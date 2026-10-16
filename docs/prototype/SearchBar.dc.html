@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trait Atlas — Smart search</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1014}
+a{color:#8ab4ff}a:hover{color:#b8d0ff}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+#sbq::placeholder{color:#6b7480}
+.m-op{color:#f3c969;font-weight:500}
+.m-par{color:#8a94a1}
+.m-field{color:#8ab4ff}
+.m-val{color:#f1f3f5}
+.m-neg{color:#ff9b87}
+.m-phr{color:#a7e3c4}
+.m-txt{color:#f1f3f5}
+.m-err{text-decoration:underline wavy #ff6b5b;text-underline-offset:5px;text-decoration-skip-ink:none}
+.m-ghost{color:#5d6773}
+.opt{display:grid;grid-template-columns:84px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:38px;padding:4px 12px;border-radius:6px;cursor:pointer;list-style:none}
+.opt.sel{background:#1d2b3e}
+.kb{justify-self:start;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid #2e3741;color:#a0a8b3}
+.k-field{color:#8ab4ff;border-color:#2c4566}
+.k-op{color:#f3c969;border-color:#5a4a22}
+.k-debuff{color:#ff9b87;border-color:#5e3029}
+.k-buff{color:#74dbb0;border-color:#24533f}
+.k-mech{color:#a9c1ff;border-color:#2c3b66}
+.k-trig{color:#f3c969;border-color:#5a4a22}
+.k-recent,.k-saved{color:#c8ced6}
+.mt{color:#f1f3f5;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid #2e3741;background:#1a1f26;cursor:pointer;font-size:13px}
+.btn:hover{background:#232a33}
+.iconb{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;border:0;background:transparent;cursor:pointer;color:#a0a8b3}
+.iconb:hover{background:#1a1f26;color:#fff}
+.iconb.on{color:#f3c969}
+.chipb{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:6px;border:1px solid #2e3741;background:#151a20;cursor:pointer;font-size:12.5px}
+.chipb:hover{background:#1d232b}
+.diag{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:13px}
+.diag.error{background:#2a1816;border:1px solid #6e3a33;color:#ffc9bf}
+.diag.warn{background:#2a2412;border:1px solid #5a4a22;color:#f6dc9a}
+.fixb{margin-left:auto;height:28px;padding:0 10px;border-radius:5px;border:1px solid currentColor;background:transparent;cursor:pointer;font-size:12px;color:inherit;white-space:nowrap}
+kbd{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:1px 5px;border-radius:4px;border:1px solid #2e3741;background:#151a20;color:#a0a8b3}
+.btn:focus-visible,.iconb:focus-visible,.chipb:focus-visible,.fixb:focus-visible{outline:2px solid #8ab4ff;outline-offset:1px}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0e1014; color: #e4e7eb; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 10px 20px; border-bottom: 1px solid #1f252d; background: #0b0d10">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="1.6" aria-hidden="true"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"></path><path d="M12 7.5v9M7.8 9.8l8.4 4.4M16.2 9.8l-8.4 4.4"></path></svg>
+<span style="font-weight: 600; font-size: 15px">Trait Atlas</span>
+<span style="font-size: 12px; color: #8a94a1">for Siralim Ultimate · unofficial</span>
+</div>
+<nav aria-label="Sections" style="display: flex; gap: 4px">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; background: #1a1f26; color: #f1f3f5; text-decoration: none; font-size: 13px">Explore</a>
+<a href="Synergy.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; color: #a0a8b3; text-decoration: none; font-size: 13px">Synergies</a>
+<a href="Main.dc.html#party" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; color: #a0a8b3; text-decoration: none; font-size: 13px">Party</a>
+</nav>
+</header>
+
+<section style="width: 100%; max-width: 1080px; margin: 0 auto; padding: 28px 20px 48px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="position: relative">
+<label for="sbq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search traits</label>
+<div style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 14px; border-radius: 9px; border: 1px solid {{barBorder}}; background: #12161b">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a94a1" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<div style="position: relative; flex: 1; min-width: 0; height: 100%">
+<div aria-hidden="true" class="mono" style="position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; overflow: hidden; font-size: 15px; pointer-events: none"><span><sc-for list="{{mirror}}" as="m" hint-placeholder-count="3"><span class="{{m.cls}}">{{m.text}}</span></sc-for></span></div>
+<input id="sbq" class="mono" role="combobox" aria-expanded="{{open}}" aria-controls="sb-list" aria-autocomplete="list" aria-activedescendant="{{activeId}}" aria-invalid="{{hasErrors}}" aria-describedby="sb-reads sb-diags" value="{{q}}" onChange="{{onInput}}" onSelect="{{onSel}}" onKeyDown="{{onKey}}" onFocus="{{onFocus}}" onBlur="{{onBlur}}" spellcheck="false" autocomplete="off" placeholder="Type a keyword, a creature, or a field like applies:" style="position: relative; width: 100%; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; font-size: 15px; color: transparent; caret-color: #f1f3f5">
+</div>
+<sc-if value="{{hasIssues}}" hint-placeholder-val="{{ false }}"><span class="mono" style="font-size: 11px; color: #ffb4a6; border: 1px solid #6e3a33; border-radius: 10px; padding: 2px 8px; white-space: nowrap">{{issueText}}</span></sc-if>
+<button class="{{starCls}}" onClick="{{toggleSave}}" aria-pressed="{{isSaved}}" aria-label="{{starLabel}}" title="{{starLabel}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="{{starFill}}" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></button>
+<button class="iconb" onClick="{{clearQ}}" aria-label="Clear search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; top: 58px; left: 0; right: 0; z-index: 5; padding: 6px; border-radius: 9px; border: 1px solid #2e3741; background: #151a20; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45)">
+<sc-if value="{{showHistory}}" hint-placeholder-val="{{ false }}"><div style="padding: 6px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8a94a1">Recent and saved</div></sc-if>
+<ul id="sb-list" role="listbox" aria-label="Suggestions" style="margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="6"><li id="{{it.id}}" role="option" aria-selected="{{it.selected}}" class="{{it.cls}}" onMouseDown="{{it.pick}}" onMouseEnter="{{it.hover}}"><span class="{{it.kcls}}">{{it.kindLabel}}</span><span style="display: flex; align-items: baseline; gap: 10px; min-width: 0"><span class="mono" style="font-size: 13.5px; color: #c8ced6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.a}}<span class="mt">{{it.b}}</span>{{it.c}}</span><span style="font-size: 12px; color: #8a94a1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.detail}}</span></span><span class="mono" style="font-size: 11.5px; color: #8a94a1">{{it.countText}}</span></li></sc-for>
+</ul>
+<sc-if value="{{noItems}}" hint-placeholder-val="{{ false }}"><div style="padding: 12px; font-size: 13px; color: #8a94a1">No suggestions. Keep typing, or press Esc.</div></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 12px 4px; margin-top: 4px; border-top: 1px solid #232a33; font-size: 11.5px; color: #8a94a1">
+<span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>Tab</kbd> or <kbd>Enter</kbd> insert</span><span><kbd>Esc</kbd> close</span><span><kbd>/</kbd> focus search from anywhere</span>
+</div>
+</div>
+</sc-if>
+</div>
+
+<div id="sb-reads" style="display: flex; gap: 10px; align-items: baseline; font-size: 13px; color: #a0a8b3"><span style="flex: none; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8a94a1">Reads as</span><span style="color: #dfe3e8">{{reads}}</span></div>
+
+<div id="sb-diags" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{diags}}" as="d" hint-placeholder-count="1"><div class="{{d.cls}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4 2.5 20h19z"></path><path d="M12 10v4M12 17v.5"></path></svg><span>{{d.msg}}</span><sc-if value="{{d.hasFix}}" hint-placeholder-val="{{ true }}"><button class="fixb" onClick="{{d.apply}}">{{d.fixLabel}}</button></sc-if></div></sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8a94a1; margin-right: 4px">Saved</span>
+<sc-for list="{{saved}}" as="s" hint-placeholder-count="2"><button class="chipb" onClick="{{s.load}}" title="{{s.q}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="#f3c969" stroke="#f3c969" stroke-width="1.8" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg>{{s.name}}</button></sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8a94a1; margin-right: 4px">Try a state</span>
+<sc-for list="{{examples}}" as="e" hint-placeholder-count="4"><button class="btn" onClick="{{e.go}}" style="height: 30px; font-size: 12.5px">{{e.label}}</button></sc-for>
+</div>
+
+<div style="margin-top: 10px; border: 1px solid #1f252d; border-radius: 9px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #1f252d; background: #12161b; font-size: 12.5px; color: #a0a8b3"><span aria-live="polite"><strong style="color: #f1f3f5; font-weight: 600">{{count}}</strong> of {{total}} traits</span><span style="flex: 1"></span><span>Results update while you type</span></div>
+<sc-for list="{{preview}}" as="r" hint-placeholder-count="6"><div style="display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto; gap: 16px; align-items: baseline; padding: 9px 14px; border-bottom: 1px solid #171c22; font-size: 13px"><span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span style="width: 8px; height: 8px; border-radius: 2px; flex: none; background: {{r.color}}" aria-hidden="true"></span><span style="font-weight: 600; color: #f1f3f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.trait}}</span></span><span style="color: #a0a8b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.cre}} · {{r.fam}}</span><span class="mono" style="font-size: 11.5px; color: #8a94a1">{{r.roles}}</span></div></sc-for>
+<sc-if value="{{more}}" hint-placeholder-val="{{ false }}"><div style="padding: 9px 14px; font-size: 12.5px; color: #8a94a1">+ {{moreN}} more in Explore</div></sc-if>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+var RAW = [
+["Death","Abomination","Abomination Brute","Flesh Rot","After an enemy is afflicted with either Weak or Vulnerable, this creature afflicts them with whichever of these debuffs…","Brute Stitches"],
+["Death","Abomination","Abomination Volatile","Quell","When this creature attacks an enemy with Vulnerable, it deals 100% more damage. If this damage exceeds 35% of the target's…","Volatile Stitches"],
+["Death","Abomination","Bile Abomination","Frailty","When this creature attacks an enemy with Vulnerable, it deals 100% more damage, recovers health equal to 100% of…","Bile Stitches"],
+["Death","Abomination","Cloth Abomination","Extra Padding","At the start of battle, this creature gains a Barrier that absorbs damage equal to 200% of its highest stat.","No Material Exists"],
+["Death","Abomination","Flesh Abomination","Wretchedness","Your creatures' attacks against enemy creatures with Vulnerable cannot be dodged and have a 50% greater chance…","Flesh Stitches"],
+["Death","Abomination","Gore Abomination","Manipulate Fear","Enemy creatures with Weak have 50% less attack and cannot deal critical damage. This trait does not stack.","Gore Stitches"],
+["Death","Abomination","Ritual Abomination","Turn to Gray","After this creature is attacked, enemies are afflicted with Vulnerable.","Ritual Stitches"],
+["Death","Abomination","Wandering Abomination","Sin and Sentence","After this creature attacks an enemy with both Weak and Vulnerable, it has a 50% chance to kill the target.","Wandering Stitches"],
+["Rodian Master","Abomination","Mastery Trait","Master of Abominations","If all the creatures in your party are Abominations, enemies always have Weak and Vulnerable, and take 50%…","Sigil of the Abomination"],
+["Sorcery","Alemental","Grenale","Slosh","After your creatures manually cast a spell, a random enemy is afflicted with a random debuff. This trait does not stack.","Bottle of Grenale"],
+["Life","Angel","Aegis Angel","Hand of Light","This creature's attacks deal 75% more damage and grant this creature Shelled.","Aegis Claymore"],
+["Life","Angel","Doomblight Angel","Scourge","This creature's attacks deal 75% more damage and afflict the target with Weak.","Doomblight Claymore"],
+["Sorcery","Animation","Silver Tether","Silver Tether","After an adjacent creature is killed, this creature gains 60% of its stats (other than health).","Silver Shackle"],
+["Life","Apis","Apis Warrior","Crunch","This creature's attacks deal 75% more damage and afflict the target with Vulnerable.","Warrior Headdress"],
+["Nature","Arachnalisk","Creeping Arachnalisk","Hopelessness","Enemies with Snared take 50% more damage. This trait does not stack.","Creeping Mandible"],
+["Nature","Arachnalisk","Goliath Arachnalisk","Entrapment","After this creature is attacked, it afflicts the enemy with Snared.","Goliath Mandible"],
+["Nature","Arachnalisk","Spitting Arachnalisk","Spit Poison","After this creature is attacked, it afflicts enemies with Poisoned. If enemies already have this debuff, its potency is…","Spitting Mandible"],
+["Chaos","Asura","Asura Gutslasher","Sidewinder","After this creature deals critical damage, it has a 75% chance to attack again.","Gutslasher Tattoo"],
+["Sorcery","Automaton","Luxury Automaton","Pandemic","At the start of this creature's turn, it afflicts enemies with a random debuff.","Luxury Gear"],
+["Sorcery","Bard","Bard Trovatore","Hymn of Panic","At the start of battle, the Timeline is shuffled randomly.","Trovatore Harp"],
+["Nature","Brownie","Brownie Enforcer","Wrecking Ball","After this creature attacks, it afflicts the target with Vulnerable and Stoned.","Enforcer Maul"],
+["Death","Calumnier","Calumnier Dandy","Stolen Valor","Your creatures cannot lose extra traits and Spell Gems in battle.","Liar's Uniform"],
+["Death","Carnage","Rotten Carnage","Consumption","After this creature kills a creature, it gains 35% of the target's attack, intelligence, defense, and speed.","Rotten Exoskeleton"],
+["Nature","Centaur","Centaur Warrior","Paradigm","After this creature is attacked, it attacks the enemy.","Warrior Tuft"],
+["Chaos","Clutcher","Flamegrip Clutcher","Vehemence","After an enemy dodges, this creature afflicts it with Burning and Scorned.","Flamegrip Finger"],
+["Chaos","Clutcher","Venomous Clutcher","Contagion","After an enemy dodges, this creature afflicts it with Poisoned and Silenced.","Venomous Finger"],
+["Chaos","Clutcher","Vital Clutcher","Seize","After an enemy dodges, this creature afflicts it with Stoned and Snared.","Vital Finger"],
+["Sorcery","Cruncher","Frostbite Cruncher","Munch","After this creature attacks, it Seals one of the target's Spell Gems and gains 20% attack.","Frostbite Carapace"],
+["Life","Crusader","Holy Crusader","Faith's Armor","After this creature attacks or is attacked, it gains Shelled.","Holy Hammer"],
+["Life","Crusader","Mist Crusader","Galvanization","After this creature attacks, it gains a Barrier that absorbs damage equal to 50% of its health.","Mist Hammer"],
+["Life","Demigod","Eternal Divinity","Consciousness","At the start of battle, this creature gains Maximum health equal to 15% of your other creatures' Maximum health.","Eternal Crown"],
+["Backer","Backer","Backer Trait","Minion Master","At the start of this creature's turn, it gains a random minion and its current minions gain 1 stack.","Minion Master Staff"],
+["Backer","Backer","Backer Trait","Arcane Echo","After your creatures manually cast a spell, they cast a random spell from the same class.","Arcane Puzzle"]
+];
+
+var DEBUFFS = ['Weak','Vulnerable','Poisoned','Burning','Snared','Stoned','Scorned','Silenced','Disarmed','Bleeding','Frozen','Confused','Feared'];
+var BUFFS = ['Shelled','Invisible','Savage','Agile','Protected'];
+var MECHS = [['Barrier','Barrier'],['minion','Minions'],['Spell Gems','Spell Gems'],['Timeline','Timeline'],['critical damage','Critical damage'],['Maximum health','Maximum health']];
+var TRIGS = [['start of battle','Start of battle'],["start of this creature's turn",'Start of own turn'],['after this creature attacks','After attacking'],['after this creature is attacked','After being attacked'],['after an enemy dodges','After an enemy dodges'],['manually cast a spell','Manual spell cast'],["this creature's attacks",'On attack (passive)'],['kills a creature','On kill'],['is killed','On death'],['deals critical damage','On critical hit']];
+var CLASS_COLOR = {Chaos:'#ef6b5b',Death:'#b49cf5',Life:'#e9c46a',Nature:'#63c98a',Sorcery:'#5fb0f5','Rodian Master':'#d98fc4',Backer:'#8fa1b3','Nether Boss':'#f08c4a'};
+var APPLY = /\b(afflicts?|are afflicted|gains?|grants?|always have)\b/;
+var FIELDS = {'class':'cls',c:'cls',family:'fam',fam:'fam',f:'fam',creature:'cre',cr:'cre',trait:'trait',t:'trait',desc:'desc',d:'desc',applies:'A',a:'A',uses:'U',u:'U',kw:'K',k:'K',mat:'M',stack:'S'};
+var FIELD_NAMES = ['applies','uses','kw','class','family','creature','trait','desc','mat','stack'];
+var FIELD_HELP = {applies:'traits that apply a buff or debuff',uses:'traits that rely on a buff or debuff',kw:'any keyword mention',class:'creature class',family:'creature family',creature:'creature name',trait:'trait name',desc:'description text only',mat:'yes = artifact-eligible',stack:'no = does not stack'};
+
+function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+var KWLIST = [];
+DEBUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'debuff',key:k.toLowerCase(),label:k}); });
+BUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'buff',key:k.toLowerCase(),label:k}); });
+MECHS.forEach(function(k){ KWLIST.push({s:k[0],kind:'mech',key:k[0].toLowerCase(),label:k[1]}); });
+TRIGS.forEach(function(k){ KWLIST.push({s:k[0],kind:'trig',key:k[0],label:k[1]}); });
+KWLIST.push({s:'This trait does not stack',kind:'flag',key:'nostack',label:'Does not stack'});
+var KWMAP = {}, KWBYKEY = {};
+KWLIST.forEach(function(k){ KWMAP[k.s.toLowerCase()] = k; KWBYKEY[k.key] = k; });
+var KWSRC = KWLIST.slice().sort(function(a,b){ return b.s.length - a.s.length; }).map(function(k){ return '\\b' + esc(k.s) + ((k.kind==='debuff'||k.kind==='buff') ? '\\b' : ''); }).join('|');
+
+var ROWS = RAW.map(function(r,i){
+  var o = {id:i,cls:r[0],fam:r[1],cre:r[2],trait:r[3],desc:r[4],mat:r[5]};
+  o.hasMat = r[5] !== 'No Material Exists';
+  o.stacks = !/does not stack/i.test(r[4]);
+  o.mastery = r[2] === 'Mastery Trait' || r[2] === 'Backer Trait';
+  o.applies = {}; o.uses = {}; o.kws = {}; o.segs = [];
+  var d = r[4], re = new RegExp(KWSRC,'gi'), m, last = 0;
+  while ((m = re.exec(d))) {
+    if (m.index > last) o.segs.push({t:d.slice(last,m.index)});
+    var k = KWMAP[m[0].toLowerCase()], role = null;
+    if (k.kind==='debuff' || k.kind==='buff') {
+      var clause = d.slice(d.lastIndexOf('.', m.index-1)+1, m.index).toLowerCase();
+      role = APPLY.test(clause) ? 'a' : 'u';
+      if (role==='a') o.applies[k.key] = 1; else o.uses[k.key] = 1;
+    }
+    o.kws[k.key] = 1;
+    o.segs.push({t:m[0],k:k,role:role});
+    last = m.index + m[0].length;
+  }
+  if (last < d.length) o.segs.push({t:d.slice(last)});
+  o.text = r.join(' ').toLowerCase();
+  return o;
+});
+var CLASSES = [], FAMILIES = [];
+ROWS.forEach(function(r){ if (CLASSES.indexOf(r.cls) < 0) CLASSES.push(r.cls); if (FAMILIES.indexOf(r.fam) < 0) FAMILIES.push(r.fam); });
+var PRESENT = {debuff:[],buff:[],mech:[],trig:[]};
+KWLIST.forEach(function(k){ if (PRESENT[k.kind] && ROWS.some(function(r){ return r.kws[k.key]; })) PRESENT[k.kind].push(k); });
+var ROLEKW = PRESENT.debuff.concat(PRESENT.buff);
+var ALLKW = ROLEKW.concat(PRESENT.mech, PRESENT.trig);
+var VOCAB = [];
+ALLKW.forEach(function(k){ VOCAB.push(k.key); });
+ROWS.forEach(function(r){ [r.trait, r.fam, r.cls].forEach(function(w){ w = w.toLowerCase(); if (VOCAB.indexOf(w) < 0) VOCAB.push(w); }); if (!r.mastery && VOCAB.indexOf(r.cre.toLowerCase()) < 0) VOCAB.push(r.cre.toLowerCase()); });
+
+function tokPos(q){ var re = /\s*(\(|\)|-?[A-Za-z]+:"[^"]*"?|-?"[^"]*"?|[^\s()]+)/g, out = [], m; while ((m = re.exec(q))) { if (!m[1]) break; var s = m.index + m[0].length - m[1].length; out.push({t:m[1], start:s, end:s + m[1].length}); } return out; }
+function tokenize(q){ return tokPos(q).map(function(t){ return t.t; }); }
+function isOp(t,op){ return !!t && t.toUpperCase() === op; }
+function isOr(t){ return isOp(t,'OR') || t === '|'; }
+function isOpTok(t){ return /^(AND|OR|NOT|&|\|)$/i.test(t || ''); }
+function mkTerm(raw){ var m = /^([A-Za-z]+):(.+)$/.exec(raw), f = null, v = raw; if (m && FIELDS[m[1].toLowerCase()]) { f = FIELDS[m[1].toLowerCase()]; v = m[2]; } v = v.replace(/"/g,'').toLowerCase(); return {op:'term',f:f,v:v}; }
+function parseTokens(tokens){
+  var i = 0;
+  function pExpr(){ var n = pAnd(); while (isOr(tokens[i])) { i++; var r = pAnd(); if (r) n = n ? {op:'or',a:n,b:r} : r; } return n; }
+  function pAnd(){ var n = pUnary(); while (i < tokens.length && tokens[i] !== ')' && !isOr(tokens[i])) { if (isOp(tokens[i],'AND') || tokens[i] === '&') i++; var r = pUnary(); if (!r) break; n = n ? {op:'and',a:n,b:r} : r; } return n; }
+  function pUnary(){ var t = tokens[i]; if (t === undefined) return null; if (isOp(t,'NOT')) { i++; var x = pUnary(); return x ? {op:'not',a:x} : null; } if (t === '(') { i++; var e = pExpr(); if (tokens[i] === ')') i++; return e; } if (t === ')') return null; i++; if (t.length > 1 && t[0] === '-') return {op:'not',a:mkTerm(t.slice(1))}; return mkTerm(t); }
+  return pExpr();
+}
+function anyKey(o,v){ for (var k in o) { if (k.indexOf(v) === 0) return true; } return false; }
+function matchTerm(n,r){
+  var v = n.v; if (!v) return true;
+  if (n.f === null) return r.text.indexOf(v) >= 0;
+  if (n.f === 'A') return anyKey(r.applies,v);
+  if (n.f === 'U') return anyKey(r.uses,v);
+  if (n.f === 'K') return anyKey(r.kws,v);
+  if (n.f === 'M') return (v==='no'||v==='none') ? !r.hasMat : r.hasMat;
+  if (n.f === 'S') return v==='no' ? !r.stacks : r.stacks;
+  return r[n.f].toLowerCase().indexOf(v) >= 0;
+}
+function evalNode(n,r){ if (n.op==='term') return matchTerm(n,r); if (n.op==='and') return evalNode(n.a,r) && evalNode(n.b,r); if (n.op==='or') return evalNode(n.a,r) || evalNode(n.b,r); return !evalNode(n.a,r); }
+function countFor(q){ var a = parseTokens(tokenize(q)); return a ? ROWS.filter(function(r){ return evalNode(a,r); }).length : ROWS.length; }
+function qt(s){ return /\s/.test(s) ? '"' + s + '"' : s; }
+function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function lev(a,b){ var d = [], i, j; for (i = 0; i <= a.length; i++) d[i] = [i]; for (j = 0; j <= b.length; j++) d[0][j] = j; for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[a.length][b.length]; }
+function closest(v, list){ var best = null, bd = 99; list.forEach(function(x){ var dd = lev(v, x.toLowerCase()); if (dd < bd) { bd = dd; best = x; } }); return bd <= Math.max(2, Math.floor(v.length / 3)) ? best : null; }
+function rep(q,t,s){ return q.slice(0,t.start) + s + q.slice(t.end); }
+function tidy(s){ return s.replace(/\s{2,}/g,' ').replace(/\(\s+/g,'(').replace(/\s+\)/g,')').trim(); }
+
+function suggest(q, caret){
+  var toks = tokPos(q), cur = null, prev = null;
+  toks.forEach(function(t){ if (caret > t.start && caret <= t.end) cur = t; });
+  if (!cur) cur = {t:'', start:caret, end:caret};
+  toks.forEach(function(t){ if (t.end <= cur.start && t !== cur) prev = t.t; });
+  var raw = cur.t.slice(0, caret - cur.start), neg = raw[0] === '-' ? '-' : '', p = neg ? raw.slice(1) : raw, lp = p.toLowerCase();
+  var items = [];
+  function add(label, kind, insert, detail, match, complete){ items.push({label:label, kind:kind, insert:insert, detail:detail || '', match:match || '', complete:complete !== false}); }
+  var fm = /^([A-Za-z]+):(.*)$/.exec(p);
+  if (fm) {
+    var fn = fm[1].toLowerCase(), fv = fm[2].replace(/"/g,'').toLowerCase(), F = FIELDS[fn];
+    if (!F) { var c = closest(fn, FIELD_NAMES); if (c) add(c + ':' + fm[2], 'field', neg + c + ':' + fm[2], 'did you mean ' + c + ':?', '', !!fm[2]); }
+    else if (F === 'A' || F === 'U') ROLEKW.forEach(function(k){ if (k.key.indexOf(fv) >= 0) add(fn + ':' + k.key, k.kind, neg + fn + ':' + k.key, (F === 'A' ? 'applies ' : 'relies on ') + k.label, fv); });
+    else if (F === 'K') ALLKW.forEach(function(k){ if (k.key.indexOf(fv) >= 0) add(fn + ':' + qt(k.key), k.kind, neg + fn + ':' + qt(k.key), k.label, fv); });
+    else if (F === 'cls') CLASSES.forEach(function(c){ if (c.toLowerCase().indexOf(fv) >= 0) add(fn + ':' + qt(c.toLowerCase()), 'class', neg + fn + ':' + qt(c.toLowerCase()), 'class', fv); });
+    else if (F === 'fam') FAMILIES.forEach(function(c){ if (c.toLowerCase().indexOf(fv) >= 0) add(fn + ':' + qt(c.toLowerCase()), 'family', neg + fn + ':' + qt(c.toLowerCase()), 'family', fv); });
+    else if (F === 'trait') ROWS.forEach(function(r){ if (r.trait.toLowerCase().indexOf(fv) >= 0) add(fn + ':' + qt(r.trait.toLowerCase()), 'trait', neg + fn + ':' + qt(r.trait.toLowerCase()), r.cre, fv); });
+    else if (F === 'cre') ROWS.forEach(function(r){ if (!r.mastery && r.cre.toLowerCase().indexOf(fv) >= 0) add(fn + ':' + qt(r.cre.toLowerCase()), 'creature', neg + fn + ':' + qt(r.cre.toLowerCase()), r.trait, fv); });
+    else if (F === 'M' || F === 'S') ['yes','no'].forEach(function(v){ if (v.indexOf(fv) === 0) add(fn + ':' + v, 'value', neg + fn + ':' + v, F === 'M' ? (v === 'yes' ? 'artifact-eligible' : 'no material') : (v === 'yes' ? 'stacks' : 'does not stack'), fv); });
+  } else if (!p) {
+    if (prev && prev !== '(' && !isOpTok(prev)) { add('OR','op','OR','either side'); add('AND','op','AND','both sides (also implicit)'); add('NOT','op','NOT','exclude the next term'); }
+    FIELD_NAMES.forEach(function(f){ add(f + ':', 'field', f + ':', FIELD_HELP[f], '', false); });
+  } else {
+    FIELD_NAMES.forEach(function(f){ if (f.indexOf(lp) === 0) add(f + ':', 'field', neg + f + ':', FIELD_HELP[f], lp, false); });
+    ALLKW.forEach(function(k){
+      if (k.key.indexOf(lp) < 0) return;
+      if (k.kind === 'debuff' || k.kind === 'buff') { add('applies:' + k.key, k.kind, neg + 'applies:' + k.key, 'applies ' + k.label, lp); add('uses:' + k.key, k.kind, neg + 'uses:' + k.key, 'relies on ' + k.label, lp); }
+      else if (k.kind === 'trig') add('"' + k.key + '"', 'trig', neg + '"' + k.key + '"', 'trigger · ' + k.label, lp);
+      else add('kw:' + qt(k.key), 'mech', neg + 'kw:' + qt(k.key), k.label, lp);
+    });
+    ROWS.forEach(function(r){ if (r.trait.toLowerCase().indexOf(lp) >= 0) add('trait:' + qt(r.trait.toLowerCase()), 'trait', neg + 'trait:' + qt(r.trait.toLowerCase()), r.cre, lp); });
+    FAMILIES.forEach(function(f){ if (f.toLowerCase().indexOf(lp) >= 0) add('family:' + qt(f.toLowerCase()), 'family', neg + 'family:' + qt(f.toLowerCase()), 'family', lp); });
+    add(p, 'text', neg + p, 'match anywhere in the text', lp);
+  }
+  return {cur:cur, raw:raw, items:items.slice(0, 9)};
+}
+
+function lint(q){
+  var toks = tokPos(q), out = [], depth = 0;
+  toks.forEach(function(t, i){
+    var tt = t.t, pv = toks[i-1], nx = toks[i+1];
+    if (tt === '(') { depth++; return; }
+    if (tt === ')') { if (depth === 0) out.push({at:t, msg:'Unmatched “)”', fixLabel:'Remove it', fix:tidy(rep(q,t,''))}); else depth--; return; }
+    if (/^(AND|OR|&|\|)$/i.test(tt)) { if (!pv || pv.t === '(' || isOpTok(pv.t) || !nx || nx.t === ')') out.push({at:t, msg:'“' + tt.toUpperCase() + '” needs a term on both sides', fixLabel:'Remove ' + tt.toUpperCase(), fix:tidy(rep(q,t,''))}); return; }
+    if (/^NOT$/i.test(tt)) { if (!nx || nx.t === ')' || isOpTok(nx.t)) out.push({at:t, msg:'“NOT” needs a term after it', fixLabel:'Remove NOT', fix:tidy(rep(q,t,''))}); return; }
+    var neg = tt[0] === '-' ? '-' : '', body = neg ? tt.slice(1) : tt;
+    if ((body.match(/"/g) || []).length === 1) { out.push({at:t, msg:'Unclosed quote', fixLabel:'Close the phrase', fix:rep(q,t,tt + '"')}); return; }
+    var m = /^([A-Za-z]+):(.*)$/.exec(body);
+    if (m) {
+      var fn = m[1].toLowerCase(), v = m[2].replace(/"/g,'').toLowerCase(), F = FIELDS[fn], c;
+      if (!F) { c = closest(fn, FIELD_NAMES); out.push({at:t, msg:'Unknown field “' + m[1] + ':”' + (c ? '. Did you mean “' + c + ':”?' : ''), fixLabel: c ? 'Use ' + c + ':' : '', fix: c ? rep(q,t,neg + c + ':' + m[2]) : null}); return; }
+      if (!v) { out.push({at:t, msg:'“' + fn + ':” has no value yet', fixLabel:'', fix:null, sev:'warn'}); return; }
+      if (F === 'A' || F === 'U') {
+        if (ROLEKW.some(function(k){ return k.key.indexOf(v) === 0; })) return;
+        var mk = ALLKW.filter(function(k){ return k.key.indexOf(v) === 0; })[0];
+        if (mk) { out.push({at:t, sev:'warn', msg:mk.label + ' has no applies/uses role. Search it as a keyword instead.', fixLabel:'Use kw:' + qt(mk.key), fix:rep(q,t,neg + 'kw:' + qt(mk.key))}); return; }
+        c = closest(v, DEBUFFS.concat(BUFFS));
+        out.push({at:t, msg:'No buff or debuff called “' + v + '”' + (c ? '. Did you mean ' + c + '?' : ''), fixLabel: c ? 'Use ' + fn + ':' + c.toLowerCase() : '', fix: c ? rep(q,t,neg + fn + ':' + c.toLowerCase()) : null}); return;
+      }
+      if (F === 'K') { if (ALLKW.some(function(k){ return k.key.indexOf(v) === 0; })) return; c = closest(v, ALLKW.map(function(k){ return k.key; })); out.push({at:t, msg:'No keyword “' + v + '”' + (c ? '. Did you mean ' + c + '?' : ''), fixLabel: c ? 'Use kw:' + qt(c) : '', fix: c ? rep(q,t,neg + 'kw:' + qt(c)) : null}); return; }
+      if (F === 'M' || F === 'S') { if (['yes','no','none'].indexOf(v) < 0) out.push({at:t, msg:'“' + fn + ':” takes yes or no', fixLabel:'Use ' + fn + ':' + (F === 'M' ? 'yes' : 'no'), fix:rep(q,t,neg + fn + ':' + (F === 'M' ? 'yes' : 'no'))}); return; }
+      if (F === 'cls') { if (CLASSES.some(function(x){ return x.toLowerCase().indexOf(v) >= 0; })) return; c = closest(v, CLASSES); out.push({at:t, msg:'No class “' + v + '”' + (c ? '. Did you mean ' + c + '?' : ''), fixLabel: c ? 'Use class:' + qt(c.toLowerCase()) : '', fix: c ? rep(q,t,neg + fn + ':' + qt(c.toLowerCase())) : null}); return; }
+      return;
+    }
+    var lv = body.replace(/"/g,'').toLowerCase();
+    if (lv.length > 1 && !ROWS.some(function(r){ return r.text.indexOf(lv) >= 0; })) { var c5 = closest(lv, VOCAB); out.push({at:t, sev:'warn', msg:'“' + lv + '” appears in no trait' + (c5 ? '. Did you mean “' + c5 + '”?' : ''), fixLabel: c5 ? 'Use ' + c5 : '', fix: c5 ? rep(q,t,neg + qt(c5)) : null}); }
+  });
+  if (depth > 0) out.push({at:null, msg:(depth === 1 ? 'One' : depth) + ' unclosed “(”', fixLabel:'Close it', fix:q.replace(/\s+$/,'') + new Array(depth + 1).join(')')});
+  return out;
+}
+
+function termText(n){
+  var v = n.v;
+  if (n.f === null) return 'mentions “' + v + '”';
+  if (n.f === 'A') return 'applies ' + cap(v);
+  if (n.f === 'U') return 'relies on ' + cap(v);
+  if (n.f === 'K') return 'has keyword “' + v + '”';
+  if (n.f === 'cls') return 'class is ' + cap(v);
+  if (n.f === 'fam') return 'family is ' + cap(v);
+  if (n.f === 'cre') return 'creature is “' + v + '”';
+  if (n.f === 'trait') return 'trait is “' + v + '”';
+  if (n.f === 'desc') return 'text has “' + v + '”';
+  if (n.f === 'M') return (v === 'no' || v === 'none') ? 'has no material' : 'is artifact-eligible';
+  if (n.f === 'S') return v === 'no' ? 'does not stack' : 'stacks';
+  return v;
+}
+function explain(n, parent){
+  if (!n) return 'every trait';
+  if (n.op === 'term') return termText(n);
+  if (n.op === 'not') return 'NOT ' + explain(n.a, 'not');
+  var s = n.op === 'and' ? explain(n.a, 'and') + ' AND ' + explain(n.b, 'and') : explain(n.a, 'or') + ' OR ' + explain(n.b, 'or');
+  return (parent && parent !== n.op) ? '(' + s + ')' : s;
+}
+
+var KIND_LABEL = {field:'field', op:'operator', debuff:'debuff', buff:'buff', mech:'mechanic', trig:'trigger', trait:'trait', creature:'creature', family:'family', 'class':'class', value:'value', text:'text', recent:'recent', saved:'saved'};
+var START_Q = 'clas:life (weak OR snared applies:vul';
+
+class Component extends DCLogic {
+  state = {
+    q: START_Q, caret: START_Q.length, open: true, sel: 0,
+    recent: ['(vulnerable OR weak) -stack:no', 'applies:snared', 'family:clutcher "after an enemy dodges"'],
+    saved: [{name:'Vulnerable payoffs, artifact-ready', q:'uses:vulnerable mat:yes'}, {name:'Start-of-battle shields', q:'"start of battle" kw:barrier'}]
+  };
+
+  renderVals() {
+    var self = this, st = this.state, q = st.q, caret = Math.min(st.caret, q.length);
+    var set = function(p){ self.setState(p); };
+    var sg = suggest(q, caret);
+    var showHistory = st.open && q.trim() === '';
+    var items = showHistory
+      ? st.recent.map(function(r){ return {label:r, kind:'recent', insert:r, detail:'', match:'', whole:true, complete:true}; }).concat(st.saved.map(function(s){ return {label:s.q, kind:'saved', insert:s.q, detail:s.name, match:'', whole:true, complete:true}; }))
+      : sg.items;
+    var sel = Math.min(st.sel, Math.max(items.length - 1, 0));
+
+    function nextQ(it){
+      if (it.whole) return {q:it.insert, caret:it.insert.length};
+      var cur = sg.cur, after = q.slice(cur.end).replace(/^\s+/,''), sep = it.complete ? ' ' : '';
+      var nq = q.slice(0, cur.start) + it.insert + sep + after;
+      return {q:nq, caret:cur.start + it.insert.length + sep.length};
+    }
+    function apply(it){ var n = nextQ(it); set({q:n.q, caret:n.caret, sel:0, open:!it.whole}); }
+
+    var itemsV = items.map(function(it, i){
+      var low = it.label.toLowerCase(), mi = it.match ? low.indexOf(it.match) : -1;
+      var cnt = (it.complete && it.kind !== 'op') ? countFor(nextQ(it).q) : null;
+      return {
+        id:'sb-opt-' + i, selected:i === sel, cls:'opt' + (i === sel ? ' sel' : ''),
+        a: mi >= 0 ? it.label.slice(0, mi) : it.label, b: mi >= 0 ? it.label.slice(mi, mi + it.match.length) : '', c: mi >= 0 ? it.label.slice(mi + it.match.length) : '',
+        detail:it.detail, kindLabel:KIND_LABEL[it.kind] || it.kind, kcls:'kb k-' + it.kind,
+        countText: cnt === null ? '' : (cnt + (cnt === 1 ? ' trait' : ' traits')),
+        pick:function(e){ if (e && e.preventDefault) e.preventDefault(); apply(it); },
+        hover:function(){ if (self.state.sel !== i) set({sel:i}); }
+      };
+    });
+
+    var diagsRaw = lint(q);
+    var errAt = {};
+    diagsRaw.forEach(function(d){ if (d.at) errAt[d.at.start] = 1; });
+    var diags = diagsRaw.map(function(d){ return {msg:d.msg, cls:'diag ' + (d.sev || 'error'), hasFix:!!d.fix, fixLabel:d.fixLabel, apply:function(){ set({q:d.fix, caret:d.fix.length, open:false}); }}; });
+    var nErr = diagsRaw.filter(function(d){ return d.sev !== 'warn'; }).length;
+
+    var toks = tokPos(q), mirror = [], pos = 0;
+    toks.forEach(function(t){
+      if (t.start > pos) mirror.push({text:q.slice(pos, t.start), cls:''});
+      var e = errAt[t.start] ? ' m-err' : '', tt = t.t;
+      if (tt === '(' || tt === ')') mirror.push({text:tt, cls:'m-par' + e});
+      else if (isOpTok(tt)) mirror.push({text:tt, cls:'m-op' + e});
+      else {
+        var off = 0;
+        if (tt[0] === '-' && tt.length > 1) { mirror.push({text:'-', cls:'m-neg' + e}); off = 1; }
+        var body = tt.slice(off), fm = /^([A-Za-z]+:)(.*)$/.exec(body);
+        if (fm) { mirror.push({text:fm[1], cls:'m-field' + e}); if (fm[2]) mirror.push({text:fm[2], cls:(fm[2][0] === '"' ? 'm-phr' : 'm-val') + e}); }
+        else mirror.push({text:body, cls:(body[0] === '"' ? 'm-phr' : 'm-txt') + e});
+      }
+      pos = t.end;
+    });
+    if (pos < q.length) mirror.push({text:q.slice(pos), cls:''});
+    if (st.open && !showHistory && items.length && caret === q.length && sg.raw) {
+      var top = items[sel];
+      if (top.insert.toLowerCase().indexOf(sg.raw.toLowerCase()) === 0 && top.insert.length > sg.raw.length) mirror.push({text:top.insert.slice(sg.raw.length), cls:'m-ghost'});
+    }
+
+    var ast = parseTokens(tokenize(q));
+    var res = ast ? ROWS.filter(function(r){ return evalNode(ast, r); }) : ROWS;
+    var preview = res.slice(0, 7).map(function(r){
+      var a = Object.keys(r.applies).map(function(k){ return '+' + KWBYKEY[k].label; }), u = Object.keys(r.uses).map(function(k){ return '◇' + KWBYKEY[k].label; });
+      return {trait:r.trait, cre:r.cre, fam:r.fam, color:CLASS_COLOR[r.cls] || '#8fa1b3', roles:a.concat(u).join('  ')};
+    });
+
+    var savedIdx = -1;
+    st.saved.forEach(function(s, i){ if (s.q === q.trim()) savedIdx = i; });
+    var isSaved = savedIdx >= 0;
+
+    var examples = [
+      {label:'Typos and a missing “)”', q:START_Q},
+      {label:'Autocomplete a field', q:'uses:'},
+      {label:'Unknown word', q:'vulnrable -stack:no'},
+      {label:'Role on a mechanic', q:'applies:barrier'},
+      {label:'Empty: recent and saved', q:''}
+    ].map(function(e){ return {label:e.label, go:function(){ set({q:e.q, caret:e.q.length, open:true, sel:0}); }}; });
+
+    return {
+      q:q, open:st.open, showHistory:showHistory,
+      onInput:function(e){ set({q:e.target.value, caret:e.target.selectionStart, open:true, sel:0}); },
+      onSel:function(e){ var c = e.target.selectionStart; if (c !== self.state.caret) set({caret:c}); },
+      onFocus:function(){ if (!self.state.open) set({open:true}); },
+      onBlur:function(){ set({open:false}); },
+      onKey:function(e){
+        var k = e.key, n = items.length;
+        if (k === 'Escape') { if (self.state.open) { e.preventDefault(); set({open:false}); } return; }
+        if (!self.state.open) { if (k === 'ArrowDown') { e.preventDefault(); set({open:true}); } return; }
+        if (!n) return;
+        if (k === 'ArrowDown') { e.preventDefault(); set({sel:(sel + 1) % n}); }
+        else if (k === 'ArrowUp') { e.preventDefault(); set({sel:(sel - 1 + n) % n}); }
+        else if (k === 'Tab' || k === 'Enter') { e.preventDefault(); apply(items[sel]); }
+      },
+      clearQ:function(){ set({q:'', caret:0, open:true, sel:0}); },
+      activeId: st.open && items.length ? 'sb-opt-' + sel : '',
+      items:itemsV, noItems:st.open && !items.length,
+      mirror:mirror,
+      barBorder: nErr ? '#8a4a40' : (st.open ? '#4a76b0' : '#36557f'),
+      hasErrors: nErr > 0, hasIssues: diags.length > 0, issueText: diags.length + (diags.length === 1 ? ' issue' : ' issues'),
+      diags:diags,
+      reads: explain(ast),
+      isSaved:isSaved, starCls:'iconb' + (isSaved ? ' on' : ''), starFill: isSaved ? 'currentColor' : 'none',
+      starLabel: isSaved ? 'Remove from saved searches' : 'Save this search',
+      toggleSave:function(){ var s = self.state.saved.slice(), cq = self.state.q.trim(); if (!cq) return; var idx = -1; s.forEach(function(x, i){ if (x.q === cq) idx = i; }); if (idx >= 0) s.splice(idx, 1); else s.push({name:cq.length > 28 ? cq.slice(0, 27) + '…' : cq, q:cq}); set({saved:s}); },
+      saved: st.saved.map(function(s){ return {name:s.name, q:s.q, load:function(){ set({q:s.q, caret:s.q.length, open:false}); }}; }),
+      examples:examples,
+      count:res.length, total:ROWS.length, preview:preview, more:res.length > 7, moreN:res.length - 7
+    };
+  }
+}
+</script>
+</body>
+</html>

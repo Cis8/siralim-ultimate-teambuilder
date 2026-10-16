@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trait Atlas — Party analysis</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1014}
+a{color:#8ab4ff}a:hover{color:#b8d0ff}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.fh{margin:0;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a94a1}
+.h2{margin:0;font-size:16px;font-weight:600;color:#f1f3f5}
+.panel{border:1px solid #1f252d;border-radius:12px;background:#11151a}
+.tile{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:10px;border:1px solid #232a33;background:#12161b;min-width:0}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.st-good{color:#74dbb0}
+.st-warn{color:#f3c969}
+.st-crit{color:#ff9b87}
+.st-none{color:#a0a8b3}
+.slot{display:flex;align-items:stretch;border:1px solid #232a33;border-radius:6px;background:#151a20}
+.slot.active{border-color:#8ab4ff;box-shadow:0 0 0 1px #8ab4ff}
+.slot.flag{border-color:#6e3a33}
+.slot.empty .slotname{color:#7d8794}
+.slotbtn{flex:1;display:flex;align-items:center;gap:8px;min-height:32px;padding:4px 8px;border:0;background:transparent;cursor:pointer;text-align:left;min-width:0}
+.x{display:inline-flex;align-items:center;justify-content:center;width:28px;border:0;border-left:1px solid #232a33;background:transparent;color:#a0a8b3;cursor:pointer;border-radius:0 6px 6px 0}
+.x:hover{background:#262d36;color:#fff}
+.issue{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:9px;border:1px solid #232a33;background:#12161b}
+.issue.crit{border-color:#6e3a33;background:#1d1312}
+.issue.warn{border-color:#5a4a22;background:#1b1810}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:6px;border:1px solid #2e3741;background:#1a1f26;cursor:pointer;font-size:12.5px;color:#e4e7eb;text-decoration:none;white-space:nowrap}
+.btn:hover{background:#232a33;color:#fff}
+.btn.pri{border-color:#3a5a86;background:#1b2b40;color:#dbe8ff}
+.btn.pri:hover{background:#22385a}
+.seg{height:30px;padding:0 12px;border:0;background:transparent;cursor:pointer;font-size:12.5px;color:#a0a8b3;border-radius:5px}
+.seg.on{background:#2a3442;color:#fff}
+.tag{display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:5px;font-size:11.5px;border:1px solid #2e3741;color:#b4bcc6;white-space:nowrap}
+.tag.good{color:#74dbb0;border-color:#24533f;background:#11231b}
+.tag.warn{color:#f3c969;border-color:#5a4a22;background:#1b1810}
+.tag.info{color:#a9c1ff;border-color:#2c3b66}
+.cell{display:flex;align-items:center;justify-content:center;gap:4px;min-height:40px;padding:4px;border-left:1px solid #1a1f26}
+.ap{display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:5px;font-size:11.5px;background:#22344d;color:#dbe8ff}
+.us{display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:5px;font-size:11.5px;border:1px dashed #8a94a1;color:#dfe3e8}
+.chipm{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#151a20;border:1px solid #232a33;font-size:12.5px;min-width:0}
+.btn:focus-visible,.seg:focus-visible,.slotbtn:focus-visible,.x:focus-visible{outline:2px solid #8ab4ff;outline-offset:1px}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0e1014; color: #e4e7eb; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 10px 20px; border-bottom: 1px solid #1f252d; background: #0b0d10">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="1.6" aria-hidden="true"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"></path><path d="M12 7.5v9M7.8 9.8l8.4 4.4M16.2 9.8l-8.4 4.4"></path></svg>
+<span style="font-weight: 600; font-size: 15px">Trait Atlas</span>
+<span style="font-size: 12px; color: #8a94a1">for Siralim Ultimate · unofficial</span>
+</div>
+<nav aria-label="Sections" style="display: flex; gap: 4px">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; color: #a0a8b3; text-decoration: none; font-size: 13px">Explore</a>
+<a href="Synergy.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; color: #a0a8b3; text-decoration: none; font-size: 13px">Synergies</a>
+<a href="PartyLab.dc.html" aria-current="page" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; background: #1a1f26; color: #f1f3f5; text-decoration: none; font-size: 13px">Party · {{filledN}}/18</a>
+</nav>
+</header>
+
+<div style="width: 100%; max-width: 1400px; margin: 0 auto; padding: 20px 20px 48px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span class="fh">Party analysis</span>
+<h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #f6f7f8">Abomination debuff core</h1>
+</div>
+<div style="flex: 1"></div>
+<button class="btn" onClick="{{reset}}">Reset example</button>
+<button class="btn" onClick="{{copyShare}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>{{shareLabel}}</button>
+</div>
+
+<div role="list" aria-label="Party health" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4"><div role="listitem" class="tile"><span class="fh">{{t.label}}</span><span style="font-size: 26px; font-weight: 600; color: #f6f7f8; letter-spacing: -.01em">{{t.value}}</span><span class="{{t.stCls}}"><sc-if value="{{t.isGood}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if><sc-if value="{{t.isBad}}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4 2.5 20h19z"></path><path d="M12 10v4M12 17v.5"></path></svg></sc-if>{{t.status}}</span><span style="font-size: 12.5px; color: #a0a8b3">{{t.sub}}</span></div></sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section aria-labelledby="h-party" class="panel" style="flex: 1 1 340px; max-width: 420px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 8px"><h2 id="h-party" class="h2">Party</h2><span class="mono" style="font-size: 11.5px; color: #8a94a1">{{filledN}}/18</span></div>
+<span style="font-size: 12px; color: #8a94a1">Click a slot to make it the target for suggestions. Flagged slots are part of an issue.</span>
+<sc-for list="{{members}}" as="m" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 11px; color: #8a94a1">{{m.label}}</span><span style="font-size: 13px; font-weight: 500">{{m.name}}</span><span style="font-size: 11.5px; color: #8a94a1">{{m.fam}}</span></div>
+<sc-for list="{{m.slots}}" as="s" hint-placeholder-count="3"><div class="{{s.cls}}"><button class="slotbtn" onClick="{{s.pick}}" aria-label="{{s.aria}}"><span class="mono" style="width: 58px; flex: none; font-size: 10.5px; color: #8a94a1; text-transform: uppercase; letter-spacing: .04em">{{s.label}}</span><span style="width: 7px; height: 7px; border-radius: 2px; flex: none; background: {{s.color}}" aria-hidden="true"></span><span class="slotname" style="font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.name}}</span></button><sc-if value="{{s.filled}}" hint-placeholder-val="{{ false }}"><button class="x" aria-label="{{s.clearLabel}}" onClick="{{s.clear}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></sc-if></div></sc-for>
+</div>
+</sc-for>
+</section>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<section aria-labelledby="h-issues" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><h2 id="h-issues" class="h2">Issues</h2><span class="mono" style="font-size: 11.5px; color: #8a94a1">{{issueN}}</span></div>
+<sc-for list="{{issues}}" as="i" hint-placeholder-count="4"><div class="{{i.cls}}"><span class="{{i.stCls}}" style="flex: none; margin-top: 2px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4 2.5 20h19z"></path><path d="M12 10v4M12 17v.5"></path></svg></span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 500; color: #f1f3f5">{{i.title}}</span><span style="font-size: 12.5px; color: #b4bcc6">{{i.detail}}</span></div><sc-if value="{{i.hasAction}}" hint-placeholder-val="{{ true }}"><button class="btn" onClick="{{i.action}}">{{i.actionLabel}}</button></sc-if></div></sc-for>
+<sc-if value="{{noIssues}}" hint-placeholder-val="{{ false }}"><div class="issue"><span class="st st-good"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><span style="font-size: 14px">No issues: every dependency has a firm source and nothing conflicts.</span></div></sc-if>
+</section>
+
+<section aria-labelledby="h-sugg" class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<h2 id="h-sugg" class="h2">Suggestions</h2>
+<div role="group" aria-label="Suggestion type" style="display: flex; gap: 2px; padding: 3px; border-radius: 7px; background: #0e1014; border: 1px solid #232a33">
+<button class="{{fixCls}}" aria-pressed="{{isFix}}" onClick="{{toFix}}">Fix gaps</button>
+<button class="{{payCls}}" aria-pressed="{{isPay}}" onClick="{{toPay}}">Add payoffs</button>
+</div>
+<sc-if value="{{hasFocus}}" hint-placeholder-val="{{ false }}"><span class="tag info">only {{focusLabel}}<button onClick="{{clearFocus}}" aria-label="Show all suggestions" style="margin-left: 4px; border: 0; background: transparent; cursor: pointer; color: inherit; padding: 0 2px">×</button></span></sc-if>
+<div style="flex: 1"></div>
+<span style="font-size: 12px; color: #8a94a1">Target: <strong style="color: #dbe8ff; font-weight: 500">{{targetLabel}}</strong></span>
+</div>
+<span style="font-size: 12.5px; color: #8a94a1">{{suggHint}}</span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{sugg}}" as="c" hint-placeholder-count="4"><div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 8px; border: 1px solid #232a33; background: #14181d"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px"><span style="width: 8px; height: 8px; border-radius: 2px; background: {{c.color}}; align-self: center" aria-hidden="true"></span><span style="font-size: 14px; font-weight: 600; color: #f1f3f5">{{c.trait}}</span><span style="font-size: 12.5px; color: #a0a8b3">{{c.cre}}</span></div><div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{c.tags}}" as="g" hint-placeholder-count="2"><span class="{{g.cls}}">{{g.t}}</span></sc-for></div></div><button class="{{c.btnCls}}" onClick="{{c.add}}" disabled="{{c.cant}}" title="{{c.btnTitle}}">{{c.btnLabel}}</button></div></sc-for>
+<sc-if value="{{noSugg}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: #a0a8b3">{{noSuggText}}</span></sc-if>
+</div>
+</section>
+</div>
+</div>
+
+<section aria-labelledby="h-cov" class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px"><h2 id="h-cov" class="h2">Coverage matrix</h2><span style="font-size: 12.5px; color: #8a94a1">Who applies and who relies on each buff or debuff, per creature</span><div style="flex: 1"></div><span style="display: inline-flex; align-items: center; gap: 12px; font-size: 12px; color: #a0a8b3"><span class="ap">applies</span><span class="us">uses</span></span></div>
+<div style="overflow-x: auto">
+<div role="table" aria-label="Keyword coverage by party member" style="min-width: 900px; display: flex; flex-direction: column; border: 1px solid #1f252d; border-radius: 8px; overflow: hidden">
+<div role="row" style="display: grid; grid-template-columns: 150px repeat(6, minmax(0, 1fr)) 190px; background: #151a20; border-bottom: 1px solid #1f252d">
+<span role="columnheader" style="padding: 8px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8a94a1">Keyword</span>
+<sc-for list="{{matrixHead}}" as="h" hint-placeholder-count="6"><span role="columnheader" style="display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; border-left: 1px solid #1f252d; min-width: 0"><span class="mono" style="font-size: 11px; color: #8a94a1">{{h.label}}</span><span style="font-size: 11.5px; color: {{h.color}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%">{{h.name}}</span></span></sc-for>
+<span role="columnheader" style="padding: 8px 12px; border-left: 1px solid #1f252d; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8a94a1">Status</span>
+</div>
+<sc-for list="{{matrix}}" as="r" hint-placeholder-count="3"><div role="row" style="display: grid; grid-template-columns: 150px repeat(6, minmax(0, 1fr)) 190px; border-bottom: 1px solid #1a1f26"><span role="rowheader" style="display: flex; align-items: center; padding: 6px 12px; font-size: 13.5px; font-weight: 500; color: {{r.kColor}}">{{r.label}}</span><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6"><span role="cell" class="cell" title="{{c.title}}"><sc-if value="{{c.a}}" hint-placeholder-val="{{ false }}"><span class="ap">{{c.aText}}</span></sc-if><sc-if value="{{c.u}}" hint-placeholder-val="{{ false }}"><span class="us">{{c.uText}}</span></sc-if></span></sc-for><span role="cell" style="display: flex; align-items: center; padding: 6px 12px; border-left: 1px solid #1a1f26"><span class="{{r.stCls}}"><sc-if value="{{r.isGood}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if><sc-if value="{{r.isBad}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4 2.5 20h19z"></path><path d="M12 10v4M12 17v.5"></path></svg></sc-if>{{r.status}}</span></span></div></sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-time" class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px"><h2 id="h-time" class="h2">Trigger timeline</h2><span style="font-size: 12.5px; color: #8a94a1">When each trait fires during a battle, in order</span><div style="flex: 1"></div><span style="font-size: 12.5px; color: {{timeNoteColor}}">{{timeNote}}</span></div>
+<ol style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 10px">
+<sc-for list="{{phases}}" as="p" hint-placeholder-count="7"><li style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 8px; border: 1px solid {{p.border}}; background: #12161b; min-width: 0"><div style="display: flex; align-items: baseline; gap: 6px"><span class="mono" style="font-size: 11px; color: #8a94a1">{{p.n}}</span><span style="font-size: 13px; font-weight: 600; color: #f1f3f5">{{p.label}}</span><span style="flex: 1"></span><span class="mono" style="font-size: 11.5px; color: #8a94a1">{{p.count}}</span></div><sc-for list="{{p.items}}" as="t" hint-placeholder-count="2"><div class="chipm"><span style="width: 7px; height: 7px; border-radius: 2px; flex: none; background: {{t.color}}" aria-hidden="true"></span><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.trait}}</span><span class="mono" style="font-size: 10.5px; color: #8a94a1">{{t.where}}</span></div></sc-for><sc-if value="{{p.empty}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #6b7480">Nothing fires here</span></sc-if></li></sc-for>
+</ol>
+</section>
+
+<section aria-labelledby="h-comp" class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px"><h2 id="h-comp" class="h2">Composition</h2><span style="font-size: 12.5px; color: #8a94a1">Family comes from the innate creature, class from the fused one</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 24px">
+<sc-for list="{{comp}}" as="g" hint-placeholder-count="2"><div style="display: flex; flex-direction: column; gap: 6px"><span class="fh">{{g.title}}</span><sc-for list="{{g.rows}}" as="b" hint-placeholder-count="3"><div title="{{b.title}}" style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 28px; align-items: center; gap: 10px; min-height: 26px"><span style="display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 0"><span style="width: 8px; height: 8px; border-radius: 2px; flex: none; background: {{b.dot}}" aria-hidden="true"></span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.label}}</span></span><span style="height: 10px; border-radius: 0 4px 4px 0; background: #4a76b0; width: {{b.w}}"></span><span class="mono" style="font-size: 12px; color: #c8ced6; text-align: right">{{b.n}}</span></div></sc-for><sc-if value="{{g.empty}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; color: #6b7480">No creatures yet</span></sc-if><sc-if value="{{g.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; color: {{g.noteColor}}">{{g.note}}</span></sc-if></div></sc-for>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1640}}'>
+var RAW = [
+["Death","Abomination","Abomination Brute","Flesh Rot","After an enemy is afflicted with either Weak or Vulnerable, this creature afflicts them with whichever of these debuffs…","Brute Stitches"],
+["Death","Abomination","Abomination Volatile","Quell","When this creature attacks an enemy with Vulnerable, it deals 100% more damage. If this damage exceeds 35% of the target's…","Volatile Stitches"],
+["Death","Abomination","Bile Abomination","Frailty","When this creature attacks an enemy with Vulnerable, it deals 100% more damage, recovers health equal to 100% of…","Bile Stitches"],
+["Death","Abomination","Cloth Abomination","Extra Padding","At the start of battle, this creature gains a Barrier that absorbs damage equal to 200% of its highest stat.","No Material Exists"],
+["Death","Abomination","Flesh Abomination","Wretchedness","Your creatures' attacks against enemy creatures with Vulnerable cannot be dodged and have a 50% greater chance…","Flesh Stitches"],
+["Death","Abomination","Gore Abomination","Manipulate Fear","Enemy creatures with Weak have 50% less attack and cannot deal critical damage. This trait does not stack.","Gore Stitches"],
+["Death","Abomination","Ritual Abomination","Turn to Gray","After this creature is attacked, enemies are afflicted with Vulnerable.","Ritual Stitches"],
+["Death","Abomination","Wandering Abomination","Sin and Sentence","After this creature attacks an enemy with both Weak and Vulnerable, it has a 50% chance to kill the target.","Wandering Stitches"],
+["Rodian Master","Abomination","Mastery Trait","Master of Abominations","If all the creatures in your party are Abominations, enemies always have Weak and Vulnerable, and take 50%…","Sigil of the Abomination"],
+["Sorcery","Alemental","Grenale","Slosh","After your creatures manually cast a spell, a random enemy is afflicted with a random debuff. This trait does not stack.","Bottle of Grenale"],
+["Life","Angel","Aegis Angel","Hand of Light","This creature's attacks deal 75% more damage and grant this creature Shelled.","Aegis Claymore"],
+["Life","Angel","Doomblight Angel","Scourge","This creature's attacks deal 75% more damage and afflict the target with Weak.","Doomblight Claymore"],
+["Sorcery","Animation","Silver Tether","Silver Tether","After an adjacent creature is killed, this creature gains 60% of its stats (other than health).","Silver Shackle"],
+["Life","Apis","Apis Warrior","Crunch","This creature's attacks deal 75% more damage and afflict the target with Vulnerable.","Warrior Headdress"],
+["Nature","Arachnalisk","Creeping Arachnalisk","Hopelessness","Enemies with Snared take 50% more damage. This trait does not stack.","Creeping Mandible"],
+["Nature","Arachnalisk","Goliath Arachnalisk","Entrapment","After this creature is attacked, it afflicts the enemy with Snared.","Goliath Mandible"],
+["Nature","Arachnalisk","Spitting Arachnalisk","Spit Poison","After this creature is attacked, it afflicts enemies with Poisoned. If enemies already have this debuff, its potency is…","Spitting Mandible"],
+["Chaos","Asura","Asura Gutslasher","Sidewinder","After this creature deals critical damage, it has a 75% chance to attack again.","Gutslasher Tattoo"],
+["Sorcery","Automaton","Luxury Automaton","Pandemic","At the start of this creature's turn, it afflicts enemies with a random debuff.","Luxury Gear"],
+["Sorcery","Bard","Bard Trovatore","Hymn of Panic","At the start of battle, the Timeline is shuffled randomly.","Trovatore Harp"],
+["Nature","Brownie","Brownie Enforcer","Wrecking Ball","After this creature attacks, it afflicts the target with Vulnerable and Stoned.","Enforcer Maul"],
+["Death","Calumnier","Calumnier Dandy","Stolen Valor","Your creatures cannot lose extra traits and Spell Gems in battle.","Liar's Uniform"],
+["Death","Carnage","Rotten Carnage","Consumption","After this creature kills a creature, it gains 35% of the target's attack, intelligence, defense, and speed.","Rotten Exoskeleton"],
+["Nature","Centaur","Centaur Warrior","Paradigm","After this creature is attacked, it attacks the enemy.","Warrior Tuft"],
+["Chaos","Clutcher","Flamegrip Clutcher","Vehemence","After an enemy dodges, this creature afflicts it with Burning and Scorned.","Flamegrip Finger"],
+["Chaos","Clutcher","Venomous Clutcher","Contagion","After an enemy dodges, this creature afflicts it with Poisoned and Silenced.","Venomous Finger"],
+["Chaos","Clutcher","Vital Clutcher","Seize","After an enemy dodges, this creature afflicts it with Stoned and Snared.","Vital Finger"],
+["Sorcery","Cruncher","Frostbite Cruncher","Munch","After this creature attacks, it Seals one of the target's Spell Gems and gains 20% attack.","Frostbite Carapace"],
+["Life","Crusader","Holy Crusader","Faith's Armor","After this creature attacks or is attacked, it gains Shelled.","Holy Hammer"],
+["Life","Crusader","Mist Crusader","Galvanization","After this creature attacks, it gains a Barrier that absorbs damage equal to 50% of its health.","Mist Hammer"],
+["Life","Demigod","Eternal Divinity","Consciousness","At the start of battle, this creature gains Maximum health equal to 15% of your other creatures' Maximum health.","Eternal Crown"],
+["Backer","Backer","Backer Trait","Minion Master","At the start of this creature's turn, it gains a random minion and its current minions gain 1 stack.","Minion Master Staff"],
+["Backer","Backer","Backer Trait","Arcane Echo","After your creatures manually cast a spell, they cast a random spell from the same class.","Arcane Puzzle"]
+];
+
+var DEBUFFS = ['Weak','Vulnerable','Poisoned','Burning','Snared','Stoned','Scorned','Silenced','Disarmed','Bleeding','Frozen','Confused','Feared'];
+var BUFFS = ['Shelled','Invisible','Savage','Agile','Protected'];
+var MECHS = [['Barrier','Barrier'],['minion','Minions'],['Spell Gems','Spell Gems'],['Timeline','Timeline'],['critical damage','Critical damage'],['Maximum health','Maximum health']];
+var TRIGS = [['start of battle','Start of battle'],["start of this creature's turn",'Start of own turn'],['after this creature attacks','After attacking'],['when this creature attacks','When attacking'],['after this creature is attacked','After being attacked'],['after an enemy dodges','After an enemy dodges'],['manually cast a spell','Manual spell cast'],["this creature's attacks",'On attack (passive)'],['kills a creature','On kill'],['is killed','On death'],['deals critical damage','On critical hit']];
+var PHASES = [
+  {label:'Start of battle', keys:['start of battle']},
+  {label:'Start of turn', keys:["start of this creature's turn"]},
+  {label:'Attacking', keys:["this creature's attacks",'when this creature attacks','after this creature attacks','deals critical damage']},
+  {label:'Being attacked', keys:['after this creature is attacked','after an enemy dodges']},
+  {label:'Spellcasting', keys:['manually cast a spell']},
+  {label:'Kills and deaths', keys:['kills a creature','is killed']},
+  {label:'Always on', keys:null}
+];
+var CLASS_COLOR = {Chaos:'#ef6b5b',Death:'#b49cf5',Life:'#e9c46a',Nature:'#63c98a',Sorcery:'#5fb0f5','Rodian Master':'#d98fc4',Backer:'#8fa1b3','Nether Boss':'#f08c4a'};
+var SLOTS = ['Innate','Fused','Artifact'];
+var APPLY = /\b(afflicts?|are afflicted|gains?|grants?|always have)\b/;
+
+function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+var KWLIST = [];
+DEBUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'debuff',key:k.toLowerCase(),label:k}); });
+BUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'buff',key:k.toLowerCase(),label:k}); });
+MECHS.forEach(function(k){ KWLIST.push({s:k[0],kind:'mech',key:k[0].toLowerCase(),label:k[1]}); });
+TRIGS.forEach(function(k){ KWLIST.push({s:k[0],kind:'trig',key:k[0],label:k[1]}); });
+KWLIST.push({s:'This trait does not stack',kind:'flag',key:'nostack',label:'Does not stack'});
+var KWMAP = {}, KWBYKEY = {};
+KWLIST.forEach(function(k){ KWMAP[k.s.toLowerCase()] = k; KWBYKEY[k.key] = k; });
+var KWSRC = KWLIST.slice().sort(function(a,b){ return b.s.length - a.s.length; }).map(function(k){ return '\\b' + esc(k.s) + ((k.kind==='debuff'||k.kind==='buff') ? '\\b' : ''); }).join('|');
+
+var ROWS = RAW.map(function(r,i){
+  var o = {id:i,cls:r[0],fam:r[1],cre:r[2],trait:r[3],desc:r[4],mat:r[5]};
+  o.hasMat = r[5] !== 'No Material Exists';
+  o.stacks = !/does not stack/i.test(r[4]);
+  o.mastery = r[2] === 'Mastery Trait' || r[2] === 'Backer Trait';
+  o.randomDebuff = /random debuff/i.test(r[4]);
+  o.applies = {}; o.uses = {}; o.kws = {};
+  var d = r[4], re = new RegExp(KWSRC,'gi'), m;
+  while ((m = re.exec(d))) {
+    var k = KWMAP[m[0].toLowerCase()];
+    if (k.kind==='debuff' || k.kind==='buff') {
+      var clause = d.slice(d.lastIndexOf('.', m.index-1)+1, m.index).toLowerCase();
+      if (APPLY.test(clause)) o.applies[k.key] = 1; else o.uses[k.key] = 1;
+    }
+    o.kws[k.key] = 1;
+  }
+  return o;
+});
+var FAMILIES = [];
+ROWS.forEach(function(r){ if (FAMILIES.indexOf(r.fam) < 0) FAMILIES.push(r.fam); });
+
+function idOf(name){ for (var i = 0; i < ROWS.length; i++) { if (ROWS[i].trait === name) return i; } return null; }
+function slotWhy(r,s){ if (s===2) return r.hasMat ? '' : 'No material: cannot go on an artifact'; return r.mastery ? 'Mastery and backer traits only fit the artifact slot' : ''; }
+function masteryFam(r){ var m = /all the creatures in your party are ([A-Z][a-z]+)/.exec(r.desc); if (!m) return null; var hit = null; FAMILIES.forEach(function(f){ if (m[1].indexOf(f) === 0) hit = f; }); return hit; }
+function trigKeys(r){ return TRIGS.map(function(t){ return t[0]; }).filter(function(k){ return r.kws[k]; }); }
+function where(x){ return 'M' + (x.m + 1) + ' ' + SLOTS[x.s]; }
+function lab(k){ return KWBYKEY[k].label; }
+
+function analyze(party){
+  var filled = [];
+  party.forEach(function(id, i){ if (id != null) filled.push({idx:i, m:Math.floor(i/3), s:i%3, r:ROWS[id]}); });
+  var creatures = [];
+  for (var m = 0; m < 6; m++) { var cid = party[m*3]; if (cid != null && !ROWS[cid].mastery) creatures.push({m:m, r:ROWS[cid]}); }
+  var mastery = filled.filter(function(x){ return x.r.mastery && masteryFam(x.r); }).map(function(x){
+    var fam = masteryFam(x.r), bad = creatures.filter(function(c){ return c.r.fam !== fam; });
+    return {x:x, fam:fam, ok:creatures.length - bad.length, total:creatures.length, bad:bad, met:creatures.length > 0 && !bad.length};
+  });
+  var unmet = {};
+  mastery.forEach(function(ms){ if (!ms.met) unmet[ms.x.r.id] = 1; });
+  var K = {}, order = [];
+  function ent(k){ if (!K[k]) { K[k] = {a:[], u:[]}; order.push(k); } return K[k]; }
+  filled.forEach(function(x){ var k; for (k in x.r.applies) ent(k).a.push(x); for (k in x.r.uses) ent(k).u.push(x); });
+  var rank = {missing:0, conditional:1, random:2, covered:3, nopayoff:4};
+  var randomSrc = filled.filter(function(x){ return x.r.randomDebuff && !unmet[x.r.id]; });
+  var keyRows = order.map(function(k){
+    var e = K[k], firm = e.a.filter(function(x){ return !unmet[x.r.id]; });
+    var rnd = KWBYKEY[k].kind === 'debuff' ? randomSrc : [];
+    var status = e.u.length ? (firm.length ? 'covered' : (rnd.length ? 'random' : (e.a.length ? 'conditional' : 'missing'))) : 'nopayoff';
+    return {key:k, a:e.a, u:e.u, firm:firm, rnd:rnd, status:status};
+  }).sort(function(a,b){ return rank[a.status] - rank[b.status]; });
+  var byTrait = {}, dups = [];
+  filled.forEach(function(x){ if (!x.r.stacks) (byTrait[x.r.id] = byTrait[x.r.id] || []).push(x); });
+  Object.keys(byTrait).forEach(function(k){ if (byTrait[k].length > 1) dups.push(byTrait[k]); });
+  var invalid = filled.filter(function(x){ return !!slotWhy(x.r, x.s); });
+  var phases = PHASES.map(function(p){ return {p:p, items:filled.filter(function(x){ var t = trigKeys(x.r); return p.keys === null ? !t.length : t.some(function(k){ return p.keys.indexOf(k) >= 0; }); })}; });
+  return {filled:filled, creatures:creatures, mastery:mastery, keyRows:keyRows, dups:dups, invalid:invalid, phases:phases};
+}
+
+function pickSlot(party, r, target){
+  if (target != null && party[target] == null && !slotWhy(r, target % 3)) return target;
+  var m, s;
+  for (m = 0; m < 6; m++) { if (party[m*3] == null) continue; for (s = 1; s <= 2; s++) { if (party[m*3+s] == null && !slotWhy(r, s)) return m*3+s; } }
+  if (!r.mastery) for (m = 0; m < 6; m++) { if (party[m*3] == null) return m*3; }
+  for (m = 0; m < 18; m++) { if (party[m] == null && !slotWhy(r, m % 3)) return m; }
+  return null;
+}
+
+function suggestions(an, party, mode, focus, target){
+  var inP = {};
+  party.forEach(function(id){ if (id != null) inP[id] = 1; });
+  var fams = an.mastery.map(function(ms){ return ms.fam; });
+  var want = mode === 'fix'
+    ? an.keyRows.filter(function(k){ return k.status === 'missing' || k.status === 'conditional' || k.status === 'random'; }).map(function(k){ return k.key; })
+    : an.keyRows.filter(function(k){ return k.firm.length; }).map(function(k){ return k.key; });
+  if (focus) want = want.filter(function(k){ return k === focus; });
+  return ROWS.filter(function(r){ return !inP[r.id]; }).map(function(r){
+    var hits = want.filter(function(k){ return mode === 'fix' ? r.applies[k] : r.uses[k]; });
+    if (!hits.length) return null;
+    var slot = pickSlot(party, r, target);
+    var innate = slot != null && slot % 3 === 0;
+    var breaks = innate && fams.length && fams.indexOf(r.fam) < 0;
+    var keeps = innate && fams.length && fams.indexOf(r.fam) >= 0;
+    var score = hits.length * 10 + (slot != null ? 4 : 0) - (breaks ? 3 : 0) + (keeps ? 2 : 0) - (r.stacks ? 0 : 1);
+    return {r:r, hits:hits, slot:slot, breaks:breaks, keeps:keeps, score:score};
+  }).filter(function(x){ return x; }).sort(function(a,b){ return b.score - a.score || a.r.trait.localeCompare(b.r.trait); });
+}
+
+var SEED = [idOf('Crunch'), idOf('Wretchedness'), idOf('Master of Abominations'), idOf('Sin and Sentence'), idOf('Quell'), idOf('Manipulate Fear'), idOf('Turn to Gray'), idOf('Hopelessness'), idOf('Flesh Rot'), idOf('Manipulate Fear'), null, null, null, null, null, null, null, null];
+
+class Component extends DCLogic {
+  state = { party: SEED.slice(), target: null, mode: 'fix', focus: null, copied: false };
+
+  renderVals() {
+    var self = this, st = this.state, set = function(p){ self.setState(p); };
+    var party = st.party, an = analyze(party);
+    var target = (st.target != null && party[st.target] == null) ? st.target : null;
+    function setSlot(idx, id){ var p = self.state.party.slice(); p[idx] = id; set({party:p, target:null}); }
+
+    var flagged = {};
+    an.keyRows.forEach(function(k){ if (k.status === 'missing' || k.status === 'conditional' || k.status === 'random') k.u.forEach(function(x){ flagged[x.idx] = 1; }); });
+    an.dups.forEach(function(g){ g.forEach(function(x){ flagged[x.idx] = 1; }); });
+    an.mastery.forEach(function(ms){ if (!ms.met) { flagged[ms.x.idx] = 1; ms.bad.forEach(function(c){ flagged[c.m*3] = 1; }); } });
+    an.invalid.forEach(function(x){ flagged[x.idx] = 1; });
+
+    var members = [];
+    for (var mi = 0; mi < 6; mi++) {
+      var slots = [];
+      for (var si = 0; si < 3; si++) {
+        (function(idx, s, m){
+          var id = party[idx], r = id != null ? ROWS[id] : null, on = idx === target;
+          slots.push({label:SLOTS[s], name: r ? r.trait : (on ? 'Empty — target' : 'Empty'), filled:!!r,
+            cls:'slot' + (on ? ' active' : '') + (r ? '' : ' empty') + (flagged[idx] ? ' flag' : ''), color: r ? (CLASS_COLOR[r.cls] || '#8fa1b3') : '#3a434e',
+            aria:(r ? r.trait + ' in ' : 'Empty ') + 'M' + (m+1) + ' ' + SLOTS[s] + (r ? '' : ', make it the target'), clearLabel:'Clear M' + (m+1) + ' ' + SLOTS[s],
+            pick:function(){ if (!r) set({target: self.state.target === idx ? null : idx}); },
+            clear:function(){ setSlot(idx, null); }});
+        })(mi*3 + si, si, mi);
+      }
+      var inn = party[mi*3];
+      members.push({label:'M' + (mi+1), name: inn != null ? ROWS[inn].cre : 'No creature yet', fam: inn != null ? ROWS[inn].fam : '', slots:slots});
+    }
+
+    var deps = an.keyRows.filter(function(k){ return k.status !== 'nopayoff'; });
+    var covered = deps.filter(function(k){ return k.status === 'covered'; });
+    var missing = deps.filter(function(k){ return k.status === 'missing'; });
+    var cond = deps.filter(function(k){ return k.status === 'conditional' || k.status === 'random'; });
+    var unmetM = an.mastery.filter(function(ms){ return !ms.met; });
+    var conflicts = an.dups.length + an.invalid.length;
+    var open = 18 - an.filled.length;
+    function tile(label, value, kind, status, sub){ return {label:label, value:value, stCls:'st st-' + kind, isGood:kind === 'good', isBad:kind === 'warn' || kind === 'crit', status:status, sub:sub}; }
+    var tiles = [
+      tile('Dependencies', deps.length ? covered.length + ' of ' + deps.length : '—', missing.length ? 'crit' : (cond.length ? 'warn' : (deps.length ? 'good' : 'none')), missing.length ? 'Missing sources' : (cond.length ? 'Conditional sources' : (deps.length ? 'All covered' : 'Nothing relied on yet')),
+        missing.concat(cond).map(function(k){ return lab(k.key) + (k.status === 'missing' ? ' missing' : (k.status === 'random' ? ' random only' : ' conditional')); }).join(' · ') || 'Every buff and debuff you rely on is applied'),
+      tile('Mastery', an.mastery.length ? (unmetM.length ? 'Inactive' : 'Active') : '—', an.mastery.length ? (unmetM.length ? 'warn' : 'good') : 'none', an.mastery.length ? (unmetM.length ? 'Condition not met' : 'Condition met') : 'No mastery trait',
+        an.mastery.map(function(ms){ return ms.fam + 's: ' + ms.ok + ' of ' + ms.total + ' creatures'; }).join(' · ') || 'Add one via an artifact slot'),
+      tile('Conflicts', String(conflicts), conflicts ? 'warn' : 'good', conflicts ? 'Needs attention' : 'None',
+        an.dups.map(function(g){ return g[0].r.trait + ' ×' + g.length + ' (does not stack)'; }).concat(an.invalid.map(function(x){ return x.r.trait + ' in ' + where(x); })).join(' · ') || 'No duplicate or misplaced traits'),
+      tile('Open slots', open + ' of 18', 'none', an.creatures.length + ' creatures', (6 - an.creatures.length) + ' creature slots and ' + (open - (6 - an.creatures.length)) + ' trait slots free')
+    ];
+
+    var issues = [];
+    missing.forEach(function(k){ issues.push({sev:'crit', title:'Nothing applies ' + lab(k.key), detail:k.u.map(function(x){ return x.r.trait + ' (' + where(x) + ')'; }).join(', ') + (k.u.length > 1 ? ' rely' : ' relies') + ' on it.', actionLabel:'Show fixes', action:function(){ set({mode:'fix', focus:k.key}); }}); });
+    cond.forEach(function(k){ var rly = k.u.length + ' trait' + (k.u.length > 1 ? 's rely' : ' relies') + ' on it.'; issues.push({sev:'warn', title: k.status === 'random' ? lab(k.key) + ' only comes from random debuffs' : lab(k.key) + ' only comes from an inactive mastery', detail: k.status === 'random' ? k.rnd.map(function(x){ return x.r.trait; }).join(', ') + ' afflicts a random debuff, so ' + lab(k.key) + ' is unreliable. ' + rly : k.a.map(function(x){ return x.r.trait; }).join(', ') + ' supplies it, but its condition is not met. ' + rly, actionLabel:'Show fixes', action:function(){ set({mode:'fix', focus:k.key}); }}); });
+    unmetM.forEach(function(ms){ issues.push({sev:'warn', title:ms.x.r.trait + ' is inactive', detail: ms.total ? ms.ok + ' of ' + ms.total + ' creatures are ' + ms.fam + 's. ' + ms.bad.map(function(c){ return 'M' + (c.m+1) + ' ' + c.r.cre; }).join(', ') + ' break' + (ms.bad.length > 1 ? '' : 's') + ' the condition: replace it, or keep its trait as a fused trait on an ' + ms.fam + '.' : 'There are no creatures yet.', actionLabel:'', action:null}); });
+    an.dups.forEach(function(g){ var extra = g[g.length - 1]; issues.push({sev:'warn', title:g[0].r.trait + ' appears ' + g.length + ' times', detail:'It does not stack, so only one copy counts (' + g.map(where).join(', ') + ').', actionLabel:'Clear ' + where(extra), action:function(){ setSlot(extra.idx, null); }}); });
+    an.invalid.forEach(function(x){ issues.push({sev:'crit', title:x.r.trait + ' cannot sit in ' + where(x), detail:slotWhy(x.r, x.s) + '.', actionLabel:'Clear slot', action:function(){ setSlot(x.idx, null); }}); });
+    var issuesV = issues.map(function(i){ return {cls:'issue ' + i.sev, stCls:'st st-' + i.sev, title:i.title, detail:i.detail, hasAction:!!i.action, actionLabel:i.actionLabel, action:i.action}; });
+
+    var sg = suggestions(an, party, st.mode, st.focus, target).slice(0, 6);
+    var suggV = sg.map(function(c){
+      var tags = c.hits.map(function(k){ return {t:(st.mode === 'fix' ? 'applies ' : 'uses ') + lab(k), cls:'tag good'}; });
+      if (c.keeps) tags.push({t:'keeps ' + c.r.fam + ' mastery', cls:'tag good'});
+      if (c.breaks) tags.push({t:'breaks ' + an.mastery[0].fam + ' mastery', cls:'tag warn'});
+      if (!c.r.stacks) tags.push({t:'does not stack', cls:'tag'});
+      var t = trigKeys(c.r); tags.push({t:t.length ? KWBYKEY[t[0]].label : 'Always on', cls:'tag info'});
+      var lbl = c.slot != null ? 'Add to M' + (Math.floor(c.slot/3) + 1) + ' ' + SLOTS[c.slot % 3] : 'No compatible slot';
+      return {trait:c.r.trait, cre:c.r.mastery ? c.r.fam + ' mastery' : c.r.cre + ' · ' + c.r.fam, color:CLASS_COLOR[c.r.cls] || '#8fa1b3', tags:tags,
+        cant:c.slot == null, btnLabel:lbl, btnCls:'btn pri', btnTitle: c.slot != null && c.slot % 3 === 0 ? 'Adds a new creature' : 'Adds a trait without changing your creatures',
+        add:function(){ if (c.slot != null) setSlot(c.slot, c.r.id); }};
+    });
+
+    var cols = [];
+    for (var cm = 0; cm < 6; cm++) { var ci = party[cm*3]; cols.push({label:'M' + (cm+1), name: ci != null ? ROWS[ci].cre : 'empty', color: ci != null ? '#c8ced6' : '#5d6773'}); }
+    var statusTxt = {covered:'Covered', conditional:'Conditional', random:'Random debuffs only', missing:'No source', nopayoff:'No payoff in party'};
+    var statusKind = {covered:'good', conditional:'warn', random:'warn', missing:'crit', nopayoff:'none'};
+    var matrix = an.keyRows.map(function(k){
+      var cells = [];
+      for (var m = 0; m < 6; m++) {
+        var A = k.a.filter(function(x){ return x.m === m; }), U = k.u.filter(function(x){ return x.m === m; });
+        cells.push({a:A.length > 0, u:U.length > 0, aText:'applies' + (A.length > 1 ? ' ×' + A.length : ''), uText:'uses' + (U.length > 1 ? ' ×' + U.length : ''),
+          title: A.map(function(x){ return x.r.trait + ' applies'; }).concat(U.map(function(x){ return x.r.trait + ' relies on it'; })).join(' · ')});
+      }
+      var kind = statusKind[k.status];
+      return {label:lab(k.key), kColor: KWBYKEY[k.key].kind === 'buff' ? '#74dbb0' : '#ff9b87', cells:cells, status:statusTxt[k.status], stCls:'st st-' + kind, isGood:kind === 'good', isBad:kind === 'warn' || kind === 'crit'};
+    });
+
+    var phases = an.phases.map(function(ph, i){
+      return {n:i < 6 ? String(i + 1) : '∞', label:ph.p.label, count:ph.items.length, empty:!ph.items.length, border: ph.items.length ? '#232a33' : '#1a1f26',
+        items:ph.items.map(function(x){ return {trait:x.r.trait, where:'M' + (x.m+1), color:CLASS_COLOR[x.r.cls] || '#8fa1b3'}; })};
+    });
+    var busiest = an.phases.slice(0, 6).slice().sort(function(a,b){ return b.items.length - a.items.length; })[0];
+    var emptyPh = an.phases.slice(0, 6).filter(function(p){ return !p.items.length; }).map(function(p){ return p.p.label.toLowerCase(); });
+    var timeNote = an.filled.length ? ('Heaviest: ' + busiest.p.label.toLowerCase() + ' (' + busiest.items.length + ')' + (emptyPh.length ? ' · nothing at ' + emptyPh.slice(0, 2).join(' or ') : '')) : 'Add traits to see the timeline';
+
+    function bars(map, dotFn){
+      var keys = Object.keys(map).sort(function(a,b){ return map[b] - map[a]; }), max = keys.length ? map[keys[0]] : 1;
+      return keys.map(function(k){ return {label:k, n:map[k], w:Math.max(4, Math.round(map[k] / max * 100)) + '%', dot:dotFn(k), title:k + ': ' + map[k] + ' creature' + (map[k] > 1 ? 's' : '')}; });
+    }
+    var cls = {}, fam = {};
+    an.creatures.forEach(function(c){ var fz = party[c.m*3+1], mc = (fz != null && !ROWS[fz].mastery) ? ROWS[fz].cls : c.r.cls; cls[mc] = (cls[mc] || 0) + 1; fam[c.r.fam] = (fam[c.r.fam] || 0) + 1; });
+    var mNote = an.mastery.map(function(ms){ return ms.met ? ms.fam + ' mastery active' : ms.fam + ' mastery needs ' + (ms.total - ms.ok) + ' more swap' + (ms.total - ms.ok > 1 ? 's' : ''); }).join(' · ');
+    var comp = [
+      {title:'Classes', rows:bars(cls, function(k){ return CLASS_COLOR[k] || '#8fa1b3'; }), empty:!an.creatures.length, hasNote:false, note:'', noteColor:''},
+      {title:'Families', rows:bars(fam, function(){ return '#8a94a1'; }), empty:!an.creatures.length, hasNote:!!mNote, note:mNote, noteColor: unmetM.length ? '#f3c969' : '#74dbb0'}
+    ];
+
+    var focusLabel = st.focus ? lab(st.focus) : '';
+    var share = '#p=' + party.map(function(x){ return x == null ? '-' : x; }).join('.');
+    return {
+      filledN:an.filled.length, tiles:tiles, members:members,
+      issues:issuesV, issueN:issuesV.length, noIssues:!issuesV.length,
+      isFix:st.mode === 'fix', isPay:st.mode === 'pay', fixCls:'seg' + (st.mode === 'fix' ? ' on' : ''), payCls:'seg' + (st.mode === 'pay' ? ' on' : ''),
+      toFix:function(){ set({mode:'fix'}); }, toPay:function(){ set({mode:'pay', focus:null}); },
+      hasFocus:!!st.focus, focusLabel:focusLabel, clearFocus:function(){ set({focus:null}); },
+      targetLabel: target != null ? 'M' + (Math.floor(target/3) + 1) + ' ' + SLOTS[target % 3] : 'best free slot (auto)',
+      suggHint: st.mode === 'fix' ? 'Traits that apply what your party relies on but lacks. Fused and artifact slots are preferred, so your creatures — and their mastery — stay the same.' : 'Traits that cash in on what your party already applies reliably.',
+      sugg:suggV, noSugg:!suggV.length, noSuggText: st.mode === 'fix' ? 'No gaps to fix.' : 'Nothing else in the compendium uses what you apply.',
+      matrixHead:cols, matrix:matrix,
+      phases:phases, timeNote:timeNote, timeNoteColor:'#a0a8b3',
+      comp:comp,
+      reset:function(){ set({party:SEED.slice(), target:null, focus:null, mode:'fix'}); },
+      shareLabel: st.copied ? 'Link copied' : 'Copy link',
+      copyShare:function(){ try { navigator.clipboard.writeText(share); } catch (e) {} set({copied:true}); }
+    };
+  }
+}
+</script>
+</body>
+</html>

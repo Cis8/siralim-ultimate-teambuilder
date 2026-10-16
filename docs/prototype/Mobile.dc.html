@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trait Atlas — Mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1014}
+a{color:#8ab4ff}a:hover{color:#b8d0ff}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.kw{font:inherit;border:0;margin:0;padding:0 3px;border-radius:3px;background:transparent;line-height:inherit}
+.kw-debuff{color:#ff9b87;background:rgba(255,120,100,.10)}
+.kw-buff{color:#74dbb0;background:rgba(90,210,160,.10)}
+.kw-mech{color:#a9c1ff;background:rgba(130,160,255,.10)}
+.kw-trig{color:#f3c969;text-decoration:underline dotted;text-underline-offset:3px;padding:0}
+.kw-flag{color:#a0a8b3;font-style:italic;padding:0}
+.r-a{box-shadow:inset 0 -2px 0 currentColor}
+.r-u{outline:1px dashed currentColor;outline-offset:-1px}
+.hit{background:rgba(250,204,21,.28);color:#fde68a;border-radius:2px}
+.kw.hit{background:rgba(250,204,21,.28)}
+.chip{display:inline-flex;flex:none;align-items:center;height:34px;border-radius:7px;background:#1c222a;border:1px solid #2e3741;font-size:13px;white-space:nowrap}
+.chip.neg{background:#2a1816;border-color:#6e3a33}
+.chipbody{display:inline-flex;align-items:center;gap:4px;height:100%;padding:0 6px 0 10px;border:0;background:transparent}
+.field{color:#8a94a1}
+.negtag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#ff9b87}
+.x{display:inline-flex;align-items:center;justify-content:center;width:30px;height:100%;border:0;border-left:1px solid #2e3741;background:transparent;color:#a0a8b3;border-radius:0 7px 7px 0}
+.op{flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:#f3c969;align-self:center}
+.pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid #2e3741;background:#151a20;font-size:14px}
+.pill.on{background:#1d2b3e;border-color:#4a76b0;color:#e6efff}
+.mini{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:96px;height:40px;padding:0 10px;border-radius:7px;border:1px solid #2e3741;background:transparent;font-size:13px;color:#b4bcc6}
+.mini.on{background:#1d2b3e;border-color:#4a76b0;color:#e6efff}
+.seg{flex:1;height:36px;border:0;background:transparent;font-size:13px;color:#a0a8b3;border-radius:6px}
+.seg.on{background:#2a3442;color:#fff}
+.addb{flex:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;border:1px solid #3a5a86;background:#1b2b40;color:#dbe8ff}
+.addb:disabled{border-color:#2e3741;background:transparent;color:#5d6773}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;font-size:11.5px;color:#8a94a1}
+.tab.on{color:#dbe8ff}
+.slot{display:flex;align-items:stretch;border:1px solid #232a33;border-radius:8px;background:#151a20}
+.slot.active{border-color:#8ab4ff;box-shadow:0 0 0 1px #8ab4ff}
+.slot.empty .slotname{color:#7d8794}
+.slotbtn{flex:1;display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 10px;border:0;background:transparent;text-align:left;min-width:0}
+.cov{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:6px;font-size:12.5px;border:1px solid #2e3741;background:transparent}
+.cov.ok{color:#74dbb0;border-color:#24533f;background:#11231b}
+.cov.bad{color:#ffb4a6;border-color:#6e3a33;background:#2a1816}
+.fh{margin:0;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a94a1}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0e1014; color: #e4e7eb; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<div style="padding: 12px 16px 8px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #1f252d">
+<div style="display: flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="1.6" aria-hidden="true"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"></path><path d="M12 7.5v9M7.8 9.8l8.4 4.4M16.2 9.8l-8.4 4.4"></path></svg>
+<span style="font-weight: 600; font-size: 15px">Trait Atlas</span>
+<div style="flex: 1"></div>
+<span class="mono" style="font-size: 11px; color: #8a94a1">v2.0 · {{total}} traits</span>
+</div>
+
+<sc-if value="{{isExplore}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<label for="mq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search traits</label>
+<div style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px; border-radius: 9px; border: 1px solid #36557f; background: #12161b">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a94a1" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="mq" class="mono" value="{{q}}" onChange="{{setQ}}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="weak OR snared -stack:no" style="flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 14px; color: #f1f3f5">
+</div>
+<div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin: 0 -16px; padding-left: 16px; padding-right: 16px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3"><sc-if value="{{c.isOp}}" hint-placeholder-val="{{ false }}"><span class="op">{{c.text}}</span></sc-if><sc-if value="{{c.isTerm}}" hint-placeholder-val="{{ true }}"><span class="{{c.cls}}"><button class="chipbody" onClick="{{c.flip}}" title="{{c.flipLabel}}"><sc-if value="{{c.neg}}" hint-placeholder-val="{{ false }}"><span class="negtag">NOT</span></sc-if><sc-if value="{{c.hasField}}" hint-placeholder-val="{{ false }}"><span class="field">{{c.field}}:</span></sc-if><span>{{c.val}}</span></button><button class="x" aria-label="{{c.rmLabel}}" onClick="{{c.rm}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></span></sc-if></sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-size: 13px; color: #a0a8b3"><strong style="color: #f1f3f5; font-weight: 600">{{count}}</strong> traits · target <strong style="color: #dbe8ff; font-weight: 500">{{targetLabel}}</strong></span>
+<div style="flex: 1"></div>
+<button onClick="{{openSheet}}" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #2e3741; background: #1a1f26; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>Filters<sc-if value="{{hasFilterCount}}" hint-placeholder-val="{{ false }}"><span class="mono" style="font-size: 11px; background: #8ab4ff; color: #0e1014; border-radius: 9px; padding: 1px 7px">{{filterCount}}</span></sc-if></button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isParty}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 8px; min-height: 44px">
+<h1 style="margin: 0; font-size: 18px; font-weight: 600">Party</h1>
+<span class="mono" style="font-size: 12px; color: #8a94a1">{{filled}}/18</span>
+<div style="flex: 1"></div>
+<button onClick="{{copyShare}}" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #2e3741; background: #1a1f26; font-size: 14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>{{shareLabel}}</button>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{isExplore}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+<article style="padding: 14px 16px; border-bottom: 1px solid #1a1f26; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: flex-start; gap: 10px">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{r.color}}; flex: none" aria-hidden="true"></span><h2 style="margin: 0; font-size: 15.5px; font-weight: 600; color: #f1f3f5">{{r.trait}}</h2></div>
+<span style="font-size: 12.5px; color: #a0a8b3">{{r.cre}} · {{r.fam}} · {{r.cls}}</span>
+</div>
+<button class="addb" onClick="{{r.add}}" disabled="{{r.cantAdd}}" aria-label="{{r.addTitle}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #cfd4da"><sc-for list="{{r.segs}}" as="s" hint-placeholder-count="1"><sc-if value="{{s.isKw}}" hint-placeholder-val="{{ false }}"><button class="{{s.cls}}" title="{{s.title}}" onClick="{{s.go}}">{{s.text}}</button></sc-if><sc-if value="{{s.plain}}" hint-placeholder-val="{{ true }}"><span class="{{s.cls}}">{{s.text}}</span></sc-if></sc-for></p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12px; color: {{r.matColor}}">
+<span style="display: inline-flex; align-items: center; gap: 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"></path><path d="M4 7.5 12 12l8-4.5M12 12v9"></path></svg>{{r.mat}}</span>
+<sc-if value="{{r.inParty}}" hint-placeholder-val="{{ false }}"><span style="color: #74dbb0">In party: {{r.where}}</span></sc-if>
+</div>
+</article>
+</sc-for>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 24px; text-align: center; color: #a0a8b3; font-size: 14px">No trait matches. Open Filters and switch keywords to “Match any”, or remove a chip.</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isParty}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 18px">
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; border: 1px solid #232a33; background: #12161b">
+<h2 class="fh">Coverage</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span style="font-size: 12px; color: #a0a8b3; width: 64px">Applies</span><sc-for list="{{appliedC}}" as="a" hint-placeholder-count="2"><span class="cov">{{a.name}}</span></sc-for></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span style="font-size: 12px; color: #a0a8b3; width: 64px">Relies on</span><sc-for list="{{usedC}}" as="u" hint-placeholder-count="2"><button class="{{u.cls}}" onClick="{{u.find}}" aria-label="{{u.note}}" style="height: 34px"><sc-if value="{{u.bad}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4 2.5 20h19z"></path><path d="M12 10v4M12 17v.5"></path></svg></sc-if>{{u.name}}</button></sc-for></div>
+<sc-if value="{{hasMissing}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; color: #ffb4a6">{{missingText}}</span></sc-if>
+</section>
+<sc-for list="{{members}}" as="m" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 11px; color: #8a94a1">{{m.label}}</span><span style="font-size: 14px; font-weight: 500">{{m.name}}</span></div>
+<sc-for list="{{m.slots}}" as="s" hint-placeholder-count="3"><div class="{{s.cls}}"><button class="slotbtn" onClick="{{s.pick}}" aria-label="{{s.aria}}"><span class="mono" style="width: 62px; flex: none; font-size: 10.5px; color: #8a94a1; text-transform: uppercase; letter-spacing: .04em">{{s.label}}</span><span style="width: 8px; height: 8px; border-radius: 2px; flex: none; background: {{s.color}}" aria-hidden="true"></span><span class="slotname" style="font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.name}}</span></button><sc-if value="{{s.filled}}" hint-placeholder-val="{{ false }}"><button class="x" aria-label="{{s.clearLabel}}" onClick="{{s.clear}}" style="width: 44px; border-color: #232a33"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></sc-if></div></sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<nav aria-label="Sections" style="flex: none; display: flex; height: 64px; border-top: 1px solid #1f252d; background: #0b0d10">
+<button class="{{tabExplore}}" onClick="{{goExplore}}" aria-current="{{isExplore}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Explore</button>
+<button class="{{tabParty}}" onClick="{{goParty}}" aria-current="{{isParty}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.5"></rect><rect x="14" y="4" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Party {{filled}}/18</button>
+</nav>
+
+<sc-if value="{{sheet}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; background: rgba(4, 6, 9, 0.62); display: flex; flex-direction: column; justify-content: flex-end">
+<button aria-label="Close filters" onClick="{{closeSheet}}" style="flex: 1; border: 0; background: transparent"></button>
+<div role="dialog" aria-label="Filters" style="height: 680px; display: flex; flex-direction: column; background: #12161b; border-top: 1px solid #2e3741; border-radius: 16px 16px 0 0">
+<div style="display: flex; justify-content: center; padding-top: 8px"><span style="width: 36px; height: 4px; border-radius: 2px; background: #3a434e" aria-hidden="true"></span></div>
+<div style="display: flex; align-items: center; padding: 6px 16px 10px; gap: 8px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Filters</h2>
+<div style="flex: 1"></div>
+<button onClick="{{resetFilters}}" style="height: 44px; padding: 0 12px; border: 0; background: transparent; color: #8ab4ff; font-size: 14px">Reset</button>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 20px">
+<section style="display: flex; flex-direction: column; gap: 8px">
+<h3 class="fh">Class · any of</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{classF}}" as="c" hint-placeholder-count="5"><button class="{{c.pill}}" aria-pressed="{{c.on}}" onClick="{{c.toggle}}"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{c.color}}" aria-hidden="true"></span>{{c.name}}<span class="mono" style="font-size: 11.5px; color: #8a94a1">{{c.n}}</span></button></sc-for></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h3 class="fh">Keywords</h3>
+<div role="group" aria-label="Keyword match mode" style="display: flex; gap: 2px; padding: 3px; border-radius: 8px; background: #0e1014; border: 1px solid #232a33">
+<button class="{{allCls}}" aria-pressed="{{isAll}}" onClick="{{setAll}}">Match all</button>
+<button class="{{anyCls}}" aria-pressed="{{isAny}}" onClick="{{setAny}}">Match any</button>
+</div>
+<span style="font-size: 12px; color: #ff9b87; font-weight: 600">Debuffs</span>
+<sc-for list="{{debF}}" as="k" hint-placeholder-count="5"><div style="display: flex; align-items: center; gap: 8px"><span style="flex: 1; font-size: 14px">{{k.name}}</span><button class="{{k.aCls}}" aria-pressed="{{k.aOn}}" onClick="{{k.aT}}">applies <span class="mono" style="font-size: 11.5px; color: #8a94a1">{{k.aN}}</span></button><button class="{{k.uCls}}" aria-pressed="{{k.uOn}}" onClick="{{k.uT}}">uses <span class="mono" style="font-size: 11.5px; color: #8a94a1">{{k.uN}}</span></button></div></sc-for>
+<span style="font-size: 12px; color: #74dbb0; font-weight: 600">Buffs</span>
+<sc-for list="{{bufF}}" as="k" hint-placeholder-count="1"><div style="display: flex; align-items: center; gap: 8px"><span style="flex: 1; font-size: 14px">{{k.name}}</span><button class="{{k.aCls}}" aria-pressed="{{k.aOn}}" onClick="{{k.aT}}">applies <span class="mono" style="font-size: 11.5px; color: #8a94a1">{{k.aN}}</span></button><button class="{{k.uCls}}" aria-pressed="{{k.uOn}}" onClick="{{k.uT}}">uses <span class="mono" style="font-size: 11.5px; color: #8a94a1">{{k.uN}}</span></button></div></sc-for>
+<span style="font-size: 12px; color: #f3c969; font-weight: 600">Triggers</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{trigF}}" as="c" hint-placeholder-count="4"><button class="{{c.pill}}" aria-pressed="{{c.on}}" onClick="{{c.toggle}}">{{c.name}}<span class="mono" style="font-size: 11.5px; color: #8a94a1">{{c.n}}</span></button></sc-for></div>
+<span style="font-size: 12px; color: #a9c1ff; font-weight: 600">Mechanics</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><sc-for list="{{mechF}}" as="c" hint-placeholder-count="3"><button class="{{c.pill}}" aria-pressed="{{c.on}}" onClick="{{c.toggle}}">{{c.name}}<span class="mono" style="font-size: 11.5px; color: #8a94a1">{{c.n}}</span></button></sc-for></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 4px">
+<h3 class="fh">Flags</h3>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px"><input type="checkbox" checked="{{mat}}" onChange="{{toggleMat}}" style="width: 20px; height: 20px; accent-color: #8ab4ff"> Artifact-eligible (has material)</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px"><input type="checkbox" checked="{{nostack}}" onChange="{{toggleNoStack}}" style="width: 20px; height: 20px; accent-color: #8ab4ff"> Only “does not stack”</label>
+</section>
+</div>
+<div style="padding: 10px 16px 16px; border-top: 1px solid #232a33">
+<button onClick="{{closeSheet}}" style="width: 100%; height: 50px; border-radius: 10px; border: 0; background: #8ab4ff; color: #0b1220; font-size: 15px; font-weight: 600">Show {{count}} traits</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startView":{"editor":"enum","options":["explore","filters","party"],"default":"explore"},"$preview":{"width":390,"height":844}}'>
+var RAW = [
+["Death","Abomination","Abomination Brute","Flesh Rot","After an enemy is afflicted with either Weak or Vulnerable, this creature afflicts them with whichever of these debuffs…","Brute Stitches"],
+["Death","Abomination","Abomination Volatile","Quell","When this creature attacks an enemy with Vulnerable, it deals 100% more damage. If this damage exceeds 35% of the target's…","Volatile Stitches"],
+["Death","Abomination","Bile Abomination","Frailty","When this creature attacks an enemy with Vulnerable, it deals 100% more damage, recovers health equal to 100% of…","Bile Stitches"],
+["Death","Abomination","Cloth Abomination","Extra Padding","At the start of battle, this creature gains a Barrier that absorbs damage equal to 200% of its highest stat.","No Material Exists"],
+["Death","Abomination","Flesh Abomination","Wretchedness","Your creatures' attacks against enemy creatures with Vulnerable cannot be dodged and have a 50% greater chance…","Flesh Stitches"],
+["Death","Abomination","Gore Abomination","Manipulate Fear","Enemy creatures with Weak have 50% less attack and cannot deal critical damage. This trait does not stack.","Gore Stitches"],
+["Death","Abomination","Ritual Abomination","Turn to Gray","After this creature is attacked, enemies are afflicted with Vulnerable.","Ritual Stitches"],
+["Death","Abomination","Wandering Abomination","Sin and Sentence","After this creature attacks an enemy with both Weak and Vulnerable, it has a 50% chance to kill the target.","Wandering Stitches"],
+["Rodian Master","Abomination","Mastery Trait","Master of Abominations","If all the creatures in your party are Abominations, enemies always have Weak and Vulnerable, and take 50%…","Sigil of the Abomination"],
+["Sorcery","Alemental","Grenale","Slosh","After your creatures manually cast a spell, a random enemy is afflicted with a random debuff. This trait does not stack.","Bottle of Grenale"],
+["Life","Angel","Aegis Angel","Hand of Light","This creature's attacks deal 75% more damage and grant this creature Shelled.","Aegis Claymore"],
+["Life","Angel","Doomblight Angel","Scourge","This creature's attacks deal 75% more damage and afflict the target with Weak.","Doomblight Claymore"],
+["Sorcery","Animation","Silver Tether","Silver Tether","After an adjacent creature is killed, this creature gains 60% of its stats (other than health).","Silver Shackle"],
+["Life","Apis","Apis Warrior","Crunch","This creature's attacks deal 75% more damage and afflict the target with Vulnerable.","Warrior Headdress"],
+["Nature","Arachnalisk","Creeping Arachnalisk","Hopelessness","Enemies with Snared take 50% more damage. This trait does not stack.","Creeping Mandible"],
+["Nature","Arachnalisk","Goliath Arachnalisk","Entrapment","After this creature is attacked, it afflicts the enemy with Snared.","Goliath Mandible"],
+["Nature","Arachnalisk","Spitting Arachnalisk","Spit Poison","After this creature is attacked, it afflicts enemies with Poisoned. If enemies already have this debuff, its potency is…","Spitting Mandible"],
+["Chaos","Asura","Asura Gutslasher","Sidewinder","After this creature deals critical damage, it has a 75% chance to attack again.","Gutslasher Tattoo"],
+["Sorcery","Automaton","Luxury Automaton","Pandemic","At the start of this creature's turn, it afflicts enemies with a random debuff.","Luxury Gear"],
+["Sorcery","Bard","Bard Trovatore","Hymn of Panic","At the start of battle, the Timeline is shuffled randomly.","Trovatore Harp"],
+["Nature","Brownie","Brownie Enforcer","Wrecking Ball","After this creature attacks, it afflicts the target with Vulnerable and Stoned.","Enforcer Maul"],
+["Death","Calumnier","Calumnier Dandy","Stolen Valor","Your creatures cannot lose extra traits and Spell Gems in battle.","Liar's Uniform"],
+["Death","Carnage","Rotten Carnage","Consumption","After this creature kills a creature, it gains 35% of the target's attack, intelligence, defense, and speed.","Rotten Exoskeleton"],
+["Nature","Centaur","Centaur Warrior","Paradigm","After this creature is attacked, it attacks the enemy.","Warrior Tuft"],
+["Chaos","Clutcher","Flamegrip Clutcher","Vehemence","After an enemy dodges, this creature afflicts it with Burning and Scorned.","Flamegrip Finger"],
+["Chaos","Clutcher","Venomous Clutcher","Contagion","After an enemy dodges, this creature afflicts it with Poisoned and Silenced.","Venomous Finger"],
+["Chaos","Clutcher","Vital Clutcher","Seize","After an enemy dodges, this creature afflicts it with Stoned and Snared.","Vital Finger"],
+["Sorcery","Cruncher","Frostbite Cruncher","Munch","After this creature attacks, it Seals one of the target's Spell Gems and gains 20% attack.","Frostbite Carapace"],
+["Life","Crusader","Holy Crusader","Faith's Armor","After this creature attacks or is attacked, it gains Shelled.","Holy Hammer"],
+["Life","Crusader","Mist Crusader","Galvanization","After this creature attacks, it gains a Barrier that absorbs damage equal to 50% of its health.","Mist Hammer"],
+["Life","Demigod","Eternal Divinity","Consciousness","At the start of battle, this creature gains Maximum health equal to 15% of your other creatures' Maximum health.","Eternal Crown"],
+["Backer","Backer","Backer Trait","Minion Master","At the start of this creature's turn, it gains a random minion and its current minions gain 1 stack.","Minion Master Staff"],
+["Backer","Backer","Backer Trait","Arcane Echo","After your creatures manually cast a spell, they cast a random spell from the same class.","Arcane Puzzle"]
+];
+
+var DEBUFFS = ['Weak','Vulnerable','Poisoned','Burning','Snared','Stoned','Scorned','Silenced','Disarmed','Bleeding','Frozen','Confused','Feared'];
+var BUFFS = ['Shelled','Invisible','Savage','Agile','Protected'];
+var MECHS = [['Barrier','Barrier'],['minion','Minions'],['Spell Gems','Spell Gems'],['Timeline','Timeline'],['critical damage','Critical damage'],['Maximum health','Maximum health']];
+var TRIGS = [['start of battle','Start of battle'],["start of this creature's turn",'Start of own turn'],['after this creature attacks','After attacking'],['after this creature is attacked','After being attacked'],['after an enemy dodges','After an enemy dodges'],['manually cast a spell','Manual spell cast'],["this creature's attacks",'On attack (passive)'],['kills a creature','On kill'],['is killed','On death'],['deals critical damage','On critical hit']];
+var CLASS_COLOR = {Chaos:'#ef6b5b',Death:'#b49cf5',Life:'#e9c46a',Nature:'#63c98a',Sorcery:'#5fb0f5','Rodian Master':'#d98fc4',Backer:'#8fa1b3','Nether Boss':'#f08c4a'};
+var SLOTS = ['Innate','Fused','Artifact'];
+var APPLY = /\b(afflicts?|are afflicted|gains?|grants?|always have)\b/;
+var FIELDS = {'class':'cls',c:'cls',family:'fam',fam:'fam',f:'fam',creature:'cre',cr:'cre',trait:'trait',t:'trait',desc:'desc',d:'desc',applies:'A',a:'A',uses:'U',u:'U',kw:'K',k:'K',mat:'M',stack:'S'};
+
+function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+var KWLIST = [];
+DEBUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'debuff',key:k.toLowerCase(),label:k}); });
+BUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'buff',key:k.toLowerCase(),label:k}); });
+MECHS.forEach(function(k){ KWLIST.push({s:k[0],kind:'mech',key:k[0].toLowerCase(),label:k[1]}); });
+TRIGS.forEach(function(k){ KWLIST.push({s:k[0],kind:'trig',key:k[0],label:k[1]}); });
+KWLIST.push({s:'This trait does not stack',kind:'flag',key:'nostack',label:'Does not stack'});
+var KWMAP = {}, KWBYKEY = {};
+KWLIST.forEach(function(k){ KWMAP[k.s.toLowerCase()] = k; KWBYKEY[k.key] = k; });
+var KWSRC = KWLIST.slice().sort(function(a,b){ return b.s.length - a.s.length; }).map(function(k){ return '\\b' + esc(k.s) + ((k.kind==='debuff'||k.kind==='buff') ? '\\b' : ''); }).join('|');
+
+var ROWS = RAW.map(function(r,i){
+  var o = {id:i,cls:r[0],fam:r[1],cre:r[2],trait:r[3],desc:r[4],mat:r[5]};
+  o.hasMat = r[5] !== 'No Material Exists';
+  o.stacks = !/does not stack/i.test(r[4]);
+  o.mastery = r[2] === 'Mastery Trait' || r[2] === 'Backer Trait';
+  o.applies = {}; o.uses = {}; o.kws = {}; o.segs = [];
+  var d = r[4], re = new RegExp(KWSRC,'gi'), m, last = 0;
+  while ((m = re.exec(d))) {
+    if (m.index > last) o.segs.push({t:d.slice(last,m.index)});
+    var k = KWMAP[m[0].toLowerCase()], role = null;
+    if (k.kind==='debuff' || k.kind==='buff') {
+      var clause = d.slice(d.lastIndexOf('.', m.index-1)+1, m.index).toLowerCase();
+      role = APPLY.test(clause) ? 'a' : 'u';
+      if (role==='a') o.applies[k.key] = 1; else o.uses[k.key] = 1;
+    }
+    o.kws[k.key] = 1;
+    o.segs.push({t:m[0],k:k,role:role});
+    last = m.index + m[0].length;
+  }
+  if (last < d.length) o.segs.push({t:d.slice(last)});
+  o.text = r.join(' ').toLowerCase();
+  return o;
+});
+var CLASSES = [];
+ROWS.forEach(function(r){ if (CLASSES.indexOf(r.cls) < 0) CLASSES.push(r.cls); });
+var PRESENT = {debuff:[],buff:[],mech:[],trig:[]};
+KWLIST.forEach(function(k){ if (PRESENT[k.kind] && ROWS.some(function(r){ return r.kws[k.key]; })) PRESENT[k.kind].push(k); });
+
+function tokenize(q){ var re = /\s*(\(|\)|-?[A-Za-z]+:"[^"]*"|-?"[^"]*"|[^\s()]+)/g, out = [], m; while ((m = re.exec(q))) { if (m[1]) out.push(m[1]); } return out; }
+function isOp(t,op){ return !!t && t.toUpperCase() === op; }
+function isOr(t){ return isOp(t,'OR') || t === '|'; }
+function mkTerm(raw){ var m = /^([A-Za-z]+):(.+)$/.exec(raw), f = null, v = raw; if (m && FIELDS[m[1].toLowerCase()]) { f = FIELDS[m[1].toLowerCase()]; v = m[2]; } v = v.replace(/^"|"$/g,'').toLowerCase(); return {op:'term',f:f,v:v}; }
+function parseTokens(tokens){
+  var i = 0;
+  function pExpr(){ var n = pAnd(); while (isOr(tokens[i])) { i++; var r = pAnd(); if (r) n = n ? {op:'or',a:n,b:r} : r; } return n; }
+  function pAnd(){ var n = pUnary(); while (i < tokens.length && tokens[i] !== ')' && !isOr(tokens[i])) { if (isOp(tokens[i],'AND') || tokens[i] === '&') i++; var r = pUnary(); if (!r) break; n = n ? {op:'and',a:n,b:r} : r; } return n; }
+  function pUnary(){ var t = tokens[i]; if (t === undefined) return null; if (isOp(t,'NOT')) { i++; var x = pUnary(); return x ? {op:'not',a:x} : null; } if (t === '(') { i++; var e = pExpr(); if (tokens[i] === ')') i++; return e; } if (t === ')') return null; i++; if (t.length > 1 && t[0] === '-') return {op:'not',a:mkTerm(t.slice(1))}; return mkTerm(t); }
+  return pExpr();
+}
+function anyKey(o,v){ for (var k in o) { if (k.indexOf(v) === 0) return true; } return false; }
+function matchTerm(n,r){
+  var v = n.v; if (!v) return true;
+  if (n.f === null) return r.text.indexOf(v) >= 0;
+  if (n.f === 'A') return anyKey(r.applies,v);
+  if (n.f === 'U') return anyKey(r.uses,v);
+  if (n.f === 'K') return anyKey(r.kws,v);
+  if (n.f === 'M') return (v==='no'||v==='none') ? !r.hasMat : r.hasMat;
+  if (n.f === 'S') return v==='no' ? !r.stacks : r.stacks;
+  return r[n.f].toLowerCase().indexOf(v) >= 0;
+}
+function evalNode(n,r){ if (n.op==='term') return matchTerm(n,r); if (n.op==='and') return evalNode(n.a,r) && evalNode(n.b,r); if (n.op==='or') return evalNode(n.a,r) || evalNode(n.b,r); return !evalNode(n.a,r); }
+function collectHits(n,neg,out){ if (!n) return; if (n.op==='term') { if (!neg && (n.f===null || n.f==='desc') && n.v.length > 1) out.push(n.v); return; } if (n.op==='not') { collectHits(n.a,!neg,out); return; } collectHits(n.a,neg,out); collectHits(n.b,neg,out); }
+function markSplit(t,hits){ if (!hits.length) return [{t:t,hit:false}]; var re = new RegExp('(' + hits.map(esc).join('|') + ')','gi'), out = [], last = 0, m; while ((m = re.exec(t))) { if (!m[0]) { re.lastIndex++; continue; } if (m.index > last) out.push({t:t.slice(last,m.index),hit:false}); out.push({t:m[0],hit:true}); last = m.index + m[0].length; } if (last < t.length) out.push({t:t.slice(last),hit:false}); return out; }
+function joinTokens(tk){ var s = ''; tk.forEach(function(t,i){ if (i > 0 && tk[i-1] !== '(' && t !== ')') s += ' '; s += t; }); return s; }
+function kwTest(r,k){ var t = k[0], v = k.slice(2); if (t==='a') return !!r.applies[v]; if (t==='u') return !!r.uses[v]; return !!r.kws[v]; }
+function slotWhy(r,s){ if (s===2) return r.hasMat ? '' : 'No material: cannot go on an artifact'; return r.mastery ? 'Mastery and backer traits only fit the artifact slot' : ''; }
+function idOf(name){ for (var i = 0; i < ROWS.length; i++) { if (ROWS[i].trait === name) return i; } return null; }
+function toggleIn(list,v){ var n = list.slice(), i = n.indexOf(v); if (i >= 0) n.splice(i,1); else n.push(v); return n; }
+function nextEmpty(p,from){ for (var j = 1; j <= 18; j++) { var k = (from + j) % 18; if (p[k] == null) return k; } return from; }
+
+class Component extends DCLogic {
+  state = {
+    q: 'weak OR vulnerable',
+    cls: [], kw: [], kwMode: 'all', mat: true, nostack: false,
+    view: null, sheet: null, copiedS: false,
+    party: [idOf('Scourge'), idOf('Manipulate Fear'), idOf('Wretchedness'), idOf('Crunch'), idOf('Quell'), null, idOf('Hopelessness'), null, null, null, null, null, null, null, null, null, null, null],
+    active: 5
+  };
+
+  renderVals() {
+    var self = this, st = this.state, sv = this.props.startView || 'explore';
+    var set = function(p){ self.setState(p); };
+    var view = st.view || (sv === 'party' ? 'party' : 'explore');
+    var sheet = st.sheet === null ? (sv === 'filters') : st.sheet;
+    var toggleKw = function(k){ set({kw: toggleIn(self.state.kw, k)}); };
+    var tokens = tokenize(st.q);
+    var ast = parseTokens(tokens);
+    var hits = []; collectHits(ast, false, hits);
+
+    function kwPass(r){ if (!st.kw.length) return true; var f = function(k){ return kwTest(r,k); }; return st.kwMode === 'all' ? st.kw.every(f) : st.kw.some(f); }
+    function pass(r, skipCls){
+      if (ast && !evalNode(ast, r)) return false;
+      if (!skipCls && st.cls.length && st.cls.indexOf(r.cls) < 0) return false;
+      if (!kwPass(r)) return false;
+      if (st.mat && !r.hasMat) return false;
+      if (st.nostack && r.stacks) return false;
+      return true;
+    }
+    var res = ROWS.filter(function(r){ return pass(r, false); });
+
+    var party = st.party, act = st.active, am = Math.floor(act/3), as = act % 3;
+    var targetLabel = 'M' + (am+1) + ' · ' + SLOTS[as];
+    var where = {};
+    party.forEach(function(id,i){ if (id != null) { (where[id] = where[id] || []).push('M' + (Math.floor(i/3)+1) + ' ' + SLOTS[i%3]); } });
+
+    function viewSegs(r){
+      var out = [];
+      r.segs.forEach(function(s){
+        if (s.k) {
+          var k = s.k, low = s.t.toLowerCase(), target = null, title;
+          var hit = hits.some(function(h){ return low.indexOf(h) >= 0; });
+          if (k.kind === 'debuff' || k.kind === 'buff') {
+            target = (s.role === 'a' ? 'u:' : 'a:') + k.key;
+            title = s.role === 'a' ? ('Applies ' + k.label + ' — show traits that rely on it') : ('Relies on ' + k.label + ' — show traits that apply it');
+          } else if (k.kind === 'flag') { title = 'Show only non-stacking traits'; }
+          else { target = (k.kind === 'trig' ? 't:' : 'x:') + k.key; title = 'Filter by ' + k.label; }
+          out.push({text:s.t, isKw:true, plain:false, cls:'kw kw-' + k.kind + (s.role ? ' r-' + s.role : '') + (hit ? ' hit' : ''), title:title,
+            go: function(){ if (target) toggleKw(target); else set({nostack: !self.state.nostack}); }});
+        } else {
+          markSplit(s.t, hits).forEach(function(p){ out.push({text:p.t, isKw:false, plain:true, cls:p.hit ? 'hit' : '', title:'', go:null}); });
+        }
+      });
+      return out;
+    }
+
+    var rows = res.map(function(r){
+      var why = slotWhy(r, as);
+      return {
+        trait:r.trait, cre:r.cre, fam:r.fam, cls:r.cls, color: CLASS_COLOR[r.cls] || '#8fa1b3',
+        mat: r.hasMat ? r.mat : 'No material', matColor: r.hasMat ? '#8a94a1' : '#ffb4a6',
+        segs: viewSegs(r),
+        cantAdd: !!why, addTitle: why || ('Add ' + r.trait + ' to ' + targetLabel),
+        add: function(){ var p = self.state.party.slice(), a = self.state.active; if (slotWhy(r, a % 3)) return; p[a] = r.id; self.setState({party:p, active:nextEmpty(p, a)}); },
+        inParty: !!where[r.id], where: (where[r.id] || []).join(', ')
+      };
+    });
+
+    var base = ROWS.filter(function(r){ return pass(r, true); });
+    var classF = CLASSES.map(function(c){ var on = st.cls.indexOf(c) >= 0; return {name:c, color:CLASS_COLOR[c] || '#8fa1b3', n:base.filter(function(r){ return r.cls === c; }).length, on:on, pill:'pill' + (on ? ' on' : ''), toggle:function(){ set({cls: toggleIn(self.state.cls, c)}); }}; });
+    function kwRow(k){
+      var a = 'a:' + k.key, u = 'u:' + k.key, aOn = st.kw.indexOf(a) >= 0, uOn = st.kw.indexOf(u) >= 0;
+      return {name:k.label, aN:res.filter(function(r){ return r.applies[k.key]; }).length, uN:res.filter(function(r){ return r.uses[k.key]; }).length,
+        aOn:aOn, uOn:uOn, aCls:'mini' + (aOn ? ' on' : ''), uCls:'mini' + (uOn ? ' on' : ''), aT:function(){ toggleKw(a); }, uT:function(){ toggleKw(u); }};
+    }
+    function oneRow(k, p){ var key = p + k.key, on = st.kw.indexOf(key) >= 0; return {name:k.label, n:res.filter(function(r){ return r.kws[k.key]; }).length, on:on, pill:'pill' + (on ? ' on' : ''), toggle:function(){ toggleKw(key); }}; }
+
+    var chips = [];
+    st.cls.forEach(function(c, i){
+      if (i > 0) chips.push({isOp:true, isTerm:false, text:'OR'});
+      chips.push({isOp:false, isTerm:true, field:'class', hasField:true, val:c, neg:false, cls:'chip', flip:null, flipLabel:'', rmLabel:'Remove class ' + c, rm:function(){ set({cls: toggleIn(self.state.cls, c)}); }});
+    });
+    var KWF = {a:'applies', u:'uses', t:'trigger', x:'kw'};
+    st.kw.forEach(function(k, i){
+      if (i > 0) chips.push({isOp:true, isTerm:false, text: st.kwMode === 'all' ? 'AND' : 'OR'});
+      var lab = KWBYKEY[k.slice(2)] ? KWBYKEY[k.slice(2)].label : k.slice(2);
+      chips.push({isOp:false, isTerm:true, field:KWF[k[0]], hasField:true, val:lab, neg:false, cls:'chip', flip:null, flipLabel:'', rmLabel:'Remove ' + lab, rm:function(){ toggleKw(k); }});
+    });
+    if (st.mat) chips.push({isOp:false, isTerm:true, field:'mat', hasField:true, val:'yes', neg:false, cls:'chip', flip:null, flipLabel:'', rmLabel:'Remove artifact-eligible filter', rm:function(){ set({mat:false}); }});
+    if (st.nostack) chips.push({isOp:false, isTerm:true, field:'stack', hasField:true, val:'no', neg:false, cls:'chip', flip:null, flipLabel:'', rmLabel:'Remove non-stacking filter', rm:function(){ set({nostack:false}); }});
+    tokens.forEach(function(t, i){
+      var U = t.toUpperCase();
+      if (/^(AND|OR|NOT|\(|\)|\||&)$/.test(U)) { chips.push({isOp:true, isTerm:false, text: U === '|' ? 'OR' : (U === '&' ? 'AND' : U)}); return; }
+      var neg = t[0] === '-' && t.length > 1, prevNot = i > 0 && isOp(tokens[i-1], 'NOT');
+      var body = neg ? t.slice(1) : t, m = /^([A-Za-z]+):(.+)$/.exec(body);
+      var field = (m && FIELDS[m[1].toLowerCase()]) ? m[1].toLowerCase() : '';
+      var val = (field ? m[2] : body);
+      chips.push({isOp:false, isTerm:true, field:field, hasField:!!field, val:val, neg:neg || prevNot, cls:'chip' + ((neg || prevNot) ? ' neg' : ''),
+        flipLabel: (neg || prevNot) ? 'Tap to include again' : 'Tap to exclude (NOT)', rmLabel:'Remove ' + val,
+        flip:function(){ var tk = tokenize(self.state.q); if (tk[i][0] === '-' && tk[i].length > 1) tk[i] = tk[i].slice(1); else if (i > 0 && isOp(tk[i-1], 'NOT')) tk.splice(i-1, 1); else tk[i] = '-' + tk[i]; set({q: joinTokens(tk)}); },
+        rm:function(){ var tk = tokenize(self.state.q), drop = [i]; if (i > 0 && /^(AND|OR|NOT|&|\|)$/i.test(tk[i-1])) drop.push(i-1); else if (i+1 < tk.length && /^(AND|OR|&|\|)$/i.test(tk[i+1])) drop.push(i+1); set({q: joinTokens(tk.filter(function(_, j){ return drop.indexOf(j) < 0; }))}); }});
+    });
+
+    var members = [];
+    for (var mi = 0; mi < 6; mi++) {
+      var slots = [];
+      for (var si = 0; si < 3; si++) {
+        (function(idx, s, m){
+          var id = party[idx], r = id != null ? ROWS[id] : null, on = idx === act;
+          slots.push({label:SLOTS[s], name: r ? r.trait : (on ? 'Empty — target' : 'Empty'), filled:!!r,
+            cls:'slot' + (on ? ' active' : '') + (r ? '' : ' empty'), color: r ? (CLASS_COLOR[r.cls] || '#8fa1b3') : '#3a434e',
+            aria:'Target M' + (m+1) + ' ' + SLOTS[s] + (r ? ' (' + r.trait + ')' : ''), clearLabel:'Clear M' + (m+1) + ' ' + SLOTS[s],
+            pick:function(){ set({active: idx, view: 'explore'}); },
+            clear:function(){ var p = self.state.party.slice(); p[idx] = null; set({party:p, active:idx}); }});
+        })(mi*3 + si, si, mi);
+      }
+      var inn = party[mi*3];
+      members.push({label:'M' + (mi+1), name: inn != null ? ROWS[inn].cre : 'No creature yet', slots:slots});
+    }
+
+    var pr = party.filter(function(x){ return x != null; }).map(function(id){ return ROWS[id]; });
+    var A = {}, Us = {};
+    pr.forEach(function(r){ var k; for (k in r.applies) A[k] = 1; for (k in r.uses) Us[k] = 1; });
+    var appliedC = Object.keys(A).map(function(k){ return {name:KWBYKEY[k].label}; });
+    var missing = [];
+    var usedC = Object.keys(Us).map(function(k){ var ok = !!A[k]; if (!ok) missing.push(KWBYKEY[k].label); return {name:KWBYKEY[k].label, bad:!ok, cls:'cov' + (ok ? ' ok' : ' bad'), note: ok ? (KWBYKEY[k].label + ': applied by your party') : (KWBYKEY[k].label + ': nothing applies it — find appliers'), find:function(){ set({kw:['a:' + k], kwMode:'all', q:'', cls:[], view:'explore'}); }}; });
+    var share = '#p=' + party.map(function(x){ return x == null ? '-' : x; }).join('.');
+    var filterCount = st.cls.length + st.kw.length + (st.mat ? 1 : 0) + (st.nostack ? 1 : 0);
+
+    return {
+      total: ROWS.length, count: res.length,
+      isExplore: view === 'explore', isParty: view === 'party',
+      tabExplore: 'tab' + (view === 'explore' ? ' on' : ''), tabParty: 'tab' + (view === 'party' ? ' on' : ''),
+      goExplore: function(){ set({view:'explore'}); }, goParty: function(){ set({view:'party', sheet:false}); },
+      q: st.q, setQ: function(e){ set({q: e.target.value}); },
+      chips: chips, filterCount: filterCount, hasFilterCount: filterCount > 0,
+      targetLabel: targetLabel,
+      sheet: sheet, openSheet: function(){ set({sheet:true}); }, closeSheet: function(){ set({sheet:false}); },
+      resetFilters: function(){ set({cls:[], kw:[], mat:false, nostack:false}); },
+      classF: classF,
+      isAll: st.kwMode === 'all', isAny: st.kwMode === 'any',
+      allCls: 'seg' + (st.kwMode === 'all' ? ' on' : ''), anyCls: 'seg' + (st.kwMode === 'any' ? ' on' : ''),
+      setAll: function(){ set({kwMode:'all'}); }, setAny: function(){ set({kwMode:'any'}); },
+      debF: PRESENT.debuff.map(kwRow), bufF: PRESENT.buff.map(kwRow),
+      trigF: PRESENT.trig.map(function(k){ return oneRow(k, 't:'); }), mechF: PRESENT.mech.map(function(k){ return oneRow(k, 'x:'); }),
+      mat: st.mat, nostack: st.nostack,
+      toggleMat: function(){ set({mat: !self.state.mat}); }, toggleNoStack: function(){ set({nostack: !self.state.nostack}); },
+      rows: rows, noResults: rows.length === 0,
+      members: members, filled: pr.length,
+      shareLabel: st.copiedS ? 'Copied' : 'Share',
+      copyShare: function(){ try { navigator.clipboard.writeText(share); } catch (e) {} set({copiedS:true}); },
+      appliedC: appliedC, usedC: usedC,
+      hasMissing: missing.length > 0, missingText: 'No source for ' + missing.join(', ') + '. Tap it to find appliers.'
+    };
+  }
+}
+</script>
+</body>
+</html>

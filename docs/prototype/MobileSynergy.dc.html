@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trait Atlas — Mobile synergies</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1014}
+a{color:#8ab4ff}a:hover{color:#b8d0ff}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.kw{font:inherit;border:0;margin:0;padding:0 3px;border-radius:3px;background:transparent;line-height:inherit}
+.kw-debuff{color:#ff9b87;background:rgba(255,120,100,.10)}
+.kw-buff{color:#74dbb0;background:rgba(90,210,160,.10)}
+.kw-mech{color:#a9c1ff;background:rgba(130,160,255,.10)}
+.kw-trig{color:#f3c969;text-decoration:underline dotted;text-underline-offset:3px;padding:0}
+.kw-flag{color:#a0a8b3;font-style:italic;padding:0}
+.r-a{box-shadow:inset 0 -2px 0 currentColor}
+.r-u{outline:1px dashed currentColor;outline-offset:-1px}
+.tabb{flex:1;height:40px;border:0;border-radius:6px;background:transparent;font-size:13px;color:#a0a8b3}
+.tabb.on{background:#2a3442;color:#fff}
+.card{display:flex;align-items:center;gap:8px;padding:0 4px 0 12px;border-bottom:1px solid #1a1f26}
+.cardb{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:56px;justify-content:center;border:0;background:transparent;text-align:left;padding:6px 0}
+.nm{font-size:14.5px;font-weight:600;color:#f1f3f5}
+.sub{font-size:12.5px;color:#8a94a1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.badge{flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;border-radius:10px;background:#22344d;color:#cfe0ff}
+.addb{flex:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;border:0;background:transparent;color:#a0a8b3}
+.addb.on{color:#74dbb0}
+.kp{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:5px;font-size:12px;font-weight:500}
+.kp-debuff{color:#ff9b87;background:rgba(255,120,100,.12)}
+.kp-buff{color:#74dbb0;background:rgba(90,210,160,.12)}
+.lane{display:flex;align-items:center;gap:8px;padding:14px 16px 6px}
+.crumb{flex:none;height:32px;padding:0 10px;border-radius:16px;border:1px solid #2e3741;background:#151a20;font-size:12.5px;color:#c8ced6}
+.crumb.cur{border-color:#4a76b0;background:#1d2b3e;color:#fff}
+.navt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;font-size:11.5px;color:#8a94a1;text-decoration:none}
+.navt.on{color:#dbe8ff}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0e1014; color: #e4e7eb; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+<div style="flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; border-bottom: 1px solid #1f252d">
+<sc-if value="{{isKw}}" hint-placeholder-val="{{ false }}"><button onClick="{{backToTrait}}" aria-label="Back to trait" style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; background: transparent; color: #c8ced6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button></sc-if>
+<h1 style="margin: 0 0 0 12px; font-size: 17px; font-weight: 600">{{title}}</h1>
+<div style="flex: 1"></div>
+<a href="MobileSearch.dc.html" aria-label="Search" style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #c8ced6"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></a>
+</div>
+
+<sc-if value="{{isTrait}}" hint-placeholder-val="{{ true }}">
+<div style="flex: none; display: flex; flex-direction: column; gap: 10px; padding: 10px 16px 12px; border-bottom: 1px solid #1f252d">
+<nav aria-label="Exploration trail" style="display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+<sc-for list="{{trail}}" as="c" hint-placeholder-count="2"><button class="{{c.cls}}" onClick="{{c.go}}" aria-current="{{c.isLast}}">{{c.trait}}</button></sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; border: 1px solid #36557f; background: #12161b">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{fColor}}" aria-hidden="true"></span><h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #f6f7f8">{{focusName}}</h2><div style="flex: 1"></div><button class="{{fAddCls}}" aria-pressed="{{fAdded}}" aria-label="{{fAddLabel}}" onClick="{{fToggle}}"><sc-if value="{{fAdded}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if><sc-if value="{{fNotAdded}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if></button></div>
+<span style="font-size: 12.5px; color: #a0a8b3; margin-top: -6px">{{fCre}} · {{fFam}} · {{fCls}}</span>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #d6dade"><sc-for list="{{fSegs}}" as="s" hint-placeholder-count="1"><sc-if value="{{s.isBtn}}" hint-placeholder-val="{{ false }}"><button class="{{s.cls}}" onClick="{{s.go}}" aria-label="{{s.title}}">{{s.text}}</button></sc-if><sc-if value="{{s.isSpan}}" hint-placeholder-val="{{ true }}"><span class="{{s.cls}}">{{s.text}}</span></sc-if></sc-for></p>
+<span style="font-size: 12.5px; color: #8a94a1">Relies on <span style="color: #e4e7eb">{{fUses}}</span> · Applies <span style="color: #e4e7eb">{{fApplies}}</span></span>
+</div>
+<div role="tablist" aria-label="Relations" style="display: flex; gap: 2px; padding: 3px; border-radius: 8px; background: #151a20; border: 1px solid #232a33">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button role="tab" aria-selected="{{t.on}}" class="{{t.cls}}" onClick="{{t.go}}">{{t.label}} <span class="mono" style="font-size: 11px; color: #8a94a1">{{t.n}}</span></button></sc-for>
+</div>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto" role="tabpanel">
+<div style="padding: 10px 16px 0; font-size: 12.5px; color: #8a94a1">{{tabHint}}</div>
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="2">
+<div>
+<sc-if value="{{l.hasLabel}}" hint-placeholder-val="{{ true }}"><div class="lane"><span class="{{l.pill}}">{{l.label}}</span><span style="flex: 1; height: 1px; background: #232a33"></span></div></sc-if>
+<sc-for list="{{l.cards}}" as="c" hint-placeholder-count="2"><div class="card"><span style="width: 8px; height: 8px; border-radius: 2px; flex: none; background: {{c.color}}" aria-hidden="true"></span><button class="cardb" onClick="{{c.focus}}" aria-label="{{c.focusLabel}}"><span class="nm">{{c.trait}}</span><span class="sub">{{c.sub}}</span></button><sc-if value="{{c.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="badge">{{c.badge}}</span></sc-if><button class="{{c.addCls}}" aria-pressed="{{c.added}}" aria-label="{{c.addLabel}}" onClick="{{c.toggle}}"><sc-if value="{{c.added}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if><sc-if value="{{c.notAdded}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if></button></div></sc-for>
+<sc-if value="{{l.empty}}" hint-placeholder-val="{{ false }}"><div style="margin: 4px 16px; padding: 10px 12px; border-radius: 8px; border: 1px dashed #6e3a33; font-size: 13px; color: #ffb4a6">{{l.emptyText}}</div></sc-if>
+</div>
+</sc-for>
+<sc-if value="{{noLanes}}" hint-placeholder-val="{{ false }}"><div style="margin: 16px; padding: 14px; border-radius: 8px; border: 1px dashed #2e3741; font-size: 13.5px; color: #a0a8b3">{{noLanesText}}</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isKw}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #1f252d">
+<div style="display: flex; align-items: center; gap: 10px"><span class="{{kPill}}" style="height: 30px; font-size: 15px; padding: 0 12px">{{kLabel}}</span><span style="font-size: 13.5px; color: #dfe3e8">{{kA}} apply · {{kU}} rely on it</span></div>
+<span style="font-size: 13px; color: {{kVerdictColor}}">{{kVerdict}}</span>
+<div role="tablist" aria-label="Keyword sides" style="display: flex; gap: 2px; padding: 3px; border-radius: 8px; background: #151a20; border: 1px solid #232a33">
+<button role="tab" aria-selected="{{kOnApp}}" class="{{kAppCls}}" onClick="{{kToApp}}">Appliers <span class="mono" style="font-size: 11px; color: #8a94a1">{{kA}}</span></button>
+<button role="tab" aria-selected="{{kOnUse}}" class="{{kUseCls}}" onClick="{{kToUse}}">Rely on it <span class="mono" style="font-size: 11px; color: #8a94a1">{{kU}}</span></button>
+</div>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto" role="tabpanel">
+<sc-for list="{{kCards}}" as="c" hint-placeholder-count="4"><div class="card"><span style="width: 8px; height: 8px; border-radius: 2px; flex: none; background: {{c.color}}" aria-hidden="true"></span><button class="cardb" onClick="{{c.focus}}" aria-label="{{c.focusLabel}}"><span class="nm">{{c.trait}}</span><span class="sub">{{c.sub}}</span></button><button class="{{c.addCls}}" aria-pressed="{{c.added}}" aria-label="{{c.addLabel}}" onClick="{{c.toggle}}"><sc-if value="{{c.added}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if><sc-if value="{{c.notAdded}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></sc-if></button></div></sc-for>
+<sc-if value="{{kEmpty}}" hint-placeholder-val="{{ false }}"><div style="margin: 16px; padding: 14px; border-radius: 8px; border: 1px dashed #6e3a33; font-size: 13.5px; color: #ffb4a6">Nothing here yet for {{kLabel}}.</div></sc-if>
+</div>
+</sc-if>
+
+<nav aria-label="Sections" style="flex: none; display: flex; height: 64px; border-top: 1px solid #1f252d; background: #0b0d10">
+<a class="navt" href="Mobile.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Explore</a>
+<a class="navt on" href="MobileSynergy.dc.html" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="5" cy="12" r="2.5"></circle><circle cx="19" cy="6" r="2.5"></circle><circle cx="19" cy="18" r="2.5"></circle><path d="M7.3 11 16.7 7M7.3 13l9.4 4"></path></svg>Synergies</a>
+<a class="navt" href="Mobile.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.5"></rect><rect x="14" y="4" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Party {{partyN}}</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var RAW = [
+["Death","Abomination","Abomination Brute","Flesh Rot","After an enemy is afflicted with either Weak or Vulnerable, this creature afflicts them with whichever of these debuffs…","Brute Stitches"],
+["Death","Abomination","Abomination Volatile","Quell","When this creature attacks an enemy with Vulnerable, it deals 100% more damage. If this damage exceeds 35% of the target's…","Volatile Stitches"],
+["Death","Abomination","Bile Abomination","Frailty","When this creature attacks an enemy with Vulnerable, it deals 100% more damage, recovers health equal to 100% of…","Bile Stitches"],
+["Death","Abomination","Cloth Abomination","Extra Padding","At the start of battle, this creature gains a Barrier that absorbs damage equal to 200% of its highest stat.","No Material Exists"],
+["Death","Abomination","Flesh Abomination","Wretchedness","Your creatures' attacks against enemy creatures with Vulnerable cannot be dodged and have a 50% greater chance…","Flesh Stitches"],
+["Death","Abomination","Gore Abomination","Manipulate Fear","Enemy creatures with Weak have 50% less attack and cannot deal critical damage. This trait does not stack.","Gore Stitches"],
+["Death","Abomination","Ritual Abomination","Turn to Gray","After this creature is attacked, enemies are afflicted with Vulnerable.","Ritual Stitches"],
+["Death","Abomination","Wandering Abomination","Sin and Sentence","After this creature attacks an enemy with both Weak and Vulnerable, it has a 50% chance to kill the target.","Wandering Stitches"],
+["Rodian Master","Abomination","Mastery Trait","Master of Abominations","If all the creatures in your party are Abominations, enemies always have Weak and Vulnerable, and take 50%…","Sigil of the Abomination"],
+["Sorcery","Alemental","Grenale","Slosh","After your creatures manually cast a spell, a random enemy is afflicted with a random debuff. This trait does not stack.","Bottle of Grenale"],
+["Life","Angel","Aegis Angel","Hand of Light","This creature's attacks deal 75% more damage and grant this creature Shelled.","Aegis Claymore"],
+["Life","Angel","Doomblight Angel","Scourge","This creature's attacks deal 75% more damage and afflict the target with Weak.","Doomblight Claymore"],
+["Sorcery","Animation","Silver Tether","Silver Tether","After an adjacent creature is killed, this creature gains 60% of its stats (other than health).","Silver Shackle"],
+["Life","Apis","Apis Warrior","Crunch","This creature's attacks deal 75% more damage and afflict the target with Vulnerable.","Warrior Headdress"],
+["Nature","Arachnalisk","Creeping Arachnalisk","Hopelessness","Enemies with Snared take 50% more damage. This trait does not stack.","Creeping Mandible"],
+["Nature","Arachnalisk","Goliath Arachnalisk","Entrapment","After this creature is attacked, it afflicts the enemy with Snared.","Goliath Mandible"],
+["Nature","Arachnalisk","Spitting Arachnalisk","Spit Poison","After this creature is attacked, it afflicts enemies with Poisoned. If enemies already have this debuff, its potency is…","Spitting Mandible"],
+["Chaos","Asura","Asura Gutslasher","Sidewinder","After this creature deals critical damage, it has a 75% chance to attack again.","Gutslasher Tattoo"],
+["Sorcery","Automaton","Luxury Automaton","Pandemic","At the start of this creature's turn, it afflicts enemies with a random debuff.","Luxury Gear"],
+["Sorcery","Bard","Bard Trovatore","Hymn of Panic","At the start of battle, the Timeline is shuffled randomly.","Trovatore Harp"],
+["Nature","Brownie","Brownie Enforcer","Wrecking Ball","After this creature attacks, it afflicts the target with Vulnerable and Stoned.","Enforcer Maul"],
+["Death","Calumnier","Calumnier Dandy","Stolen Valor","Your creatures cannot lose extra traits and Spell Gems in battle.","Liar's Uniform"],
+["Death","Carnage","Rotten Carnage","Consumption","After this creature kills a creature, it gains 35% of the target's attack, intelligence, defense, and speed.","Rotten Exoskeleton"],
+["Nature","Centaur","Centaur Warrior","Paradigm","After this creature is attacked, it attacks the enemy.","Warrior Tuft"],
+["Chaos","Clutcher","Flamegrip Clutcher","Vehemence","After an enemy dodges, this creature afflicts it with Burning and Scorned.","Flamegrip Finger"],
+["Chaos","Clutcher","Venomous Clutcher","Contagion","After an enemy dodges, this creature afflicts it with Poisoned and Silenced.","Venomous Finger"],
+["Chaos","Clutcher","Vital Clutcher","Seize","After an enemy dodges, this creature afflicts it with Stoned and Snared.","Vital Finger"],
+["Sorcery","Cruncher","Frostbite Cruncher","Munch","After this creature attacks, it Seals one of the target's Spell Gems and gains 20% attack.","Frostbite Carapace"],
+["Life","Crusader","Holy Crusader","Faith's Armor","After this creature attacks or is attacked, it gains Shelled.","Holy Hammer"],
+["Life","Crusader","Mist Crusader","Galvanization","After this creature attacks, it gains a Barrier that absorbs damage equal to 50% of its health.","Mist Hammer"],
+["Life","Demigod","Eternal Divinity","Consciousness","At the start of battle, this creature gains Maximum health equal to 15% of your other creatures' Maximum health.","Eternal Crown"],
+["Backer","Backer","Backer Trait","Minion Master","At the start of this creature's turn, it gains a random minion and its current minions gain 1 stack.","Minion Master Staff"],
+["Backer","Backer","Backer Trait","Arcane Echo","After your creatures manually cast a spell, they cast a random spell from the same class.","Arcane Puzzle"]
+];
+
+var DEBUFFS = ['Weak','Vulnerable','Poisoned','Burning','Snared','Stoned','Scorned','Silenced','Disarmed','Bleeding','Frozen','Confused','Feared'];
+var BUFFS = ['Shelled','Invisible','Savage','Agile','Protected'];
+var MECHS = [['Barrier','Barrier'],['minion','Minions'],['Spell Gems','Spell Gems'],['Timeline','Timeline'],['critical damage','Critical damage'],['Maximum health','Maximum health']];
+var TRIGS = [['start of battle','Start of battle'],["start of this creature's turn",'Start of own turn'],['after this creature attacks','After attacking'],['after this creature is attacked','After being attacked'],['after an enemy dodges','After an enemy dodges'],['manually cast a spell','Manual spell cast'],["this creature's attacks",'On attack (passive)'],['kills a creature','On kill'],['is killed','On death'],['deals critical damage','On critical hit']];
+var CLASS_COLOR = {Chaos:'#ef6b5b',Death:'#b49cf5',Life:'#e9c46a',Nature:'#63c98a',Sorcery:'#5fb0f5','Rodian Master':'#d98fc4',Backer:'#8fa1b3','Nether Boss':'#f08c4a'};
+var APPLY = /\b(afflicts?|are afflicted|gains?|grants?|always have)\b/;
+
+function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+var KWLIST = [];
+DEBUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'debuff',key:k.toLowerCase(),label:k}); });
+BUFFS.forEach(function(k){ KWLIST.push({s:k,kind:'buff',key:k.toLowerCase(),label:k}); });
+MECHS.forEach(function(k){ KWLIST.push({s:k[0],kind:'mech',key:k[0].toLowerCase(),label:k[1]}); });
+TRIGS.forEach(function(k){ KWLIST.push({s:k[0],kind:'trig',key:k[0],label:k[1]}); });
+KWLIST.push({s:'This trait does not stack',kind:'flag',key:'nostack',label:'Does not stack'});
+var KWMAP = {}, KWBYKEY = {};
+KWLIST.forEach(function(k){ KWMAP[k.s.toLowerCase()] = k; KWBYKEY[k.key] = k; });
+var KWSRC = KWLIST.slice().sort(function(a,b){ return b.s.length - a.s.length; }).map(function(k){ return '\\b' + esc(k.s) + ((k.kind==='debuff'||k.kind==='buff') ? '\\b' : ''); }).join('|');
+
+var ROWS = RAW.map(function(r,i){
+  var o = {id:i,cls:r[0],fam:r[1],cre:r[2],trait:r[3],desc:r[4],mat:r[5]};
+  o.hasMat = r[5] !== 'No Material Exists';
+  o.mastery = r[2] === 'Mastery Trait' || r[2] === 'Backer Trait';
+  o.applies = {}; o.uses = {}; o.kws = {}; o.segs = [];
+  var d = r[4], re = new RegExp(KWSRC,'gi'), m, last = 0;
+  while ((m = re.exec(d))) {
+    if (m.index > last) o.segs.push({t:d.slice(last,m.index)});
+    var k = KWMAP[m[0].toLowerCase()], role = null;
+    if (k.kind==='debuff' || k.kind==='buff') {
+      var clause = d.slice(d.lastIndexOf('.', m.index-1)+1, m.index).toLowerCase();
+      role = APPLY.test(clause) ? 'a' : 'u';
+      if (role==='a') o.applies[k.key] = 1; else o.uses[k.key] = 1;
+    }
+    o.kws[k.key] = 1;
+    o.segs.push({t:m[0],k:k,role:role});
+    last = m.index + m[0].length;
+  }
+  if (last < d.length) o.segs.push({t:d.slice(last)});
+  return o;
+});
+var PRESENT = {trig:[]};
+KWLIST.forEach(function(k){ if (k.kind === 'trig' && ROWS.some(function(r){ return r.kws[k.key]; })) PRESENT.trig.push(k); });
+
+function idOf(name){ for (var i = 0; i < ROWS.length; i++) { if (ROWS[i].trait === name) return i; } return 0; }
+function toggleIn(list,v){ var n = list.slice(), i = n.indexOf(v); if (i >= 0) n.splice(i,1); else n.push(v); return n; }
+function labels(o){ var k = Object.keys(o); return k.length ? k.map(function(x){ return KWBYKEY[x].label; }).join(', ') : '—'; }
+function trigsOf(r){ return PRESENT.trig.filter(function(t){ return r.kws[t.key]; }); }
+
+class Component extends DCLogic {
+  state = { mode:'trait', tab:'left', kTab:'app', focus:idOf('Sin and Sentence'), trail:[idOf('Crunch'), idOf('Sin and Sentence')], kwKey:'vulnerable', party:[idOf('Crunch')] };
+
+  renderVals() {
+    var self = this, st = this.state, set = function(p){ self.setState(p); };
+    var f = ROWS[st.focus];
+    function goFocus(id){ var tr = self.state.trail.slice(), i = tr.indexOf(id); if (i >= 0) tr = tr.slice(0, i + 1); else tr.push(id); set({focus:id, trail:tr.slice(-6), mode:'trait'}); }
+    function card(r, score, sub){
+      var added = st.party.indexOf(r.id) >= 0;
+      return {trait:r.trait, sub:sub, color:CLASS_COLOR[r.cls] || '#8fa1b3', badge:score > 1 ? '×' + score + ' links' : '', hasBadge:score > 1,
+        added:added, notAdded:!added, addCls:'addb' + (added ? ' on' : ''), addLabel:(added ? 'Remove ' + r.trait + ' from party' : 'Add ' + r.trait + ' to party'),
+        focusLabel:'Re-center on ' + r.trait, toggle:function(){ set({party:toggleIn(self.state.party, r.id)}); }, focus:function(){ goFocus(r.id); }};
+    }
+    function subOf(r){ return (r.mastery ? r.fam + ' mastery' : r.cre) + (r.hasMat ? '' : ' · no material'); }
+    function lanes(keys, test, verb){
+      var score = {}, raw = keys.map(function(k){ var list = ROWS.filter(function(r){ return r.id !== f.id && test(r, k); }); list.forEach(function(r){ score[r.id] = (score[r.id] || 0) + 1; }); return {k:k, list:list}; });
+      var ids = {};
+      var out = raw.map(function(l){ l.list.forEach(function(r){ ids[r.id] = 1; }); var kw = KWBYKEY[l.k];
+        return {label:verb + ' ' + kw.label, hasLabel:true, pill:'kp kp-' + kw.kind, empty:!l.list.length, emptyText:'No trait ' + verb + ' ' + kw.label + ' yet.',
+          cards:l.list.slice().sort(function(a,b){ return (score[b.id] - score[a.id]) || a.trait.localeCompare(b.trait); }).map(function(r){ return card(r, score[r.id], subOf(r)); })}; });
+      return {lanes:out, n:Object.keys(ids).length};
+    }
+    var usesK = Object.keys(f.uses), appK = Object.keys(f.applies);
+    var L = lanes(usesK, function(r,k){ return r.applies[k]; }, 'applies');
+    var R = lanes(appK, function(r,k){ return r.uses[k]; }, 'uses');
+    var alts = ROWS.filter(function(r){ return r.id !== f.id; }).map(function(r){
+      var s = usesK.filter(function(k){ return r.uses[k]; }).length + appK.filter(function(k){ return r.applies[k]; }).length;
+      return {r:r, s:s};
+    }).filter(function(x){ return x.s > 0; }).sort(function(a,b){ return b.s - a.s || a.r.trait.localeCompare(b.r.trait); });
+    var A = {lanes:[{label:'', hasLabel:false, pill:'', empty:false, emptyText:'', cards:alts.map(function(x){ return card(x.r, x.s, subOf(x.r)); })}], n:alts.length};
+
+    var cur = st.tab === 'left' ? L : (st.tab === 'right' ? R : A);
+    var hints = {left:'Traits that apply what ' + f.trait + ' relies on.', right:'Traits that rely on what ' + f.trait + ' applies.', alts:'Same role as ' + f.trait + ': substitutes or redundancy.'};
+    var emptyTxt = {left:'Self-sufficient: it relies on no buff or debuff.', right:'Payoff trait: it applies nothing others rely on. Check Alternatives.', alts:'No trait shares its role.'};
+    var noLanes = st.tab === 'alts' ? !alts.length : (st.tab === 'left' ? !usesK.length : !appK.length);
+    var tabs = [{id:'left', label:'Enabled by', n:L.n}, {id:'right', label:'Enables', n:R.n}, {id:'alts', label:'Alternatives', n:A.n}].map(function(t){ var on = st.tab === t.id; return {label:t.label, n:t.n, on:on, cls:'tabb' + (on ? ' on' : ''), go:function(){ set({tab:t.id}); }}; });
+
+    var fSegs = f.segs.map(function(s){
+      if (s.k && (s.k.kind === 'debuff' || s.k.kind === 'buff')) { var key = s.k.key; return {text:s.t, isBtn:true, isSpan:false, cls:'kw kw-' + s.k.kind + ' r-' + s.role, title:'Explore everything around ' + s.k.label, go:function(){ set({mode:'kw', kwKey:key}); }}; }
+      return {text:s.t, isBtn:false, isSpan:true, cls:s.k ? 'kw kw-' + s.k.kind : '', title:'', go:null};
+    });
+    var fAdded = st.party.indexOf(f.id) >= 0;
+    var trail = st.trail.map(function(id, i){ var last = i === st.trail.length - 1; return {trait:ROWS[id].trait, isLast:last, cls:'crumb' + (last ? ' cur' : ''), go:function(){ goFocus(id); }}; });
+
+    var K = st.kwKey, kobj = KWBYKEY[K];
+    var app = ROWS.filter(function(r){ return r.applies[K]; }), use = ROWS.filter(function(r){ return r.uses[K]; });
+    var verdict, vColor;
+    if (!app.length) { verdict = 'No source: you need a way to apply it'; vColor = '#ffb4a6'; }
+    else if (!use.length) { verdict = 'No payoff yet'; vColor = '#f3c969'; }
+    else if (app.length * 2 < use.length) { verdict = 'Scarce enabler: many payoffs, few sources'; vColor = '#f3c969'; }
+    else { verdict = 'Well supported'; vColor = '#74dbb0'; }
+    var kList = st.kTab === 'app' ? app : use;
+
+    return {
+      isTrait:st.mode === 'trait', isKw:st.mode === 'kw', title:st.mode === 'kw' ? kobj.label : 'Synergies',
+      backToTrait:function(){ set({mode:'trait'}); }, partyN:st.party.length,
+      trail:trail, focusName:f.trait, fCre:f.mastery ? 'Mastery trait' : f.cre, fFam:f.fam, fCls:f.cls, fColor:CLASS_COLOR[f.cls] || '#8fa1b3',
+      fSegs:fSegs, fUses:labels(f.uses), fApplies:labels(f.applies),
+      fAdded:fAdded, fNotAdded:!fAdded, fAddCls:'addb' + (fAdded ? ' on' : ''), fAddLabel:fAdded ? 'Remove ' + f.trait + ' from party' : 'Add ' + f.trait + ' to party',
+      fToggle:function(){ set({party:toggleIn(self.state.party, f.id)}); },
+      tabs:tabs, tabHint:hints[st.tab], lanes:noLanes ? [] : cur.lanes, noLanes:noLanes, noLanesText:emptyTxt[st.tab],
+      kPill:'kp kp-' + kobj.kind, kLabel:kobj.label, kA:app.length, kU:use.length, kVerdict:verdict, kVerdictColor:vColor,
+      kOnApp:st.kTab === 'app', kOnUse:st.kTab === 'use', kAppCls:'tabb' + (st.kTab === 'app' ? ' on' : ''), kUseCls:'tabb' + (st.kTab === 'use' ? ' on' : ''),
+      kToApp:function(){ set({kTab:'app'}); }, kToUse:function(){ set({kTab:'use'}); },
+      kCards:kList.map(function(r){ var t = trigsOf(r); return card(r, 0, (t.length ? t[0].label : 'Passive') + ' · ' + subOf(r)); }), kEmpty:!kList.length
+    };
+  }
+}
+</script>
+</body>
+</html>
