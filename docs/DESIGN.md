@@ -50,7 +50,11 @@ use the fallback `#8fa1b3`.
 Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
 R9) = solid outline. Colour is the kind: an *effect* (Dire Wolves, Mega Magic) takes the mechanic colour, since it is not
 a status. Search matches add a yellow highlight (`<mark>`, 22 % of `--status-warn`, which keeps every token colour above
-4.5:1), also inside a token. Tooltip/title explains the click action ("Applies Vulnerable — show traits that rely on it").
+4.5:1), also inside a token. The token is a toggle `button`: its accessible name says what the trait does with the keyword
+(a shape cannot be heard) and what a click shows ("Applies Vulnerable — show traits that rely on it"), and `title` says the
+same to the pointer. `aria-pressed` and a 2 px ring in `--accent-border` mean its filter is on; a hover is a 1 px ring in
+`--border-strong`. Never a fill: a match highlight over a lighter fill takes a debuff or the muted flag under 4.5:1, since
+the token colours are only guaranteed on the page background.
 
 ### Result list
 The page scrolls, not the list: results sit among other panels and stack under the filters on narrow screens. The list

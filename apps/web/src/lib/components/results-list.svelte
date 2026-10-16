@@ -1,13 +1,15 @@
 <script lang="ts">
   import type { Highlighter, Trait } from '@atlas/core';
   import { copy } from '../copy';
+  import type { KeywordActions } from '../keyword-actions';
   import ResultRow from './result-row.svelte';
   import VirtualList from './virtual-list.svelte';
 
   /** About what a row of a few lines of description takes; the real heights are measured as rows are drawn. */
   const ESTIMATED_ROW_HEIGHT = 150;
 
-  const { traits, highlight }: { traits: readonly Trait[]; highlight: Highlighter } = $props();
+  const { traits, highlight, actions }: { traits: readonly Trait[]; highlight: Highlighter; actions: KeywordActions } =
+    $props();
 
   const keys = $derived(traits.map(({ id }) => id));
 </script>
@@ -21,7 +23,7 @@
   <VirtualList {keys} estimatedHeight={ESTIMATED_ROW_HEIGHT}>
     {#snippet row(index: number)}
       {@const trait = traits[index]}
-      {#if trait !== undefined}<ResultRow {trait} {highlight} />{/if}
+      {#if trait !== undefined}<ResultRow {trait} {highlight} {actions} />{/if}
     {/snippet}
   </VirtualList>
 {/if}

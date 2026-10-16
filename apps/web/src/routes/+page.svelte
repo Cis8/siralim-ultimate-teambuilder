@@ -1,15 +1,43 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { initialExploreState, SORT_KEYS, type ExploreState, type SearchService, type SortKey } from '@atlas/core';
+  import { onMount, tick } from 'svelte';
+  import {
+    clickKeyword,
+    initialExploreState,
+    isClickOn,
+    SORT_KEYS,
+    type ExploreState,
+    type SearchService,
+    type SortKey,
+  } from '@atlas/core';
   import QueryInput from '../lib/components/query-input.svelte';
   import ResultCount from '../lib/components/result-count.svelte';
   import ResultsList from '../lib/components/results-list.svelte';
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
+  import type { KeywordActions } from '../lib/keyword-actions';
 
   let service = $state.raw<SearchService>();
   let failed = $state(false);
   let explore = $state.raw<ExploreState>(initialExploreState);
+  let resultsHeading = $state<HTMLHeadingElement>();
+
+  /**
+   * A click on a keyword far down the list swaps the list for another: it is shown from its first trait, and the focus,
+   * which the row it was on may not outlive, goes to the start of it.
+   */
+  async function showResultsFromTheStart(): Promise<void> {
+    await tick();
+    window.scrollTo({ top: 0 });
+    resultsHeading?.focus({ preventScroll: true });
+  }
+
+  const keywordActions: KeywordActions = {
+    isOn: (keyword) => isClickOn(explore, keyword),
+    click: (keyword) => {
+      explore = clickKeyword(explore, keyword);
+      void showResultsFromTheStart();
+    },
+  };
 
   /** What the page shows once the data is loaded: the search of the current state, and the dataset it ran on. */
   const loaded = $derived(
@@ -74,7 +102,7 @@
   </section>
 
   <section class="results" aria-labelledby="results-heading">
-    <h2 id="results-heading" class="visually-hidden">{copy.resultsHeading}</h2>
+    <h2 id="results-heading" class="visually-hidden" tabindex="-1" bind:this={resultsHeading}>{copy.resultsHeading}</h2>
     {#if failed}
       <p class="status failed" role="alert">
         <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
@@ -86,7 +114,7 @@
     {:else if loaded === undefined}
       <p class="status" role="status">{copy.loadingTraits}</p>
     {:else}
-      <ResultsList traits={loaded.outcome.traits} highlight={loaded.outcome.highlight} />
+      <ResultsList traits={loaded.outcome.traits} highlight={loaded.outcome.highlight} actions={keywordActions} />
     {/if}
   </section>
 

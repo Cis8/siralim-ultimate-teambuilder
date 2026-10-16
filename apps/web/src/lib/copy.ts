@@ -1,7 +1,21 @@
-import type { SortKey, TraitKind } from '@atlas/core';
+import type { ClickGoal, KeywordRole, SortKey, TraitKind } from '@atlas/core';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
+
+/** What a trait does with a keyword, which the shape of its token says to the eye (DESIGN § Keyword tokens). */
+const keywordRole = {
+  applies: 'Applies',
+  uses: 'Relies on',
+  resists: 'Guards against',
+} as const satisfies Record<KeywordRole, string>;
+
+const keywordGoal = {
+  appliers: 'show traits that apply it',
+  users: 'show traits that rely on it',
+  mentions: 'show traits that mention it',
+  nonStacking: 'show only traits that do not stack',
+} as const satisfies Record<ClickGoal, string>;
 
 /** Every user-facing string lives here so the UI stays i18n-ready (DESIGN § Copy). */
 export const copy = {
@@ -31,6 +45,9 @@ export const copy = {
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a term.',
   noMaterial: 'No material — not artifact-eligible',
+  /** The name of a keyword in a description, a button: what the trait does with it, then what a click shows. */
+  keywordButton: (text: string, role: KeywordRole | undefined, goal: ClickGoal) =>
+    `${role === undefined ? '' : `${keywordRole[role]} `}${text} — ${keywordGoal[goal]}`,
   /** What stands in the creature's place for a trait that has no creature. */
   traitKind: {
     creature: 'Creature trait',

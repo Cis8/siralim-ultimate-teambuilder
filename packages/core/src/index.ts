@@ -80,3 +80,4 @@ export {
   type ParamReader,
 } from './explore/explore-url';
 export { descriptionParts, type DescriptionPart, type TextPiece } from './explore/description-parts';
+export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal } from './explore/keyword-click';

@@ -225,6 +225,14 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each
   part, and joining the pieces gives the description back. The page asks for it only for the rows it draws.
+- **A click on a keyword** of a description (`clickGoal`, `isClickOn`, `clickKeyword`) turns one filter on or off and leaves
+  the query bar alone. A keyword a trait applies leads to the traits that rely on it (`uses:key`), one it relies on to the
+  traits that apply it (`applies:key`): the two are sides of one keyword, so turning one on takes the other off
+  (`applies:vulnerable` becomes `uses:vulnerable`, and the click shows the counterpart, not the traits that are both).
+  A keyword with no side (a trigger, a mechanic, a mention that only `resists`, GAME_RULES R9) is `kw:key`; the flag "does
+  not stack" is `doesNotStack`. A second click on a token whose filter is on turns it off, which leaves the other side as
+  it was. The page then shows the new list from its first trait and moves the focus to the results heading, since the row
+  clicked may be gone.
 - **Sort** is a strategy per key: `book` keeps the order of the dataset (by family, then trait name, since the dataset is
   sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
 

@@ -12,14 +12,15 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1-5.6 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec, `descriptionParts`) and
-  QUERY_LANGUAGE §4 (`queryChips`, `toggleChipNot`, `removeChip`: they return the new query text; ask `queryChips` again after
-  each edit). `web`: `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}`
-  from `loadSearchService()`; components in `lib/components/` (`query-input`, `result-count`, `results-list` → `virtual-list` →
-  `result-row` → `description-text` → `keyword-token` + `marked-text`). Filters and Party still say "Coming soon.".
-  **Next: 5.7**: `keyword-token.svelte` is a plain `span` (`data-kind`, `data-role`) until now: make it the button with the accessible
-  name "Applies Vulnerable — show traits that rely on it" (DESIGN). Still missing in `core` for 5.7/5.8: "is it chosen"
-  (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): do them in 5.7.
+- **Phase 1 · M5 in progress, 5.1-5.7 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec, `descriptionParts`,
+  `clickKeyword` / `isClickOn`: a click on a token toggles one filter of `ExploreState`) and QUERY_LANGUAGE §4 (`queryChips`,
+  `toggleChipNot`, `removeChip`: they return the new query text; ask `queryChips` again after each edit). `web`:
+  `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}` from
+  `loadSearchService()` and gives the list a `KeywordActions` (`lib/keyword-actions.ts`); components in `lib/components/`
+  (`query-input`, `result-count`, `results-list` → `virtual-list` → `result-row` → `description-text` → `keyword-token` (a toggle
+  button) + `marked-text`). Filters and Party still say "Coming soon.", so a keyword filter shows only as pressed tokens.
+  **Next: 5.8**: facet panel (`aria-pressed`; class toggle and the keyword applies/uses toggles are still to write in `core`,
+  `isClickOn`'s way: state in, state out), chip row from `queryChips`, effective query + copy, empty state.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -68,7 +69,8 @@ session (after `CLAUDE.md`), update it before ending one.
   needs its parameters typed (`onchange={(query: string) => …}`), or `no-unsafe-assignment` fires.
 - Changing what the pipeline emits does not change `apps/web/static/data` by itself: run `pnpm pipeline:fetch && pnpm pipeline:build`
   and commit the result (`chore(data)`), or the app keeps showing the old shape (the dataset lacked keywords until M5.6).
-- `playwright test` reuses whatever answers on port 4173: a `vite preview` left running serves the old build. Stop it first.
+- `playwright test` reuses whatever answers on port 4173: a `vite preview` left running serves the old build. Stop it first
+  (on Windows one is often left behind after a run: stop the process that listens on the port).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
 ## Phase 1 — slices
@@ -129,7 +131,13 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
       list is re-read when the body resizes); `descriptionParts` cuts the description into keyword and text parts in `core`
       so `web` does not touch the spans; `resists` is a solid outline and an effect takes the mechanic colour (DESIGN); the
       token is not interactive until 5.7. The dataset on `main` predated M3 (no keywords), so it was regenerated first.
-- [ ] **5.7** Click a keyword → counterpart filter. *e2e:* acceptance criterion 3.
+- [x] **5.7** Click a keyword → counterpart filter. *T:* `keyword-click.test.ts` (table + property tests); e2e: criterion 3 on the
+      real data in both directions (the second by keyboard), pressed state and second click, list restarts from the top with
+      the focus on the results heading, trigger and flag, axe. Deviations: the filter is toggled on and off (as in the
+      prototype), and turning one side of a keyword on takes the other off, or the click on `applies:vulnerable` would show the
+      traits that are both; a keyword with no side is `kw:`; the pressed state is a ring, not a fill (a fill broke the
+      contrast of a match highlight, DESIGN); the class toggle waits for 5.8, its first user. Until the chips of 5.8 the
+      filter is visible only as the pressed tokens.
 - [ ] **5.8** Facet panel (`aria-pressed`), chip row, effective query + copy, empty state.
 - [ ] **5.9** URL sync (replace while typing, push on discrete actions; back/forward). *e2e:* criteria 1 and 4 through the
       UI, reload restores state, axe.
