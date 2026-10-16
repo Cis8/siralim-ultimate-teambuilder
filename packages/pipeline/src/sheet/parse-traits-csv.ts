@@ -5,7 +5,7 @@ const FIELDS = ['class', 'family', 'creature', 'name', 'description', 'material'
 type Field = (typeof FIELDS)[number];
 
 /** The sheet's column names, as written in its header row. */
-const HEADERS: Readonly<Record<Field, string>> = {
+export const COLUMN_HEADERS: Readonly<Record<Field, string>> = {
   class: 'Class',
   family: 'Family',
   creature: 'Creature',
@@ -65,10 +65,10 @@ function findHeader(records: readonly string[][]): { index: number; columns: Col
   }
 
   if (closest.count === 0) {
-    const expected = FIELDS.map((field) => HEADERS[field]).join(', ');
+    const expected = FIELDS.map((field) => COLUMN_HEADERS[field]).join(', ');
     throw new SheetFormatError(`No header row found: expected a row with the columns ${expected}`);
   }
-  const missing = FIELDS.filter((field) => closest.found[field] === undefined).map((field) => HEADERS[field]);
+  const missing = FIELDS.filter((field) => closest.found[field] === undefined).map((field) => COLUMN_HEADERS[field]);
   throw new SheetFormatError(`Header row (row ${closest.index + 1}) is missing the column(s): ${missing.join(', ')}`);
 }
 
@@ -77,7 +77,7 @@ function matchColumns(record: readonly string[]): Partial<ColumnIndex> {
   for (const [column, cell] of record.entries()) {
     const text = normaliseHeader(cell);
     for (const field of FIELDS) {
-      if (found[field] === undefined && normaliseHeader(HEADERS[field]) === text) found[field] = column;
+      if (found[field] === undefined && normaliseHeader(COLUMN_HEADERS[field]) === text) found[field] = column;
     }
   }
   return found;

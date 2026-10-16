@@ -108,8 +108,10 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   deterministically. It must not change when rows are reordered.
   - Slug: lowercase ASCII, accents stripped, apostrophes dropped (`Mother's` → `mothers`), `&` → `and`, any other
     run of characters → one hyphen.
-  - Collisions: rows are ranked by their content (family, name, class, creature, description, material); the first
-    keeps the plain id and the others get `-2`, `-3`, … skipping ids another row owns. v2.0 has no collisions.
+  - Collisions: `assignTraitIds` can make them unique (rows ranked by family, name, class, creature, description,
+    material; the first keeps the plain id, the others get `-2`, `-3`, … skipping ids another row owns), but the
+    pipeline does not use that: a collision makes the build fail (§6), because a suffix depends on how the rows
+    rank and an edit to one description could swap two ids. v2.0 has no collisions.
   - A family or name with nothing left after slugging fails the build.
 - The dataset carries `datasetVersion` (the sheet's "Version x.y") and a content hash.
 - Saved/shared state stores TraitIds plus `datasetVersion`. When an ID is unknown in the current dataset, the UI keeps
@@ -119,8 +121,11 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 
 1. **Fetch** CSV per configured tab (with retry; cache to `.cache/`).
 2. **Locate header** row by column names; read version from the preamble.
-3. **Validate** with a zod schema; fail on missing columns, empty names or duplicate IDs.
-4. **Normalise**: trim, unify quotes/whitespace, map special values (§2).
+3. **Validate** with a zod schema; fail on missing columns, an empty cell in any column (Material Name included: the
+   explicit marker below is the only way to say "no material"), or two rows with the same id. All row problems are
+   reported at once.
+4. **Normalise**: trim, collapse blanks (spaces, tabs, line breaks, non-breaking spaces) to one space, curly quotes to
+   straight ones, map special values (§2).
 5. **Enrich**: kind, stacks, random-debuff flag, mastery condition, keywords + roles, overrides.
 6. **Emit** `traits.<hash>.json` (schema-versioned) and `manifest.json` `{datasetVersion, hash, count, generatedAt}`.
 7. **Report**: counts per class/kind, unknown classes, taxonomy candidates, and a diff against the previous build

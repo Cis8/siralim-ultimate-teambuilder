@@ -12,8 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1 and 2.2 done (ids; `parseTraitsCsv` → `{datasetVersion, rows}` of
-  raw strings). **Next: 2.3** (zod validation + normalisation of those rows into core's `TraitRow`).
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.3 done (ids; `parseTraitsCsv`; `normaliseRows` + `identifyRows`:
+  the real sheet passes, 1,780 unique ids). **Next: 2.4** (base enrichment in `core`: kind, stacks, mastery family
+  and requirement, random-debuff detection; counts must match GAME_RULES).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -54,7 +55,7 @@ app shell with tokens, self-hosted fonts and footer credits.
       deterministic de-duplication; property (fast-check): shuffled rows → same IDs.
 - [x] **2.2** CSV parsing (csv-parse), header located by column names, `datasetVersion` from the preamble.
       *T:* preamble variants, header moved, extra column, missing column → clear error.
-- [ ] **2.3** zod validation + normalisation (trim, curly quotes, double spaces, `No Material Exists` → null).
+- [x] **2.3** zod validation + normalisation (trim, curly quotes, double spaces, `No Material Exists` → null).
       *T:* one per rule; empty name or duplicate ID fails the build.
 - [ ] **2.4** Base enrichment in `core`: `kind` (R7), `stacks`, `masteryFamily` + `partyRequirement` (R3), random-debuff
       detection (R5, before overrides). *T:* table-driven on real rows; counts on the snapshot match GAME_RULES

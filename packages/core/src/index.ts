@@ -6,6 +6,7 @@ export const DATASET_SCHEMA_VERSION = 1;
 
 export { assignTraitIds } from './identity/assign-trait-ids';
 export { slugify } from './identity/slugify';
+export { traitIdBase } from './identity/trait-id-base';
 export type {
   ClassName,
   IdentifiedTraitRow,

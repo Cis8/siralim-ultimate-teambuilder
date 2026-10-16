@@ -1,5 +1,5 @@
 import type { IdentifiedTraitRow, TraitRow } from '../model/trait';
-import { slugify } from './slugify';
+import { traitIdBase } from './trait-id-base';
 
 /**
  * Gives every row a stable id: `<family slug>--<name slug>` (SPEC §5).
@@ -8,10 +8,10 @@ import { slugify } from './slugify';
  * result never depends on the order of `rows`. Suffixes skip ids that another row owns naturally (`Foo 2` is
  * `foo-2`). Rows are returned in input order.
  *
- * @throws if the family or the trait name leaves nothing to build an id from.
+ * @throws if the family or the trait name leaves nothing to build an id from (see `traitIdBase`).
  */
 export function assignTraitIds(rows: readonly TraitRow[]): IdentifiedTraitRow[] {
-  const entries = rows.map((row, index) => ({ row, index, base: baseId(row) }));
+  const entries = rows.map((row, index) => ({ row, index, base: traitIdBase(row) }));
   const taken = new Set(entries.map((entry) => entry.base));
 
   const identified: { index: number; row: TraitRow; id: string }[] = [];
@@ -34,14 +34,6 @@ export function assignTraitIds(rows: readonly TraitRow[]): IdentifiedTraitRow[] 
   }
 
   return identified.toSorted((a, b) => a.index - b.index).map(({ row, id }) => ({ ...row, id }));
-}
-
-function baseId(row: TraitRow): string {
-  const family = slugify(row.family);
-  if (family === '') throw new Error(`Cannot build an id: family "${row.family}" has no letters or digits`);
-  const name = slugify(row.name);
-  if (name === '') throw new Error(`Cannot build an id: trait name "${row.name}" has no letters or digits`);
-  return `${family}--${name}`;
 }
 
 interface Entry {
