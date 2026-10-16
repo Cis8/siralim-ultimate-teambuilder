@@ -64,7 +64,7 @@ Each diagnostic: `{ severity: 'error'|'warning', span, message, fix?: { label, e
 | Unclosed quote | error | Unclosed quote | close it |
 | Unknown field | error | Unknown field “clas:”. Did you mean “class:”? | replace (Levenshtein ≤ max(2, ⌊len/3⌋)) |
 | Empty value | warning | “applies:” has no value yet | — |
-| Role on a non-role keyword | warning | Barrier has no applies/uses role | use `kw:barrier` |
+| Role on a non-role keyword | warning | Timeline has no applies/uses role | use `kw:timeline` |
 | Unknown buff/debuff | error | No buff or debuff called “vulnrable”. Did you mean Vulnerable? | replace |
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
 | Unknown class | error | No class “lif”. Did you mean Life? | replace |

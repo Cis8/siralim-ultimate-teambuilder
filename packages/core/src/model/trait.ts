@@ -47,9 +47,12 @@ export type PartyRequirement =
   | { readonly type: 'familyScoped'; readonly families: readonly string[] }
   | { readonly type: 'none' };
 
+/** What a keyword is. Only buffs and debuffs have a role. */
+export type KeywordKind = 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
+
 export interface KeywordHit {
   readonly key: KeywordKey;
-  readonly kind: 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
+  readonly kind: KeywordKind;
   /** Only for buffs and debuffs. */
   readonly role?: 'applies' | 'uses';
   /** Half-open character range `[start, end)` in the trait description. */

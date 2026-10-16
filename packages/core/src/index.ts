@@ -14,6 +14,7 @@ export type {
   IdentifiedTraitRow,
   KeywordHit,
   KeywordKey,
+  KeywordKind,
   PartyRequirement,
   RandomDebuffSource,
   Trait,
@@ -24,3 +25,15 @@ export type {
 export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
+export type {
+  BuffEntry,
+  DebuffEntry,
+  FlagEntry,
+  MechanicEntry,
+  TaxonomyEntry,
+  TriggerEntry,
+  TriggerPhase,
+} from './taxonomy/entry';
+export { TRIGGER_PHASES } from './taxonomy/entry';
+export { createTaxonomy, TaxonomyError, type Taxonomy } from './taxonomy/registry';
+export { taxonomy } from './taxonomy/taxonomy';

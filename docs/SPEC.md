@@ -85,10 +85,14 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 - **Taxonomy as data** (`packages/core/src/taxonomy/*.ts`): debuffs, buffs, mechanics, triggers, flags — each entry has
   `key`, `label`, `kind`, `patterns` (one or more phrases), for triggers a `phase` (see §8.5), and for debuffs
   `canBeRandomlyApplied` (GAME_RULES R8).
-- **Buffs and debuffs come from canonical lists**, transcribed once with a source note, not classified by hand:
+- **Buffs and debuffs come from canonical lists** (20 debuffs, 18 buffs; Barrier is a buff), transcribed once with a
+  source note, not classified by hand:
   [wiki Buffs](https://siralimultimate.wiki.gg/wiki/Buffs), [wiki Debuffs](https://siralimultimate.wiki.gg/wiki/Debuffs),
   [Codex Reference](https://steamcommunity.com/sharedfiles/filedetails/?id=2197484456). When they disagree with the
-  compendium v2.0, v2.0 wins and the pipeline report lists the discrepancy.
+  compendium v2.0, v2.0 wins and the pipeline report lists the discrepancy: the entry keeps the canonical name in
+  `canonicalName` (the compendium writes "Stoned" for the canonical "Stone").
+- `createTaxonomy` rejects a taxonomy with duplicate keys, a pattern shared by two entries, or patterns that are not
+  plain text, and lists all violations at once.
 - Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
   taxonomy so the lists can grow.
 - **Matching**: case-insensitive, longest match wins, word boundaries for single words.

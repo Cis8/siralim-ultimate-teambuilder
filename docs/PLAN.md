@@ -12,8 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 done** (2026-10-16). **Next: M3, slice 3.1** (canonical buff/debuff lists from the wiki and the Codex
-  Reference, transcribed into the taxonomy registry with a source note).
+- **Phase 1 · M3 in progress** (2026-10-16): 3.1 done (`taxonomy` in core: 20 debuffs, 18 buffs, mechanics, triggers with
+  phase, the no-stack flag; wiki and Codex agree). **Next: 3.2** (matcher with spans). Known false positive to decide there
+  or in 3.4: "weak against" in Master of Unguided matches Weak (statuses are otherwise always capitalised).
 - Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
@@ -67,7 +68,7 @@ the previous build; the nightly `data-refresh.yml` opens a PR when the data chan
 rewritten when the hash is unchanged.
 
 ### M3 Keyword extraction
-- [ ] **3.1** Canonical buff/debuff lists (wiki Buffs/Debuffs, Codex Reference) transcribed into the taxonomy with a source
+- [x] **3.1** Canonical buff/debuff lists (wiki Buffs/Debuffs, Codex Reference) transcribed into the taxonomy with a source
       note; `canBeRandomlyApplied`; mechanics/triggers from the prototypes. Registry validates unique keys/patterns.
       *T:* registry invariants; every canonical debuff is present; Inverted and Mania are not randomly applicable.
 - [ ] **3.2** Matcher: case-insensitive, longest match, word-bounded, with spans. *T:* "start of this creature's turn"
