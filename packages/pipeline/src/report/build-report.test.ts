@@ -1,4 +1,4 @@
-import type { PartyRequirement, Trait } from '@atlas/core';
+import { createTaxonomy, type PartyRequirement, type Trait } from '@atlas/core';
 import { describe, expect, it } from 'vitest';
 import type { BuiltTraits } from '../build/build-traits';
 import { buildReport, type PreviousBuild } from './build-report';
@@ -256,6 +256,75 @@ describe('buildReport', () => {
       expect(report).not.toContain('`m-ok`:');
       expect(report).not.toContain('`m-none`:');
       expect(report).not.toContain('`m-class`:');
+    });
+  });
+
+  describe('taxonomy', () => {
+    const moonbeam = (id: string) => trait(id, { description: 'This creature casts Moonbeam and Frostbolt.' });
+    const traits = [moonbeam('a'), moonbeam('b'), moonbeam('c')];
+    const withKeywords = (list: Trait[]) =>
+      list.map((entry) => ({
+        ...entry,
+        keywords: [{ key: 'weak', kind: 'debuff' as const, span: [0, 1] as const, role: 'uses' as const }],
+      }));
+    const taxonomy = createTaxonomy([
+      { kind: 'debuff', key: 'weak', label: 'Weak', patterns: ['Weak'], canBeRandomlyApplied: true },
+    ]);
+
+    it('lists the capitalised terms no keyword covers, most frequent first', () => {
+      const report = buildReport(build('2.0', [...traits, trait('d', { description: 'Casts Frostbolt.' })]), null, {
+        taxonomy,
+      });
+      expect(report).toContain(
+        [
+          '## Taxonomy',
+          '',
+          '### Candidates',
+          '',
+          'Capitalised terms in at least 3 traits that no keyword covers and nobody has ruled out.',
+          '',
+          '| Term | Traits | Example | Buff or debuff? |',
+          '|---|---|---|---|',
+          '| Frostbolt | 4 | `a` | - |',
+          '| Moonbeam | 3 | `a` | - |',
+        ].join('\n'),
+      );
+    });
+
+    it('flags a term that follows "gains" or "afflicted with"', () => {
+      const gains = ['a', 'b', 'c'].map((id) => trait(id, { description: 'This creature gains Taunted.' }));
+      expect(buildReport(build('2.0', gains), null, { taxonomy })).toContain('| Taunted | 3 | `a` | maybe |');
+    });
+
+    it('leaves out terms that were ruled out', () => {
+      const report = buildReport(build('2.0', traits), null, {
+        taxonomy,
+        ignoredTerms: new Set(['Moonbeam', 'Frostbolt']),
+      });
+      expect(report).not.toContain('### Candidates');
+    });
+
+    it('lists at most 25 candidates and counts the rest', () => {
+      const words = Array.from({ length: 30 }, (_, i) => `W${'a'.repeat(i + 1)}`);
+      const many = ['a', 'b', 'c'].map((id) => trait(id, { description: `Casts ${words.join(', ')}.` }));
+      const report = buildReport(build('2.0', many), null, { taxonomy });
+      expect(report).toContain('- …and 5 more');
+    });
+
+    it('compares with the canonical lists once keywords were extracted', () => {
+      const report = buildReport(build('2.0', withKeywords([trait('a', { description: 'Weak.' })])), null, {
+        taxonomy: createTaxonomy([
+          { kind: 'debuff', key: 'weak', label: 'Weak', patterns: ['Weak'], canBeRandomlyApplied: true },
+          { kind: 'buff', key: 'shelled', label: 'Shelled', patterns: ['Shelled'] },
+        ]),
+      });
+      expect(report).toContain(
+        '### Compared with the canonical lists\n\n- "Shelled" is in the canonical lists, but no trait mentions it.',
+      );
+    });
+
+    it('is left out when there is nothing to say', () => {
+      expect(buildReport(build('2.0', [trait('a')]), null, { taxonomy })).not.toContain('## Taxonomy');
     });
   });
 });

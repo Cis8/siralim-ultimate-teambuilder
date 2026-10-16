@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createFamilyMatcher } from './family-matcher';
+import { createFamilyMatcher, writtenForms } from './family-matcher';
 
 const familiesIn = (families: string[], text: string) =>
   createFamilyMatcher(families)
@@ -58,5 +58,13 @@ describe('createFamilyMatcher', () => {
   it('treats characters with a meaning in patterns as plain text', () => {
     expect(familiesIn(['Dr. Who', 'Mr+Mrs'], 'Your Dr. Whos and Mr+Mrs.')).toEqual(['Dr. Who', 'Mr+Mrs']);
     expect(familiesIn(['Dr. Who'], 'Dr! Who')).toEqual([]);
+  });
+});
+
+describe('writtenForms', () => {
+  it('lists the singular and the regular plurals of a family', () => {
+    expect(writtenForms('Mummy')).toEqual(['Mummy', 'Mummys', 'Mummyes', 'Mummies']);
+    expect(writtenForms('Elf')).toEqual(['Elf', 'Elfs', 'Elfes', 'Elves']);
+    expect(writtenForms('Knife')).toEqual(['Knife', 'Knifes', 'Knifees', 'Knives']);
   });
 });

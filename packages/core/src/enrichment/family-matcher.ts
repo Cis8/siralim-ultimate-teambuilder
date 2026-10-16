@@ -34,8 +34,8 @@ export function createFamilyMatcher(families: Iterable<string>): FamilyMatcher {
   };
 }
 
-/** The singular and the regular plurals: `s`, `es`, `y` → `ies`, `f` / `fe` → `ves`. */
-function writtenForms(family: string): string[] {
+/** The ways the sheet writes a family: the singular and the regular plurals: `s`, `es`, `y` → `ies`, `f` / `fe` → `ves`. */
+export function writtenForms(family: string): string[] {
   const forms = [family, `${family}s`, `${family}es`];
   if (family.endsWith('y')) forms.push(`${family.slice(0, -1)}ies`);
   if (family.endsWith('fe')) forms.push(`${family.slice(0, -2)}ves`);

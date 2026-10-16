@@ -1,6 +1,17 @@
-import { compareText, KNOWN_CLASSES, type PartyRequirement, type Trait, type TraitKind } from '@atlas/core';
+import {
+  compareText,
+  KNOWN_CLASSES,
+  taxonomy as appTaxonomy,
+  type PartyRequirement,
+  type Taxonomy,
+  type Trait,
+  type TraitKind,
+} from '@atlas/core';
 import type { BuiltTraits } from '../build/build-traits';
+import { compareWithCanonicalLists } from './compare-canonical';
 import { diffTraits, type TraitRecord } from './diff-traits';
+import { REVIEWED_NON_KEYWORDS } from './reviewed-non-keywords';
+import { findTaxonomyCandidates } from './taxonomy-candidates';
 
 /** The build the new one is compared with: what was last emitted. */
 export interface PreviousBuild {
@@ -9,19 +20,28 @@ export interface PreviousBuild {
 }
 
 const MAX_LISTED = 50;
+const MAX_CANDIDATES = 25;
+
+export interface ReportOptions {
+  /** The keywords the extractor knows. Defaults to the app's. */
+  readonly taxonomy?: Taxonomy;
+  /** Capitalised terms already looked at and found to be no keyword. Defaults to `REVIEWED_NON_KEYWORDS`. */
+  readonly ignoredTerms?: ReadonlySet<string>;
+}
 
 /**
  * A Markdown report of a build: what changed since the previous one, what the dataset holds, and what needs a look.
  * It becomes the body of the data-refresh pull request, so its text depends on the data and nothing else.
  */
-export function buildReport(current: BuiltTraits, previous: PreviousBuild | null): string {
+export function buildReport(current: BuiltTraits, previous: PreviousBuild | null, options: ReportOptions = {}): string {
   const sections = [
     `# Data report: Siralim Ultimate compendium v${current.datasetVersion}`,
     changesSection(current.traits, previous),
     countsSection(current.traits),
+    taxonomySection(current.traits, options),
     attentionSection(current.traits, current.warnings),
   ];
-  return `${sections.join('\n\n')}\n`;
+  return `${sections.filter((section) => section !== null).join('\n\n')}\n`;
 }
 
 function changesSection(traits: readonly Trait[], previous: PreviousBuild | null): string {
@@ -138,6 +158,41 @@ function randomDebuffs(traits: readonly Trait[]): string | null {
   const conditional = sources.filter((source) => source.activation === 'conditional').length;
   const verb = sources.length === 1 ? 'trait afflicts' : 'traits afflict';
   return `### Random debuffs\n\n${sources.length} ${verb} one: ${enemyOnly} aimed at enemies only, ${conditional} conditional.`;
+}
+
+/** What the taxonomy lacks or owes the canonical lists: material for keywords, not a defect. */
+function taxonomySection(traits: readonly Trait[], options: ReportOptions): string | null {
+  const taxonomy = options.taxonomy ?? appTaxonomy;
+  const candidates = findTaxonomyCandidates(traits, { ignore: options.ignoredTerms ?? REVIEWED_NON_KEYWORDS });
+  const discrepancies = compareWithCanonicalLists(traits, taxonomy);
+
+  const subsections: string[] = [];
+  if (candidates.length > 0) {
+    const rows = candidates
+      .slice(0, MAX_CANDIDATES)
+      .map(
+        ({ term, traits: count, example, afterStatusCue }) =>
+          `| ${term} | ${count} | \`${example}\` | ${afterStatusCue ? 'maybe' : '-'} |`,
+      );
+    if (candidates.length > MAX_CANDIDATES) rows.push(`- …and ${candidates.length - MAX_CANDIDATES} more`);
+    subsections.push(
+      [
+        '### Candidates',
+        '',
+        'Capitalised terms in at least 3 traits that no keyword covers and nobody has ruled out.',
+        '',
+        '| Term | Traits | Example | Buff or debuff? |',
+        '|---|---|---|---|',
+        ...rows,
+      ].join('\n'),
+    );
+  }
+  if (discrepancies.length > 0) {
+    subsections.push(
+      ['### Compared with the canonical lists', '', ...discrepancies.map((line) => `- ${line}`)].join('\n'),
+    );
+  }
+  return subsections.length === 0 ? null : ['## Taxonomy', ...subsections].join('\n\n');
 }
 
 function attentionSection(traits: readonly Trait[], warnings: readonly string[]): string {

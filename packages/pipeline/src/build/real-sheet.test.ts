@@ -2,6 +2,9 @@ import { KNOWN_CLASSES, taxonomy, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
+import { compareWithCanonicalLists } from '../report/compare-canonical';
+import { REVIEWED_NON_KEYWORDS } from '../report/reviewed-non-keywords';
+import { findTaxonomyCandidates } from '../report/taxonomy-candidates';
 import { buildRealSheet } from '../testing/real-build';
 
 // The pinned snapshot of the compendium, v2.0, built with the committed overrides. The counts below are the ones in
@@ -134,6 +137,20 @@ describe('the compendium v2.0 snapshot', () => {
         .map((trait) => trait.name);
       expect(conditional.toSorted()).toEqual(["Flubris's Entrapment", 'Grim Ailment']);
     });
+  });
+
+  it('leaves exactly the taxonomy candidates that are still open', () => {
+    // The list in reviewed-non-keywords.ts says which these are; if the data or the taxonomy changes, review again.
+    const open = findTaxonomyCandidates(traits, { ignore: REVIEWED_NON_KEYWORDS }).map((candidate) => candidate.term);
+    expect(open.toSorted()).toEqual(
+      ['Cascading', 'Charges', 'Dire Wolves', 'Fused', 'Mega Magic', 'Sealed', 'Seals', 'Zombies'].toSorted(),
+    );
+  });
+
+  it('is compared with the canonical lists: only Stone is written another way', () => {
+    expect(compareWithCanonicalLists(traits, taxonomy)).toEqual([
+      'The canonical name "Stone" is written "Stoned" in 14 traits and "Stone" in 2 traits.',
+    ]);
   });
 
   describe('keywords', () => {

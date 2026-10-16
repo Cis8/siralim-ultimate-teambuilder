@@ -12,11 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.5 done: every trait now carries its keywords (2,175 mentions; 272
-  applies / 266 uses), overrides apply, snapshots in `packages/pipeline/snapshots/`. **Next: 3.6** (report of taxonomy
-  candidates and discrepancies with the canonical lists), then 3.7 (hand review of the 30 most frequent keywords).
-  Flesh Rot-style implicit applications ("afflicts them with whichever of these debuffs") name no keyword: an override
-  that adds a mention may be needed in 3.7. The next data-refresh PR will carry the keywords of all 1,780 traits.
+- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.6 done. The report now has a *Taxonomy* section. **Next: 3.7**, the
+  hand review of the roles of the 30 most frequent keywords against their sentences, fixing through `overrides.yaml`.
+  Open for the owner, not blocking: whether to make searchable the Spell Gem properties (Sealed, Seals, Charges,
+  Cascading), Fused, and the stacking effects (Mega Magic, Dire Wolves, Zombies); they are the 8 candidates left in the
+  report. Flesh Rot-style implicit applications name no keyword: an override that adds a mention may be needed.
 - Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
@@ -81,7 +81,7 @@ rewritten when the hash is unchanged.
       keyword must exist, warning on redundant overrides. *T:* schema cases.
 - [x] **3.5** Enrich the dataset with keywords + overrides; snapshot `{traitId, key, role}` one line per hit;
       random-debuff snapshot `{traitId, target, activation}`.
-- [ ] **3.6** Report of taxonomy candidates (frequent capitalised terms not in the taxonomy, names excluded) and
+- [x] **3.6** Report of taxonomy candidates (frequent capitalised terms not in the taxonomy, names excluded) and
       discrepancies with the canonical lists. *T:* fixture.
 - [ ] **3.7** Review the 30 most frequent keywords' roles against their sentences; fix through overrides. Ask the owner
       only about genuinely ambiguous cases.
