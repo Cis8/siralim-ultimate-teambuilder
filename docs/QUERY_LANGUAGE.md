@@ -73,10 +73,14 @@ and unique across the registry; the field name in a query is matched whatever it
 - A mastery has no creature and a trait may have no material: those columns are empty for it, and nothing matches them.
 
 ## 3. Evaluation
-Visitor over the AST against `IndexedTrait` (`indexTrait`): the trait with its columns lower-cased and its keyword keys
-listed by role, worked out once at load time.
+`createTraitIndex(traits)` indexes the dataset once, at load time (`IndexedTrait` per trait: columns lower-cased, keyword keys
+listed by role). `evaluate(ast, index)` returns the matching `Trait`s in the order of the index; an `ast` of `undefined` (a
+query with no term) returns them all. It is a visitor (`visitQuery`, bottom-up; the same dispatch serves highlighting and
+serialising) that turns the tree into one `TraitMatcher`: each term asks the field registry for its matcher once, NOT / AND / OR
+combine them (`every`, `some`, short-circuiting), and the index is filtered with the result. Fields are read from the registry
+passed in, the one of the app by default.
 For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
-bitsets) only if the 16 ms budget is missed.
+bitsets) only if the 16 ms budget is missed: `TraitIndex` is opaque to `evaluate`'s callers, so it can change without them.
 
 ## 4. Highlighting
 Positive free-text and `desc:` terms (not under NOT) are highlighted in descriptions; keyword tokens are always styled by

@@ -42,6 +42,9 @@ export type { FieldDefinition, TraitMatcher } from './query/field';
 export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
 export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
+export { createTraitIndex, type TraitIndex } from './query/trait-index';
+export { evaluate } from './query/evaluate';
+export { visitQuery, type QueryVisitor } from './query/visitor';
 export type {
   BuffEntry,
   DebuffEntry,

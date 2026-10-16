@@ -12,12 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M4 in progress: 4.1 lexer, 4.2 parser and 4.3 field registry done** (`core/src/query/`: `tokenize`, `parseQuery` →
-  `{ast, tokens, diagnostics}`; `fieldRegistry.matcherFor(term)` → `(IndexedTrait) => boolean`, `indexTrait(trait)`; QUERY_LANGUAGE
-  §1, §2). **Next: 4.4** evaluator visitor: a `createTraitIndex(traits)` over `indexTrait`, and `evaluate(ast, index)` that calls
-  `matcherFor` once per `TermNode` (not per trait); `ast === undefined` matches everything. *T:* criteria 1 and 2 against an
-  independent oracle on the snapshot. Criterion 2 "disjoint": `elementasaur--cloudy-constitution` both gives and relies on
-  Vulnerable, so it is in `applies:vulnerable` and `uses:vulnerable` (8 + 6 = 14 results, 13 traits mention it); say so in the test.
+- **Phase 1 · M4 in progress: 4.1-4.4 done** (`core/src/query/`: `tokenize`, `parseQuery` → `{ast, tokens, diagnostics}`,
+  `fieldRegistry`, `createTraitIndex(traits)`, `evaluate(ast, index)` → `Trait[]`, `visitQuery(ast, visitor)` bottom-up fold;
+  QUERY_LANGUAGE §1-§3). Criteria 1 and 2 are tested against an oracle in `pipeline/src/build/query-acceptance.test.ts`.
+  **Next: 4.5** highlight visitor (positive free-text and `desc:` terms, spans never HTML; say in QUERY_LANGUAGE §4 whether a term
+  under two NOTs, `--weak`, is positive) + serialiser built on `visitQuery`. *T:* property `parse(serialise(ast)) ≡ ast` (modulo spans).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works: the dataset on `main` still has no
@@ -89,7 +88,7 @@ has 2,299 mentions: 311 applies, 270 uses, 21 resists.
 - [x] **4.2** Error-tolerant parser → `{ast, tokens, diagnostics}`. *T:* precedence NOT > AND > OR, juxtaposition,
       missing/extra `)`, dangling OR, trailing NOT, empty query; property: never throws on arbitrary input.
 - [x] **4.3** Field registry (QUERY_LANGUAGE §2, aliases; unknown field → free text). *T:* each field, `a:vul`, `mat:none`.
-- [ ] **4.4** Evaluator visitor over a precomputed index. *T:* acceptance criteria 1 and 2 on the snapshot vs an
+- [x] **4.4** Evaluator visitor over a precomputed index. *T:* acceptance criteria 1 and 2 on the snapshot vs an
       independent oracle.
 - [ ] **4.5** Highlight visitor (positive terms only) + serialiser. *T:* property `parse(serialise(ast)) ≡ ast` (modulo spans).
 

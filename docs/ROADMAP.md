@@ -34,7 +34,8 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 
 ### Acceptance criteria
 1. `(vulnerable OR weak) -stack:no` returns exactly the traits mentioning Vulnerable or Weak that stack.
-2. `applies:vulnerable` and `uses:vulnerable` return disjoint role-correct sets for the reviewed keywords.
+2. `applies:vulnerable` and `uses:vulnerable` return role-correct sets for the reviewed keywords: disjoint, but for a trait that
+   gives *and* relies on the same keyword (QUERY_LANGUAGE §2).
 3. Clicking “Vulnerable” in a trait that applies it shows traits that use it, and vice versa.
 4. Class facet is any-of; keyword facets follow the all/any switch; counts update as filters change.
 5. A trait without material cannot be placed in an Artifact slot; the button explains why.
