@@ -16,7 +16,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 - [x] **M1 Scaffold.** pnpm monorepo (`core`, `pipeline`, `web`), TS strict, ESLint (+ import boundaries), Prettier,
       Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, test, build), deploy to GitHub Pages from `main`
       (manual until the compendium authors agree). Framework per ADR-0002 (accepted).
-- [ ] **M2 Pipeline v1.** Fetch Traits tab → validate → normalise → IDs → `traits.<hash>.json` + manifest + report.
+- [x] **M2 Pipeline v1.** Fetch Traits tab → validate → normalise → IDs → `traits.<hash>.json` + manifest + report.
       Pinned real snapshot committed as test fixture. Nightly workflow that opens a PR on change.
 - [ ] **M3 Keyword extraction.** Taxonomy registry, longest-match tokenizer, role heuristic, `overrides.yaml`,
       dataset-wide snapshot test, report of unknown capitalised terms. Review the 30 most frequent keywords' roles by hand.

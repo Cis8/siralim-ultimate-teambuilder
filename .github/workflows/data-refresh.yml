@@ -1,0 +1,83 @@
+name: Data refresh
+
+# Every night: download the compendium, rebuild the dataset and, if it changed, open a pull request whose body is the
+# build report (ADR-0004). A pull request opened with GITHUB_TOKEN does not trigger CI, so this job runs the full check
+# itself (decision D12). Only merged data is ever deployed; the session that starts next reads the report and merges.
+#
+# Needs the repository setting "Allow GitHub Actions to create and approve pull requests"
+# (Settings > Actions > General > Workflow permissions).
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Fetch, build, open a pull request if the data changed
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DATA_DIRECTORY: apps/web/static/data
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm pipeline:fetch
+      - run: pnpm pipeline:build
+
+      - name: Did the data change?
+        id: diff
+        run: |
+          if [ -n "$(git status --porcelain -- "$DATA_DIRECTORY")" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The data is up to date: nothing to do."
+          fi
+
+      - name: Check
+        if: steps.diff.outputs.changed == 'true'
+        run: pnpm check
+
+      - name: Open the pull request
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          version=$(jq -r .datasetVersion "$DATA_DIRECTORY/manifest.json")
+          hash=$(jq -r .hash "$DATA_DIRECTORY/manifest.json")
+          branch="data-refresh/v${version}-${hash}"
+          title="chore(data): compendium v${version} (${hash:0:8})"
+
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "This data is already proposed on $branch."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add "$DATA_DIRECTORY"
+          git commit -m "$title"
+          # The check above already ran; the pre-push hook would only repeat it.
+          git push --no-verify origin "$branch"
+          gh pr create --base main --head "$branch" --title "$title" --body-file packages/pipeline/.cache/report.md
+
+          # Whatever was proposed before is out of date now.
+          stale=$(gh pr list --state open --json number,headRefName \
+            --jq ".[] | select(.headRefName | startswith(\"data-refresh/\")) | select(.headRefName != \"$branch\") | .number")
+          for number in $stale; do
+            gh pr close "$number" --delete-branch --comment "Superseded by $branch."
+          done

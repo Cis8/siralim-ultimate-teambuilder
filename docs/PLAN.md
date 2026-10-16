@@ -12,10 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.7 done (`pnpm pipeline:fetch` / `pipeline:build` work against the
-  live sheet; nothing is committed under `apps/web/static/data/` yet). **Next: 2.8** (`data-refresh.yml`: nightly +
-  manual, runs `pnpm check`, opens a PR when `pipeline:build` changes the output; the PR body is `.cache/report.md`).
-- Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
+- **Phase 1 · M2 done** (2026-10-16). **Next: M3, slice 3.1** (canonical buff/debuff lists from the wiki and the Codex
+  Reference, transcribed into the taxonomy registry with a source note).
+- Owner input pending: (1) permission from the compendium authors → then deploy on push (D2). (2) Settings → Actions →
+  General → "Allow GitHub Actions to create and approve pull requests": off today, so the nightly `data-refresh` cannot
+  open its PR yet; its first PR will carry the whole dataset (nothing is committed under `apps/web/static/data/` yet).
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
 ## Owner decisions (2026-10-16)
@@ -53,23 +54,13 @@ Monorepo, strict TS, ESLint with package-boundary rules (tested in `tools/bounda
 Prettier, Vitest projects, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebKit) + axe, CI, manual Pages deploy,
 app shell with tokens, self-hosted fonts and footer credits.
 
-### M2 Pipeline v1
-- [x] **2.1** `core` model types (SPEC §3) + `slugify` / `assignTraitIds`. *T:* apostrophes, accents, `!`, `&`;
-      deterministic de-duplication; property (fast-check): shuffled rows → same IDs.
-- [x] **2.2** CSV parsing (csv-parse), header located by column names, `datasetVersion` from the preamble.
-      *T:* preamble variants, header moved, extra column, missing column → clear error.
-- [x] **2.3** zod validation + normalisation (trim, curly quotes, double spaces, `No Material Exists` → null).
-      *T:* one per rule; empty name or duplicate ID fails the build.
-- [x] **2.4** Base enrichment in `core`: `kind` (R7), `stacks`, `masteryFamily` + `partyRequirement` (R3), random-debuff
-      detection (R5, before overrides). *T:* table-driven on real rows; counts on the snapshot match GAME_RULES
-      (kinds 1,331/31/156/135/127; requirements 76/2/24/1/52/1).
-- [x] **2.5** Emit `traits.<hash>.json` + `manifest.json` (clock injected). *T:* same input → identical bytes and hash.
-- [x] **2.6** Report (markdown): counts per class and kind, classes outside R7, diff vs previous build.
-      *T:* two small fixture versions.
-- [x] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`. The pinned snapshot
-      (`fixtures/traits-v2.0.csv`) and the counts test (`build/real-sheet.test.ts`, 1,780 unique ids) landed with 2.4.
-      *T:* fetch with an injected `fetch`; the class set of the snapshot.
-- [ ] **2.8** `data-refresh.yml`: nightly + manual; runs `pnpm check`, opens a PR when the output changes.
+### M2 Pipeline v1 — done
+`pnpm pipeline:fetch` (retries, one `SheetSource` per tab) and `pnpm pipeline:build` run parse → clean and validate → ids →
+base enrichment (kind, stacks, R3 requirement, R5 random debuff) → dataset + manifest + Markdown report with a diff against
+the previous build; the nightly `data-refresh.yml` opens a PR when the data changes. Real v2.0: 1,780 traits, 704 KB
+(~100 KB gzip). Deviations: an id collision fails the build instead of getting a suffix (SPEC §5/§6); the pinned snapshot
+(`pipeline/fixtures/traits-v2.0.csv`) and the GAME_RULES counts test (`build/real-sheet.test.ts`) landed with 2.4; nothing is
+rewritten when the hash is unchanged.
 
 ### M3 Keyword extraction
 - [ ] **3.1** Canonical buff/debuff lists (wiki Buffs/Debuffs, Codex Reference) transcribed into the taxonomy with a source
