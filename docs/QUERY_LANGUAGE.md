@@ -27,7 +27,16 @@ field    = letter , { letter } ;
   `--weak`, a lone `-`), never inside a word (`well-known`); a field is ASCII letters followed by a colon, and its value
   follows with no blank in between (`applies: weak` is `applies:` with no value, then `weak`); an unclosed quote runs to
   the end of the text, parentheses included. Letter case is kept as written; the field registry and the evaluator fold it.
-- **The parser never throws.** It returns `{ ast, tokens, diagnostics }`; every token and node carries its source span.
+- **The parser never throws** (`parseQuery`). It returns `{ ast, tokens, diagnostics }`; every token and node carries its
+  source span. `ast` is `undefined` for a query with no term, which matches everything. A node's span is the text it was
+  read from, its parentheses included (`(weak)` spans six characters, its `term` token four).
+- **Repairs.** What does not make a query is reported and read as if it were not there, so the tree is the one of the query
+  with the reported text removed (which is also what the Phase 2 fixes will do): a `)` that closes nothing is skipped; a
+  `(` left open is closed at the end; an `AND`/`OR` without a term on both sides, a `NOT` with nothing to negate and `()`
+  are dropped. No term is ever dropped. Juxtaposition and `AND` build one n-ary node per chain; a group written inside a
+  group of the same kind stays a node of its own (`a OR (b OR c)`).
+- **Nesting** of `(` and `NOT` is limited to `MAX_NESTING` (32), so that any text, a pasted `?q=` included, gives a tree
+  the visitors can recurse over. Past it, the `(` or `NOT` is dropped and reported; its `)` is then reported too.
 
 ## 2. Fields
 
@@ -57,16 +66,20 @@ bitsets) only if the 16 ms budget is missed.
 Positive free-text and `desc:` terms (not under NOT) are highlighted in descriptions; keyword tokens are always styled by
 kind and role (DESIGN § Keyword tokens). Highlight computation is a Visitor that returns spans, never HTML.
 
-## 5. Diagnostics (Phase 2)
-Each diagnostic: `{ severity: 'error'|'warning', span, message, fix?: { label, edit: TextEdit } }`. Lint rules are a registry.
+## 5. Diagnostics (syntax: Phase 1, the rest: Phase 2)
+The parser already returns the syntax diagnostics (the first seven rows), as `{ code, severity: 'error', span,
+message }` with the `message` of the table, the operator as written in it. Phase 2 adds `fix?: { label, edit: TextEdit }`, the
+`warning` severity and the other rows, as a registry of lint rules. One diagnostic per unclosed `(`, where it was opened.
 
 | Rule | Severity | Message | Fix |
 |---|---|---|---|
 | Unmatched `)` | error | Unmatched “)” | remove it |
-| Unclosed `(` | error | N unclosed “(” | append `)` × N |
+| Unclosed `(` | error | Unclosed “(” | append `)` |
 | Dangling `AND`/`OR` | error | “OR” needs a term on both sides | remove operator |
 | `NOT` without operand | error | “NOT” needs a term after it | remove |
 | Unclosed quote | error | Unclosed quote | close it |
+| Empty `()` | error | Nothing between “(” and “)” | remove it |
+| Nesting past the limit | error | Nested too deeply: “(” is ignored | remove it |
 | Unknown field | error | Unknown field “clas:”. Did you mean “class:”? | replace (Levenshtein ≤ max(2, ⌊len/3⌋)) |
 | Empty value | warning | “applies:” has no value yet | — |
 | Role on a non-role keyword | warning | Timeline has no applies/uses role | use `kw:timeline` |

@@ -12,9 +12,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M4 in progress: 4.1 lexer done** (`core/src/query/`: `tokenize`, `Token`, `Span`). **Next: 4.2** error-tolerant
-  parser → `{ast, tokens, diagnostics}` (QUERY_LANGUAGE §1; the lexer's choices are listed there). The parser must not throw
-  on any token sequence; a `term` token's `text` is what an unknown field falls back to as free text (4.3).
+- **Phase 1 · M4 in progress: 4.1 lexer and 4.2 parser done** (`core/src/query/`: `tokenize`, `parseQuery` → `{ast, tokens,
+  diagnostics}`; nodes `term | not | and | or`, QUERY_LANGUAGE §1 and §5). **Next: 4.3** field registry. A `TermNode` holds its
+  `TermToken`: `term.field?.name` as written (fold the case, resolve aliases), `term.value` (quotes stripped), `term.text` (what an
+  unknown field falls back to as free text); `quote: 'unclosed'` is already a parser diagnostic, not the registry's concern.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works: the dataset on `main` still has no
@@ -42,8 +43,8 @@ session (after `CLAUDE.md`), update it before ending one.
   `$lib` is gone (use relative imports or `#lib/*` subpath imports).
 - `ssr.noExternal: ['cookie']` in the Vite config: without it the prerender step cannot resolve `cookie` under pnpm.
 - Internal links need `resolve()` from `$app/paths`; external links use `lib/components/external-link.svelte`.
-- The RTK hook compacts command output: vitest prints nothing useful through it. Use `rtk proxy <command>` for the
-  raw output.
+- The RTK hook compacts command output: vitest prints nothing useful through it, and `cat` of a long file can drop lines
+  (a test file seemed to lack its `vitest` import). Use `rtk proxy <command>` for the raw output, or Read.
 - A data-refresh PR shows a `pull_request` CI run with conclusion failure, no jobs and no log (opened by the bot). Ignore
   it; judge `main` with `gh run list --branch main`.
 - pnpm in CI fails on unapproved dependency build scripts (`ERR_PNPM_IGNORED_BUILDS`), locally it only warns:
@@ -83,7 +84,7 @@ has 2,299 mentions: 311 applies, 270 uses, 21 resists.
 
 ### M4 Query core (TDD)
 - [x] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
-- [ ] **4.2** Error-tolerant parser → `{ast, tokens, diagnostics}`. *T:* precedence NOT > AND > OR, juxtaposition,
+- [x] **4.2** Error-tolerant parser → `{ast, tokens, diagnostics}`. *T:* precedence NOT > AND > OR, juxtaposition,
       missing/extra `)`, dangling OR, trailing NOT, empty query; property: never throws on arbitrary input.
 - [ ] **4.3** Field registry (QUERY_LANGUAGE §2, aliases; unknown field → free text). *T:* each field, `a:vul`, `mat:none`.
 - [ ] **4.4** Evaluator visitor over a precomputed index. *T:* acceptance criteria 1 and 2 on the snapshot vs an

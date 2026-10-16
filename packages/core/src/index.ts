@@ -33,6 +33,9 @@ export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
 export { tokenize } from './query/lexer';
+export { parseQuery, type ParseResult } from './query/parser';
+export type { AndNode, NotNode, OrNode, QueryNode, TermNode } from './query/ast';
+export type { QueryDiagnostic, SyntaxDiagnosticCode } from './query/diagnostic';
 export type { Span } from './query/span';
 export type { FieldName, SymbolToken, TermToken, Token } from './query/token';
 export type {
