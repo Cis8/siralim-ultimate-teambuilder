@@ -68,6 +68,18 @@ describe('createTaxonomy', () => {
     it('refuses a pattern repeated inside one entry', () => {
       expect(violations([debuff('stoned', ['Stoned', 'stoned'])])).toMatch(/"stoned" lists the pattern "stoned" twice/);
     });
+
+    // A query finds a keyword by the start of its key, and so does the filter of a facet, which is a query: `applies:seal`
+    // would find both, and the one could never be asked for alone.
+    it('refuses a key that is the start of another', () => {
+      expect(violations([debuff('sealed', ['Sealed']), buff('seal', ['Seal'])])).toMatch(
+        /key "seal" is the start of key "sealed"/,
+      );
+    });
+
+    it('accepts keys that only share their first words', () => {
+      expect(createTaxonomy([trigger('start of battle'), trigger('start of turn')]).entries).toHaveLength(2);
+    });
   });
 
   describe('refusing entries that could never match', () => {

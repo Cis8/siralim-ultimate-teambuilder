@@ -17,13 +17,19 @@ export interface Taxonomy {
 }
 
 /**
- * Checks the entries and wraps them: keys are unique and lower case, every entry has a label and plain-text
- * patterns, and no pattern names two entries. Adding a keyword is adding an entry; nothing else changes.
+ * Checks the entries and wraps them: keys are unique, lower case and none the start of another (a query finds a keyword
+ * by the start of its key), every entry has a label and plain-text patterns, and no pattern names two entries. Adding a
+ * keyword is adding an entry; nothing else changes.
  *
  * @throws TaxonomyError listing every violation.
  */
 export function createTaxonomy(entries: readonly TaxonomyEntry[]): Taxonomy {
-  const violations = [...keyViolations(entries), ...entryViolations(entries), ...patternViolations(entries)];
+  const violations = [
+    ...keyViolations(entries),
+    ...keyPrefixViolations(entries),
+    ...entryViolations(entries),
+    ...patternViolations(entries),
+  ];
   if (violations.length > 0) {
     throw new TaxonomyError(`The taxonomy is not valid:\n- ${violations.join('\n- ')}`);
   }
@@ -41,6 +47,18 @@ function keyViolations(entries: readonly TaxonomyEntry[]): string[] {
   const counts = new Map<string, number>();
   for (const { key } of entries) counts.set(key, (counts.get(key) ?? 0) + 1);
   return [...counts].filter(([, count]) => count > 1).map(([key, count]) => `key "${key}" is used by ${count} entries`);
+}
+
+function keyPrefixViolations(entries: readonly TaxonomyEntry[]): string[] {
+  const keys = [...new Set(entries.map(({ key }) => key))];
+  return keys.flatMap((key) =>
+    keys
+      .filter((other) => other !== key && other.startsWith(key))
+      .map(
+        (other) =>
+          `key "${key}" is the start of key "${other}": queries find a keyword by the start of its key, so they could not tell them apart`,
+      ),
+  );
 }
 
 function entryViolations(entries: readonly TaxonomyEntry[]): string[] {

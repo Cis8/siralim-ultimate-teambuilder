@@ -16,7 +16,7 @@ export interface KeywordFilter {
 export const KEYWORD_MODES = ['all', 'any'] as const;
 export type KeywordMode = (typeof KEYWORD_MODES)[number];
 
-/** `book` is the order of the compendium, which is the order of the dataset. */
+/** `book` is the order of the dataset: by family, then trait name (SPEC §6), not the order of the rows of the sheet. */
 export const SORT_KEYS = ['book', 'class', 'az'] as const;
 export type SortKey = (typeof SORT_KEYS)[number];
 

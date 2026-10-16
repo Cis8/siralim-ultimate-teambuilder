@@ -79,7 +79,8 @@ listed by role). `evaluate(ast, index)` returns the matching `Trait`s in the ord
 query with no term) returns them all. It is a visitor (`visitQuery`, bottom-up; the same dispatch serves highlighting and
 serialising) that turns the tree into one `TraitMatcher`: each term asks the field registry for its matcher once, NOT / AND / OR
 combine them (`every`, `some`, short-circuiting), and the index is filtered with the result. Fields are read from the registry
-passed in, the one of the app by default.
+passed in, the one of the app by default. `compileQuery(ast)` is that test on its own, for a caller that asks it of more than
+one set of traits (the Explore facets count the traits twice, with and without the class filter).
 For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
 bitsets) only if the 16 ms budget is missed: `TraitIndex` is opaque to `evaluate`'s callers, so it can change without them.
 
@@ -98,7 +99,7 @@ they are always styled by kind and role (DESIGN § Keyword tokens), from the spa
   result has one `<mark>` where two terms meet. They are positions in the text as it is (lower-casing it first would move
   them: the lower case of "İ" is two characters).
 
-**Writing back.** `serialise(ast)` is the canonical text of a query, the inverse of `parseQuery` on the meaning:
+**Writing back.** `serialiseTerm(field, value)` writes one term, which the Explore filters use to write theirs; `serialise(ast)` is the canonical text of a query, the inverse of `parseQuery` on the meaning:
 reading it gives the tree it was written from, spans aside (a property test on any text and on any tree). `-` for NOT, a
 space for AND, ` OR `, and parentheses only where the tree needs them: around an `or` in an `and`, around a group in a
 group of its own kind (that is a node of its own, §1), around an `and` or `or` under a NOT; `a OR b c` needs none. A term

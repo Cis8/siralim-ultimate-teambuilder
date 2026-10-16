@@ -97,8 +97,9 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   to letter case, and an effect can name its active forms ("Seals"): written that way the trait is the one doing it
   (`applies`); "that Spell Gem is Sealed" is also given, "for each Sealed Spell Gem" relied on, "cannot be Sealed" guarded
   against. Charges, Cascading (Spell Gem properties) and Fused are plain mechanics, without a role.
-- `createTaxonomy` rejects a taxonomy with duplicate keys, a pattern shared by two entries, or patterns that are not
-  plain text, and lists all violations at once.
+- `createTaxonomy` rejects a taxonomy with duplicate keys, a key that is the start of another (a query finds a keyword by
+  the start of its key, so the two could not be told apart: `applies:seal` would find `sealed` too), a pattern shared by
+  two entries, or patterns that are not plain text, and lists all violations at once.
 - Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
   taxonomy so the lists can grow.
 - **Matching**: whole words, longest match wins. Phrases, mechanics and triggers ignore letter case; buffs and debuffs
@@ -190,8 +191,8 @@ state, so that state has no parameter at all, and reads any address: what is mis
 value. `q` is the query bar exactly as typed. `class` and `kw` are comma-separated lists in the order chosen, lower case,
 trimmed and without repeats; a comma inside an item is written `%2C` and a percent sign `%25`. A `kw` item is a letter and a
 key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
-nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (compendium order,
-default), `class` or `az`. The party and the tab live in other parameters that the search codec leaves alone.
+nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
+dataset: by family, then trait name; default), `class` (class, then family) or `az` (trait name). The party and the tab live in other parameters that the search codec leaves alone.
 
 The URL is the source of truth; local storage keeps only conveniences (recent searches, saved searches, last party).
 
@@ -202,6 +203,24 @@ Query bar (QUERY_LANGUAGE), facets (class: any-of; keywords: per keyword "applie
 triggers; mechanics; flags: artifact-eligible, does-not-stack), result list with keyword tokens styled by kind and role,
 match highlighting, and click-a-keyword → counterpart jump (applies ↔ uses). Facet counts reflect the current results
 (class counts ignore the class filter itself). An "effective query" line shows the full query the UI state stands for.
+
+`SearchService.search(state)` gives, for an `ExploreState`, the traits in the order of the sort, the effective query and the
+facets (`Facets`); any state can be searched, since the parser repairs the query bar and a name nobody has finds nothing.
+- **The filters are a query.** `filterQuery` writes the class, keyword and flag filters as text of the query language and
+  the search runs that very text, so the effective query is not a description of the filters but what they are: the filters
+  as `class:… (applies:… OR uses:…) mat:yes stack:no`, then the query bar (an OR of its own in parentheses). Typed in the
+  query bar, it finds the same traits (tested on the real sheet).
+- **Classes** are any-of, written `(class:life OR class:nature)`. `class:` looks for a name inside the class, so
+  `class:boss` would find Nether Boss too: a chosen class is written with the classes whose name contains it left out,
+  `class:boss -class:"nether boss"`.
+- **Keywords** are `applies:`, `uses:` or `kw:` terms, joined by AND (match all) or OR (match any). They use the key prefix of
+  those fields, which the taxonomy keeps exact (no key is the start of another).
+- **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
+  empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
+  (`kw:`); a trigger or a mechanic has `mentions` only. The facets list the classes of the dataset from A to Z, and the
+  buffs, debuffs, effects, triggers and mechanics of the taxonomy, with the counts they have, 0 included.
+- **Sort** is a strategy per key: `book` keeps the order of the dataset (by family, then trait name, since the dataset is
+  sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
 
 ### 8.2 Party planner (Phase 1)
 6 × 3 slots (GAME_RULES R1), a target slot that results fill, slot validation with a reason, basic coverage

@@ -12,12 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1 and 5.2 done.** `core`: `createSearchService(repository)` → `search(text)`; `ExploreState` +
-  `decodeExploreState(params)` / `encodeExploreState(state)` (SPEC §7; `ParamReader` is what `URLSearchParams` already is;
-  `EXPLORE_PARAMS` lists what the codec owns, for the page that shares its address with the party). `web`:
-  `loadSearchService()` in `lib/composition-root.ts`. **Next: 5.3** facets, effective query, sort strategies in `core`.
-  Watch out: the class facet is exact, but `class:boss` is a substring and also finds the 105 "Nether Boss" traits, so
-  the effective query must pin it (or say it differs): decide and test it. Classes in the state are lower case.
+- **Phase 1 · M5 in progress, 5.1-5.3 done.** `core`: `createSearchService(repository)` → `search(state: ExploreState)` gives
+  `{query, traits (sorted), highlight, effectiveQuery, facets}` (SPEC §8.1: the filters are a query; ~0.5 ms on v2.0).
+  `facets.classes` = `{name, count}` A-Z; `facets.keywords` = `{key, label, kind, applies, uses, mentions}` by
+  `FACET_KEYWORD_KINDS`. `decodeExploreState` / `encodeExploreState` (SPEC §7; `EXPLORE_PARAMS` lists what the codec owns, for
+  the page that shares its address with the party). `web`: `loadSearchService()` in `lib/composition-root.ts`.
+  **Next: 5.4** chip operations on the query text, in `core`. Still missing in `core` for 5.7/5.8: "is it chosen"
+  (`aria-pressed`) and the state transitions (toggle a class, toggle a keyword filter, counterpart jump): add them with 5.7.
+  The sort `book` is the order of the dataset (family, then trait name): label it that way in the UI, not "Compendium order".
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -52,6 +54,11 @@ session (after `CLAUDE.md`), update it before ending one.
   `allowBuilds` in `pnpm-workspace.yaml` must list every package that has one.
 - Pipeline scripts run with `tsx` (the sources use extensionless imports, which plain Node cannot load).
 - Prettier skips Markdown on purpose (hand-wrapped prose, tables).
+- Windows clone: `.gitattributes` makes every checkout LF. Git for Windows sets `core.autocrlf=true`, which gave a CRLF tree
+  where `.editorconfig`, Prettier and so `pnpm check` (the pre-push hook) failed on every file. Node 24 is not the default
+  there: `fnm install 24`, put `%APPDATA%nm
+ode-versions<v24>installation` on PATH, `corepack prepare pnpm@12.14.0
+  --activate`. `gh` may be missing: read CI from `https://api.github.com/repos/Cis8/siralim-ultimate-teambuilder/actions/runs?branch=main&per_page=3`.
 - `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
   data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
   `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
@@ -96,8 +103,10 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
 ### M5 Explore UI
 - [x] **5.1** `TraitRepository` port (core) + static JSON adapter + fixture adapter; composition root; `SearchService`.
 - [x] **5.2** `ExploreState` + URL codec (`q, class, kw, mode, mat, stack, sort`). *T:* property round-trip; bad params ignored.
-- [ ] **5.3** Facets: class counts ignore the class filter, applies/uses counts, all/any, flags, effective query, sort
-      strategies. *T:* acceptance criterion 4.
+- [x] **5.3** Facets: class counts ignore the class filter, applies/uses counts, all/any, flags, effective query, sort
+      strategies. *T:* acceptance criterion 4 (`pipeline/src/build/explore-acceptance.test.ts`). Deviations: the filters
+      are written as a query and the search runs that text (`class:boss -class:"nether boss"`); `createTaxonomy` refuses a
+      key that is the start of another; `search` takes the whole `ExploreState`.
 - [ ] **5.4** Chip operations on the query text (toggle NOT, remove term + adjacent operator). *T:* table cases.
 - [ ] **5.5** Layout (3 columns, wrapping), query input, result count in `aria-live`.
 - [ ] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights.

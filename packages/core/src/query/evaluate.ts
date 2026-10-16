@@ -14,15 +14,22 @@ const compiler = (registry: FieldRegistry): QueryVisitor<TraitMatcher> => ({
   or: (_node, operands) => (trait) => operands.some((operand) => operand(trait)),
 });
 
+const matchEveryTrait: TraitMatcher = () => true;
+
 /**
- * The traits the query finds, in the order of the index. A query with no term (`ast` is `undefined`) finds them all.
- * The fields are read from `registry`, which is the one of the app unless a test brings its own.
+ * The test a query is on one trait: what `evaluate` runs on the index, for a caller that asks it of more than one set of
+ * traits. A query with no term (`ast` is `undefined`) accepts every trait. The fields are read from `registry`, which is
+ * the one of the app unless a test brings its own.
  */
+export function compileQuery(ast: QueryNode | undefined, registry: FieldRegistry = fieldRegistry): TraitMatcher {
+  return ast === undefined ? matchEveryTrait : visitQuery(ast, compiler(registry));
+}
+
+/** The traits the query finds, in the order of the index. A query with no term finds them all. */
 export function evaluate(
   ast: QueryNode | undefined,
   index: TraitIndex,
   registry: FieldRegistry = fieldRegistry,
 ): readonly Trait[] {
-  const entries = ast === undefined ? index.entries : index.entries.filter(visitQuery(ast, compiler(registry)));
-  return entries.map(({ trait }) => trait);
+  return index.entries.filter(compileQuery(ast, registry)).map(({ trait }) => trait);
 }

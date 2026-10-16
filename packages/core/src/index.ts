@@ -69,6 +69,8 @@ export {
   type KeywordMode,
   type SortKey,
 } from './explore/explore-state';
+export { FACET_KEYWORD_KINDS } from './explore/facets';
+export type { ClassFacet, FacetKeywordKind, Facets, KeywordFacet } from './explore/facets';
 export {
   decodeExploreState,
   encodeExploreState,

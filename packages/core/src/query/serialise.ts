@@ -32,12 +32,17 @@ export function serialise(ast: QueryNode | undefined): string {
   return ast === undefined ? '' : visitQuery(ast, writer).text;
 }
 
-/** Quotes the value unless the lexer reads the text as one term with that field and value: `and`, `-x`, `a:b`, `()`. */
-function writeTerm({ term }: TermNode): string {
-  const prefix = term.field === undefined ? '' : `${term.field.name}:`;
-  const plain = `${prefix}${term.value}`;
+const writeTerm = ({ term }: TermNode): string => serialiseTerm(term.field?.name, term.value);
+
+/**
+ * One term as text: the field if there is one, then the value, in quotes unless the lexer reads the text as one term
+ * with that field and value (not so for `and`, `-x`, `a:b`, `()`, or a value of several words). The value holds no
+ * double quote, since no term can.
+ */
+export function serialiseTerm(field: string | undefined, value: string): string {
+  const prefix = field === undefined ? '' : `${field}:`;
+  const plain = `${prefix}${value}`;
   const [only, ...others] = tokenize(plain);
-  const readsBack =
-    only?.kind === 'term' && others.length === 0 && only.value === term.value && only.field?.name === term.field?.name;
-  return readsBack ? plain : `${prefix}"${term.value}"`;
+  const readsBack = only?.kind === 'term' && others.length === 0 && only.value === value && only.field?.name === field;
+  return readsBack ? plain : `${prefix}"${value}"`;
 }

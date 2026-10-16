@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import type { QueryNode, TermNode } from './ast';
 import { parseQuery } from './parser';
-import { serialise } from './serialise';
+import { serialise, serialiseTerm } from './serialise';
 
 const astOf = (source: string): QueryNode | undefined => parseQuery(source).ast;
 const canonical = (source: string): string => serialise(astOf(source));
@@ -254,5 +254,31 @@ describe('serialise', () => {
         }),
       );
     });
+  });
+});
+
+describe('serialiseTerm', () => {
+  it('writes a field and a value the way a query reads them back', () => {
+    expect(serialiseTerm('class', 'life')).toBe('class:life');
+    expect(serialiseTerm(undefined, 'weak')).toBe('weak');
+  });
+
+  it('quotes a value the lexer would not read as one', () => {
+    expect(serialiseTerm('class', 'nether boss')).toBe('class:"nether boss"');
+    expect(serialiseTerm('kw', "start of this creature's turn")).toBe('kw:"start of this creature\'s turn"');
+    expect(serialiseTerm('kw', 'a(b)')).toBe('kw:"a(b)"');
+    expect(serialiseTerm(undefined, 'and')).toBe('"and"');
+    expect(serialiseTerm(undefined, '-weak')).toBe('"-weak"');
+  });
+
+  it('writes what serialise writes for the same term', () => {
+    for (const [field, value] of [
+      ['applies', 'vulnerable'],
+      ['class', 'rodian master'],
+      [undefined, 'or'],
+    ] as const) {
+      const text = field === undefined ? `"${value}"` : `${field}:"${value}"`;
+      expect(serialiseTerm(field, value), text).toBe(canonical(text));
+    }
   });
 });

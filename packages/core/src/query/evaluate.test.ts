@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KeywordRole, Trait } from '../model/trait';
-import { evaluate } from './evaluate';
+import { compileQuery, evaluate } from './evaluate';
 import { createFieldRegistry } from './field-registry';
 import type { TraitMatcher } from './field';
 import { parseQuery } from './parser';
@@ -136,5 +136,25 @@ describe('evaluate', () => {
         'weak-no-stack',
       ]);
     });
+  });
+});
+
+describe('compileQuery', () => {
+  const compiled = (query: string, registry?: Parameters<typeof compileQuery>[1]) =>
+    index.entries.filter(compileQuery(parseQuery(query).ast, registry)).map(({ trait: each }) => each.id);
+
+  it('is the test evaluate runs on every trait', () => {
+    for (const query of ['weak', 'weak -stack:no', '(vulnerable OR weak) -stack:no', '-(weak OR vulnerable)']) {
+      expect(compiled(query), query).toEqual(found(query));
+    }
+  });
+
+  it('accepts every trait for a query with no term', () => {
+    expect(compiled('')).toEqual(traits.map((each) => each.id));
+  });
+
+  it('reads the fields from the registry it is given', () => {
+    const registry = createFieldRegistry([], () => () => false);
+    expect(compiled('weak', registry)).toEqual([]);
   });
 });

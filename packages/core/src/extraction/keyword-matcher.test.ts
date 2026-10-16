@@ -130,13 +130,13 @@ describe('createKeywordMatcher', () => {
     it('prefers the longer phrase when one contains the other', () => {
       const overlapping = createKeywordMatcher(
         createTaxonomy([
-          { kind: 'mechanic', key: 'spell', label: 'Spell', patterns: ['spell'] },
+          { kind: 'mechanic', key: 'spellcasting', label: 'Spell', patterns: ['spell'] },
           { kind: 'mechanic', key: 'spell gems', label: 'Spell Gems', patterns: ['spell gems'] },
         ]),
       );
       expect(overlapping.match('Seal spell gems and a spell.').map((match) => match.key)).toEqual([
         'spell gems',
-        'spell',
+        'spellcasting',
       ]);
     });
 
