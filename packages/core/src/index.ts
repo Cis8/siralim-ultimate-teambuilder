@@ -38,6 +38,10 @@ export type { AndNode, NotNode, OrNode, QueryNode, TermNode } from './query/ast'
 export type { QueryDiagnostic, SyntaxDiagnosticCode } from './query/diagnostic';
 export type { Span } from './query/span';
 export type { FieldName, SymbolToken, TermToken, Token } from './query/token';
+export type { FieldDefinition, TraitMatcher } from './query/field';
+export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
+export { fieldRegistry } from './query/fields';
+export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
 export type {
   BuffEntry,
   DebuffEntry,

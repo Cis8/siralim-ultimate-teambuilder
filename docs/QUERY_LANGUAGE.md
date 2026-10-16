@@ -54,11 +54,27 @@ field    = letter , { letter } ;
 | `mat:` | `yes` = has material (artifact-eligible), `no`/`none` = no material | exact |
 | `stack:` | `yes` = stacks, `no` = "does not stack" | exact |
 
-Fields are a **registry** (`FieldDefinition { name, aliases, match(trait, value), suggestValues?(prefix), describe(value) }`).
-An unknown field makes the whole token a free-text term (and a diagnostic in Phase 2).
+Fields are a **registry** (`createFieldRegistry`; the fields of the app are in `query/fields.ts`). Phase 1 gives a
+`FieldDefinition` `{ name, aliases, matcher(value) }`; Phase 2 adds `suggestValues?(prefix)` and `describe(value)`. `matcher`
+is asked once per term, with the value lower-cased, and returns the test to run on each trait, so a field parses its value
+(`yes`, `no`) once, not once per trait. Names and aliases are lower-case ASCII letters (what the lexer reads before a colon)
+and unique across the registry; the field name in a query is matched whatever its letter case.
+- **No field, or an unknown one.** A word with no field is looked for in the six columns of the table, one at a time, so a
+  phrase never runs from the end of a column into the start of the next. An unknown field makes the whole token a free-text
+  term: `clas:life` looks for the text `clas:life`, quotes stripped (and a diagnostic in Phase 2).
+- **No value yet.** `applies:`, `class:""` and `""` match every trait: a term that asks for nothing does not empty the
+  results while the query is being typed (Phase 2 warns about it).
+- **Exact fields.** `mat:` and `stack:` take the values of the table and nothing else; any other value (`mat:maybe`)
+  matches no trait (Phase 2 reports it as an error).
+- **Keyword fields** compare the value with the start of the key (`a:dire` finds Dire Wolves; `a:wolves` does not).
+  `applies:` and `uses:` read only the mentions of that role: a mention that `resists` is in neither (R9), and a
+  conditional source (R10) is `uses`, not `applies`, so the two roles stay apart. A trait can be in both when it gives
+  *and* relies on the same keyword (Cloudy Constitution: "always has Vulnerable … creatures with Vulnerable gain").
+- A mastery has no creature and a trait may have no material: those columns are empty for it, and nothing matches them.
 
 ## 3. Evaluation
-Visitor over the AST against `Trait`. Precompute per trait a lower-cased haystack and keyword key sets at load time.
+Visitor over the AST against `IndexedTrait` (`indexTrait`): the trait with its columns lower-cased and its keyword keys
+listed by role, worked out once at load time.
 For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
 bitsets) only if the 16 ms budget is missed.
 
