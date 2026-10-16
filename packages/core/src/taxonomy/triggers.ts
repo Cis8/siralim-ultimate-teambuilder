@@ -5,7 +5,7 @@ import { trigger } from './entries';
  * phrases are the ones the compendium writes: "start of battle" is not "start of this creature's turn".
  */
 export const triggers = [
-  trigger('start of battle', 'Start of battle', 'startOfBattle'),
+  trigger('start of battle', 'Start of battle', 'startOfBattle', ['start battles']),
   trigger("start of this creature's turn", 'Start of own turn', 'startOfTurn'),
   trigger("this creature's attacks", 'On attack (passive)', 'attacking'),
   trigger('when this creature attacks', 'When attacking', 'attacking'),

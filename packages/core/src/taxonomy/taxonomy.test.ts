@@ -82,7 +82,7 @@ describe('the taxonomy', () => {
     });
 
     it('tell the start of battle from the start of the creature’s own turn', () => {
-      expect(taxonomy.get('start of battle')?.patterns).toContain('start of battle');
+      expect(taxonomy.get('start of battle')?.patterns).toEqual(['start of battle', 'start battles']);
       expect(taxonomy.get("start of this creature's turn")).toMatchObject({ kind: 'trigger', phase: 'startOfTurn' });
     });
 

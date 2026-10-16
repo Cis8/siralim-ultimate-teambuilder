@@ -4,6 +4,7 @@
  */
 export const DATASET_SCHEMA_VERSION = 1;
 
+export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
 export { enrichTraits } from './enrichment/enrich-traits';
 export { CREATURE_CLASSES, KNOWN_CLASSES } from './enrichment/trait-kind';
 export { assignTraitIds } from './identity/assign-trait-ids';

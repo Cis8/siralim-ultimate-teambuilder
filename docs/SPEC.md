@@ -95,7 +95,10 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   plain text, and lists all violations at once.
 - Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
   taxonomy so the lists can grow.
-- **Matching**: case-insensitive, longest match wins, word boundaries for single words.
+- **Matching**: whole words, longest match wins. Phrases, mechanics and triggers ignore letter case; buffs and debuffs
+  are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
+  "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A run of blanks matches the
+  space of a pattern and a curly apostrophe a straight one, without moving spans.
 - **Role detection** for buffs and debuffs (heuristic, then overrides):
   within the sentence before the keyword, `afflict(s)`, `are afflicted`, `gain(s)`, `grant(s)`, `always have` → `applies`;
   otherwise → `uses` (e.g. "enemy with Vulnerable", "Enemies with Snared"). "is afflicted with" (a trigger) → `uses`.
