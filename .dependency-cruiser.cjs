@@ -31,6 +31,6 @@ module.exports = {
     doNotFollow: { path: 'node_modules' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },
-    exclude: { path: '(^|/)(node_modules|build|\\.svelte-kit)/' },
+    exclude: { path: '(^|/)node_modules/|^apps/web/(build|\\.svelte-kit)/' },
   },
 };

@@ -11,7 +11,7 @@ export default defineConfig(
   {
     ignores: [
       '**/node_modules/',
-      '**/build/',
+      'apps/web/build/',
       '**/.svelte-kit/',
       '**/.cache/',
       '**/coverage/',
