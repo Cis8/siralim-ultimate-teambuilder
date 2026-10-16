@@ -12,7 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M1 done** (2026-10-16). **Next: M2, slice 2.1.**
+- **Phase 1 · M1 complete locally** (2026-10-16): `pnpm check` and e2e (3 projects, axe) green.
+- **First:** if `origin` is missing, the owner creates the repo and pushes (`gh repo create
+  Cis8/siralim-ultimate-teambuilder --public --source . --remote origin --push`). Then confirm CI is green and tick M1
+  in ROADMAP.md.
+- **Next: M2, slice 2.1.**
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -43,7 +47,7 @@ session (after `CLAUDE.md`), update it before ending one.
 ## Phase 1 — slices
 One slice = one commit (or a few) on `main`. *T:* = tests written with or before the code (TDD for `core`).
 
-### M1 Scaffold — done
+### M1 Scaffold — done (CI on GitHub pending first push)
 Monorepo, strict TS, ESLint with package-boundary rules (tested in `tools/boundaries.test.ts`) + dependency-cruiser,
 Prettier, Vitest projects, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebKit) + axe, CI, manual Pages deploy,
 app shell with tokens, self-hosted fonts and footer credits.
