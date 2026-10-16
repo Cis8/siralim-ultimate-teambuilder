@@ -182,8 +182,17 @@ PRs at the start of a session (ADR-0007). Never deploy data that has not been th
 ## 7. URL state
 
 Every view is reproducible from its URL (query string for search, compact party encoding):
-- Search: `?q=<query>&class=life,nature&kw=a:vulnerable,u:weak&mode=all&mat=1&sort=az`
+- Search: `?q=<query>&class=life,nature&kw=a:vulnerable,u:weak,k:start of battle&mode=any&mat=yes&stack=no&sort=az`
 - Party: `?party=<base64url of [datasetVersion, 18 TraitIds-or-empty]>&target=<slot>`
+
+The search codec (`ExploreState`, `decodeExploreState` / `encodeExploreState`) writes only what differs from the initial
+state, so that state has no parameter at all, and reads any address: what is missing or says nothing usable is the initial
+value. `q` is the query bar exactly as typed. `class` and `kw` are comma-separated lists in the order chosen, lower case,
+trimmed and without repeats; a comma inside an item is written `%2C` and a percent sign `%25`. A `kw` item is a letter and a
+key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
+nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (compendium order,
+default), `class` or `az`. The party and the tab live in other parameters that the search codec leaves alone.
+
 The URL is the source of truth; local storage keeps only conveniences (recent searches, saved searches, last party).
 
 ## 8. Features

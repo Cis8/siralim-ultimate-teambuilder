@@ -58,3 +58,21 @@ export { DatasetLoadError, type TraitRepository } from './repository/trait-repos
 export { createMemoryTraitRepository } from './repository/memory-trait-repository';
 export { readDataset, readManifest } from './repository/read-dataset';
 export { createSearchService, type SearchOutcome, type SearchService } from './search/search-service';
+export {
+  initialExploreState,
+  KEYWORD_FILTER_FIELDS,
+  KEYWORD_MODES,
+  SORT_KEYS,
+  type ExploreState,
+  type KeywordFilter,
+  type KeywordFilterField,
+  type KeywordMode,
+  type SortKey,
+} from './explore/explore-state';
+export {
+  decodeExploreState,
+  encodeExploreState,
+  EXPLORE_PARAMS,
+  type ExploreParams,
+  type ParamReader,
+} from './explore/explore-url';
