@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // No DOM and no Node types: core must stay platform-free (ADR-0003).
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src"]
+}

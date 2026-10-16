@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+build/
+.svelte-kit/
+.cache/
+coverage/
+test-results/
+playwright-report/
+docs/prototype/
+# Prose is wrapped by hand; Prettier would re-align every table on each edit.
+*.md

@@ -1,0 +1,50 @@
+/* Design tokens (docs/DESIGN.md § Tokens). Components use these, never raw hex values. */
+:root {
+  color-scheme: dark;
+
+  --bg: #0e1014;
+  --bg-bar: #0b0d10;
+  --surface-1: #12161b;
+  --surface-2: #151a20;
+  --surface-3: #1a1f26;
+  --border: #1f252d;
+  --border-strong: #2e3741;
+
+  --text: #e4e7eb;
+  --text-strong: #f1f3f5;
+  --text-muted: #a0a8b3;
+  --text-faint: #8a94a1;
+
+  --accent: #8ab4ff;
+  --accent-surface: #1d2b3e;
+  --accent-border: #4a76b0;
+
+  --status-good: #74dbb0;
+  --status-warn: #f3c969;
+  --status-crit: #ff9b87;
+
+  --kw-debuff: #ff9b87;
+  --kw-buff: #74dbb0;
+  --kw-mechanic: #a9c1ff;
+  --kw-trigger: #f3c969;
+
+  /* Class identity dots: only next to a class or trait name, never alone (DESIGN § Colour rules). */
+  --class-chaos: #ef6b5b;
+  --class-death: #b49cf5;
+  --class-life: #e9c46a;
+  --class-nature: #63c98a;
+  --class-sorcery: #5fb0f5;
+  --class-rodian-master: #d98fc4;
+  --class-nether-boss: #f08c4a;
+  --class-fallback: #8fa1b3;
+
+  --chart-fill: #4a76b0;
+
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --text-base: 14px;
+
+  --focus-ring: 2px solid var(--accent);
+  --radius: 6px;
+  --target-min: 44px;
+}
