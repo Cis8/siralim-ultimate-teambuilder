@@ -97,26 +97,29 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   taxonomy so the lists can grow.
 - **Matching**: whole words, longest match wins. Phrases, mechanics and triggers ignore letter case; buffs and debuffs
   are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
-  "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A run of blanks matches the
+  "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A status followed by a
+  capitalised word is the start of a longer name ("Savage Spores" is not Savage). A run of blanks matches the
   space of a pattern and a curly apostrophe a straight one, without moving spans.
 - **Role detection** for buffs and debuffs (`assignRoles`; heuristic, then overrides), per sentence:
   - a status in the condition the sentence opens with (After / When / If / While / … up to the first comma) is one the
     trait waits for → `uses` ("After an enemy is afflicted with Weak, …");
-  - otherwise the nearest signal before it decides. `applies`: `afflict(s/ed) … with`, `gain(s)`, `grant(s)`, `always
-    has/have`, `battles with`. `uses`: `has/have`, `damage from`, `immune/resistant to`, `enemies/creatures with`,
-    `creatures afflicted with`, `for each … afflicted with`. Where two end together the one that starts first wins
+  - otherwise the nearest signal before it decides. `applies`: `afflict(s/ed) … with`, `gain(s)`, `grant(s)`/`give(s)`,
+    `always has/have`, `is/are always`, `battles with`. `uses`: `has/have`, `damage from`, `immune/resistant to`,
+    `enemies/creatures with`, `creatures afflicted with`, `for each … afflicted with`, `if/while/when … afflicted with`
+    inside a sentence, `cannot gain`. Where two end together the one that starts first wins
     ("afflicts enemies with" over "enemies with", "always has" over "has");
   - a status after another in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable") takes its role;
   - no signal → `uses` (e.g. "Enemies' Burning debuff lasts forever").
-  On v2.0 it gives 272 `applies` and 266 `uses`; a sample read by hand shows a few idiomatic errors ("gain 50% of the
-  Barrier's strength", "has Protected" as a grant), left to overrides.
+  On v2.0 it gives 275 `applies` and 262 `uses`. All 537 mentions were read by hand (M3.7): the cues above came from
+  that reading, and 11 mentions it could not tell apart are in `overrides.yaml` (conditional grants such as "As long as
+  this creature hasn't gained or lost speed, it has … and has Agile", and a Barrier named again as a reference).
 - **Overrides** (`packages/pipeline/overrides.yaml`, `parseOverrides` / `applyOverrides`): two sections, `roles` (trait
   id, keyword key, optional `occurrence` counting from 1 or all mentions, `role`) and `randomDebuff` (trait id, `target`,
   `activation`, optional `note`; GAME_RULES R5). Every entry needs a `reason` citing the trait; unknown fields are refused.
   An entry naming a trait, a keyword the trait does not mention, an occurrence it does not have, or a keyword without a
   role fails the build; two entries for one mention conflict; an entry that changes nothing is a warning.
 - **Snapshot tests** over the pinned v2.0 sheet, as committed files in `packages/pipeline/snapshots/`: one line per
-  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,175 lines), and one per random-debuff trait, `trait | target |
+  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,174 lines), and one per random-debuff trait, `trait | target |
   activation | note`. Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read
   and approved; refresh with `pnpm exec vitest run -u`.
 - Done in the **pipeline** (build time), not at runtime; `core` exposes the same extractor so tests and the pipeline

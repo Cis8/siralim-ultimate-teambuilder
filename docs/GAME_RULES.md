@@ -119,3 +119,9 @@ Order of evaluation: `covered` → `random` → `conditional` → `missing`.
 5. Dusty Struggle ends with "This trait will not activate if another creature in your party has it as well" instead of
    "This trait does not stack". It is the only trait with that wording. Should it count as non-stacking (R4)? Today
    its `stacks` is `true`, because only the exact sentence counts.
+6. Protective mentions: "immune to Silenced", "takes 90% less damage from Bleeding", "recovers health from Burning instead
+   of taking damage" (about 20 of 537 mentions) name a debuff the trait does not need anyone to apply, but today they are
+   `uses`, so the analysis would call that debuff a missing source. Should they have no dependency (a third role, or none)?
+7. Flesh Rot, Here to Die, Scared Stiff and Kindling wait for one debuff of a pair and "afflict whichever of these debuffs
+   the target doesn't already have": they name both debuffs only as a trigger, so both are `uses` and neither is
+   `applies`. Should they count as conditional sources of the pair?

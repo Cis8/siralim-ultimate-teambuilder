@@ -68,6 +68,17 @@ describe('createKeywordMatcher', () => {
       expect(keysIn(`Your ${word} attack.`)).not.toContain(key);
     });
 
+    it('does not take a status for part of a longer name: "Savage Spores" is not Savage', () => {
+      expect(keysIn('At the start of battle, this creature gains Savage Spores.')).toEqual(['start of battle']);
+      expect(keysIn('Frozen Nova hits Weak Enemies.')).toEqual([]);
+    });
+
+    it('still reads a status followed by a lower-case word, a punctuation mark or another status', () => {
+      expect(keysIn('Weak enemies with Snared and Feared.')).toEqual(['weak', 'snared', 'feared']);
+      expect(keysIn('It gains Savage, Berserk and Agile creatures.')).toEqual(['savage', 'berserk', 'agile']);
+      expect(keysIn('Afflicts Weak. Then it casts Fireball.')).toEqual(['weak']);
+    });
+
     it('still finds a keyword next to punctuation', () => {
       expect(keysIn('(Weak), Vulnerable. Snared; "Feared"!')).toEqual(['weak', 'vulnerable', 'snared', 'feared']);
     });

@@ -19,5 +19,59 @@
 #     note: After your creatures apply a debuff    # optional: what a conditional source waits for
 #     reason: Grim Ailment only adds a random debuff after another one was applied.
 
-roles: []
+# Read by hand on 2026-10-16, mention by mention, for the 38 buffs and debuffs of compendium v2.0 (M3.7). What is left
+# here is what the wording of the heuristic cannot tell apart.
+roles:
+  # The Barrier named again is the one already there, not a new one.
+  - trait: koloss--heart-versus-mind
+    keyword: barrier
+    occurrence: 2
+    role: uses
+    reason: 'Heart versus Mind: "the original strength of the Barrier as Maximum health" refers to the Barrier that was destroyed.'
+  - trait: koloss--trauma-prevention
+    keyword: barrier
+    occurrence: 2
+    role: uses
+    reason: 'Trauma Prevention: "the strength of the Barrier is increased" refers to the Barrier the creatures just gained.'
+
+  # Waits for the debuff instead of applying it.
+  - trait: pilwiz--marked-for-death
+    keyword: bleeding
+    role: uses
+    reason: 'Marked for Death attacks each enemy "that is afflicted with Bleeding": it needs the debuff to be there.'
+
+  # Gives itself the buff under a condition, in words ("it is", "has") that the heuristic reads as a check.
+  - trait: sanctus--chastity
+    keyword: invisible
+    role: applies
+    reason: 'Chastity: "While this creature has more than 90% health, it is Invisible" grants Invisible.'
+  - trait: storm--cloud-connected
+    keyword: repelling
+    role: applies
+    reason: 'Cloud Connected: "While this creature is above 90% health, it has Repelling" grants Repelling.'
+  - trait: kraken--inky-escape
+    keyword: agile
+    role: applies
+    reason: 'Inky Escape: "As long as this creature hasn''t gained or lost speed, it has 200% more speed and has Agile" grants Agile.'
+  - trait: kraken--iron-shell
+    keyword: protected
+    role: applies
+    reason: 'Iron Shell: "As long as this creature hasn''t gained or lost defense, it has 200% more defense and has Protected" grants Protected.'
+  - trait: kraken--unblinking-eyes
+    keyword: arcane
+    role: applies
+    reason: 'Unblinking Eyes: "As long as this creature hasn''t gained or lost intelligence, it has 200% more intelligence and has Arcane" grants Arcane.'
+  - trait: kraken--shipbreaker
+    keyword: berserk
+    role: applies
+    reason: 'Shipbreaker: "As long as this creature hasn''t gained or lost attack, it has 200% more attack and has Berserk" grants Berserk.'
+  - trait: minotaur--seeing-red
+    keyword: berserk
+    role: applies
+    reason: 'Seeing Red: "While your creatures are below 80% health, they have Berserk" grants Berserk.'
+  - trait: wight--master-of-wights
+    keyword: shelled
+    role: applies
+    reason: 'Master of Wights: Wights "always resurrect with 100% Health and Shelled", so the mastery gives Shelled.'
+
 randomDebuff: []

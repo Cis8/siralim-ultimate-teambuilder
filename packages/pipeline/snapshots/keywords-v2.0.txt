@@ -302,7 +302,7 @@ backer--screech-of-domination | after this creature attacks | -
 backer--screech-of-domination | minion | -
 backer--shrapnel-blast | bomb | uses
 backer--shrapnel-blast | nostack | -
-backer--shattering-tackle | frozen | applies
+backer--shattering-tackle | frozen | uses
 backer--shattering-tackle | nostack | -
 backer--snack-break | start of this creature's turn | -
 backer--soul-steal | after this creature attacks | -
@@ -355,7 +355,6 @@ banshee--empowered-fireball | start of battle | -
 banshee--empowered-bone-spear | start of battle | -
 banshee--tempest | nostack | -
 banshee--empowered-savage-spores | start of battle | -
-banshee--empowered-savage-spores | savage | applies
 banshee--empowered-chain-lightning | start of battle | -
 banshee--empowered-death-blossom | start of battle | -
 banshee--empowered-soul-sacrifice | start of battle | -
@@ -372,7 +371,7 @@ bard--fable | start of battle | -
 bard--fable | nostack | -
 bard--song-of-resolve | nostack | -
 bard--song-of-wit | nostack | -
-bard--hymn-of-guile | invisible | applies
+bard--hymn-of-guile | invisible | uses
 bard--hymn-of-panic | start of battle | -
 bard--hymn-of-panic | timeline | -
 bard--hymn-of-strength | nostack | -
@@ -1016,7 +1015,7 @@ familiar--higher-understanding | nostack | -
 familiar--master-of-familiars | nostack | -
 fiend--uncontrollable-anger | berserk | uses
 fiend--uncontrollable-anger | nostack | -
-fiend--outrage | berserk | uses
+fiend--outrage | berserk | applies
 fiend--flash-of-anger | berserk | uses
 fiend--flash-of-anger | invisible | applies
 fiend--bloodfury | berserk | applies
@@ -1102,7 +1101,7 @@ godspawn--fear-of-success | this creature's attacks | -
 godspawn--fear-of-success | inverted | applies
 godspawn--echobreather | nostack | -
 godspawn--silence-speaks | start of battle | -
-godspawn--rescue-ride | shelled | uses
+godspawn--rescue-ride | shelled | applies
 godspawn--any-given-sin | scorned | applies
 godspawn--any-given-sin | nostack | -
 godspawn--nostalgia | nostack | -
@@ -1144,7 +1143,7 @@ gorgon--treachery | start of battle | -
 gorgon--treachery | stoned | applies
 gorgon--sealed-fate | stoned | applies
 gorgon--steady-gaze | stoned | applies
-gorgon--pulverizing-stare | stoned | applies
+gorgon--pulverizing-stare | stoned | uses
 gorgon--pulverizing-stare | nostack | -
 gorgon--master-of-gorgons | stoned | uses
 gorgon--master-of-gorgons | nostack | -
@@ -1252,13 +1251,13 @@ inquisitor--master-of-inquisitors | nostack | -
 koloss--hearty-appetite | maximum health | -
 koloss--hearty-appetite | nostack | -
 koloss--heart-versus-mind | barrier | uses
-koloss--heart-versus-mind | barrier | applies
+koloss--heart-versus-mind | barrier | uses
 koloss--heart-versus-mind | maximum health | -
 koloss--heart-versus-mind | nostack | -
 koloss--rise-above | maximum health | -
 koloss--rise-above | nostack | -
 koloss--trauma-prevention | barrier | uses
-koloss--trauma-prevention | barrier | applies
+koloss--trauma-prevention | barrier | uses
 koloss--trauma-prevention | maximum health | -
 koloss--trauma-prevention | nostack | -
 koloss--big-boned | start of battle | -
@@ -1267,10 +1266,10 @@ koloss--master-of-kolosses | start of battle | -
 koloss--master-of-kolosses | maximum health | -
 koloss--master-of-kolosses | nostack | -
 kraken--abyssal-waters | nostack | -
-kraken--inky-escape | agile | uses
-kraken--iron-shell | protected | uses
-kraken--shipbreaker | berserk | uses
-kraken--unblinking-eyes | arcane | uses
+kraken--inky-escape | agile | applies
+kraken--iron-shell | protected | applies
+kraken--shipbreaker | berserk | applies
+kraken--unblinking-eyes | arcane | applies
 kraken--master-of-krakens | nostack | -
 leech--coming-undone | leeching | uses
 leech--coming-undone | nostack | -
@@ -1391,7 +1390,7 @@ mimic--ultimate-trickery | timeline | -
 mimic--master-of-mimics | start of battle | -
 mimic--master-of-mimics | timeline | -
 mimic--master-of-mimics | nostack | -
-minotaur--seeing-red | berserk | uses
+minotaur--seeing-red | berserk | applies
 minotaur--seeing-red | nostack | -
 minotaur--fracture | after this creature is attacked | -
 minotaur--fracture | maximum health | -
@@ -1579,7 +1578,7 @@ pilwiz--throat-slash | start of battle | -
 pilwiz--throat-slash | bleeding | applies
 pilwiz--flay | this creature's attacks | -
 pilwiz--flay | bleeding | applies
-pilwiz--marked-for-death | bleeding | applies
+pilwiz--marked-for-death | bleeding | uses
 pilwiz--pica | nostack | -
 pilwiz--zenpangs-boast | nostack | -
 pilwiz--zenpangs-exploit | nostack | -
@@ -1678,7 +1677,7 @@ salamander--limitless | nostack | -
 salamander--wallflower | nostack | -
 salamander--simulation | nostack | -
 salamander--master-of-salamanders | nostack | -
-sanctus--chastity | invisible | uses
+sanctus--chastity | invisible | applies
 sanctus--kindness | start of this creature's turn | -
 sanctus--humility | after this creature is attacked | -
 sanctus--conservation-of-energy | nostack | -
@@ -1950,7 +1949,7 @@ stag--like-sand | nostack | -
 stag--master-of-stags | nostack | -
 storm--best-kind-of-weather | start of battle | -
 storm--storm-to-pass | nostack | -
-storm--cloud-connected | repelling | uses
+storm--cloud-connected | repelling | applies
 storm--damage-control | nostack | -
 storm--eye-of-the-storm | maximum health | -
 tanukrook--monster-crown | start of this creature's turn | -
@@ -2116,7 +2115,7 @@ wight--cold-like-war | frozen | applies
 wight--woe | maximum health | -
 wight--praise-the-light | nostack | -
 wight--shacklers-mastery | nostack | -
-wight--master-of-wights | shelled | uses
+wight--master-of-wights | shelled | applies
 wisp--lyra | timeline | -
 wisp--overpowered | timeline | -
 wisp--ethereal | timeline | -

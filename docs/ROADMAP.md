@@ -18,7 +18,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
       once CI is green (authors agreed). Framework per ADR-0002 (accepted).
 - [x] **M2 Pipeline v1.** Fetch Traits tab → validate → normalise → IDs → `traits.<hash>.json` + manifest + report.
       Pinned real snapshot committed as test fixture. Nightly workflow that opens a PR on change.
-- [ ] **M3 Keyword extraction.** Taxonomy registry, longest-match tokenizer, role heuristic, `overrides.yaml`,
+- [x] **M3 Keyword extraction.** Taxonomy registry, longest-match tokenizer, role heuristic, `overrides.yaml`,
       dataset-wide snapshot test, report of unknown capitalised terms. Review the 30 most frequent keywords' roles by hand.
 - [ ] **M4 Query core.** Tokenizer with spans, error-tolerant parser, field registry, evaluator, highlight visitor,
       serialiser (AST → canonical text). Property test: `parse(serialise(ast))` equals `ast`.

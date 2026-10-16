@@ -39,13 +39,14 @@ interface Cue {
 /**
  * Words that say what the trait does with the status that follows. Where two signals end at the same place, the one
  * that starts first is the more specific and wins: "afflicts enemies with" over "enemies with", "always has" over
- * "has", "for each enemy that is afflicted with" over "afflicted with".
+ * "has", "if the enemy is afflicted with" over "afflicted with", "cannot gain" over "gain".
  */
 const CUES: readonly Cue[] = [
   { role: 'applies', pattern: /\bafflict(?:s|ed)?\b[^,.;]*?\bwith\b/gi },
   { role: 'applies', pattern: /\bafflict(?:s|ed)?\b/gi },
   { role: 'applies', pattern: /\bgain(?:s|ed)?\b/gi },
-  { role: 'applies', pattern: /\bgrants?\b/gi },
+  { role: 'applies', pattern: /\b(?:grants?|gives?)\b/gi },
+  { role: 'applies', pattern: /\b(?:is|are) always\b/gi },
   { role: 'applies', pattern: /\balways (?:has|have)\b/gi },
   { role: 'applies', pattern: /\bbattles? with\b/gi },
   { role: 'uses', pattern: /\b(?:has|have|had)\b/gi },
@@ -54,6 +55,8 @@ const CUES: readonly Cue[] = [
   { role: 'uses', pattern: /\b(?:enem(?:y|ies)|creatures?) with\b/gi },
   { role: 'uses', pattern: /\b(?:enem(?:y|ies)|creatures?|allies|ally|team|targets?) afflicted with\b/gi },
   { role: 'uses', pattern: /\bfor each\b[^,.;]*?\bafflicted with\b/gi },
+  { role: 'uses', pattern: /\b(?:if|while|when|whenever|as long as|unless)\b[^,.;]*?\bafflicted with\b/gi },
+  { role: 'uses', pattern: /\b(?:cannot|can't|never)\s+(?:gain|be afflicted with|have)\b/gi },
 ];
 
 /** The sentence starts with a condition: what it names is waited for, not given. */

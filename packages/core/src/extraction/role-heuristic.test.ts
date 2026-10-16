@@ -185,6 +185,15 @@ describe('assignRoles', () => {
       ['Your creatures are resistant to Burning.', 'burning:uses'],
       ['This deals more damage for each creature on your team afflicted with Silenced.', 'silenced:uses'],
       ['Your creatures deal more damage for each enemy that is afflicted with Cursed.', 'cursed:uses'],
+      ['This creature gives allies Shelled.', 'shelled:applies'],
+      ['At the end of its turn it resurrects an ally and gives it Shelled.', 'shelled:applies'],
+      ['This creature is always Berserk, and deals more damage.', 'berserk:applies'],
+      ['Your creatures are always Berserk.', 'berserk:applies'],
+      ['Enemies cannot gain Invisible.', 'invisible:uses'],
+      ["Your creatures can't gain Barrier.", 'barrier:uses'],
+      ['This bonus is doubled if the enemy is afflicted with Frozen.', 'frozen:uses'],
+      ["Enemy creatures take 50% more damage while they're afflicted with Stoned.", 'stoned:uses'],
+      ['The damage is doubled when an enemy is afflicted with Bomb.', 'bomb:uses'],
     ])('%s', (text, role) => {
       expect(rolesIn(text)).toEqual([role]);
     });

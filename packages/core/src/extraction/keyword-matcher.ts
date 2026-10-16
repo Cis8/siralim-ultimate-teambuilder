@@ -20,7 +20,8 @@ export interface KeywordMatcher {
  * `Maniacs`), the longest phrase winning where phrases overlap.
  *
  * Phrases, mechanics and triggers ignore letter case. Buffs and debuffs are names: they count only when written as
- * the taxonomy writes them, so "gain Immune" is a buff and "immune to damage" is not. Any run of blanks in the text
+ * the taxonomy writes them, so "gain Immune" is a buff and "immune to damage" is not, and not when a capitalised
+ * word follows, which makes them part of a name ("Savage Spores"). Any run of blanks in the text
  * matches the single space of a pattern, and curly apostrophes read as straight ones; neither moves a span.
  */
 export function createKeywordMatcher(taxonomy: Taxonomy): KeywordMatcher {
@@ -43,13 +44,22 @@ export function createKeywordMatcher(taxonomy: Taxonomy): KeywordMatcher {
       return [...straight.matchAll(phrase)].flatMap((found) => {
         const written = found[0].replace(/\s+/g, ' ');
         const known = byPattern.get(written.toLowerCase());
-        if (known === undefined || (isName(known.entry) && written !== known.pattern)) return [];
+        if (known === undefined) return [];
+        if (
+          isName(known.entry) &&
+          (written !== known.pattern || continuesIntoName(straight, found.index + found[0].length))
+        ) {
+          return [];
+        }
         const { entry } = known;
         return [{ key: entry.key, kind: entry.kind, span: [found.index, found.index + found[0].length] as const }];
       });
     },
   };
 }
+
+/** A capitalised word right after: the status is the start of a longer name, as in "Savage Spores". */
+const continuesIntoName = (text: string, position: number) => /^ [A-Z][a-z]/.test(text.slice(position, position + 3));
 
 /** Buffs and debuffs are proper names, unlike the phrases around them. */
 const isName = (entry: TaxonomyEntry) => entry.kind === 'buff' || entry.kind === 'debuff';

@@ -12,14 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.6 done. The report now has a *Taxonomy* section. **Next: 3.7**, the
-  hand review of the roles of the 30 most frequent keywords against their sentences, fixing through `overrides.yaml`.
-  Open for the owner, not blocking: whether to make searchable the Spell Gem properties (Sealed, Seals, Charges,
-  Cascading), Fused, and the stacking effects (Mega Magic, Dire Wolves, Zombies); they are the 8 candidates left in the
-  report. Flesh Rot-style implicit applications name no keyword: an override that adds a mention may be needed.
-- Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
-- The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
-  under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
+- **Phase 1 · M3 done** (2026-10-16). **Next: M4 Query core**, slice 4.1 (lexer with spans; read
+  `docs/QUERY_LANGUAGE.md` first; TDD in `core`).
+- Open for the owner, none blocking: GAME_RULES open questions 6-7 (protective mentions; Flesh Rot-style pairs), and
+  whether to make searchable the Spell Gem properties (Sealed, Seals, Charges, Cascading), Fused and the stacking effects
+  (Mega Magic, Dire Wolves, Zombies), which are the 8 candidates left in the report.
+- Every green commit on `main` is deployed to Pages (D2: the authors agreed). The nightly `data-refresh` works: the
+  dataset on `main` still has no keywords, so its next PR carries those of all 1,780 traits; read its report before
+  merging, as the protocol says.
 - Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
 ## Owner decisions (2026-10-16)
@@ -69,22 +69,14 @@ the previous build; the nightly `data-refresh.yml` opens a PR when the data chan
 (`pipeline/fixtures/traits-v2.0.csv`) and the GAME_RULES counts test (`build/real-sheet.test.ts`) landed with 2.4; nothing is
 rewritten when the hash is unchanged.
 
-### M3 Keyword extraction
-- [x] **3.1** Canonical buff/debuff lists (wiki Buffs/Debuffs, Codex Reference) transcribed into the taxonomy with a source
-      note; `canBeRandomlyApplied`; mechanics/triggers from the prototypes. Registry validates unique keys/patterns.
-      *T:* registry invariants; every canonical debuff is present; Inverted and Mania are not randomly applicable.
-- [x] **3.2** Matcher: case-insensitive, longest match, word-bounded, with spans. *T:* "start of this creature's turn"
-      vs "start of battle", "Weakness" ≠ Weak, ’ vs ', inflections via patterns (Sleep/Sleeping, Stone/Stoned).
-- [x] **3.3** Role heuristic: per sentence, nearest cue before the keyword wins. *T:* real sentences: Flesh Rot (uses,
-      then applies), Master of Abominations ("always have" → applies), Quell ("enemy with" → uses).
-- [x] **3.4** `overrides.yaml` (roles + random-debuff target/activation) with schema: `reason` required, trait and
-      keyword must exist, warning on redundant overrides. *T:* schema cases.
-- [x] **3.5** Enrich the dataset with keywords + overrides; snapshot `{traitId, key, role}` one line per hit;
-      random-debuff snapshot `{traitId, target, activation}`.
-- [x] **3.6** Report of taxonomy candidates (frequent capitalised terms not in the taxonomy, names excluded) and
-      discrepancies with the canonical lists. *T:* fixture.
-- [ ] **3.7** Review the 30 most frequent keywords' roles against their sentences; fix through overrides. Ask the owner
-      only about genuinely ambiguous cases.
+### M3 Keyword extraction — done
+`core`: a `taxonomy` registry (20 debuffs and 18 buffs from the wiki, cross-checked with the Codex Reference; mechanics,
+triggers with a battle phase, the no-stack flag), `createKeywordMatcher` (spans), `assignRoles`, one `extractKeywords`
+used by `enrichTraits`. `pipeline`: `overrides.yaml` with a schema, keywords in the dataset (2,174 mentions; 275 applies /
+262 uses), committed snapshots in `packages/pipeline/snapshots/`, and a *Taxonomy* section in the report (candidates,
+differences with the canonical lists). Deviations: Barrier is a buff, not a mechanic (both sources and the compendium say
+so); buffs and debuffs match only as capitalised names (25 false positives otherwise); an opening condition makes a
+status `uses`, which refines SPEC §4. All 537 role mentions were read by hand; 11 are overridden.
 
 ### M4 Query core (TDD)
 - [ ] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
