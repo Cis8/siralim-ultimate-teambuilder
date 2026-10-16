@@ -12,11 +12,12 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M4 done** (`core/src/query/`: `tokenize`, `parseQuery` → `{ast, tokens, diagnostics}`, `fieldRegistry`,
-  `createTraitIndex`, `evaluate`, `createHighlighter(ast)(text)` → spans, `serialise(ast)` → canonical text, `visitQuery`
-  bottom-up fold; QUERY_LANGUAGE §1-§4). Acceptance criteria 1 and 2, and highlight/serialise on the real sheet, are tested in
-  `pipeline/src/build/query-acceptance.test.ts`. **Next: M5 · 5.1** `TraitRepository` port (core) + static JSON adapter +
-  fixture adapter, composition root, `SearchService` (read SPEC and DESIGN § Explore first; web calls `core` only).
+- **Phase 1 · M5 in progress, 5.1 done.** `core`: `TraitRepository` port (+ `DatasetLoadError`), `createMemoryTraitRepository`
+  (fixtures), `readDataset` / `readManifest` (guard the JSON; the format version vouches for the traits),
+  `createSearchService(repository)` → `{datasetVersion, traitCount, search(text) → {query, traits, highlight}}`. `web`:
+  `createStaticTraitRepository` (manifest with `cache: 'no-cache'`, then `traits.<hash>.json`), `lib/composition-root.ts`
+  (`loadSearchService()`, shared, retries after a failure); the home page shows the load state (e2e: success and failure).
+  **Next: 5.2** `ExploreState` + URL codec (`q, class, kw, mode, mat, stack, sort`; SPEC §7, ADR-0005; read DESIGN § Explore).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works: the dataset on `main` still has no
@@ -52,6 +53,9 @@ session (after `CLAUDE.md`), update it before ending one.
   `allowBuilds` in `pnpm-workspace.yaml` must list every package that has one.
 - Pipeline scripts run with `tsx` (the sources use extensionless imports, which plain Node cannot load).
 - Prettier skips Markdown on purpose (hand-wrapped prose, tables).
+- `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
+  data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
+  `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
 ## Phase 1 — slices
@@ -91,7 +95,7 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
 ` OR `.
 
 ### M5 Explore UI
-- [ ] **5.1** `TraitRepository` port (core) + static JSON adapter + fixture adapter; composition root; `SearchService`.
+- [x] **5.1** `TraitRepository` port (core) + static JSON adapter + fixture adapter; composition root; `SearchService`.
 - [ ] **5.2** `ExploreState` + URL codec (`q, class, kw, mode, mat, stack, sort`). *T:* property round-trip; bad params ignored.
 - [ ] **5.3** Facets: class counts ignore the class filter, applies/uses counts, all/any, flags, effective query, sort
       strategies. *T:* acceptance criterion 4.

@@ -1,9 +1,3 @@
-/**
- * Version of the dataset file format shared by the pipeline (writer) and the web app (reader).
- * Bump it on any breaking change to the emitted JSON.
- */
-export const DATASET_SCHEMA_VERSION = 1;
-
 export { createKeywordExtractor, extractKeywords, type KeywordExtractor } from './extraction/extract-keywords';
 export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
 export { assignRoles, type RoleOptions } from './extraction/role-heuristic';
@@ -29,7 +23,7 @@ export type {
   TraitRow,
 } from './model/trait';
 export { hasRole } from './model/keyword-kind';
-export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
+export { DATASET_SCHEMA_VERSION, MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
 export { tokenize } from './query/lexer';
@@ -60,3 +54,7 @@ export type {
 export { TRIGGER_PHASES } from './taxonomy/entry';
 export { createTaxonomy, TaxonomyError, type Taxonomy } from './taxonomy/registry';
 export { taxonomy } from './taxonomy/taxonomy';
+export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';
+export { createMemoryTraitRepository } from './repository/memory-trait-repository';
+export { readDataset, readManifest } from './repository/read-dataset';
+export { createSearchService, type SearchOutcome, type SearchService } from './search/search-service';

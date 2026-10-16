@@ -7,7 +7,10 @@ export const copy = {
   homeHeading: 'Find traits by mechanic, plan your party',
   homeIntro:
     'Search every trait by keyword and role — what applies Vulnerable, what relies on it — and check that your party feeds itself.',
-  homeStatus: 'Explore and the party planner are being built.',
+  loadingTraits: 'Loading the traits…',
+  traitsLoaded: (count: number, datasetVersion: string) =>
+    `${new Intl.NumberFormat('en-US').format(count)} traits loaded from compendium version ${datasetVersion}. Explore and the party planner are being built.`,
+  traitsFailed: 'The trait data could not be loaded. Check your connection and reload the page.',
   unofficial: 'Unofficial fan project, not affiliated with Thylacine Studios.',
   dataCreditBefore: 'Trait data comes from the community ',
   compendiumName: 'Siralim Ultimate Compendium',

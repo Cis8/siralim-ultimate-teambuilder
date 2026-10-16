@@ -80,7 +80,7 @@ Hard boundaries, enforced by `tools/eslint/boundaries.js` (tested), `.dependency
 nvm use                  # Node 24 (.nvmrc); pnpm comes from corepack (packageManager field)
 pnpm install
 pnpm dev                 # web dev server
-pnpm test                # all unit tests (Vitest projects: core, pipeline, tools)
+pnpm test                # all unit tests (Vitest projects: core, pipeline, web, tools)
 pnpm test:e2e            # Playwright: desktop Chromium, Pixel 7, iPhone 14 WebKit; builds first
 pnpm lint                # ESLint + Prettier check + dependency-cruiser
 pnpm typecheck

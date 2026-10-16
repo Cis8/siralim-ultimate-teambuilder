@@ -1,5 +1,11 @@
 import type { Trait } from './trait';
 
+/**
+ * Version of the dataset file format shared by the pipeline (writer) and the web app (reader).
+ * Bump it on any breaking change to the emitted JSON.
+ */
+export const DATASET_SCHEMA_VERSION = 1;
+
 /** The dataset file the pipeline writes and the web app reads: every trait of one version of the compendium. */
 export interface TraitDataset {
   /** `DATASET_SCHEMA_VERSION` at the time the file was written. */

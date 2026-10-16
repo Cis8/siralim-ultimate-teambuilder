@@ -6,6 +6,7 @@ export default defineConfig({
     projects: [
       { test: { name: 'core', root: 'packages/core', include: ['src/**/*.test.ts'] } },
       { test: { name: 'pipeline', root: 'packages/pipeline', include: ['src/**/*.test.ts'] } },
+      { test: { name: 'web', root: 'apps/web', include: ['src/**/*.test.ts'] } },
       { test: { name: 'tools', root: 'tools', include: ['**/*.test.ts'] } },
     ],
   },
