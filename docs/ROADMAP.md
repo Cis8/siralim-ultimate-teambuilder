@@ -13,7 +13,7 @@ Goal: a public, fast, accessible replacement for browsing the sheet, with keywor
 Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 
 ### Milestones
-- [ ] **M1 Scaffold.** pnpm monorepo (`core`, `pipeline`, `web`), TS strict, ESLint (+ import boundaries), Prettier,
+- [x] **M1 Scaffold.** pnpm monorepo (`core`, `pipeline`, `web`), TS strict, ESLint (+ import boundaries), Prettier,
       Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, test, build), deploy to GitHub Pages from `main`
       (manual until the compendium authors agree). Framework per ADR-0002 (accepted).
 - [ ] **M2 Pipeline v1.** Fetch Traits tab → validate → normalise → IDs → `traits.<hash>.json` + manifest + report.
