@@ -12,13 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1-5.3 done.** `core`: `createSearchService(repository)` → `search(state: ExploreState)` gives
-  `{query, traits (sorted), highlight, effectiveQuery, facets}` (SPEC §8.1: the filters are a query; ~0.5 ms on v2.0).
-  `facets.classes` = `{name, count}` A-Z; `facets.keywords` = `{key, label, kind, applies, uses, mentions}` by
-  `FACET_KEYWORD_KINDS`. `decodeExploreState` / `encodeExploreState` (SPEC §7; `EXPLORE_PARAMS` lists what the codec owns, for
-  the page that shares its address with the party). `web`: `loadSearchService()` in `lib/composition-root.ts`.
-  **Next: 5.4** chip operations on the query text, in `core`. Still missing in `core` for 5.7/5.8: "is it chosen"
-  (`aria-pressed`) and the state transitions (toggle a class, toggle a keyword filter, counterpart jump): add them with 5.7.
+- **Phase 1 · M5 in progress, 5.1-5.4 done.** `core`: `createSearchService(repository)` → `search(state: ExploreState)` gives
+  `{query, traits (sorted), highlight, effectiveQuery, facets}` (SPEC §8.1; ~0.5 ms on v2.0). `facets.classes` = `{name, count}`
+  A-Z; `facets.keywords` = `{key, label, kind, applies, uses, mentions}` by `FACET_KEYWORD_KINDS`. `decodeExploreState` /
+  `encodeExploreState` (SPEC §7; `EXPLORE_PARAMS` = what the codec owns). Chips: `queryChips(q)` → `{field, value, negated}[]`,
+  `toggleChipNot(q, i)` / `removeChip(q, i)` return the new query text (QUERY_LANGUAGE §4; ask `queryChips` again after each
+  edit). `web`: `loadSearchService()` in `lib/composition-root.ts`.
+  **Next: 5.5**, the first UI slice: read DESIGN and `docs/prototype/Main.dc.html` first. Still missing in `core` for 5.7/5.8:
+  "is it chosen" (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): with 5.7.
   The sort `book` is the order of the dataset (family, then trait name): label it that way in the UI, not "Compendium order".
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
@@ -56,9 +57,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Prettier skips Markdown on purpose (hand-wrapped prose, tables).
 - Windows clone: `.gitattributes` makes every checkout LF. Git for Windows sets `core.autocrlf=true`, which gave a CRLF tree
   where `.editorconfig`, Prettier and so `pnpm check` (the pre-push hook) failed on every file. Node 24 is not the default
-  there: `fnm install 24`, put `%APPDATA%nm
-ode-versions<v24>installation` on PATH, `corepack prepare pnpm@12.14.0
-  --activate`. `gh` may be missing: read CI from `https://api.github.com/repos/Cis8/siralim-ultimate-teambuilder/actions/runs?branch=main&per_page=3`.
+  there: `fnm install 24`, put `%APPDATA%\fnm\node-versions\v24.22.0\installation` on PATH (from PowerShell: Git Bash does not
+  expand `%APPDATA%`), `corepack prepare pnpm@12.14.0 --activate`. `gh` may be missing: read CI from
+  `https://api.github.com/repos/Cis8/siralim-ultimate-teambuilder/actions/runs?branch=main&per_page=3`.
 - `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
   data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
   `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
@@ -107,7 +108,10 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
       strategies. *T:* acceptance criterion 4 (`pipeline/src/build/explore-acceptance.test.ts`). Deviations: the filters
       are written as a query and the search runs that text (`class:boss -class:"nether boss"`); `createTaxonomy` refuses a
       key that is the start of another; `search` takes the whole `ExploreState`.
-- [ ] **5.4** Chip operations on the query text (toggle NOT, remove term + adjacent operator). *T:* table cases.
+- [x] **5.4** Chip operations on the query text (toggle NOT, remove term + adjacent operator). *T:* table cases + property
+      tests on any text (`query/chips.ts`). Deviations: they edit the text in place (token surgery guided by the AST spans)
+      instead of re-serialising, so the user's spelling survives; toggling a term in a negated group wraps the term, not the
+      group (`-(a OR b)` → `-(-a OR b)`); a flip the parser would not read leaves the text alone.
 - [ ] **5.5** Layout (3 columns, wrapping), query input, result count in `aria-live`.
 - [ ] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights.
 - [ ] **5.7** Click a keyword → counterpart filter. *e2e:* acceptance criterion 3.

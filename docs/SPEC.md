@@ -203,6 +203,8 @@ Query bar (QUERY_LANGUAGE), facets (class: any-of; keywords: per keyword "applie
 triggers; mechanics; flags: artifact-eligible, does-not-stack), result list with keyword tokens styled by kind and role,
 match highlighting, and click-a-keyword → counterpart jump (applies ↔ uses). Facet counts reflect the current results
 (class counts ignore the class filter itself). An "effective query" line shows the full query the UI state stands for.
+The terms of the query bar are shown as chips, each with a toggle-NOT and a remove button that edit the text of the bar in
+place (QUERY_LANGUAGE §4, *Chips*).
 
 `SearchService.search(state)` gives, for an `ExploreState`, the traits in the order of the sort, the effective query and the
 facets (`Facets`); any state can be searched, since the parser repairs the query bar and a name nobody has finds nothing.

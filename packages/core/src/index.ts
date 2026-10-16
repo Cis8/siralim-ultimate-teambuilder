@@ -41,6 +41,7 @@ export { evaluate } from './query/evaluate';
 export { visitQuery, type QueryVisitor } from './query/visitor';
 export { createHighlighter, type Highlighter } from './query/highlight';
 export { serialise } from './query/serialise';
+export { queryChips, removeChip, toggleChipNot, type QueryChip } from './query/chips';
 export type {
   BuffEntry,
   DebuffEntry,

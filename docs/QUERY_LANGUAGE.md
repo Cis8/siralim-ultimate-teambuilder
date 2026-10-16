@@ -1,7 +1,7 @@
 # Query language
 
-Phase 1 needs §1–§4 (parse, evaluate, highlight, write back). Phase 2 adds §5–§8 (diagnostics, autocomplete, explain,
-editor).
+Phase 1 needs §1–§4 (parse, evaluate, highlight, write back, edit by chip). Phase 2 adds §5–§8 (diagnostics, autocomplete,
+explain, editor).
 Reference behaviour: `docs/prototype/SearchBar.dc.html` (functions `tokPos`, `parseTokens`, `lint`, `suggest`, `explain`).
 
 ## 1. Grammar (EBNF)
@@ -84,7 +84,7 @@ one set of traits (the Explore facets count the traits twice, with and without t
 For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
 bitsets) only if the 16 ms budget is missed: `TraitIndex` is opaque to `evaluate`'s callers, so it can change without them.
 
-## 4. Highlighting and writing a query back
+## 4. Highlighting, writing a query back and chips
 **Highlighting.** `createHighlighter(ast)` works out once what the query marks, and returns a function from a text (the
 description of a result) to its spans: `[start, end)` positions in that text, never HTML. Keyword tokens are not part of it:
 they are always styled by kind and role (DESIGN § Keyword tokens), from the spans of the dataset.
@@ -107,6 +107,25 @@ keeps its field as written and loses its quotes unless the lexer would read some
 `"-weak"`, `"a:b"`, `"two words"`; `class:or` needs none): the lexer itself decides, so the two cannot drift apart. A value
 with no field and no text is `""`, a field with none is `class:`. A query read with repairs is written as repaired; a query
 with no term is the empty text.
+
+**Chips.** The chip row shows the terms of the query bar and edits the text of the bar, not a copy of it: the text outside
+the edit stays as typed (spelling of the operators, quotes, blanks), which is why this is not `serialise`. `queryChips(text)`
+lists one chip per term, in the order of the text, as `{ field, value, negated }` (`negated` = an odd number of NOTs above the
+term, whatever stands between them, as in the highlighter); a term in a group is a chip like any other. `toggleChipNot(text, i)`
+and `removeChip(text, i)` name a chip by its place in that list, so the caller asks the list again after each edit; a chip that
+does not exist leaves the text as it is.
+- **Toggle NOT** flips the term, never the group around it. A NOT written right in front of the term (`-`, `NOT`, and the blank
+  after it) is taken away; otherwise a `-` is written in front of the term, inside the parentheses it may have. So `-(a OR b)`
+  flips `a` with `-(-a OR b)` (`a` is included again, `b` is still excluded), and `(a)` becomes `(-a)`. A flip the parser
+  would not read (a NOT nested past `MAX_NESTING`) leaves the text alone.
+- **Remove** takes away the term, the NOTs written right in front of it, and one operator: the one that joined it to the next
+  term, or to the one before if it is the last of its group. A group left with a single plain term is that term, so its
+  parentheses and operator go too (`(a OR b) c` without `a` is `b c`, `-(a OR b)` is `-b`); a group left with more, or with
+  something that is not a plain term, keeps its parentheses (`(a OR -b)` without `a` is `(-b)`). The only term of a query leaves
+  the empty text. Reported junk between two terms (`a OR OR b`) goes with the operator.
+- **Blanks.** Two tokens that become neighbours keep the blank that stood next to what went, and stay as close as they read as
+  two tokens when there was none (`(a OR b OR c)` without `OR c` is `(a OR b)`; `-(a b)` without `a` is `-b`; `a(b)c` without
+  `(b)` is `a c`, since `ac` would be one word). The other chips are never changed by the edit (a property test on any text).
 
 ## 5. Diagnostics (syntax: Phase 1, the rest: Phase 2)
 The parser already returns the syntax diagnostics (the first seven rows), as `{ code, severity: 'error', span,
