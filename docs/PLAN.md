@@ -12,8 +12,8 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1 done (model types, `slugify`, `assignTraitIds`). **Next: 2.2** (CSV
-  parsing; add `csv-parse` to `packages/pipeline`).
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1 and 2.2 done (ids; `parseTraitsCsv` → `{datasetVersion, rows}` of
+  raw strings). **Next: 2.3** (zod validation + normalisation of those rows into core's `TraitRow`).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -52,7 +52,7 @@ app shell with tokens, self-hosted fonts and footer credits.
 ### M2 Pipeline v1
 - [x] **2.1** `core` model types (SPEC §3) + `slugify` / `assignTraitIds`. *T:* apostrophes, accents, `!`, `&`;
       deterministic de-duplication; property (fast-check): shuffled rows → same IDs.
-- [ ] **2.2** CSV parsing (csv-parse), header located by column names, `datasetVersion` from the preamble.
+- [x] **2.2** CSV parsing (csv-parse), header located by column names, `datasetVersion` from the preamble.
       *T:* preamble variants, header moved, extra column, missing column → clear error.
 - [ ] **2.3** zod validation + normalisation (trim, curly quotes, double spaces, `No Material Exists` → null).
       *T:* one per rule; empty name or duplicate ID fails the build.

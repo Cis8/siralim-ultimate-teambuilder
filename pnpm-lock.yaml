@@ -260,6 +260,9 @@ importers:
       '@atlas/core':
         specifier: workspace:*
         version: link:../core
+      csv-parse:
+        specifier: ^7.0.3
+        version: 7.0.3
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
@@ -706,6 +709,9 @@ packages:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
     hasBin: true
+
+  csv-parse@7.0.3:
+    resolution: {integrity: sha512-YFd3QM/yo17vH91L1IOZuvl09zM0zEEtdfTcOCKWcMdM++MNaQSyp09slXyFCLaPXvHstQFx/xC8myiFHSMUvw==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -1877,6 +1883,8 @@ snapshots:
       which: 2.0.2
 
   cssesc@3.0.0: {}
+
+  csv-parse@7.0.3: {}
 
   debug@4.4.3(supports-color@7.2.0):
     dependencies:
