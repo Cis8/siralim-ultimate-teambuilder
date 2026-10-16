@@ -17,6 +17,7 @@ function trait(id: string, overrides: Partial<Trait> = {}): Trait {
     randomDebuff: null,
     masteryFamily: null,
     partyRequirement: null,
+    conditionalSources: [],
     keywords: [],
     ...overrides,
   };
@@ -217,6 +218,17 @@ describe('buildReport', () => {
       expect(report).toContain(
         '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs and debuffs, 2 are given (applies), 1 relied on (uses) and 0 guarded against (resists).',
       );
+    });
+
+    it('counts the traits that apply debuffs only through a pair', () => {
+      const report = buildReport(
+        build('2.0', [
+          trait('a', { keywords: [hit('weak', 'debuff', 'uses')], conditionalSources: ['weak', 'vulnerable'] }),
+          trait('b', { keywords: [hit('weak', 'debuff', 'uses')] }),
+        ]),
+        null,
+      );
+      expect(report).toContain('1 trait applies debuffs only through a pair (conditional sources).');
     });
 
     it('leaves the section out when nothing was extracted', () => {

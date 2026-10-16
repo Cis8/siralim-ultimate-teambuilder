@@ -13,7 +13,7 @@ session (after `CLAUDE.md`), update it before ending one.
 
 ## Resume here
 - **Phase 1 · M3 done; follow-up 3.8-3.10 in progress** (owner decisions of 2026-10-16, see "M3 follow-up"). 3.8 done
-  (`resists`). **Next: 3.9**, then 3.10, then M4 Query core, slice 4.1 (read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
+  (`resists`) and 3.9 (`conditionalSources`). **Next: 3.10**, then M4 Query core, slice 4.1 (read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
 - Every green commit on `main` is deployed to Pages (D2: the authors agreed). The nightly `data-refresh` works: the
   dataset on `main` still has no keywords, so its next PR carries those of all 1,780 traits; read its report before
   merging, as the protocol says.
@@ -77,7 +77,7 @@ status `uses`, which refines SPEC §4. All 537 role mentions were read by hand; 
 
 ### M3 follow-up: owner decisions of 2026-10-16
 - [x] **3.8** Role `resists` for protective mentions (GAME_RULES R9): `immune to`, `avoid`, `less damage from`, `cannot be`.
-- [ ] **3.9** `conditionalSources` on a trait: the debuffs a Flesh Rot-style pair trait applies implicitly (R10).
+- [x] **3.9** `conditionalSources` on a trait: the debuffs a Flesh Rot-style pair trait applies implicitly (R10).
 - [ ] **3.10** Searchable Spell Gem properties (Charges, Cascading), Fused, and the effects Seal/Sealed, Dire Wolves,
       Zombies, Mega Magic with roles like buffs (R11).
 

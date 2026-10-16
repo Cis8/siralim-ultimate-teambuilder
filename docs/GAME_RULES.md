@@ -102,6 +102,12 @@ Burning", "50% chance to avoid Scorned", "takes 90% less damage from Bleeding", 
 still works by keyword (`kw:`). Recovering health from a debuff instead of taking damage is not protection: it needs the
 debuff to be there (`uses`).
 
+## R10 — Pairs: "whichever of these debuffs the target doesn't already have" · Confirmed (2026-10-16)
+Flesh Rot, Here to Die, Scared Stiff and Kindling wait for an enemy to be afflicted with one debuff of a pair and then afflict
+it with the other. Both debuffs are named only as the trigger (`uses`), but the trait is also a **conditional source** of
+each of them: `conditionalSources` on the trait lists the pair. A conditional source never makes a dependency fully
+*covered* (it needs the other debuff of the pair to be there first); it upgrades *missing* to *conditional*.
+
 ## Dependency statuses (derived from R3–R5)
 For each buff or debuff that at least one party trait **relies on**:
 
@@ -109,7 +115,7 @@ For each buff or debuff that at least one party trait **relies on**:
 |---|---|---|
 | `covered` | At least one active, specific source applies it | ok |
 | `random` | No specific source, but an active enemy-only random source exists and the debuff can be randomly applied (debuffs only) | warning |
-| `conditional` | Only inactive mastery traits apply it | warning |
+| `conditional` | Only inactive mastery traits apply it, or only conditional sources (R10) | warning |
 | `missing` | Nothing in the party applies it | critical |
 | `nopayoff` | Applied, but nobody relies on it (informational, not an issue) | none |
 
@@ -126,6 +132,3 @@ Order of evaluation: `covered` → `random` → `conditional` → `missing`.
 5. Dusty Struggle ends with "This trait will not activate if another creature in your party has it as well" instead of
    "This trait does not stack". It is the only trait with that wording. Should it count as non-stacking (R4)? Today
    its `stacks` is `true`, because only the exact sentence counts.
-6. Flesh Rot, Here to Die, Scared Stiff and Kindling wait for one debuff of a pair and "afflict whichever of these debuffs
-   the target doesn't already have": they name both debuffs only as a trigger, so both are `uses` and neither is
-   `applies`. Should they count as conditional sources of the pair?

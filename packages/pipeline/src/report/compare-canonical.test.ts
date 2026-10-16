@@ -34,6 +34,7 @@ function trait(id: string, description: string, words: Record<string, string>): 
     randomDebuff: null,
     masteryFamily: null,
     partyRequirement: null,
+    conditionalSources: [],
     keywords,
   };
 }

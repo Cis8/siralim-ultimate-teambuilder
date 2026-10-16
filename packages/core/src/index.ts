@@ -8,6 +8,7 @@ export { createKeywordExtractor, extractKeywords, type KeywordExtractor } from '
 export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
 export { assignRoles } from './extraction/role-heuristic';
 export { enrichTraits } from './enrichment/enrich-traits';
+export { detectConditionalSources } from './enrichment/conditional-sources';
 export { writtenForms as familyWrittenForms } from './enrichment/family-matcher';
 export { CREATURE_CLASSES, KNOWN_CLASSES } from './enrichment/trait-kind';
 export { assignTraitIds } from './identity/assign-trait-ids';

@@ -31,4 +31,11 @@ describe('what is extracted from the compendium v2.0', () => {
     );
     await expect(`${lines.join('\n')}\n`).toMatchFileSnapshot('../../snapshots/random-debuffs-v2.0.txt');
   });
+
+  it('conditional sources: trait | keys', async () => {
+    const lines = traits.flatMap((trait) =>
+      trait.conditionalSources.length === 0 ? [] : [`${trait.id} | ${trait.conditionalSources.join(', ')}`],
+    );
+    await expect(`${lines.join('\n')}\n`).toMatchFileSnapshot('../../snapshots/conditional-sources-v2.0.txt');
+  });
 });

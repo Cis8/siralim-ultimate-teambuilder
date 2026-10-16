@@ -1,5 +1,6 @@
 import { extractKeywords, type KeywordExtractor } from '../extraction/extract-keywords';
 import type { IdentifiedTraitRow, Trait } from '../model/trait';
+import { detectConditionalSources } from './conditional-sources';
 import { doesStack } from './does-stack';
 import { createFamilyMatcher } from './family-matcher';
 import { parsePartyRequirement } from './party-requirement';
@@ -20,6 +21,7 @@ export function enrichTraits(
   return rows.map((row) => {
     const kind = classifyKind(row);
     const isMastery = kind === 'mastery';
+    const keywords = extract(row.description);
     return {
       id: row.id,
       name: row.name,
@@ -33,7 +35,8 @@ export function enrichTraits(
       randomDebuff: detectRandomDebuff(row.description),
       masteryFamily: isMastery ? row.family : null,
       partyRequirement: isMastery ? parsePartyRequirement(row.description, familyMatcher) : null,
-      keywords: extract(row.description),
+      keywords,
+      conditionalSources: detectConditionalSources(row.description, keywords),
     };
   });
 }

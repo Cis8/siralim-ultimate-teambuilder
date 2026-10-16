@@ -25,6 +25,7 @@ function trait(id: string, keywords: KeywordHit[], overrides: Partial<Trait> = {
     randomDebuff: null,
     masteryFamily: null,
     partyRequirement: null,
+    conditionalSources: [],
     keywords,
     ...overrides,
   };

@@ -145,9 +145,15 @@ function keywordCounts(traits: readonly Trait[]): string | null {
   const withKeywords = traits.filter((trait) => trait.keywords.length > 0).length;
   const statuses = mentions.filter((hit) => hit.role !== undefined);
   const count = (role: 'applies' | 'uses' | 'resists') => statuses.filter((hit) => hit.role === role).length;
+  const conditional = traits.filter((trait) => trait.conditionalSources.length > 0).length;
+  const pairs =
+    conditional === 0
+      ? ''
+      : ` ${conditional} ${conditional === 1 ? 'trait applies' : 'traits apply'} debuffs only through a pair (conditional sources).`;
   return (
     `### Keywords\n\n${mentions.length} mentions in ${withKeywords} traits. Of the ${statuses.length} buffs and debuffs, ` +
-    `${count('applies')} are given (applies), ${count('uses')} relied on (uses) and ${count('resists')} guarded against (resists).`
+    `${count('applies')} are given (applies), ${count('uses')} relied on (uses) and ${count('resists')} guarded against (resists).` +
+    pairs
   );
 }
 

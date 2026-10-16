@@ -51,6 +51,7 @@ interface Trait {
   masteryFamily: string | null;                // mastery only: the Family column, GAME_RULES R3
   partyRequirement: PartyRequirement | null;   // mastery only: parsed from the text, GAME_RULES R3
   keywords: KeywordHit[];           // ordered by position in description
+  conditionalSources: KeywordKey[];  // buffs/debuffs applied only as "whichever of these the target lacks", GAME_RULES R10
 }
 
 interface RandomDebuffSource {
@@ -115,6 +116,9 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   On v2.0 it gives 275 `applies`, 244 `uses` and 18 `resists`. All 537 mentions were read by hand (M3.7): the cues above came from
   that reading, and 11 mentions it could not tell apart are in `overrides.yaml` (conditional grants such as "As long as
   this creature hasn't gained or lost speed, it has … and has Agile", and a Barrier named again as a reference).
+- **Conditional sources** (`detectConditionalSources`, GAME_RULES R10): a sentence with "whichever of these debuffs
+  (buffs) …" makes the trait a conditional source of every buff and debuff it names. They stay `uses` in `keywords`,
+  since the trait waits for them; `conditionalSources` records the other half. Four traits on v2.0.
 - **Overrides** (`packages/pipeline/overrides.yaml`, `parseOverrides` / `applyOverrides`): two sections, `roles` (trait
   id, keyword key, optional `occurrence` counting from 1 or all mentions, `role`) and `randomDebuff` (trait id, `target`,
   `activation`, optional `note`; GAME_RULES R5). Every entry needs a `reason` citing the trait; unknown fields are refused.

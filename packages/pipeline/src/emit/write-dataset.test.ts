@@ -20,6 +20,7 @@ const trait = (id: string): Trait => ({
   randomDebuff: null,
   masteryFamily: null,
   partyRequirement: null,
+  conditionalSources: [],
   keywords: [],
 });
 

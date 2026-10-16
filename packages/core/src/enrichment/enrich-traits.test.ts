@@ -46,6 +46,7 @@ describe('enrichTraits', () => {
         randomDebuff: null,
         masteryFamily: null,
         partyRequirement: null,
+        conditionalSources: [],
         keywords: [],
       },
     ]);
@@ -116,6 +117,7 @@ describe('enrichTraits', () => {
         creature: null,
         masteryFamily: null,
         partyRequirement: null,
+        conditionalSources: [],
       });
     });
 
@@ -138,5 +140,21 @@ describe('enrichTraits', () => {
       const [trait] = enrichTraits([row()], () => [{ key: 'weak', kind: 'debuff', span: [0, 4], role: 'uses' }]);
       expect(trait?.keywords).toEqual([{ key: 'weak', kind: 'debuff', span: [0, 4], role: 'uses' }]);
     });
+  });
+});
+
+describe('enrichTraits: conditional sources', () => {
+  it('names the debuffs a "whichever of these" trait applies only through its pair', () => {
+    const [trait] = enrichTraits([
+      row({
+        description:
+          "After an enemy is afflicted with either Weak or Vulnerable, this creature afflicts them with whichever of these debuffs the target doesn't already have.",
+      }),
+    ]);
+    expect(trait?.conditionalSources).toEqual(['weak', 'vulnerable']);
+  });
+
+  it('has none for an ordinary trait', () => {
+    expect(enrichTraits([row()])[0]?.conditionalSources).toEqual([]);
   });
 });

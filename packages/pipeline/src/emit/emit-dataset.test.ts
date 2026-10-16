@@ -17,6 +17,7 @@ function trait(overrides: Partial<Trait> = {}): Trait {
     randomDebuff: null,
     masteryFamily: null,
     partyRequirement: null,
+    conditionalSources: [],
     keywords: [],
     ...overrides,
   };

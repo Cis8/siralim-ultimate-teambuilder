@@ -84,4 +84,10 @@ export interface Trait {
   readonly partyRequirement: PartyRequirement | null;
   /** Ordered by position in the description. */
   readonly keywords: readonly KeywordHit[];
+  /**
+   * Buffs and debuffs the trait applies only through a condition it does not state as applying them: "afflicts them
+   * with whichever of these debuffs the target doesn't already have" makes it a conditional source of each one named
+   * (GAME_RULES R10). Keys in order of appearance, without repeats.
+   */
+  readonly conditionalSources: readonly KeywordKey[];
 }
