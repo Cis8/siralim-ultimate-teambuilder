@@ -12,9 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.3 done (ids; `parseTraitsCsv`; `normaliseRows` + `identifyRows`:
-  the real sheet passes, 1,780 unique ids). **Next: 2.4** (base enrichment in `core`: kind, stacks, mastery family
-  and requirement, random-debuff detection; counts must match GAME_RULES).
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.4 done (`buildTraits(csv)` → enriched `Trait[]`, counts match
+  GAME_RULES on the pinned snapshot). **Next: 2.5** (emit `traits.<hash>.json` + `manifest.json`, clock injected,
+  byte-identical for the same input).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -57,14 +57,15 @@ app shell with tokens, self-hosted fonts and footer credits.
       *T:* preamble variants, header moved, extra column, missing column → clear error.
 - [x] **2.3** zod validation + normalisation (trim, curly quotes, double spaces, `No Material Exists` → null).
       *T:* one per rule; empty name or duplicate ID fails the build.
-- [ ] **2.4** Base enrichment in `core`: `kind` (R7), `stacks`, `masteryFamily` + `partyRequirement` (R3), random-debuff
+- [x] **2.4** Base enrichment in `core`: `kind` (R7), `stacks`, `masteryFamily` + `partyRequirement` (R3), random-debuff
       detection (R5, before overrides). *T:* table-driven on real rows; counts on the snapshot match GAME_RULES
       (kinds 1,331/31/156/135/127; requirements 76/2/24/1/52/1).
 - [ ] **2.5** Emit `traits.<hash>.json` + `manifest.json` (clock injected). *T:* same input → identical bytes and hash.
 - [ ] **2.6** Report (markdown): counts per class and kind, classes outside R7, diff vs previous build.
       *T:* two small fixture versions.
-- [ ] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`; pinned real snapshot in
-      `packages/pipeline/fixtures/`. *T:* golden test (1,780 traits, 0 duplicate IDs, expected class set).
+- [ ] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`. The pinned snapshot
+      (`fixtures/traits-v2.0.csv`) and the counts test (`build/real-sheet.test.ts`, 1,780 unique ids) landed with 2.4.
+      *T:* fetch with an injected `fetch`; the class set of the snapshot.
 - [ ] **2.8** `data-refresh.yml`: nightly + manual; runs `pnpm check`, opens a PR when the output changes.
 
 ### M3 Keyword extraction

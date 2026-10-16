@@ -116,3 +116,6 @@ Order of evaluation: `covered` → `random` → `conditional` → `missing`.
    innate creature of that family", to confirm.)
 4. Before M14: Master of Diabolic Horde changes your creatures' race at the start of battle. Does that satisfy other
    masteries' family requirements?
+5. Dusty Struggle ends with "This trait will not activate if another creature in your party has it as well" instead of
+   "This trait does not stack". It is the only trait with that wording. Should it count as non-stacking (R4)? Today
+   its `stacks` is `true`, because only the exact sentence counts.
