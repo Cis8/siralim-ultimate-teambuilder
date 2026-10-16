@@ -12,8 +12,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.2 done (`taxonomy`, `createKeywordMatcher`: on v2.0, 2,175 hits in
-  1,401 traits). **Next: 3.3** (role heuristic: applies / uses, per sentence, nearest cue before the keyword).
+- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.3 done (`taxonomy`, `createKeywordMatcher`, `assignRoles`: v2.0 gives
+  276 applies / 262 uses). **Next: 3.4** (`overrides.yaml` + schema: roles and random-debuff target/activation, `reason`
+  required). Flesh Rot-style implicit applications ("afflicts them with whichever of these debuffs") name no keyword: an
+  override format that can add a hit may be needed.
 - Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
@@ -72,7 +74,7 @@ rewritten when the hash is unchanged.
       *T:* registry invariants; every canonical debuff is present; Inverted and Mania are not randomly applicable.
 - [x] **3.2** Matcher: case-insensitive, longest match, word-bounded, with spans. *T:* "start of this creature's turn"
       vs "start of battle", "Weakness" ≠ Weak, ’ vs ', inflections via patterns (Sleep/Sleeping, Stone/Stoned).
-- [ ] **3.3** Role heuristic: per sentence, nearest cue before the keyword wins. *T:* real sentences: Flesh Rot (uses,
+- [x] **3.3** Role heuristic: per sentence, nearest cue before the keyword wins. *T:* real sentences: Flesh Rot (uses,
       then applies), Master of Abominations ("always have" → applies), Quell ("enemy with" → uses).
 - [ ] **3.4** `overrides.yaml` (roles + random-debuff target/activation) with schema: `reason` required, trait and
       keyword must exist, warning on redundant overrides. *T:* schema cases.

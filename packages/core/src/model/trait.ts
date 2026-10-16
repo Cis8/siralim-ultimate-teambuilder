@@ -50,11 +50,14 @@ export type PartyRequirement =
 /** What a keyword is. Only buffs and debuffs have a role. */
 export type KeywordKind = 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
 
+/** Whether a trait gives a buff or debuff to someone, or relies on it being there. */
+export type KeywordRole = 'applies' | 'uses';
+
 export interface KeywordHit {
   readonly key: KeywordKey;
   readonly kind: KeywordKind;
   /** Only for buffs and debuffs. */
-  readonly role?: 'applies' | 'uses';
+  readonly role?: KeywordRole;
   /** Half-open character range `[start, end)` in the trait description. */
   readonly span: readonly [start: number, end: number];
 }

@@ -99,9 +99,17 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
   "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A run of blanks matches the
   space of a pattern and a curly apostrophe a straight one, without moving spans.
-- **Role detection** for buffs and debuffs (heuristic, then overrides):
-  within the sentence before the keyword, `afflict(s)`, `are afflicted`, `gain(s)`, `grant(s)`, `always have` → `applies`;
-  otherwise → `uses` (e.g. "enemy with Vulnerable", "Enemies with Snared"). "is afflicted with" (a trigger) → `uses`.
+- **Role detection** for buffs and debuffs (`assignRoles`; heuristic, then overrides), per sentence:
+  - a status in the condition the sentence opens with (After / When / If / While / … up to the first comma) is one the
+    trait waits for → `uses` ("After an enemy is afflicted with Weak, …");
+  - otherwise the nearest signal before it decides. `applies`: `afflict(s/ed) … with`, `gain(s)`, `grant(s)`, `always
+    has/have`, `battles with`. `uses`: `has/have`, `damage from`, `immune/resistant to`, `enemies/creatures with`,
+    `creatures afflicted with`, `for each … afflicted with`. Where two end together the one that starts first wins
+    ("afflicts enemies with" over "enemies with", "always has" over "has");
+  - a status after another in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable") takes its role;
+  - no signal → `uses` (e.g. "Enemies' Burning debuff lasts forever").
+  On v2.0 it gives 276 `applies` and 262 `uses`; a sample read by hand shows a few idiomatic errors ("gain 50% of the
+  Barrier's strength", "has Protected" as a grant), left to overrides.
 - **Overrides**: `packages/pipeline/overrides.yaml` maps `traitId → { keyword: role }` for cases the heuristic gets
   wrong. Each override has a comment.
 - **Snapshot test** over the full dataset: the extracted `{traitId, key, role}` list is committed; any change shows in
