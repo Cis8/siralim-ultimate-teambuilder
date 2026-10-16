@@ -108,15 +108,17 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
     ("afflicts enemies with" over "enemies with", "always has" over "has");
   - a status after another in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable") takes its role;
   - no signal → `uses` (e.g. "Enemies' Burning debuff lasts forever").
-  On v2.0 it gives 276 `applies` and 262 `uses`; a sample read by hand shows a few idiomatic errors ("gain 50% of the
+  On v2.0 it gives 272 `applies` and 266 `uses`; a sample read by hand shows a few idiomatic errors ("gain 50% of the
   Barrier's strength", "has Protected" as a grant), left to overrides.
 - **Overrides** (`packages/pipeline/overrides.yaml`, `parseOverrides` / `applyOverrides`): two sections, `roles` (trait
   id, keyword key, optional `occurrence` counting from 1 or all mentions, `role`) and `randomDebuff` (trait id, `target`,
   `activation`, optional `note`; GAME_RULES R5). Every entry needs a `reason` citing the trait; unknown fields are refused.
   An entry naming a trait, a keyword the trait does not mention, an occurrence it does not have, or a keyword without a
   role fails the build; two entries for one mention conflict; an entry that changes nothing is a warning.
-- **Snapshot test** over the full dataset: the extracted `{traitId, key, role}` list is committed; any change shows in
-  the PR diff and must be reviewed.
+- **Snapshot tests** over the pinned v2.0 sheet, as committed files in `packages/pipeline/snapshots/`: one line per
+  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,175 lines), and one per random-debuff trait, `trait | target |
+  activation | note`. Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read
+  and approved; refresh with `pnpm exec vitest run -u`.
 - Done in the **pipeline** (build time), not at runtime; `core` exposes the same extractor so tests and the pipeline
   share code.
 

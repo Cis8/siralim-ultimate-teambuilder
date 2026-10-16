@@ -22,7 +22,11 @@ function trait(id: string, overrides: Partial<Trait> = {}): Trait {
   };
 }
 
-const build = (datasetVersion: string, traits: Trait[]): BuiltTraits => ({ datasetVersion, traits });
+const build = (datasetVersion: string, traits: Trait[], warnings: string[] = []): BuiltTraits => ({
+  datasetVersion,
+  traits,
+  warnings,
+});
 const previousOf = (built: BuiltTraits): PreviousBuild => ({
   datasetVersion: built.datasetVersion,
   traits: built.traits.map((t) => ({ ...t })),
@@ -197,7 +201,38 @@ describe('buildReport', () => {
     });
   });
 
+  describe('keywords', () => {
+    const hit = (key: string, kind: 'debuff' | 'buff' | 'trigger', role?: 'applies' | 'uses') =>
+      role === undefined ? { key, kind, span: [0, 1] as const } : { key, kind, span: [0, 1] as const, role };
+
+    it('counts the mentions, and how many buffs and debuffs are given or relied on', () => {
+      const report = buildReport(
+        build('2.0', [
+          trait('a', { keywords: [hit('weak', 'debuff', 'applies'), hit('start of battle', 'trigger')] }),
+          trait('b', { keywords: [hit('weak', 'debuff', 'uses'), hit('barrier', 'buff', 'applies')] }),
+          trait('c'),
+        ]),
+        null,
+      );
+      expect(report).toContain(
+        '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs and debuffs, 2 are given (applies) and 1 relied on (uses).',
+      );
+    });
+
+    it('leaves the section out when nothing was extracted', () => {
+      expect(buildReport(build('2.0', [trait('a')]), null)).not.toContain('### Keywords');
+    });
+  });
+
   describe('needs attention', () => {
+    it('passes on the warnings of overrides that change nothing', () => {
+      const report = buildReport(
+        build('2.0', [trait('a')], ['roles[0]: in "a", "weak" is already "uses"; this changes nothing']),
+        null,
+      );
+      expect(report).toContain('- Override roles[0]: in "a", "weak" is already "uses"; this changes nothing');
+    });
+
     it('is empty when everything is known', () => {
       expect(buildReport(build('2.0', [trait('a')]), null)).toContain('## Needs attention\n\nNothing.');
     });

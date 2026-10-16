@@ -1,0 +1,30 @@
+alemental--slosh | enemy | unconditional | -
+amphisbaena--grim-ailment | enemy | conditional | After your creatures apply a debuff
+automaton--pandemic | enemy | unconditional | -
+avatar--the-nether | enemy | unconditional | -
+backer--abyss-orbs | enemy | unconditional | -
+backer--glitch-in-the-system | both | unconditional | -
+backer--toxic-cloud | enemy | unconditional | -
+bat--sluuurp | enemy | unconditional | -
+exotic--forests-curse | enemy | unconditional | -
+exotic--unrevealed-secret | enemy | unconditional | -
+exotic--dusty-struggle | self_or_allies | unconditional | -
+exotic--going-mad | self_or_allies | unconditional | -
+exotic--condiments | enemy | unconditional | -
+godspawn--revolt | enemy | unconditional | -
+leper--pus-and-pox | enemy | unconditional | -
+leper--hugs-and-kisses | enemy | unconditional | -
+maniac--loids-pustulant-pimples | enemy | unconditional | -
+marionette--master-of-marionettes | enemy | unconditional | -
+masochist--binary-affliction | enemy | unconditional | -
+mite--swell | enemy | unconditional | -
+nihilist--accelerated-harvest | enemy | unconditional | -
+occultist--lingering-incantation | enemy | unconditional | -
+pit-wraith--stricken | enemy | unconditional | -
+plague-doctor--maximize | enemy | unconditional | -
+plague-doctor--black-to-white | enemy | unconditional | -
+reaper--soul-corruption | enemy | unconditional | -
+sin--despair | enemy | unconditional | -
+slime--flubriss-entrapment | enemy | conditional | When an enemy takes damage from Poisoned or Burning
+wyvern--currents | enemy | unconditional | -
+zantai--zantais-envy | enemy | unconditional | -

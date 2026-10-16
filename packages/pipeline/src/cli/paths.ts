@@ -7,6 +7,9 @@ const inPackage = (relativePath: string) => fileURLToPath(new URL(relativePath, 
 /** Downloaded sheets and the report; not committed (`.cache/` is ignored). */
 export const CACHE_DIRECTORY = inPackage('.cache/');
 
+/** The hand-made corrections to the extractor. */
+export const OVERRIDES_FILE = inPackage('overrides.yaml');
+
 /** Where the web app serves its data from. */
 export const DEFAULT_OUTPUT_DIRECTORY = inPackage('../../apps/web/static/data/');
 

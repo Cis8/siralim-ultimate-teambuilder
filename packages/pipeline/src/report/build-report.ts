@@ -19,7 +19,7 @@ export function buildReport(current: BuiltTraits, previous: PreviousBuild | null
     `# Data report: Siralim Ultimate compendium v${current.datasetVersion}`,
     changesSection(current.traits, previous),
     countsSection(current.traits),
-    attentionSection(current.traits),
+    attentionSection(current.traits, current.warnings),
   ];
   return `${sections.join('\n\n')}\n`;
 }
@@ -69,7 +69,13 @@ function signed(difference: number): string {
 }
 
 function countsSection(traits: readonly Trait[]): string {
-  const subsections = [kindsTable(traits), classesTable(traits), masteryTable(traits), randomDebuffs(traits)];
+  const subsections = [
+    kindsTable(traits),
+    classesTable(traits),
+    masteryTable(traits),
+    keywordCounts(traits),
+    randomDebuffs(traits),
+  ];
   return ['## Counts', ...subsections.filter((subsection) => subsection !== null)].join('\n\n');
 }
 
@@ -113,6 +119,18 @@ function masteryTable(traits: readonly Trait[]): string | null {
   return masteries === 0 ? null : table('Mastery requirements', 'Requirement', Object.entries(counts));
 }
 
+function keywordCounts(traits: readonly Trait[]): string | null {
+  const mentions = traits.flatMap((trait) => trait.keywords);
+  if (mentions.length === 0) return null;
+  const withKeywords = traits.filter((trait) => trait.keywords.length > 0).length;
+  const statuses = mentions.filter((hit) => hit.role !== undefined);
+  const applies = statuses.filter((hit) => hit.role === 'applies').length;
+  return (
+    `### Keywords\n\n${mentions.length} mentions in ${withKeywords} traits. Of the ${statuses.length} buffs and debuffs, ` +
+    `${applies} are given (applies) and ${statuses.length - applies} relied on (uses).`
+  );
+}
+
 function randomDebuffs(traits: readonly Trait[]): string | null {
   const sources = traits.flatMap((trait) => (trait.randomDebuff === null ? [] : [trait.randomDebuff]));
   if (sources.length === 0) return null;
@@ -122,7 +140,7 @@ function randomDebuffs(traits: readonly Trait[]): string | null {
   return `### Random debuffs\n\n${sources.length} ${verb} one: ${enemyOnly} aimed at enemies only, ${conditional} conditional.`;
 }
 
-function attentionSection(traits: readonly Trait[]): string {
+function attentionSection(traits: readonly Trait[], warnings: readonly string[]): string {
   const unknownClasses = [...countClasses(traits)]
     .filter(([className]) => !KNOWN_CLASSES.has(className))
     .toSorted(([a], [b]) => compareText(a, b))
@@ -143,7 +161,7 @@ function attentionSection(traits: readonly Trait[]): string {
         `\`${id}\`: the \`${partyRequirement?.type}\` requirement names no family the sheet knows.`,
     );
 
-  const items = [...unknownClasses, ...unresolvedMasteries];
+  const items = [...unknownClasses, ...unresolvedMasteries, ...warnings.map((warning) => `Override ${warning}`)];
   const body = items.length === 0 ? 'Nothing.' : items.map((item) => `- ${item}`).join('\n');
   return `## Needs attention\n\n${body}`;
 }

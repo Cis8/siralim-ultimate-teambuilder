@@ -1,3 +1,4 @@
+import { extractKeywords, type KeywordExtractor } from '../extraction/extract-keywords';
 import type { IdentifiedTraitRow, Trait } from '../model/trait';
 import { doesStack } from './does-stack';
 import { createFamilyMatcher } from './family-matcher';
@@ -6,10 +7,14 @@ import { detectRandomDebuff } from './random-debuff';
 import { classifyKind } from './trait-kind';
 
 /**
- * Adds what can be derived from a row alone, before keywords: its kind (R7), whether it stacks (R4), a random debuff
- * (R5) and, for masteries, the family and the party requirement (R3). Keywords are extracted in a later stage.
+ * Adds what can be derived from a row alone: its kind (R7), whether it stacks (R4), a random debuff (R5), for
+ * masteries the family and the party requirement (R3), and its keywords. Hand-made corrections come after, from
+ * `overrides.yaml`.
  */
-export function enrichTraits(rows: readonly IdentifiedTraitRow[]): Trait[] {
+export function enrichTraits(
+  rows: readonly IdentifiedTraitRow[],
+  extract: KeywordExtractor = extractKeywords,
+): Trait[] {
   const familyMatcher = createFamilyMatcher(rows.map((row) => row.family));
 
   return rows.map((row) => {
@@ -28,7 +33,7 @@ export function enrichTraits(rows: readonly IdentifiedTraitRow[]): Trait[] {
       randomDebuff: detectRandomDebuff(row.description),
       masteryFamily: isMastery ? row.family : null,
       partyRequirement: isMastery ? parsePartyRequirement(row.description, familyMatcher) : null,
-      keywords: [],
+      keywords: extract(row.description),
     };
   });
 }

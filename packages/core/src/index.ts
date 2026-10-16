@@ -4,6 +4,7 @@
  */
 export const DATASET_SCHEMA_VERSION = 1;
 
+export { createKeywordExtractor, extractKeywords, type KeywordExtractor } from './extraction/extract-keywords';
 export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
 export { assignRoles } from './extraction/role-heuristic';
 export { enrichTraits } from './enrichment/enrich-traits';

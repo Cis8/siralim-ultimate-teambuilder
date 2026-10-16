@@ -2,13 +2,16 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { DatasetManifest } from '@atlas/core';
+import { fileURLToPath } from 'node:url';
+import type { DatasetManifest, TraitDataset } from '@atlas/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { OverridesError } from '../overrides/overrides-error';
 import { SheetFormatError } from '../sheet/sheet-format-error';
 import { CliError } from './cli-error';
 import { runBuild } from './run-build';
 
 const SNAPSHOT = new URL('../../fixtures/traits-v2.0.csv', import.meta.url);
+const COMMITTED_OVERRIDES = fileURLToPath(new URL('../../overrides.yaml', import.meta.url));
 
 describe('runBuild', () => {
   let directory: string;
@@ -21,8 +24,9 @@ describe('runBuild', () => {
     await rm(directory, { recursive: true, force: true });
   });
 
-  const settings = (inputFile: string, now = '2026-10-16T10:00:00.000Z') => ({
+  const settings = (inputFile: string, now = '2026-10-16T10:00:00.000Z', overridesFile = COMMITTED_OVERRIDES) => ({
     inputFile,
+    overridesFile,
     outputDirectory: join(directory, 'data'),
     reportFile: join(directory, 'cache', 'report.md'),
     now: () => new Date(now),
@@ -99,5 +103,60 @@ describe('runBuild', () => {
 
     expect(existsSync(join(directory, 'data'))).toBe(false);
     expect(existsSync(run.reportFile)).toBe(false);
+  });
+
+  describe('overrides', () => {
+    const FLESH_ROT_WEAK = `roles:
+  - { trait: abomination--flesh-rot, keyword: weak, role: applies, reason: 'Test: pretend Flesh Rot gives Weak.' }
+`;
+    const writeOverrides = (yaml: string) => writeInput('overrides.yaml', yaml);
+    const fleshRotWeak = async () => {
+      const manifest = await readManifest();
+      const dataset = JSON.parse(
+        await readFile(join(directory, 'data', `traits.${manifest.hash}.json`), 'utf8'),
+      ) as TraitDataset;
+      return dataset.traits
+        .find((trait) => trait.id === 'abomination--flesh-rot')
+        ?.keywords.find((hit) => hit.key === 'weak');
+    };
+
+    it('are put over the extracted keywords before the dataset is written', async () => {
+      const input = await writeInput('traits.csv', snapshot);
+      await runBuild(settings(input, undefined, await writeOverrides(FLESH_ROT_WEAK)));
+      expect((await fleshRotWeak())?.role).toBe('applies');
+    });
+
+    it('leave Flesh Rot as read when there are none', async () => {
+      await runBuild(settings(await writeInput('traits.csv', snapshot)));
+      expect((await fleshRotWeak())?.role).toBe('uses');
+    });
+
+    it('stop the build, and write nothing, when one does not fit the sheet', async () => {
+      const input = await writeInput('traits.csv', snapshot);
+      const overrides = await writeOverrides(FLESH_ROT_WEAK.replace('flesh-rot', 'no-such-trait'));
+      const run = settings(input, undefined, overrides);
+
+      await expect(runBuild(run)).rejects.toBeInstanceOf(OverridesError);
+
+      expect(existsSync(join(directory, 'data'))).toBe(false);
+      expect(existsSync(run.reportFile)).toBe(false);
+    });
+
+    it('stop the build when the file is missing', async () => {
+      const input = await writeInput('traits.csv', snapshot);
+      await expect(runBuild(settings(input, undefined, join(directory, 'missing.yaml')))).rejects.toBeInstanceOf(
+        OverridesError,
+      );
+    });
+
+    it('are reported when they change nothing', async () => {
+      const input = await writeInput('traits.csv', snapshot);
+      const run = settings(input, undefined, await writeOverrides(FLESH_ROT_WEAK.replace('applies', 'uses')));
+
+      await runBuild(run);
+
+      expect(run.log).toHaveBeenCalledWith(expect.stringMatching(/^Warning, override roles\[0\].*already/));
+      expect(await readFile(run.reportFile, 'utf8')).toMatch(/- Override roles\[0\].*already/);
+    });
   });
 });

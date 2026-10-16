@@ -19,7 +19,7 @@ export interface EmittedDataset {
  * Traits are written sorted by id, so reordering the sheet changes nothing. Each is on its own line, so that a
  * data-refresh pull request shows exactly the traits that changed.
  */
-export function emitDataset(built: BuiltTraits, generatedAt: Date): EmittedDataset {
+export function emitDataset(built: Pick<BuiltTraits, 'datasetVersion' | 'traits'>, generatedAt: Date): EmittedDataset {
   const traits = built.traits.toSorted((a, b) => compareText(a.id, b.id));
   const datasetJson = serialise(built.datasetVersion, traits);
   const hash = createHash('sha256').update(datasetJson, 'utf8').digest('hex').slice(0, HASH_LENGTH);

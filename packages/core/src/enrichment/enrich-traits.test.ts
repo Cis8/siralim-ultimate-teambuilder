@@ -124,7 +124,19 @@ describe('enrichTraits', () => {
     });
   });
 
-  it('starts with no keywords: extracting them is a later stage', () => {
-    expect(enrichTraits([row()])[0]?.keywords).toEqual([]);
+  describe('keywords', () => {
+    it('are the ones in the description, with spans and roles', () => {
+      const [trait] = enrichTraits([row({ description: 'This creature gains Shelled.' })]);
+      expect(trait?.keywords).toEqual([{ key: 'shelled', kind: 'buff', span: [20, 27], role: 'applies' }]);
+    });
+
+    it('are none for a description without any', () => {
+      expect(enrichTraits([row()])[0]?.keywords).toEqual([]);
+    });
+
+    it('come from the extractor it is given', () => {
+      const [trait] = enrichTraits([row()], () => [{ key: 'weak', kind: 'debuff', span: [0, 4], role: 'uses' }]);
+      expect(trait?.keywords).toEqual([{ key: 'weak', kind: 'debuff', span: [0, 4], role: 'uses' }]);
+    });
   });
 });

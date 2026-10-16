@@ -1,11 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { KNOWN_CLASSES, type Trait } from '@atlas/core';
+import { KNOWN_CLASSES, taxonomy, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
+import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
-import { buildTraits } from './build-traits';
+import { buildRealSheet } from '../testing/real-build';
 
-// The pinned snapshot of the compendium, v2.0. The counts below are the ones in docs/GAME_RULES.md.
-const SNAPSHOT = new URL('../../fixtures/traits-v2.0.csv', import.meta.url);
+// The pinned snapshot of the compendium, v2.0, built with the committed overrides. The counts below are the ones in
+// docs/GAME_RULES.md.
 
 function countBy<T>(items: readonly T[], key: (item: T) => string): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -14,11 +14,13 @@ function countBy<T>(items: readonly T[], key: (item: T) => string): Record<strin
 }
 
 describe('the compendium v2.0 snapshot', () => {
+  let built: BuiltTraits;
   let traits: readonly Trait[];
   let datasetVersion: string;
 
-  beforeAll(() => {
-    ({ datasetVersion, traits } = buildTraits(readFileSync(SNAPSHOT, 'utf8')));
+  beforeAll(async () => {
+    built = await buildRealSheet();
+    ({ datasetVersion, traits } = built);
   });
 
   it('is version 2.0 with 1,780 traits, each with its own id', () => {
@@ -32,7 +34,7 @@ describe('the compendium v2.0 snapshot', () => {
   });
 
   it('has nothing the report needs the owner to look at', () => {
-    const report = buildReport({ datasetVersion, traits }, null);
+    const report = buildReport(built, null);
     expect(report).toContain('## Needs attention\n\nNothing.');
   });
 
@@ -131,6 +133,62 @@ describe('the compendium v2.0 snapshot', () => {
         .filter((trait) => trait.randomDebuff?.activation === 'conditional')
         .map((trait) => trait.name);
       expect(conditional.toSorted()).toEqual(["Flubris's Entrapment", 'Grim Ailment']);
+    });
+  });
+
+  describe('keywords', () => {
+    it('are cut out of the description by their span, and spell one of the patterns of their key', () => {
+      for (const trait of traits) {
+        for (const hit of trait.keywords) {
+          const written = trait.description.slice(hit.span[0], hit.span[1]).replace(/\s+/g, ' ').toLowerCase();
+          const patterns = taxonomy.get(hit.key)?.patterns.map((pattern) => pattern.toLowerCase());
+          expect(patterns, `${trait.id}: ${hit.key}`).toContain(written);
+        }
+      }
+    });
+
+    it('follow the text in order and never overlap', () => {
+      for (const { id, keywords } of traits) {
+        const spans = keywords.map((hit) => hit.span);
+        expect(
+          spans.toSorted((a, b) => a[0] - b[0]),
+          id,
+        ).toEqual(spans);
+        spans.forEach((span, index) => {
+          const next = spans[index + 1];
+          if (next) expect(span[1], id).toBeLessThanOrEqual(next[0]);
+        });
+      }
+    });
+
+    it('have a role exactly when they are buffs or debuffs', () => {
+      for (const { id, keywords } of traits) {
+        for (const hit of keywords) {
+          expect(hit.role !== undefined, `${id}: ${hit.key}`).toBe(hit.kind === 'buff' || hit.kind === 'debuff');
+        }
+      }
+    });
+
+    it('make "This trait does not stack" the flag of exactly the traits that do not stack', () => {
+      for (const trait of traits) {
+        const flagged = trait.keywords.some((hit) => hit.key === 'nostack');
+        expect(flagged, trait.id).toBe(!trait.stacks);
+      }
+    });
+
+    it('read Flesh Rot as relying on Weak and Vulnerable, and Master of Abominations as giving them', () => {
+      const rolesOf = (id: string) =>
+        traits
+          .find((trait) => trait.id === id)
+          ?.keywords.filter((hit) => hit.role !== undefined)
+          .map((hit) => `${hit.key}:${hit.role}`);
+      expect(rolesOf('abomination--flesh-rot')).toEqual(['weak:uses', 'vulnerable:uses']);
+      expect(rolesOf('abomination--master-of-abominations')).toEqual(['weak:applies', 'vulnerable:applies']);
+    });
+
+    it('use every key of the taxonomy at least once, so that no entry is dead', () => {
+      const used = new Set(traits.flatMap((trait) => trait.keywords.map((hit) => hit.key)));
+      expect(taxonomy.entries.map((entry) => entry.key).filter((key) => !used.has(key))).toEqual([]);
     });
   });
 });

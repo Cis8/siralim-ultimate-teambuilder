@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { OverridesError } from '../overrides/overrides-error';
+import type { Overrides } from '../overrides/parse-overrides';
 import { SheetFormatError } from '../sheet/sheet-format-error';
 import { buildTraits } from './build-traits';
 
@@ -36,5 +38,45 @@ describe('buildTraits', () => {
         ),
       ),
     ).toThrow(SheetFormatError);
+  });
+
+  describe('keywords and overrides', () => {
+    const sheet = csv(
+      '"Death","Abomination","Abomination Brute","Flesh Rot","After an enemy is afflicted with either Weak or Vulnerable, this creature gains Berserk.","Brute Stitches"',
+    );
+    const rolesOf = (traits: readonly { keywords: readonly { key: string; role?: string }[] }[]) =>
+      traits[0]?.keywords.map((hit) => `${hit.key}:${hit.role}`);
+
+    it('gives every trait the keywords of its description', () => {
+      expect(rolesOf(buildTraits(sheet).traits)).toEqual(['weak:uses', 'vulnerable:uses', 'berserk:applies']);
+    });
+
+    it('has no warnings without overrides', () => {
+      expect(buildTraits(sheet).warnings).toEqual([]);
+    });
+
+    it('puts the overrides over what was extracted', () => {
+      const overrides: Overrides = {
+        roles: [{ trait: 'abomination--flesh-rot', keyword: 'berserk', role: 'uses', reason: 'Test.' }],
+        randomDebuff: [],
+      };
+      expect(rolesOf(buildTraits(sheet, overrides).traits)).toEqual(['weak:uses', 'vulnerable:uses', 'berserk:uses']);
+    });
+
+    it('passes on the warnings of overrides that change nothing', () => {
+      const overrides: Overrides = {
+        roles: [{ trait: 'abomination--flesh-rot', keyword: 'weak', role: 'uses', reason: 'Test.' }],
+        randomDebuff: [],
+      };
+      expect(buildTraits(sheet, overrides).warnings).toEqual([expect.stringMatching(/roles\[0\].*already/)]);
+    });
+
+    it('stops at an override for a trait that is not in the sheet', () => {
+      const overrides: Overrides = {
+        roles: [{ trait: 'nobody--nothing', keyword: 'weak', role: 'uses', reason: 'Test.' }],
+        randomDebuff: [],
+      };
+      expect(() => buildTraits(sheet, overrides)).toThrow(OverridesError);
+    });
   });
 });
