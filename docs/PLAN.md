@@ -14,7 +14,7 @@ session (after `CLAUDE.md`), update it before ending one.
 ## Resume here
 - **Phase 1 · M2 done** (2026-10-16). **Next: M3, slice 3.1** (canonical buff/debuff lists from the wiki and the Codex
   Reference, transcribed into the taxonomy registry with a source note).
-- Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
+- Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
 - Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
@@ -23,7 +23,7 @@ session (after `CLAUDE.md`), update it before ending one.
 | # | Decision | Recorded in |
 |---|---|---|
 | D1 | Repo `Cis8/siralim-ultimate-teambuilder`, public, Pages base path `/siralim-ultimate-teambuilder` | here |
-| D2 | Deploy workflow is manual-only until the compendium authors agree; then deploy on push to `main` | `deploy.yml` |
+| D2 | The compendium authors agreed (2026-10-16): deploy every commit on `main` once CI is green | `deploy.yml` |
 | D3 | Node 24 LTS, pnpm via corepack | ADR-0002 |
 | D4 | No PRs: direct commits to `main`, quality guaranteed by gates and `CLAUDE.md` rules | ADR-0007 |
 | D5 | Slots per kind; Avatar innate-only; special kinds artifact-only; fallback colour `#8fa1b3` | GAME_RULES R1, R6, R7 |
@@ -55,7 +55,7 @@ One slice = one commit (or a few) on `main`. *T:* = tests written with or before
 
 ### M1 Scaffold — done
 Monorepo, strict TS, ESLint with package-boundary rules (tested in `tools/boundaries.test.ts`) + dependency-cruiser,
-Prettier, Vitest projects, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebKit) + axe, CI, manual Pages deploy,
+Prettier, Vitest projects, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebKit) + axe, CI, Pages deploy,
 app shell with tokens, self-hosted fonts and footer credits.
 
 ### M2 Pipeline v1 — done
@@ -129,4 +129,3 @@ rewritten when the hash is unchanged.
 - [ ] **8.3** Keyboard-only e2e walkthrough (criterion 8); contrast test of the DESIGN tokens on every surface they use;
       screen-reader checklist for the owner.
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.
-      Switch deploy to push-on-main if D2 is cleared.

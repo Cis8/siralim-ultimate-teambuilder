@@ -1,8 +1,13 @@
 name: Deploy to GitHub Pages
 
-# Manual only until the compendium authors have agreed to publication (decision D2, docs/PLAN.md).
-# Then add `push: { branches: [main] }` and gate it on the CI workflow.
+# The compendium authors agreed to publication (decision D2, docs/PLAN.md). Every commit on main is deployed once the
+# CI workflow has passed on it, so a broken commit is never published; data only reaches main through a reviewed pull
+# request (ADR-0004). Can also be started by hand.
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,12 +21,16 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       BASE_PATH: /${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The commit CI passed on, not whatever main is by now.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
