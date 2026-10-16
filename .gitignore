@@ -10,3 +10,4 @@ blob-report/
 .env
 .env.*
 .DS_Store
+.vitest/

@@ -104,8 +104,13 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 
 ## 5. Identity and versioning
 
-- `TraitId` = slug of `family` + `name` (e.g. `abomination--sin-and-sentence`), made unique deterministically.
-  It must not change when rows are reordered.
+- `TraitId` = slug of `family` + `--` + slug of `name` (e.g. `abomination--sin-and-sentence`), made unique
+  deterministically. It must not change when rows are reordered.
+  - Slug: lowercase ASCII, accents stripped, apostrophes dropped (`Mother's` → `mothers`), `&` → `and`, any other
+    run of characters → one hyphen.
+  - Collisions: rows are ranked by their content (family, name, class, creature, description, material); the first
+    keeps the plain id and the others get `-2`, `-3`, … skipping ids another row owns. v2.0 has no collisions.
+  - A family or name with nothing left after slugging fails the build.
 - The dataset carries `datasetVersion` (the sheet's "Version x.y") and a content hash.
 - Saved/shared state stores TraitIds plus `datasetVersion`. When an ID is unknown in the current dataset, the UI keeps
   the slot, marks it "not found in vX", and offers a search for the old name.

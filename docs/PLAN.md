@@ -12,7 +12,8 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M1 done** (2026-10-16): repo on GitHub, CI green on `main`. **Next: M2, slice 2.1.**
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1 done (model types, `slugify`, `assignTraitIds`). **Next: 2.2** (CSV
+  parsing; add `csv-parse` to `packages/pipeline`).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -49,7 +50,7 @@ Prettier, Vitest projects, Playwright (desktop Chromium, Pixel 7, iPhone 14 WebK
 app shell with tokens, self-hosted fonts and footer credits.
 
 ### M2 Pipeline v1
-- [ ] **2.1** `core` model types (SPEC §3) + `slugify` / `assignTraitIds`. *T:* apostrophes, accents, `!`, `&`;
+- [x] **2.1** `core` model types (SPEC §3) + `slugify` / `assignTraitIds`. *T:* apostrophes, accents, `!`, `&`;
       deterministic de-duplication; property (fast-check): shuffled rows → same IDs.
 - [ ] **2.2** CSV parsing (csv-parse), header located by column names, `datasetVersion` from the preamble.
       *T:* preamble variants, header moved, extra column, missing column → clear error.
