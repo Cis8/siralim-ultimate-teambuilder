@@ -12,10 +12,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.3 done (`taxonomy`, `createKeywordMatcher`, `assignRoles`: v2.0 gives
-  276 applies / 262 uses). **Next: 3.4** (`overrides.yaml` + schema: roles and random-debuff target/activation, `reason`
-  required). Flesh Rot-style implicit applications ("afflicts them with whichever of these debuffs") name no keyword: an
-  override format that can add a hit may be needed.
+- **Phase 1 · M3 in progress** (2026-10-16): 3.1-3.4 done (taxonomy, matcher, roles, `overrides.yaml` with schema; the
+  file is still empty). **Next: 3.5** (extract keywords in `buildTraits`, apply overrides, commit the
+  `{traitId, key, role}` and random-debuff snapshots). Flesh Rot-style implicit applications ("afflicts them with
+  whichever of these debuffs") name no keyword: an override that adds a mention may be needed in 3.7.
 - Nothing waits on the owner. The compendium authors agreed to publication (D2), so every green commit on `main` is deployed.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
@@ -76,7 +76,7 @@ rewritten when the hash is unchanged.
       vs "start of battle", "Weakness" ≠ Weak, ’ vs ', inflections via patterns (Sleep/Sleeping, Stone/Stoned).
 - [x] **3.3** Role heuristic: per sentence, nearest cue before the keyword wins. *T:* real sentences: Flesh Rot (uses,
       then applies), Master of Abominations ("always have" → applies), Quell ("enemy with" → uses).
-- [ ] **3.4** `overrides.yaml` (roles + random-debuff target/activation) with schema: `reason` required, trait and
+- [x] **3.4** `overrides.yaml` (roles + random-debuff target/activation) with schema: `reason` required, trait and
       keyword must exist, warning on redundant overrides. *T:* schema cases.
 - [ ] **3.5** Enrich the dataset with keywords + overrides; snapshot `{traitId, key, role}` one line per hit;
       random-debuff snapshot `{traitId, target, activation}`.

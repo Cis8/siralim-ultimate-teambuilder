@@ -1,0 +1,23 @@
+# Hand-made corrections to what the extractor guesses (SPEC §4, ADR-0006).
+#
+# Every entry names a trait by its id (the `id` in the dataset, e.g. `abomination--flesh-rot`) and says in `reason`
+# why it is here, citing the wording of the trait. The build fails when an entry names a trait or a mention that no
+# longer exists, and warns when an entry changes nothing: then delete it. Put a `reason` that contains a colon or
+# quotes between single quotes, as below.
+#
+# roles: who gives a buff or debuff and who relies on it, where the wording fooled the heuristic.
+#   - trait: sandstorm            # trait id
+#     keyword: blind              # key of a buff or debuff in the taxonomy
+#     occurrence: 2               # optional: which mention in the trait, counting from 1; leave out for all of them
+#     role: uses                  # applies | uses
+#     reason: 'Sandstorm, second sentence: "your creatures with Blind" only reads the debuff.'
+#
+# randomDebuff: who a "random debuff" trait afflicts, and whether it can do so on its own (GAME_RULES R5).
+#   - trait: grim-ailment
+#     target: enemy               # enemy | self_or_allies | both
+#     activation: conditional     # unconditional | conditional
+#     note: After your creatures apply a debuff    # optional: what a conditional source waits for
+#     reason: Grim Ailment only adds a random debuff after another one was applied.
+
+roles: []
+randomDebuff: []
