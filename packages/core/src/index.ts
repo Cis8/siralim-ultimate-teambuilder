@@ -45,6 +45,8 @@ export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-
 export { createTraitIndex, type TraitIndex } from './query/trait-index';
 export { evaluate } from './query/evaluate';
 export { visitQuery, type QueryVisitor } from './query/visitor';
+export { createHighlighter, type Highlighter } from './query/highlight';
+export { serialise } from './query/serialise';
 export type {
   BuffEntry,
   DebuffEntry,

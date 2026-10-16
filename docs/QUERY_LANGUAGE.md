@@ -1,6 +1,7 @@
 # Query language
 
-Phase 1 needs §1–§4 (parse + evaluate + highlight). Phase 2 adds §5–§8 (diagnostics, autocomplete, explain, editor).
+Phase 1 needs §1–§4 (parse, evaluate, highlight, write back). Phase 2 adds §5–§8 (diagnostics, autocomplete, explain,
+editor).
 Reference behaviour: `docs/prototype/SearchBar.dc.html` (functions `tokPos`, `parseTokens`, `lint`, `suggest`, `explain`).
 
 ## 1. Grammar (EBNF)
@@ -55,9 +56,9 @@ field    = letter , { letter } ;
 | `stack:` | `yes` = stacks, `no` = "does not stack" | exact |
 
 Fields are a **registry** (`createFieldRegistry`; the fields of the app are in `query/fields.ts`). Phase 1 gives a
-`FieldDefinition` `{ name, aliases, matcher(value) }`; Phase 2 adds `suggestValues?(prefix)` and `describe(value)`. `matcher`
-is asked once per term, with the value lower-cased, and returns the test to run on each trait, so a field parses its value
-(`yes`, `no`) once, not once per trait. Names and aliases are lower-case ASCII letters (what the lexer reads before a colon)
+`FieldDefinition` `{ name, aliases, matcher(value), highlightsDescription? }`; Phase 2 adds `suggestValues?(prefix)` and
+`describe(value)`. `matcher` is asked once per term, with the value lower-cased, and returns the test to run on each
+trait, so a field parses its value (`yes`, `no`) once, not once per trait. Names and aliases are lower-case ASCII letters (what the lexer reads before a colon)
 and unique across the registry; the field name in a query is matched whatever its letter case.
 - **No field, or an unknown one.** A word with no field is looked for in the six columns of the table, one at a time, so a
   phrase never runs from the end of a column into the start of the next. An unknown field makes the whole token a free-text
@@ -82,9 +83,29 @@ passed in, the one of the app by default.
 For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
 bitsets) only if the 16 ms budget is missed: `TraitIndex` is opaque to `evaluate`'s callers, so it can change without them.
 
-## 4. Highlighting
-Positive free-text and `desc:` terms (not under NOT) are highlighted in descriptions; keyword tokens are always styled by
-kind and role (DESIGN § Keyword tokens). Highlight computation is a Visitor that returns spans, never HTML.
+## 4. Highlighting and writing a query back
+**Highlighting.** `createHighlighter(ast)` works out once what the query marks, and returns a function from a text (the
+description of a result) to its spans: `[start, end)` positions in that text, never HTML. Keyword tokens are not part of it:
+they are always styled by kind and role (DESIGN § Keyword tokens), from the spans of the dataset.
+- **What is marked.** The terms that look in the description: a word with no field, a field nobody knows (its whole token,
+  as the search takes it) and `desc:`. A field says so with `highlightsDescription` on its definition, so the highlighter
+  knows no field by name. A term with no value yet (`desc:`, `""`) marks nothing. The text is found wherever it is, in any
+  letter case, as the search finds it; a character that means something in a pattern means itself.
+- **Under a NOT.** A term under a NOT is not marked: a trait found has not got it. A term under two, `--weak`, **is**
+  marked, since `--weak` is `weak`: the parity of the NOTs above the term decides, whatever the operators in between
+  (`-(snared -weak)` marks `weak`).
+- **The spans** are in the order of the text, never empty, and apart: the terms that overlap or touch are one span, so a
+  result has one `<mark>` where two terms meet. They are positions in the text as it is (lower-casing it first would move
+  them: the lower case of "İ" is two characters).
+
+**Writing back.** `serialise(ast)` is the canonical text of a query, the inverse of `parseQuery` on the meaning:
+reading it gives the tree it was written from, spans aside (a property test on any text and on any tree). `-` for NOT, a
+space for AND, ` OR `, and parentheses only where the tree needs them: around an `or` in an `and`, around a group in a
+group of its own kind (that is a node of its own, §1), around an `and` or `or` under a NOT; `a OR b c` needs none. A term
+keeps its field as written and loses its quotes unless the lexer would read something else without them (`"and"`,
+`"-weak"`, `"a:b"`, `"two words"`; `class:or` needs none): the lexer itself decides, so the two cannot drift apart. A value
+with no field and no text is `""`, a field with none is `class:`. A query read with repairs is written as repaired; a query
+with no term is the empty text.
 
 ## 5. Diagnostics (syntax: Phase 1, the rest: Phase 2)
 The parser already returns the syntax diagnostics (the first seven rows), as `{ code, severity: 'error', span,

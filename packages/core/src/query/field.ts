@@ -14,4 +14,6 @@ export interface FieldDefinition {
   readonly aliases: readonly string[];
   /** `value` is lower case, trimmed, quotes stripped, and not empty. */
   readonly matcher: (value: string) => TraitMatcher;
+  /** The value is text looked for in the description, so the results mark it there. Not marked unless `true`. */
+  readonly highlightsDescription?: boolean;
 }

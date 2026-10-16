@@ -39,7 +39,7 @@ const fields: readonly FieldDefinition[] = [
   { name: 'family', aliases: ['fam', 'f'], matcher: inColumn('family') },
   { name: 'creature', aliases: ['cr'], matcher: inColumn('creature') },
   { name: 'trait', aliases: ['t'], matcher: inColumn('name') },
-  { name: 'desc', aliases: ['d'], matcher: inColumn('description') },
+  { name: 'desc', aliases: ['d'], matcher: inColumn('description'), highlightsDescription: true },
   { name: 'applies', aliases: ['a'], matcher: startOfKey((trait) => trait.applies) },
   { name: 'uses', aliases: ['u'], matcher: startOfKey((trait) => trait.uses) },
   { name: 'kw', aliases: ['k'], matcher: startOfKey((trait) => trait.keywords) },

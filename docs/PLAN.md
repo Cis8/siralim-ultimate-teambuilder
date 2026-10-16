@@ -12,11 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M4 in progress: 4.1-4.4 done** (`core/src/query/`: `tokenize`, `parseQuery` → `{ast, tokens, diagnostics}`,
-  `fieldRegistry`, `createTraitIndex(traits)`, `evaluate(ast, index)` → `Trait[]`, `visitQuery(ast, visitor)` bottom-up fold;
-  QUERY_LANGUAGE §1-§3). Criteria 1 and 2 are tested against an oracle in `pipeline/src/build/query-acceptance.test.ts`.
-  **Next: 4.5** highlight visitor (positive free-text and `desc:` terms, spans never HTML; say in QUERY_LANGUAGE §4 whether a term
-  under two NOTs, `--weak`, is positive) + serialiser built on `visitQuery`. *T:* property `parse(serialise(ast)) ≡ ast` (modulo spans).
+- **Phase 1 · M4 done** (`core/src/query/`: `tokenize`, `parseQuery` → `{ast, tokens, diagnostics}`, `fieldRegistry`,
+  `createTraitIndex`, `evaluate`, `createHighlighter(ast)(text)` → spans, `serialise(ast)` → canonical text, `visitQuery`
+  bottom-up fold; QUERY_LANGUAGE §1-§4). Acceptance criteria 1 and 2, and highlight/serialise on the real sheet, are tested in
+  `pipeline/src/build/query-acceptance.test.ts`. **Next: M5 · 5.1** `TraitRepository` port (core) + static JSON adapter +
+  fixture adapter, composition root, `SearchService` (read SPEC and DESIGN § Explore first; web calls `core` only).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works: the dataset on `main` still has no
@@ -83,14 +83,12 @@ Owner decisions of 2026-10-16 added three things (3.8-3.10): the role `resists` 
 Seal/Sealed, Dire Wolves, Zombies and Mega Magic, plus Charges, Cascading and Fused as mechanics (R11). Dataset v2.0 now
 has 2,299 mentions: 311 applies, 270 uses, 21 resists.
 
-### M4 Query core (TDD)
-- [x] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
-- [x] **4.2** Error-tolerant parser → `{ast, tokens, diagnostics}`. *T:* precedence NOT > AND > OR, juxtaposition,
-      missing/extra `)`, dangling OR, trailing NOT, empty query; property: never throws on arbitrary input.
-- [x] **4.3** Field registry (QUERY_LANGUAGE §2, aliases; unknown field → free text). *T:* each field, `a:vul`, `mat:none`.
-- [x] **4.4** Evaluator visitor over a precomputed index. *T:* acceptance criteria 1 and 2 on the snapshot vs an
-      independent oracle.
-- [ ] **4.5** Highlight visitor (positive terms only) + serialiser. *T:* property `parse(serialise(ast)) ≡ ast` (modulo spans).
+### M4 Query core — done
+`core/src/query/`: lexer with spans, error-tolerant parser (`{ast, tokens, diagnostics}`, never throws, repairs reported),
+field registry (`FieldDefinition` with `highlightsDescription`), per-trait index and `evaluate`, `createHighlighter` and
+`serialise`, all folds over `visitQuery`. Deviations: a term under two NOTs (`--weak`) is highlighted (QUERY_LANGUAGE §4);
+the serialiser quotes a value exactly when the lexer would read it otherwise (it asks the lexer), and writes `-`, a space and
+` OR `.
 
 ### M5 Explore UI
 - [ ] **5.1** `TraitRepository` port (core) + static JSON adapter + fixture adapter; composition root; `SearchService`.

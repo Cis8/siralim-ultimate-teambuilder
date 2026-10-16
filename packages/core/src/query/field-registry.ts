@@ -20,6 +20,12 @@ export interface FieldRegistry {
    * matches every trait and does not empty the results while the query is being typed.
    */
   matcherFor(term: TermToken): TraitMatcher;
+  /**
+   * The text, in lower case, that the term looks for in the description, which the results mark: the value of a field
+   * that `highlightsDescription`, and the word of a term that is read as free text. `undefined` for a term that looks
+   * elsewhere (`class:life`), and for one with no value yet.
+   */
+  highlightedText(term: TermToken): string | undefined;
 }
 
 const matchEveryTrait: TraitMatcher = () => true;
@@ -45,13 +51,25 @@ export function createFieldRegistry(
   return {
     fields,
     resolve,
-    matcherFor({ field: written, value }) {
-      if (written === undefined) return matcherOf(freeText, value);
-      const field = resolve(written.name);
-      return field === undefined ? freeText(`${written.name}:${value}`.toLowerCase()) : matcherOf(field.matcher, value);
+    matcherFor(term) {
+      const field = fieldOf(term);
+      return field === undefined ? matcherOf(freeText, wordOf(term)) : matcherOf(field.matcher, term.value);
+    },
+    highlightedText(term) {
+      const field = fieldOf(term);
+      const text = field === undefined ? wordOf(term) : field.highlightsDescription === true ? term.value : '';
+      return text === '' ? undefined : text.toLowerCase();
     },
   };
+
+  /** The field the term names, if the registry knows it. */
+  function fieldOf({ field: written }: TermToken): FieldDefinition | undefined {
+    return written === undefined ? undefined : resolve(written.name);
+  }
 }
+
+/** What a term is looked for as when no field reads it: its value, or the whole token if it names a field nobody knows. */
+const wordOf = ({ field, value }: TermToken): string => (field === undefined ? value : `${field.name}:${value}`);
 
 const matcherOf = (matcher: (value: string) => TraitMatcher, value: string): TraitMatcher =>
   value === '' ? matchEveryTrait : matcher(value.toLowerCase());

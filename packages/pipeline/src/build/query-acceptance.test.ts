@@ -1,4 +1,12 @@
-import { createTraitIndex, evaluate, parseQuery, type Trait, type TraitIndex } from '@atlas/core';
+import {
+  createHighlighter,
+  createTraitIndex,
+  evaluate,
+  parseQuery,
+  serialise,
+  type Trait,
+  type TraitIndex,
+} from '@atlas/core';
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildRealSheet } from '../testing/real-build';
@@ -31,6 +39,57 @@ describe('the query language on the compendium v2.0', () => {
       expect(found.length, query).toBeGreaterThan(0);
       expect(find(`-(${query})`), query).toEqual(traits.map((trait) => trait.id).filter((id) => !found.includes(id)));
     }
+  });
+
+  it('finds what a query finds with the canonical text it is written back as', () => {
+    for (const query of [
+      '(vulnerable OR weak) -stack:no',
+      'class:"rodian master" OR -(applies:weak uses:weak)',
+      'Kw:Silenced "does not stack" --mat:none',
+      'weak OR (snared OR stunned) (class:life',
+      '"and" "-x" "a:b" desc:',
+    ]) {
+      const written = serialise(parseQuery(query).ast);
+      expect(parseQuery(written).diagnostics, written).toEqual([]);
+      expect(find(written), query).toEqual(find(query));
+    }
+  });
+
+  describe('highlighting: the descriptions that a query marks are the ones it finds through the description', () => {
+    const marks = (query: string): string[] => {
+      const highlight = createHighlighter(parseQuery(query).ast);
+      return traits.filter((trait) => highlight(trait.description).length > 0).map((trait) => trait.id);
+    };
+
+    it.each(['desc:vulnerable', 'DESC:"start of battle"', 'desc:weak OR desc:snared'])(
+      'marks a description for %s exactly when the trait is found by it',
+      (query) => {
+        const found = find(query);
+        expect(found.length, query).toBeGreaterThan(0);
+        expect(marks(query), query).toEqual(found);
+      },
+    );
+
+    // A word with no field also finds a trait through its name, class and other columns, which are not marked.
+    it.each(['weak', '"does not stack"'])('marks a description for %s only in a trait that it finds', (query) => {
+      const found = find(query);
+      expect(marks(query).length, query).toBeGreaterThan(0);
+      expect(found).toEqual(expect.arrayContaining(marks(query)));
+    });
+
+    it('marks nothing for what is not in the description or is under a NOT', () => {
+      for (const query of [
+        'class:life',
+        'trait:weak',
+        'applies:weak',
+        'mat:yes',
+        '-weak',
+        '-desc:weak',
+        '-(weak snared)',
+      ]) {
+        expect(marks(query), query).toEqual([]);
+      }
+    });
   });
 
   describe('criterion 1: (vulnerable OR weak) -stack:no', () => {

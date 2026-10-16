@@ -20,7 +20,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
       Pinned real snapshot committed as test fixture. Nightly workflow that opens a PR on change.
 - [x] **M3 Keyword extraction.** Taxonomy registry, longest-match tokenizer, role heuristic, `overrides.yaml`,
       dataset-wide snapshot test, report of unknown capitalised terms. Review the 30 most frequent keywords' roles by hand.
-- [ ] **M4 Query core.** Tokenizer with spans, error-tolerant parser, field registry, evaluator, highlight visitor,
+- [x] **M4 Query core.** Tokenizer with spans, error-tolerant parser, field registry, evaluator, highlight visitor,
       serialiser (AST → canonical text). Property test: `parse(serialise(ast))` equals `ast`.
 - [ ] **M5 Explore UI.** Query input, chips (toggle NOT, remove), effective-query line, facets with live counts,
       keyword applies/uses toggles + match all/any, flags, sort, results with keyword tokens, highlighting, click-to-counterpart,

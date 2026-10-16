@@ -128,6 +128,41 @@ describe('createFieldRegistry', () => {
     });
   });
 
+  describe('the text of a term that the results mark', () => {
+    const registry = createFieldRegistry(
+      [
+        { ...definition('desc', ['d']), highlightsDescription: true },
+        definition('class', ['c']),
+        { ...definition('quiet'), highlightsDescription: false },
+      ],
+      () => () => true,
+    );
+    const markedFor = (source: string) => registry.highlightedText(termOf(source));
+
+    it.each([
+      ['Vulnerable', 'vulnerable'],
+      ['"Two Words"', 'two words'],
+      ['desc:Weak', 'weak'],
+      ['D:"Two Words"', 'two words'],
+      ['clas:Life', 'clas:life'],
+      ['clas:"Rodian Master"', 'clas:rodian master'],
+      ['clas:', 'clas:'],
+    ])('is, for %j, the text the free-text search looks for: %j', (source, expected) => {
+      expect(markedFor(source)).toBe(expected);
+    });
+
+    it.each(['class:life', 'c:life', 'quiet:life'])(
+      'is nothing for %j, whose field does not look in the description',
+      (source) => {
+        expect(markedFor(source)).toBeUndefined();
+      },
+    );
+
+    it.each(['""', '"', 'desc:', 'D:""'])('is nothing for %j, which asks for nothing', (source) => {
+      expect(markedFor(source)).toBeUndefined();
+    });
+  });
+
   describe('the fields it accepts', () => {
     it('accepts no field at all', () => {
       expect(createFieldRegistry([], () => () => true).fields).toEqual([]);
