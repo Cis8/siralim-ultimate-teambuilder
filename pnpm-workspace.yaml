@@ -1,3 +1,6 @@
 packages:
   - packages/*
   - apps/*
+allowBuilds:
+  # esbuild comes with tsx. Its install script only checks the binary, which tsx does not need: do not run it.
+  esbuild: false

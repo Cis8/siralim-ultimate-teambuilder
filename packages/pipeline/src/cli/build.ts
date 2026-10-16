@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { CACHE_DIRECTORY, DEFAULT_OUTPUT_DIRECTORY } from './paths';
+import { CACHE_DIRECTORY, DEFAULT_OUTPUT_DIRECTORY, fromWhereTheCommandWasRun } from './paths';
 import { runBuild } from './run-build';
 import { runCli } from './run-cli';
 
@@ -15,9 +15,9 @@ const { values } = parseArgs({
 
 await runCli(() =>
   runBuild({
-    inputFile: values.input,
-    outputDirectory: values.output,
-    reportFile: values.report,
+    inputFile: fromWhereTheCommandWasRun(values.input),
+    outputDirectory: fromWhereTheCommandWasRun(values.output),
+    reportFile: fromWhereTheCommandWasRun(values.report),
     now: () => new Date(),
     log: console.log,
   }),
