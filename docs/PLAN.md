@@ -12,14 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 and its follow-up 3.8-3.10 done** (owner decisions of 2026-10-16: `resists`, `conditionalSources`, the
-  `effect` kind). **Next: M4 Query core**, slice 4.1 (lexer with spans; read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
+- **Phase 1 · M4 in progress: 4.1 lexer done** (`core/src/query/`: `tokenize`, `Token`, `Span`). **Next: 4.2** error-tolerant
+  parser → `{ast, tokens, diagnostics}` (QUERY_LANGUAGE §1; the lexer's choices are listed there). The parser must not throw
+  on any token sequence; a `term` token's `text` is what an unknown field falls back to as free text (4.3).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
-- Every green commit on `main` is deployed to Pages (D2: the authors agreed). The nightly `data-refresh` works: the
-  dataset on `main` still has no keywords, so its next PR carries those of all 1,780 traits; read its report before
-  merging, as the protocol says.
-- Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
+- Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works: the dataset on `main` still has no
+  keywords, so its next PR carries those of all 1,780 traits; read its report before merging, as the protocol says.
+- Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs).
 
 ## Owner decisions (2026-10-16)
 | # | Decision | Recorded in |
@@ -82,7 +82,7 @@ Seal/Sealed, Dire Wolves, Zombies and Mega Magic, plus Charges, Cascading and Fu
 has 2,299 mentions: 311 applies, 270 uses, 21 resists.
 
 ### M4 Query core (TDD)
-- [ ] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
+- [x] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
 - [ ] **4.2** Error-tolerant parser → `{ast, tokens, diagnostics}`. *T:* precedence NOT > AND > OR, juxtaposition,
       missing/extra `)`, dangling OR, trailing NOT, empty query; property: never throws on arbitrary input.
 - [ ] **4.3** Field registry (QUERY_LANGUAGE §2, aliases; unknown field → free text). *T:* each field, `a:vul`, `mat:none`.

@@ -32,6 +32,9 @@ export { hasRole } from './model/keyword-kind';
 export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
+export { tokenize } from './query/lexer';
+export type { Span } from './query/span';
+export type { FieldName, SymbolToken, TermToken, Token } from './query/token';
 export type {
   BuffEntry,
   DebuffEntry,

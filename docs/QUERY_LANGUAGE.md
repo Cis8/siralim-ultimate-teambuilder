@@ -22,6 +22,11 @@ field    = letter , { letter } ;
 - Keywords `AND`, `OR`, `NOT` are case-insensitive. Precedence: NOT > AND > OR.
 - `-` binds to the following unary (`-stack:no`, `-(weak OR snared)`).
 - Matching is case-insensitive. Values are trimmed; quotes stripped.
+- Lexing, which the grammar leaves open (`tokenize`): a word ends at a blank, a parenthesis or a quote, so `a|b` and `a&b`
+  are one word and only a standalone `|` or `&` is an operator; `-` is a NOT only where a token starts (`-stack:no`,
+  `--weak`, a lone `-`), never inside a word (`well-known`); a field is ASCII letters followed by a colon, and its value
+  follows with no blank in between (`applies: weak` is `applies:` with no value, then `weak`); an unclosed quote runs to
+  the end of the text, parentheses included. Letter case is kept as written; the field registry and the evaluator fold it.
 - **The parser never throws.** It returns `{ ast, tokens, diagnostics }`; every token and node carries its source span.
 
 ## 2. Fields
