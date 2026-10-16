@@ -12,7 +12,7 @@ Italian; repository docs, code and commits are in English.
 
 **Start**
 1. Read `docs/PLAN.md` → *Resume here* tells you the next slice and anything pending.
-2. `git pull`; `gh run list -L 3` (if `main` is red, fixing it is the first task); `gh pr list` (merge data-refresh
+2. `git pull`; `gh run list --branch main -L 3` (if `main` is red, fixing it is the first task); `gh pr list` (merge data-refresh
    PRs after reading their report, ADR-0007).
 3. Read the docs the slice touches (table below).
 

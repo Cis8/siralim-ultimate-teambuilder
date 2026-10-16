@@ -17,7 +17,7 @@ session (after `CLAUDE.md`), update it before ending one.
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
   under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
-- Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
+- Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
 ## Owner decisions (2026-10-16)
 | # | Decision | Recorded in |
@@ -42,6 +42,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - Internal links need `resolve()` from `$app/paths`; external links use `lib/components/external-link.svelte`.
 - The RTK hook compacts command output: vitest prints nothing useful through it. Use `rtk proxy <command>` for the
   raw output.
+- A data-refresh PR shows a `pull_request` CI run with conclusion failure, no jobs and no log (opened by the bot). Ignore
+  it; judge `main` with `gh run list --branch main`.
+- pnpm in CI fails on unapproved dependency build scripts (`ERR_PNPM_IGNORED_BUILDS`), locally it only warns:
+  `allowBuilds` in `pnpm-workspace.yaml` must list every package that has one.
 - Pipeline scripts run with `tsx` (the sources use extensionless imports, which plain Node cannot load).
 - Prettier skips Markdown on purpose (hand-wrapped prose, tables).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
