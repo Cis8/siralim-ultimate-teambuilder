@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
-import type { Trait } from '@atlas/core';
+import { KNOWN_CLASSES, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { buildReport } from '../report/build-report';
 import { buildTraits } from './build-traits';
 
 // The pinned snapshot of the compendium, v2.0. The counts below are the ones in docs/GAME_RULES.md.
@@ -24,6 +25,15 @@ describe('the compendium v2.0 snapshot', () => {
     expect(datasetVersion).toBe('2.0');
     expect(traits).toHaveLength(1780);
     expect(new Set(traits.map((trait) => trait.id)).size).toBe(1780);
+  });
+
+  it('uses exactly the classes of GAME_RULES R7', () => {
+    expect(new Set(traits.map((trait) => trait.class))).toEqual(KNOWN_CLASSES);
+  });
+
+  it('has nothing the report needs the owner to look at', () => {
+    const report = buildReport({ datasetVersion, traits }, null);
+    expect(report).toContain('## Needs attention\n\nNothing.');
   });
 
   it('has the kinds of GAME_RULES R7', () => {

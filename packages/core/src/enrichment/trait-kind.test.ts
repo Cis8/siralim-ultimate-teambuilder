@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TraitKind } from '../model/trait';
-import { classifyKind } from './trait-kind';
+import { classifyKind, CREATURE_CLASSES, KNOWN_CLASSES } from './trait-kind';
 
 describe('classifyKind (GAME_RULES R7)', () => {
   it.each(['Chaos', 'Death', 'Life', 'Nature', 'Sorcery'])('reads a %s creature as a creature', (className) => {
@@ -35,5 +35,27 @@ describe('classifyKind (GAME_RULES R7)', () => {
   it('needs a creature class to be an avatar', () => {
     const kind: TraitKind = classifyKind({ class: 'Nether Boss', family: 'Avatar', creature: 'Somebody' });
     expect(kind).toBe('other');
+  });
+
+  describe('KNOWN_CLASSES', () => {
+    it('holds the eleven classes of compendium v2.0', () => {
+      expect([...KNOWN_CLASSES].toSorted()).toEqual([
+        'Backer',
+        'Boss',
+        'Chaos',
+        'Death',
+        'Life',
+        'Nature',
+        'Nether Boss',
+        'Nether Room',
+        'Pandemonium',
+        'Rodian Master',
+        'Sorcery',
+      ]);
+    });
+
+    it('includes every creature class', () => {
+      for (const className of CREATURE_CLASSES) expect(KNOWN_CLASSES.has(className)).toBe(true);
+    });
   });
 });

@@ -132,8 +132,9 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
    per line (reviewable diffs, no dependence on row order). Time never enters the hash. When the directory already
    holds the same hash nothing is rewritten, so an unchanged sheet leaves the tree clean. Compendium v2.0: 704 KB,
    about 100 KB gzipped.
-7. **Report**: counts per class/kind, unknown classes, taxonomy candidates, and a diff against the previous build
-   (added / removed / changed traits).
+7. **Report** (Markdown, `buildReport`): the diff against the previous build (added / removed / changed traits, by id
+   and field), counts per kind, class, mastery requirement and random debuff, and what needs attention (classes
+   outside GAME_RULES R7, masteries whose requirement names no known family; from M3, taxonomy candidates).
 
 GitHub Actions: nightly + manual run. If the output changed, open a PR with the report as description; the workflow
 runs the full check suite itself (PRs opened with `GITHUB_TOKEN` do not trigger CI). Claude reviews and merges these

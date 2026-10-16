@@ -12,8 +12,8 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.5 done (`emitDataset` + `writeDataset`; real dataset 704 KB, ~100 KB
-  gzip). **Next: 2.6** (markdown report: counts per class and kind, classes outside R7, diff vs the previous build).
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.6 done (`buildReport`, `loadPreviousBuild`). **Next: 2.7**
+  (`pipeline:fetch` with retry and injected `fetch`, `pipeline:build` CLI wiring parse → emit → report; root scripts).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -60,7 +60,7 @@ app shell with tokens, self-hosted fonts and footer credits.
       detection (R5, before overrides). *T:* table-driven on real rows; counts on the snapshot match GAME_RULES
       (kinds 1,331/31/156/135/127; requirements 76/2/24/1/52/1).
 - [x] **2.5** Emit `traits.<hash>.json` + `manifest.json` (clock injected). *T:* same input → identical bytes and hash.
-- [ ] **2.6** Report (markdown): counts per class and kind, classes outside R7, diff vs previous build.
+- [x] **2.6** Report (markdown): counts per class and kind, classes outside R7, diff vs previous build.
       *T:* two small fixture versions.
 - [ ] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`. The pinned snapshot
       (`fixtures/traits-v2.0.csv`) and the counts test (`build/real-sheet.test.ts`, 1,780 unique ids) landed with 2.4.
