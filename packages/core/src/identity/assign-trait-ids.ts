@@ -1,4 +1,5 @@
 import type { IdentifiedTraitRow, TraitRow } from '../model/trait';
+import { compareText } from '../text/compare-text';
 import { traitIdBase } from './trait-id-base';
 
 /**
@@ -62,9 +63,4 @@ function compareMaterial(a: string | null, b: string | null): number {
   if (a === null) return -1;
   if (b === null) return 1;
   return compareText(a, b);
-}
-
-/** UTF-16 code unit order, unlike `localeCompare`, which varies with the runtime's locale. */
-function compareText(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }

@@ -1,4 +1,4 @@
-import { DATASET_SCHEMA_VERSION } from '@atlas/core';
-
-/** The schema version the pipeline writes; always the one `core` defines, so writer and reader cannot drift. */
-export const emittedSchemaVersion = DATASET_SCHEMA_VERSION;
+export { buildTraits, type BuiltTraits } from './build/build-traits';
+export { emitDataset, type EmittedDataset } from './emit/emit-dataset';
+export { writeDataset } from './emit/write-dataset';
+export { SheetFormatError } from './sheet/sheet-format-error';

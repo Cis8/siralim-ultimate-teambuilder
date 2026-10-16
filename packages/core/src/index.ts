@@ -20,3 +20,6 @@ export type {
   TraitKind,
   TraitRow,
 } from './model/trait';
+export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
+export type { DatasetManifest, TraitDataset } from './model/dataset';
+export { compareText } from './text/compare-text';

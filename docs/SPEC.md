@@ -128,6 +128,10 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
    straight ones, map special values (§2).
 5. **Enrich**: kind, stacks, random-debuff flag, mastery condition, keywords + roles, overrides.
 6. **Emit** `traits.<hash>.json` (schema-versioned) and `manifest.json` `{datasetVersion, hash, count, generatedAt}`.
+   The hash is the first 16 hex digits of the SHA-256 of the dataset file, which holds the traits sorted by id, one
+   per line (reviewable diffs, no dependence on row order). Time never enters the hash. When the directory already
+   holds the same hash nothing is rewritten, so an unchanged sheet leaves the tree clean. Compendium v2.0: 704 KB,
+   about 100 KB gzipped.
 7. **Report**: counts per class/kind, unknown classes, taxonomy candidates, and a diff against the previous build
    (added / removed / changed traits).
 
