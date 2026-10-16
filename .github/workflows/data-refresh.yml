@@ -61,18 +61,21 @@ jobs:
           branch="data-refresh/v${version}-${hash}"
           title="chore(data): compendium v${version} (${hash:0:8})"
 
-          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
-            echo "This data is already proposed on $branch."
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq length)" != "0" ]; then
+            echo "This data is already proposed in a pull request on $branch."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c "$branch"
-          git add "$DATA_DIRECTORY"
-          git commit -m "$title"
-          # The check above already ran; the pre-push hook would only repeat it.
-          git push --no-verify origin "$branch"
+          # A branch without a pull request is left over from a run that failed after pushing: reuse it.
+          if ! git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git switch -c "$branch"
+            git add "$DATA_DIRECTORY"
+            git commit -m "$title"
+            # The check above already ran; the pre-push hook would only repeat it.
+            git push --no-verify origin "$branch"
+          fi
           gh pr create --base main --head "$branch" --title "$title" --body-file packages/pipeline/.cache/report.md
 
           # Whatever was proposed before is out of date now.
