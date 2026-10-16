@@ -1,0 +1,3 @@
+# Text files are LF in the repository and in every working tree, whatever core.autocrlf says:
+# .editorconfig and Prettier expect it, and pnpm check fails on a CRLF checkout.
+* text=auto eol=lf
