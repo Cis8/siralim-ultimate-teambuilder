@@ -108,13 +108,20 @@ it with the other. Both debuffs are named only as the trigger (`uses`), but the 
 each of them: `conditionalSources` on the trait lists the pair. A conditional source never makes a dependency fully
 *covered* (it needs the other debuff of the pair to be there first); it upgrades *missing* to *conditional*.
 
-## Dependency statuses (derived from R3–R5)
-For each buff or debuff that at least one party trait **relies on**:
+## R11 — What else is searchable · Confirmed (2026-10-16)
+Builds are made of more than the canonical buffs and debuffs, so more is a keyword:
+- **Effects**, with roles like a buff (a trait gives, relies on or guards against them): **Sealed** (Seal, Seals, Sealed
+  Spell Gems), the stacking minions **Dire Wolves** and **Zombies**, and **Mega Magic**. A trait that relies on Dire Wolves
+  needs a source of them, exactly as one that relies on Vulnerable needs one (see the table below).
+- **Mechanics**, without a role: the Spell Gem properties **Charges** and **Cascading**, and **Fused**.
+
+## Dependency statuses (derived from R3–R5, R9–R11)
+For each buff, debuff or effect that at least one party trait **relies on** (`uses`; a mention that only `resists` it is no dependency, R9):
 
 | Status | Meaning | Severity |
 |---|---|---|
 | `covered` | At least one active, specific source applies it | ok |
-| `random` | No specific source, but an active enemy-only random source exists and the debuff can be randomly applied (debuffs only) | warning |
+| `random` | No specific source, but an active enemy-only random source exists and the debuff can be randomly applied (debuffs only, never effects) | warning |
 | `conditional` | Only inactive mastery traits apply it, or only conditional sources (R10) | warning |
 | `missing` | Nothing in the party applies it | critical |
 | `nopayoff` | Applied, but nobody relies on it (informational, not an issue) | none |

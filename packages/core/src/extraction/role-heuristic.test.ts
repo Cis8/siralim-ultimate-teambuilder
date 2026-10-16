@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { extractKeywords } from './extract-keywords';
 import { createKeywordMatcher } from './keyword-matcher';
 import { assignRoles } from './role-heuristic';
 import { taxonomy } from '../taxonomy/taxonomy';
 
 const matcher = createKeywordMatcher(taxonomy);
 
-/** `key:role` for every buff and debuff of a text, in order. */
+/** `key:role` for every mention that has a role, in order, as the whole extractor reads them. */
 function rolesIn(text: string): string[] {
-  return assignRoles(text, matcher.match(text))
-    .filter((hit) => hit.kind === 'buff' || hit.kind === 'debuff')
+  return extractKeywords(text)
+    .filter((hit) => hit.role !== undefined)
     .map((hit) => `${hit.key}:${hit.role}`);
 }
 
@@ -77,7 +78,7 @@ const REAL_TRAITS: readonly (readonly [name: string, description: string, roles:
   [
     'Gemcutter',
     "Your creatures' Ultimate Spell Gems cannot be Sealed and do not consume charges. Your creatures are immune to Silenced.",
-    ['silenced:resists'],
+    ['sealed:resists', 'silenced:resists'],
   ],
   [
     'Horde Limits',
@@ -215,6 +216,58 @@ describe('assignRoles', () => {
         'confused:resists',
         'poisoned:resists',
       ]);
+    });
+
+    describe('effects', () => {
+      it.each([
+        ["This creature Seals one of the target's Spell Gems.", 'sealed:applies'],
+        ['This creature seals the enemy Spell Gems.', 'sealed:applies'],
+        ['After an enemy casts a spell, that Spell Gem is Sealed.', 'sealed:applies'],
+        ['After this creature casts a spell, it is Sealed.', 'sealed:applies'],
+        ['Enemies deal 10% less damage for each Sealed Spell Gem they have.', 'sealed:uses'],
+        ['It deals 15% more damage for each Sealed Spell Gem the target has.', 'sealed:uses'],
+        ['Your creatures cannot be Sealed.', 'sealed:resists'],
+        ['At the start of battle, this creature gains Mega Magic.', 'mega magic:applies'],
+        ["Your creatures' Mega Magic now deals a devastating amount of damage.", 'mega magic:uses'],
+        ['After this creature attacks, one of your creatures gains 3 stacks of Dire Wolves.', 'dire wolves:applies'],
+        ['Your creatures start battles with 3 stacks of Dire Wolves.', 'dire wolves:applies'],
+        ['Your creatures can have 5 additional stacks of Dire Wolves.', 'dire wolves:uses'],
+        [
+          'Your creatures deal 2% more damage for each stack of Dire Wolves each of your creatures have.',
+          'dire wolves:uses',
+        ],
+        ["Your creatures' Zombies minions now deal damage based on their master's highest stat.", 'zombies:uses'],
+      ])('%s', (text, role) => {
+        expect(rolesIn(text)).toEqual([role]);
+      });
+
+      it('waits for the sealing when it is in the condition a sentence opens with', () => {
+        expect(rolesIn('When an enemy Seals a Spell Gem, this creature gains Berserk.')).toEqual([
+          'sealed:uses',
+          'berserk:applies',
+        ]);
+      });
+
+      it('takes "is" before a buff or debuff for a check, as before: only an effect is given that way', () => {
+        expect(rolesIn('Enemies take 50% more damage while they are Frozen.')).toEqual(['frozen:uses']);
+        expect(rolesIn('Enemies that are Disarmed fail 50% of their attacks.')).toEqual(['disarmed:uses']);
+      });
+
+      it('has Spell Gem properties and Fused without a role', () => {
+        expect(rolesIn('Their Spell Gems gain 1 charge and the "Cascading" property for a Fused creature.')).toEqual(
+          [],
+        );
+      });
+
+      it('lets the caller say which written forms are the trait doing it', () => {
+        const text = 'It Seals gems. For each Sealed gem it deals damage.';
+        const roles = (activeForms?: ReadonlyMap<string, ReadonlySet<string>>) =>
+          assignRoles(text, matcher.match(text), activeForms === undefined ? {} : { activeForms }).map(
+            (hit) => hit.role,
+          );
+        expect(roles(new Map([['sealed', new Set(['seals'])]]))).toEqual(['applies', 'uses']);
+        expect(roles()).toEqual(['uses', 'uses']);
+      });
     });
 
     it('lets a later signal win over an earlier one', () => {

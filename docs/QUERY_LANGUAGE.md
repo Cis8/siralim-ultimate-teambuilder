@@ -34,8 +34,8 @@ field    = letter , { letter } ;
 | `creature:` (`cr:`) | creature name | substring |
 | `trait:` (`t:`) | trait name | substring |
 | `desc:` (`d:`) | description only | substring |
-| `applies:` (`a:`) | buff/debuff the trait applies | keyword key prefix |
-| `uses:` (`u:`) | buff/debuff the trait relies on | keyword key prefix |
+| `applies:` (`a:`) | buff, debuff or effect the trait applies (`a:sealed`, `a:zombies`) | keyword key prefix |
+| `uses:` (`u:`) | buff, debuff or effect the trait relies on | keyword key prefix |
 | `kw:` (`k:`) | any keyword (any kind, any role, including a mention that only guards against it: `kw:silenced` finds "immune to Silenced", `applies:` and `uses:` do not; GAME_RULES R9) | keyword key prefix |
 | `mat:` | `yes` = has material (artifact-eligible), `no`/`none` = no material | exact |
 | `stack:` | `yes` = stacks, `no` = "does not stack" | exact |

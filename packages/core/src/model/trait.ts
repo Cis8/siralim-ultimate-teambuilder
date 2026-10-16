@@ -47,8 +47,12 @@ export type PartyRequirement =
   | { readonly type: 'familyScoped'; readonly families: readonly string[] }
   | { readonly type: 'none' };
 
-/** What a keyword is. Only buffs and debuffs have a role. */
-export type KeywordKind = 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
+/**
+ * What a keyword is. Buffs, debuffs and effects have a role (see `hasRole`); mechanics, triggers and flags do not. An
+ * *effect* is something traits give and others build on that the canonical buff and debuff lists do not have: stacking
+ * minions (Dire Wolves, Zombies), Mega Magic, Sealed Spell Gems (GAME_RULES R11).
+ */
+export type KeywordKind = 'debuff' | 'buff' | 'effect' | 'mechanic' | 'trigger' | 'flag';
 
 /**
  * What a trait does with a buff or debuff: gives it (`applies`), relies on it being there (`uses`), or only guards
@@ -59,7 +63,7 @@ export type KeywordRole = 'applies' | 'uses' | 'resists';
 export interface KeywordHit {
   readonly key: KeywordKey;
   readonly kind: KeywordKind;
-  /** Only for buffs and debuffs. */
+  /** Only for keywords that have a role (`hasRole`): buffs, debuffs and effects. */
   readonly role?: KeywordRole;
   /** Half-open character range `[start, end)` in the trait description. */
   readonly span: readonly [start: number, end: number];

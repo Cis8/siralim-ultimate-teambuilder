@@ -7,4 +7,8 @@ export const mechanics = [
   mechanic('timeline', 'Timeline', ['Timeline']),
   mechanic('critical damage', 'Critical damage', ['critical damage']),
   mechanic('maximum health', 'Maximum health', ['maximum health']),
+  // Properties of Spell Gems, and the second creature of a fusion: searched for, but nobody gives or relies on them.
+  mechanic('charges', 'Charges', ['charges', 'charge']),
+  mechanic('cascading', 'Cascading', ['Cascading']),
+  mechanic('fused', 'Fused', ['Fused']),
 ] as const;

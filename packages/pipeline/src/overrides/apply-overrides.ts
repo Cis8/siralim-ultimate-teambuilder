@@ -1,4 +1,4 @@
-import type { KeywordHit, KeywordRole, RandomDebuffSource, Trait } from '@atlas/core';
+import { hasRole, type KeywordHit, type KeywordRole, type RandomDebuffSource, type Trait } from '@atlas/core';
 import { OverridesError } from './overrides-error';
 import type { Overrides, RandomDebuffOverride, RoleOverride } from './parse-overrides';
 
@@ -100,7 +100,7 @@ function mentionsToChange(trait: Trait, override: RoleOverride, label: string, p
     problems.push(`${label}: "${trait.id}" does not mention "${override.keyword}"`);
     return [];
   }
-  if (first.hit.kind !== 'buff' && first.hit.kind !== 'debuff') {
+  if (!hasRole(first.hit.kind)) {
     problems.push(`${label}: "${override.keyword}" is a ${first.hit.kind} and has no role`);
     return [];
   }

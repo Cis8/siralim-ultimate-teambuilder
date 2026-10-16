@@ -36,10 +36,19 @@ export interface DebuffEntry extends CanonicalEntryBase<'debuff'> {
 
 export type BuffEntry = CanonicalEntryBase<'buff'>;
 export type MechanicEntry = EntryBase<'mechanic'>;
+
+/** What traits give and build on, beyond the canonical buffs and debuffs (GAME_RULES R11). Has a role like a buff. */
+export interface EffectEntry extends EntryBase<'effect'> {
+  /**
+   * Patterns in the active voice ("Seals"): a trait written that way is the one doing it, so its role is `applies`.
+   * Each must be one of `patterns`.
+   */
+  readonly activePatterns?: readonly string[];
+}
 export type FlagEntry = EntryBase<'flag'>;
 
 export interface TriggerEntry extends EntryBase<'trigger'> {
   readonly phase: TriggerPhase;
 }
 
-export type TaxonomyEntry = DebuffEntry | BuffEntry | MechanicEntry | TriggerEntry | FlagEntry;
+export type TaxonomyEntry = DebuffEntry | BuffEntry | EffectEntry | MechanicEntry | TriggerEntry | FlagEntry;

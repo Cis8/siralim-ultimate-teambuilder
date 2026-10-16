@@ -34,7 +34,7 @@ describe('createKeywordMatcher', () => {
     });
 
     it('is ignored in a mechanic: "spell gems" and "Spell Gems"', () => {
-      expect(keysIn('Seal spell gems. Seal Spell Gems.')).toEqual(['spell gems', 'spell gems']);
+      expect(keysIn('Cast spell gems. Cast Spell Gems.')).toEqual(['spell gems', 'spell gems']);
     });
 
     it('matters for a buff or debuff, which is a name: only the written form counts', () => {
@@ -50,6 +50,30 @@ describe('createKeywordMatcher', () => {
       ['creatures that are weak against their class', []],
     ])('keeps an adjective from being a status: "%s"', (text, keys) => {
       expect(keysIn(`Your creatures ${text}.`)).toEqual(keys);
+    });
+  });
+
+  describe('effects and the Spell Gem mechanics', () => {
+    it.each([
+      ['it Seals one of their Spell Gems', ['sealed', 'spell gems']],
+      ['that Spell Gem is Sealed', ['spell gems', 'sealed']],
+      ['no Spell Gems can be sealed', ['spell gems', 'sealed']],
+      ['gains 3 stacks of Dire Wolves', ['dire wolves']],
+      ['start battles with 1 Zombies', ['start of battle', 'zombies']],
+      ['this creature gains Mega Magic', ['mega magic']],
+      ['their Spell Gems gain 1 charge and 2 Charges', ['spell gems', 'charges', 'charges']],
+      ['the "Cascading" property of a Fused creature', ['cascading', 'fused']],
+    ])('finds the keywords of "%s"', (text, keys) => {
+      expect(keysIn(text)).toEqual(keys);
+    });
+
+    it('ignores letter case for an effect: they are not proper names the way a buff is', () => {
+      expect(keysIn('no Spell Gems can be sealed')).toContain('sealed');
+      expect(keysIn('Sealed Spell Gems')).toEqual(['sealed', 'spell gems']);
+    });
+
+    it('does not take a word that merely starts like one for it', () => {
+      expect(keysIn('Sealing the deal with Chargers and Zombie-like Wolves')).toEqual([]);
     });
   });
 

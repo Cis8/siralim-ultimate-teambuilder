@@ -1,4 +1,4 @@
-import { KNOWN_CLASSES, taxonomy, type Trait } from '@atlas/core';
+import { hasRole, KNOWN_CLASSES, taxonomy, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
@@ -139,12 +139,11 @@ describe('the compendium v2.0 snapshot', () => {
     });
   });
 
-  it('leaves exactly the taxonomy candidates that are still open', () => {
-    // The list in reviewed-non-keywords.ts says which these are; if the data or the taxonomy changes, review again.
-    const open = findTaxonomyCandidates(traits, { ignore: REVIEWED_NON_KEYWORDS }).map((candidate) => candidate.term);
-    expect(open.toSorted()).toEqual(
-      ['Cascading', 'Charges', 'Dire Wolves', 'Fused', 'Mega Magic', 'Sealed', 'Seals', 'Zombies'].toSorted(),
-    );
+  it('leaves no taxonomy candidate open: every frequent term is a keyword, a name or reviewed', () => {
+    // If the data or the taxonomy changes, look at the new candidates (reviewed-non-keywords.ts says how).
+    expect(
+      findTaxonomyCandidates(traits, { ignore: REVIEWED_NON_KEYWORDS }).map((candidate) => candidate.term),
+    ).toEqual([]);
   });
 
   it('is compared with the canonical lists: only Stone is written another way', () => {
@@ -178,10 +177,10 @@ describe('the compendium v2.0 snapshot', () => {
       }
     });
 
-    it('have a role exactly when they are buffs or debuffs', () => {
+    it('have a role exactly when they are buffs, debuffs or effects', () => {
       for (const { id, keywords } of traits) {
         for (const hit of keywords) {
-          expect(hit.role !== undefined, `${id}: ${hit.key}`).toBe(hit.kind === 'buff' || hit.kind === 'debuff');
+          expect(hit.role !== undefined, `${id}: ${hit.key}`).toBe(hasRole(hit.kind));
         }
       }
     });

@@ -1,4 +1,12 @@
-import type { BuffEntry, DebuffEntry, FlagEntry, MechanicEntry, TriggerEntry, TriggerPhase } from './entry';
+import type {
+  BuffEntry,
+  DebuffEntry,
+  EffectEntry,
+  FlagEntry,
+  MechanicEntry,
+  TriggerEntry,
+  TriggerPhase,
+} from './entry';
 
 // Short ways to write the entries of the lists. The key is the lower-cased label unless said otherwise, and a
 // label is also its own pattern unless `patterns` lists the phrases (which then must include it).
@@ -32,6 +40,19 @@ export function buff(label: string, options: CanonicalOptions = {}): BuffEntry {
     label,
     patterns: options.patterns ?? [label],
     ...canonicalName(options),
+  };
+}
+
+export function effect(
+  label: string,
+  options: { readonly patterns?: readonly string[]; readonly activePatterns?: readonly string[] } = {},
+): EffectEntry {
+  return {
+    kind: 'effect',
+    key: label.toLowerCase(),
+    label,
+    patterns: options.patterns ?? [label],
+    ...(options.activePatterns === undefined ? {} : { activePatterns: options.activePatterns }),
   };
 }
 

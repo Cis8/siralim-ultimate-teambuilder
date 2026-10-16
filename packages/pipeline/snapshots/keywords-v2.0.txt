@@ -27,6 +27,7 @@ alemental--alcoholism | timeline | -
 alemental--alcoholism | nostack | -
 alemental--drunken-rage | nostack | -
 alemental--numbed-pain | nostack | -
+alemental--false-epiphany | charges | -
 alemental--false-epiphany | nostack | -
 alemental--bob-and-weave | nostack | -
 alemental--hangover | nostack | -
@@ -181,6 +182,8 @@ avatar--brothel | nostack | -
 avatar--fae-dust | nostack | -
 avatar--prayer-position | nostack | -
 avatar--gemcutter | spell gems | -
+avatar--gemcutter | sealed | resists
+avatar--gemcutter | charges | -
 avatar--gemcutter | silenced | resists
 avatar--the-end | nostack | -
 avatar--i-hate-you-ing-all | nostack | -
@@ -209,6 +212,7 @@ backer--celestial-nexus | shelled | uses
 backer--celestial-nexus | nostack | -
 backer--charging-rod | manually cast a spell | -
 backer--charging-rod | spell gems | -
+backer--charging-rod | charges | -
 backer--charging-rod | nostack | -
 backer--consecrated-ground | minion | -
 backer--consecrated-ground | nostack | -
@@ -236,6 +240,7 @@ backer--frostburn | burning | uses
 backer--frostburn | frozen | applies
 backer--frostburn | nostack | -
 backer--frozen-legion | frozen | uses
+backer--frozen-legion | zombies | applies
 backer--frozen-legion | nostack | -
 backer--gamblers-game | nostack | -
 backer--gem-leech | after this creature attacks | -
@@ -277,6 +282,7 @@ backer--minion-master | minion | -
 backer--minion-master | minion | -
 backer--minions-first | minion | -
 backer--myosotis | this creature's attacks | -
+backer--necromancy | zombies | applies
 backer--necromancy | nostack | -
 backer--never-fade | disarmed | resists
 backer--ninetailss-revenge | nostack | -
@@ -307,6 +313,8 @@ backer--shattering-tackle | nostack | -
 backer--snack-break | start of this creature's turn | -
 backer--soul-steal | after this creature attacks | -
 backer--soul-steal | spell gems | -
+backer--soul-steal | charges | -
+backer--soul-steal | charges | -
 backer--soul-steal | this creature's attacks | -
 backer--spontaneous-entropy | spell gems | -
 backer--spontaneous-entropy | spell gems | -
@@ -327,6 +335,7 @@ backer--toxic-karma | bomb | applies
 backer--training-matrix | nostack | -
 backer--tribe-mentality | start of battle | -
 backer--true-strike | this creature's attacks | -
+backer--undead-legion | zombies | uses
 backer--undead-legion | nostack | -
 backer--unstable-existence | nostack | -
 backer--vengeful-rebound | nostack | -
@@ -381,6 +390,7 @@ basilisk--awakening | spell gems | -
 basilisk--here-until-forever | rebirth | applies
 basilisk--sluice | spell gems | -
 basilisk--no-sudden-movement | snared | applies
+basilisk--sap | sealed | applies
 basilisk--sap | spell gems | -
 basilisk--master-of-basilisks | nostack | -
 bat--amongst-gods | nostack | -
@@ -389,7 +399,9 @@ beacon--pendulums-return | agile | applies
 beacon--due-recompense | leeching | applies
 beacon--forbearance-forgone | protected | applies
 beacon--forbearance-forgone | spell gems | -
+beacon--forbearance-forgone | sealed | applies
 beacon--forbearance-forgone | spell gems | -
+beacon--forbearance-forgone | charges | -
 beacon--purity-and-emptiness | berserk | applies
 beacon--eternal-reprieve | nostack | -
 beacon--master-of-beacons | start of battle | -
@@ -414,6 +426,7 @@ brownie--master-of-brownies | nostack | -
 calumnier--stolen-valor | spell gems | -
 calumnier--false-bravado | nostack | -
 carbuncle--thirst-for-power | nostack | -
+carbuncle--nirvana | charges | -
 carbuncle--absolute-power | this creature's attacks | -
 carbuncle--vitjas-games | is killed | -
 carbuncle--vitjas-surprise | is killed | -
@@ -473,14 +486,20 @@ cherub--master-of-cherubs | barrier | uses
 cherub--master-of-cherubs | nostack | -
 chimera--eldritch-creation | start of battle | -
 chimera--eldritch-creation | spell gems | -
+chimera--eldritch-creation | fused | -
 chimera--eldritch-creation | nostack | -
+chimera--raging-spirit | fused | -
 chimera--raging-spirit | nostack | -
 chimera--divine-form | start of battle | -
+chimera--divine-form | fused | -
 chimera--divine-form | nostack | -
+chimera--appreciation-for-ancestry | fused | -
 chimera--appreciation-for-ancestry | nostack | -
 chimera--valiant-heart | nostack | -
 chimera--fairy-blood | start of battle | -
+chimera--fairy-blood | fused | -
 chimera--fairy-blood | nostack | -
+chimera--master-of-chimeras | fused | -
 chimera--master-of-chimeras | nostack | -
 clockwork--autonomous-health | start of this creature's turn | -
 clockwork--autonomous-health | maximum health | -
@@ -518,6 +537,7 @@ cockatrice--cock-a-doodle-doo | nostack | -
 cockatrice--master-of-cockatrices | confused | applies
 concoction--acid-body | after this creature is attacked | -
 concoction--acid-body | disarmed | applies
+concoction--acid-body | sealed | applies
 concoction--acid-body | spell gems | -
 concoction--squelch | disarmed | uses
 concoction--squelch | scorned | applies
@@ -534,6 +554,7 @@ concoction--master-of-concoctions | nostack | -
 construct--helix | nostack | -
 construct--stay-inspired | nostack | -
 construct--defiance | start of battle | -
+construct--forsaken-horizon | charges | -
 construct--feed-the-fire | nostack | -
 construct--masquerade | start of battle | -
 construct--masquerade | nostack | -
@@ -542,19 +563,27 @@ construct--safety-pin | after this creature attacks | -
 construct--justice-for-none | nostack | -
 construct--master-of-constructs | nostack | -
 cruncher--shellshock | after this creature is attacked | -
+cruncher--shellshock | sealed | applies
 cruncher--shellshock | spell gems | -
 cruncher--no-prayers | when this creature attacks | -
+cruncher--no-prayers | sealed | uses
 cruncher--no-prayers | spell gems | -
 cruncher--munch | after this creature attacks | -
+cruncher--munch | sealed | applies
 cruncher--munch | spell gems | -
+cruncher--shorted-out | sealed | applies
 cruncher--shorted-out | spell gems | -
+cruncher--something-to-complain-about | sealed | uses
 cruncher--something-to-complain-about | spell gems | -
 cruncher--something-to-complain-about | nostack | -
+cruncher--relish-the-kill | sealed | applies
 cruncher--relish-the-kill | spell gems | -
 cruncher--relish-the-kill | spell gems | -
+cruncher--relish-the-kill | sealed | applies
 cruncher--myrtles-greed | is killed | -
 cruncher--myrtles-hunger | is killed | -
 cruncher--myrtles-perseverence | is killed | -
+cruncher--master-of-crunchers | sealed | uses
 cruncher--master-of-crunchers | spell gems | -
 cruncher--master-of-crunchers | nostack | -
 crusader--blood-weapon | mending | applies
@@ -604,6 +633,7 @@ denizen--tardy-to-the-party | nostack | -
 denizen--master-of-denizens | mania | uses
 denizen--master-of-denizens | nostack | -
 devil--eggnapper | start of battle | -
+devil--eggnapper | sealed | applies
 devil--eggnapper | spell gems | -
 devil--smoking-kills | nostack | -
 diabolic-horde--diabolic-celebration | start of battle | -
@@ -613,6 +643,7 @@ diabolic-horde--diabolic-fortitude | nostack | -
 diabolic-horde--diabolic-onslaught | nostack | -
 diabolic-horde--diabolic-power | nostack | -
 diabolic-horde--diabolic-brilliance | spell gems | -
+diabolic-horde--diabolic-brilliance | charges | -
 diabolic-horde--diabolic-brilliance | nostack | -
 diabolic-horde--diabolic-link | start of battle | -
 diabolic-horde--diabolic-link | maximum health | -
@@ -622,8 +653,10 @@ diabolic-horde--diabolic-revolution | nostack | -
 diabolic-horde--diabolic-resilience | nostack | -
 diabolic-horde--diabolic-might | nostack | -
 diabolic-horde--master-of-diabolic-horde | start of battle | -
+djinn--ascendancy | charges | -
 djinn--chain-spells | manually cast a spell | -
 djinn--mega-bomb | spell gems | -
+djinn--alleviation | charges | -
 djinn--alleviation | spell gems | -
 djinn--pyromaniac | manually cast a spell | -
 djinn--ley-lines | spell gems | -
@@ -631,12 +664,14 @@ djinn--celebrate-decline | nostack | -
 djinn--master-of-djinns | critical damage | -
 djinn--master-of-djinns | nostack | -
 doom-fortress--steadfast-resilience | nostack | -
+doom-fortress--mind-prison | sealed | applies
 doom-fortress--mind-prison | spell gems | -
 doom-fortress--necrotic-protection | nostack | -
 doom-fortress--derision | taunting | applies
 doom-fortress--pandemonium-alacrity | start of battle | -
 doom-fortress--pandemonium-death | after this creature attacks | -
 doom-fortress--pandemonium-fever | start of battle | -
+doom-fortress--pandemonium-life | charges | -
 doom-fortress--pandemonium-life | spell gems | -
 doom-fortress--pandemonium-wrath | manually cast a spell | -
 doom-fortress--master-of-doom-fortresses | nostack | -
@@ -660,6 +695,7 @@ dragon--memento-vivere | shelled | applies
 dragon--memento-vivere | nostack | -
 dragon--dragon-dance | after this creature attacks | -
 dragon--blend | start of battle | -
+dragon--blend | fused | -
 dragon--master-of-dragons | nostack | -
 dryad--surge | nostack | -
 dryad--extension | minion | -
@@ -682,6 +718,7 @@ dumpling--greed-is-good | nostack | -
 dumpling--high-protein | nostack | -
 dumpling--proof-is-in-the-pudding | spell gems | -
 dumpling--proof-is-in-the-pudding | nostack | -
+dumpling--extra-treat | charges | -
 dumpling--clean-eating | nostack | -
 dumpling--master-of-dumplings | start of battle | -
 effigy--the-grudge | cursed | applies
@@ -788,6 +825,7 @@ elementasaur--molten-spray | nostack | -
 elementasaur--frost-affinity | frozen | applies
 elementasaur--frost-affinity | frozen | uses
 elementasaur--frost-affinity | frozen | uses
+elementasaur--frost-affinity | charges | -
 elementasaur--frost-affinity | nostack | -
 elementasaur--barbed-vines | snared | applies
 elementasaur--barbed-vines | snared | uses
@@ -819,7 +857,9 @@ exotic--piercing-speed | this creature's attacks | -
 exotic--cantripology | after this creature attacks | -
 exotic--cantripology | spell gems | -
 exotic--cantripology | spell gems | -
+exotic--cantripology | sealed | applies
 exotic--hungering-void | start of this creature's turn | -
+exotic--hungering-void | sealed | applies
 exotic--hungering-void | spell gems | -
 exotic--counter-slash | after this creature is attacked | -
 exotic--bloodripper | after this creature attacks | -
@@ -843,8 +883,10 @@ exotic--redemption | maximum health | -
 exotic--sacrificial-will | is killed | -
 exotic--sacrificial-will | minion | -
 exotic--backup-packup | after this creature attacks | -
+exotic--backup-packup | dire wolves | applies
 exotic--stick-soul | minion | -
 exotic--connections | nostack | -
+exotic--corpse-keeper | zombies | applies
 exotic--corpse-keeper | nostack | -
 exotic--inoculant | burning | uses
 exotic--inoculant | poisoned | uses
@@ -869,6 +911,7 @@ exotic--celestial | leeching | applies
 exotic--cauterize-the-wound | bleeding | uses
 exotic--cauterize-the-wound | burning | uses
 exotic--lizardry | spell gems | -
+exotic--lizardry | charges | -
 exotic--lizardry | nostack | -
 exotic--twin-souls | this creature's attacks | -
 exotic--turbulent-waters | after this creature attacks | -
@@ -917,6 +960,7 @@ exotic--pop | bomb | uses
 exotic--atmospheric-interference | barrier | applies
 exotic--multibite | when this creature attacks | -
 exotic--time-fracture-resonance | timeline | -
+exotic--time-fracture-resonance | charges | -
 exotic--time-fracture-resonance | critical damage | -
 exotic--ultra-cling | snared | applies
 exotic--lovesick | after this creature attacks | -
@@ -939,7 +983,10 @@ exotic--gathering-storm | nostack | -
 exotic--lunatic-generosity | start of battle | -
 exotic--lunatic-generosity | spell gems | -
 exotic--lunatic-generosity | spell gems | -
+exotic--lunatic-generosity | charges | -
 exotic--mass-mutation | start of battle | -
+exotic--mass-mutation | fused | -
+exotic--mass-mutation | fused | -
 exotic--mass-mutation | nostack | -
 exotic--red-hot-kiss | start of this creature's turn | -
 exotic--red-hot-kiss | burning | applies
@@ -1008,9 +1055,11 @@ familiar--one-for-all | nostack | -
 familiar--pierce-the-veil | nostack | -
 familiar--group-meditation | start of battle | -
 familiar--group-meditation | spell gems | -
+familiar--group-meditation | charges | -
 familiar--group-meditation | nostack | -
 familiar--potency | nostack | -
 familiar--higher-understanding | spell gems | -
+familiar--higher-understanding | charges | -
 familiar--higher-understanding | nostack | -
 familiar--master-of-familiars | nostack | -
 fiend--uncontrollable-anger | berserk | uses
@@ -1025,7 +1074,9 @@ fiend--relentless-hunger | after this creature attacks | -
 fiend--master-of-fiends | berserk | uses
 fiend--master-of-fiends | nostack | -
 forsaken--anxiety | spell gems | -
+forsaken--anxiety | sealed | applies
 forsaken--curse-of-the-silent | spell gems | -
+forsaken--curse-of-the-silent | charges | -
 forsaken--curse-of-the-silent | silenced | applies
 forsaken--contradiction | timeline | -
 forsaken--darkness-surrounding | maximum health | -
@@ -1050,14 +1101,20 @@ gargoyle--primitive-incantation | spell gems | -
 gargoyle--primitive-incantation | nostack | -
 gargoyle--master-of-gargoyles | nostack | -
 gemling--oscillation | spell gems | -
+gemling--oscillation | charges | -
+gemling--oscillation | charges | -
 gemling--oscillation | nostack | -
 gemling--tumble | spell gems | -
+gemling--tumble | cascading | -
+gemling--tumble | charges | -
 gemling--tumble | nostack | -
 gemling--neodymium | spell gems | -
 gemling--neodymium | spell gems | -
 gemling--neodymium | nostack | -
 gemling--obelisk | spell gems | -
+gemling--obelisk | charges | -
 gemling--quality-over-quantity | spell gems | -
+gemling--quality-over-quantity | charges | -
 gemling--quality-over-quantity | spell gems | -
 gemling--quality-over-quantity | nostack | -
 gemling--distribution | start of battle | -
@@ -1095,6 +1152,7 @@ godspawn--whats-yours-is-mine | start of battle | -
 godspawn--whats-yours-is-mine | nostack | -
 godspawn--skyttels | start of battle | -
 godspawn--skyttels | spell gems | -
+godspawn--eve | charges | -
 godspawn--eve | nostack | -
 godspawn--release-the-cure | after this creature attacks | -
 godspawn--fear-of-success | this creature's attacks | -
@@ -1168,7 +1226,9 @@ grimoire--book-of-the-warlock | arcane | applies
 grimoire--book-of-the-warlock | arcane | applies
 grimoire--master-of-grimoires | silenced | resists
 grimoire--master-of-grimoires | spell gems | -
+grimoire--master-of-grimoires | charges | -
 guardian--gentle-giant | start of battle | -
+guardian--gentle-giant | fused | -
 harpy--kraaw | this creature's attacks | -
 harpy--kraaw | blind | applies
 harpy--bad-omen | start of battle | -
@@ -1180,19 +1240,28 @@ harpy--master-of-harpies | nostack | -
 hemomancer--from-hero-to-zero | after this creature attacks | -
 hemomancer--heartstopper | after this creature attacks | -
 hemomancer--mind-eraser | after this creature attacks | -
+hemomancer--mind-eraser | sealed | applies
 hemomancer--mind-eraser | spell gems | -
 hemomancer--abation | after this creature attacks | -
 hemomancer--depression | after this creature attacks | -
 hemomancer--master-of-hemomancers | nostack | -
 herbling--photomorphogenesis | after this creature attacks | -
+hound--blood-thirst | dire wolves | uses
 hound--blood-thirst | nostack | -
+hound--uncharted | dire wolves | uses
 hound--uncharted | nostack | -
+hound--summon-the-pack | dire wolves | applies
 hound--summon-the-pack | nostack | -
+hound--hound-legion | dire wolves | uses
+hound--fingertip-nip | dire wolves | uses
 hound--fingertip-nip | nostack | -
+hound--vicious-bite | dire wolves | uses
 hound--vicious-bite | nostack | -
 hound--nature-of-the-beast | start of battle | -
+hound--nature-of-the-beast | dire wolves | applies
 hound--nature-of-the-beast | nostack | -
 hound--eye-of-the-thylacine | after this creature attacks | -
+hound--master-of-hounds | dire wolves | uses
 hunter--glaive-of-prayer | after this creature attacks | -
 hunter--glaive-of-justice | after this creature attacks | -
 hunter--directors-cut | after this creature attacks | -
@@ -1243,8 +1312,10 @@ inquisitor--mass-summoning | minion | -
 inquisitor--mass-summoning | nostack | -
 inquisitor--pleasant-disease | minion | -
 inquisitor--pleasant-disease | start of battle | -
+inquisitor--the-walking-dead | zombies | uses
 inquisitor--the-walking-dead | minion | -
 inquisitor--the-walking-dead | start of battle | -
+inquisitor--the-walking-dead | zombies | applies
 inquisitor--the-walking-dead | nostack | -
 inquisitor--master-of-inquisitors | minion | -
 inquisitor--master-of-inquisitors | nostack | -
@@ -1291,9 +1362,11 @@ leper--pus-and-pox | nostack | -
 leper--stank | nostack | -
 leper--wrong-side | nostack | -
 leper--master-of-lepers | nostack | -
+lich--heretic-blood | charges | -
 lich--hail-to-the-king | start of battle | -
 lich--necromastery | spell gems | -
 lich--necromastery | minion | -
+lich--necromastery | charges | -
 lich--watch-of-the-buried | minion | -
 lich--watch-of-the-buried | minion | -
 lich--dark-aegis | spell gems | -
@@ -1311,6 +1384,7 @@ lich--andricks-royal-decree | nostack | -
 lich--master-of-liches | nostack | -
 lucanian--the-high-hunt | after this creature attacks | -
 lucanian--consuming-knowledge | spell gems | -
+lucanian--consuming-knowledge | charges | -
 lucanian--consuming-knowledge | nostack | -
 lucanian--the-golden-sign | start of battle | -
 lucanian--the-golden-sign | scorned | applies
@@ -1386,6 +1460,7 @@ mimic--giftwrapped-army | start of battle | -
 mimic--giftwrapped-army | nostack | -
 mimic--sad-birthday-song | is killed | -
 mimic--ultimate-trickery | start of battle | -
+mimic--ultimate-trickery | fused | -
 mimic--ultimate-trickery | timeline | -
 mimic--master-of-mimics | start of battle | -
 mimic--master-of-mimics | timeline | -
@@ -1402,13 +1477,18 @@ minotaur--blood-crazed | after this creature is attacked | -
 minotaur--master-of-minotaurs | nostack | -
 mireling--prismatic-one | start of battle | -
 mireling--prismatic-one | spell gems | -
+mireling--prismatic-one | charges | -
 mireling--enfeebling-haze | nostack | -
 mireling--scoundrel-strike | poisoned | applies
 mireling--scoundrel-strike | nostack | -
 mireling--rain-of-magic | start of battle | -
+mireling--rain-of-magic | cascading | -
+mireling--rain-of-magic | charges | -
 mireling--conduit-strike | spell gems | -
 mireling--conduit-strike | when this creature attacks | -
+mireling--conduit-strike | charges | -
 mireling--conduit-strike | spell gems | -
+mireling--conduit-strike | charges | -
 mireling--master-of-mirelings | nostack | -
 mite--cradle-to-the-grave | nostack | -
 mite--corrosion | after this creature attacks | -
@@ -1491,7 +1571,9 @@ nix--master-of-nixes | invisible | applies
 nix--master-of-nixes | nostack | -
 occultist--lingering-incantation | nostack | -
 occultist--seal-magic | spell gems | -
+occultist--seal-magic | sealed | applies
 occultist--conjuration | spell gems | -
+occultist--conjuration | charges | -
 occultist--conjuration | nostack | -
 occultist--phantasm | spell gems | -
 occultist--phantasm | nostack | -
@@ -1505,6 +1587,7 @@ occultist--sareas-command | start of battle | -
 occultist--sareas-command | nostack | -
 occultist--sareas-haste | nostack | -
 occultist--sareas-plot | nostack | -
+occultist--master-of-occultists | charges | -
 occultist--master-of-occultists | nostack | -
 ophan--infusion | nostack | -
 ophan--spectrum-of-eternity | nostack | -
@@ -1536,6 +1619,7 @@ ossein--girans-strategy | start of battle | -
 ossein--master-of-osseins | start of battle | -
 ossein--master-of-osseins | rebirth | applies
 paragon--amethyst-attunement | spell gems | -
+paragon--amethyst-attunement | charges | -
 paragon--bismuth-attunement | nostack | -
 paragon--diamond-attunement | spell gems | -
 paragon--diamond-attunement | nostack | -
@@ -1584,6 +1668,7 @@ pilwiz--zenpangs-boast | nostack | -
 pilwiz--zenpangs-exploit | nostack | -
 pilwiz--zenpangs-yell | nostack | -
 pilwiz--master-of-pilwizes | bleeding | uses
+pit-worm--rock-candy | sealed | applies
 pit-worm--rock-candy | spell gems | -
 pit-worm--ceaseless-flame | burning | uses
 pit-worm--ceaseless-vitality | start of this creature's turn | -
@@ -1666,6 +1751,7 @@ robodomi--reactor-shield | maximum health | -
 robodomi--destruction-beam | start of this creature's turn | -
 robodomi--communication-services | start of battle | -
 robodomi--phasers | when this creature attacks | -
+robodomi--phasers | charges | -
 robodomi--master-of-robodomis | rebirth | applies
 salamander--hotspur | start of battle | -
 salamander--hotspur | nostack | -
@@ -1704,6 +1790,7 @@ sea-shambler--master-of-sea-shamblers | blighted | uses
 sea-shambler--master-of-sea-shamblers | nostack | -
 seraph--break-the-cycle | timeline | -
 seraph--break-of-dawn | nostack | -
+seraph--chasing-infinity | charges | -
 seraph--haven | nostack | -
 shade--shadow-aegis | invisible | uses
 shade--shadow-aegis | nostack | -
@@ -1865,22 +1952,28 @@ soulflayer--xyrxzys-plan | start of battle | -
 soulflayer--xyrxzys-subversion | manually cast a spell | -
 soulflayer--xyrxzys-subversion | nostack | -
 spacecat--yowl | spell gems | -
+spacecat--yowl | sealed | uses
 spacecat--yowl | spell gems | -
 spacecat--yowl | nostack | -
 spacecat--maow | spell gems | -
+spacecat--maow | sealed | uses
 spacecat--maow | spell gems | -
 spacecat--maow | nostack | -
 spacecat--hisss | spell gems | -
+spacecat--hisss | sealed | uses
 spacecat--hisss | spell gems | -
 spacecat--hisss | nostack | -
 spacecat--chattering-chant | spell gems | -
+spacecat--chattering-chant | sealed | uses
 spacecat--chattering-chant | spell gems | -
 spacecat--chattering-chant | nostack | -
 spacecat--thrillful-trills | spell gems | -
 spacecat--thrillful-trills | maximum health | -
+spacecat--thrillful-trills | sealed | uses
 spacecat--thrillful-trills | spell gems | -
 spacecat--thrillful-trills | nostack | -
 spacecat--purrr | spell gems | -
+spacecat--purrr | sealed | applies
 spacecat--master-of-spacecats | spell gems | -
 spacecat--master-of-spacecats | nostack | -
 sparktail--recompense | after this creature is attacked | -
@@ -1894,6 +1987,7 @@ spectre--master-of-spectres | nostack | -
 spelljuggler--spectrometry | spell gems | -
 spelljuggler--prismatic-amplifier | nostack | -
 spelljuggler--lucid-renewal | spell gems | -
+spelljuggler--lucid-renewal | charges | -
 spelljuggler--lucid-renewal | nostack | -
 spelljuggler--shifting-brilliance | nostack | -
 spellmane--flamestalker | start of battle | -
@@ -1910,6 +2004,7 @@ spellmane--staticstalker | start of battle | -
 spellmane--staticstalker | invisible | applies
 spellmane--master-of-spellmanes | silenced | resists
 spellmane--master-of-spellmanes | spell gems | -
+spellmane--master-of-spellmanes | sealed | resists
 sphinx--desert-glory | nostack | -
 sphinx--pharaohs-boon | nostack | -
 sphinx--rejuvenation | nostack | -
@@ -1944,7 +2039,11 @@ stag--star-prayer | spell gems | -
 stag--star-prayer | nostack | -
 stag--touched-by-the-gods | spell gems | -
 stag--endlessly | spell gems | -
+stag--endlessly | charges | -
 stag--endlessly | nostack | -
+stag--like-sand | cascading | -
+stag--like-sand | charges | -
+stag--like-sand | charges | -
 stag--like-sand | nostack | -
 stag--master-of-stags | nostack | -
 storm--best-kind-of-weather | start of battle | -
@@ -1979,6 +2078,7 @@ tremor--constrict | start of this creature's turn | -
 tremor--constrict | snared | applies
 tremor--constrict | feared | applies
 tremor--solidarity | start of battle | -
+tremor--solidarity | sealed | applies
 tremor--solidarity | spell gems | -
 tremor--jolt | stoned | applies
 tremor--jolt | nostack | -
@@ -2051,6 +2151,7 @@ voidlord--mind-fortress | repelling | applies
 voidlord--master-of-voidlords | repelling | applies
 voidlord--master-of-voidlords | nostack | -
 vortex--impedance | start of battle | -
+vortex--impedance | sealed | applies
 vortex--impedance | spell gems | -
 vortex--impedance | nostack | -
 vortex--simulacrum | spell gems | -
@@ -2128,12 +2229,15 @@ wisp--spasm | spell gems | -
 wisp--spasm | timeline | -
 wisp--master-of-wisps | shelled | applies
 wisp--master-of-wisps | nostack | -
+wolpertinger--furness-decadence | charges | -
 wolpertinger--furness-instability | start of this creature's turn | -
 wolpertinger--soul-sucker | nostack | -
 wolpertinger--camaraderie | barrier | applies
 wolpertinger--camaraderie | maximum health | -
 wolpertinger--camaraderie | barrier | uses
 wolpertinger--colorblind | after this creature attacks | -
+wolpertinger--fraud | charges | -
+wolpertinger--fraud | sealed | resists
 wolpertinger--bottom-feeder | nostack | -
 wolpertinger--prey | start of battle | -
 wolpertinger--prey | nostack | -
@@ -2162,13 +2266,34 @@ yeti--vexts-invocation | nostack | -
 yeti--master-of-yetis | start of battle | -
 yeti--master-of-yetis | frozen | applies
 zantai--zantais-boon | start of battle | -
+zantai--zantais-boon | mega magic | applies
+zantai--zantais-boon | mega magic | uses
 zantai--zantais-call | start of battle | -
+zantai--zantais-call | mega magic | applies
+zantai--zantais-call | mega magic | uses
 zantai--zantais-call | minion | -
 zantai--zantais-cunning | start of battle | -
+zantai--zantais-cunning | mega magic | applies
+zantai--zantais-cunning | mega magic | uses
 zantai--zantais-embrace | start of battle | -
+zantai--zantais-embrace | mega magic | applies
+zantai--zantais-embrace | mega magic | uses
 zantai--zantais-envy | start of battle | -
+zantai--zantais-envy | mega magic | applies
+zantai--zantais-envy | mega magic | uses
 zantai--zantais-havoc | start of battle | -
+zantai--zantais-havoc | mega magic | applies
+zantai--zantais-havoc | mega magic | uses
 zantai--zantais-inhibition | start of battle | -
+zantai--zantais-inhibition | mega magic | applies
+zantai--zantais-inhibition | mega magic | uses
 zantai--zantais-perfection | start of battle | -
+zantai--zantais-perfection | mega magic | applies
+zantai--zantais-perfection | mega magic | uses
+zantai--zantais-perfection | charges | -
 zantai--zantais-stratagem | start of battle | -
+zantai--zantais-stratagem | mega magic | applies
+zantai--zantais-stratagem | mega magic | uses
 zantai--zantais-reign | start of battle | -
+zantai--zantais-reign | mega magic | applies
+zantai--zantais-reign | mega magic | uses

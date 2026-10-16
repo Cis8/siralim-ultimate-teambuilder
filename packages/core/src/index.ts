@@ -6,7 +6,7 @@ export const DATASET_SCHEMA_VERSION = 1;
 
 export { createKeywordExtractor, extractKeywords, type KeywordExtractor } from './extraction/extract-keywords';
 export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
-export { assignRoles } from './extraction/role-heuristic';
+export { assignRoles, type RoleOptions } from './extraction/role-heuristic';
 export { enrichTraits } from './enrichment/enrich-traits';
 export { detectConditionalSources } from './enrichment/conditional-sources';
 export { writtenForms as familyWrittenForms } from './enrichment/family-matcher';
@@ -28,12 +28,14 @@ export type {
   TraitKind,
   TraitRow,
 } from './model/trait';
+export { hasRole } from './model/keyword-kind';
 export { MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
 export type {
   BuffEntry,
   DebuffEntry,
+  EffectEntry,
   FlagEntry,
   MechanicEntry,
   TaxonomyEntry,

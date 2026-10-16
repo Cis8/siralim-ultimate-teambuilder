@@ -93,14 +93,38 @@ describe('the taxonomy', () => {
     });
   });
 
-  it('has the mechanics and the flag of the prototypes', () => {
+  describe('effects: what builds are made of, beyond the canonical buffs and debuffs (GAME_RULES R11)', () => {
+    it('are Sealed Spell Gems, Dire Wolves, Zombies and Mega Magic', () => {
+      expect(
+        taxonomy
+          .ofKind('effect')
+          .map((entry) => entry.key)
+          .toSorted(),
+      ).toEqual(['dire wolves', 'mega magic', 'sealed', 'zombies']);
+    });
+
+    it('read Seal, Seals and Sealed as one effect, and know which forms are the trait doing it', () => {
+      const sealed = taxonomy.get('sealed');
+      expect(sealed?.patterns).toEqual(['Sealed', 'Seals', 'Seal']);
+      expect(sealed).toMatchObject({ kind: 'effect', activePatterns: ['Seals', 'Seal'] });
+    });
+  });
+
+  it('has the mechanics of the prototypes, and the Spell Gem properties and Fused (GAME_RULES R11)', () => {
     expect(taxonomy.ofKind('mechanic').map((entry) => entry.key)).toEqual([
       'minion',
       'spell gems',
       'timeline',
       'critical damage',
       'maximum health',
+      'charges',
+      'cascading',
+      'fused',
     ]);
+    expect(taxonomy.get('charges')?.patterns).toEqual(['charges', 'charge']);
+  });
+
+  it('has the flag of the prototypes', () => {
     expect(taxonomy.get('nostack')).toMatchObject({ kind: 'flag', patterns: ['This trait does not stack'] });
   });
 });

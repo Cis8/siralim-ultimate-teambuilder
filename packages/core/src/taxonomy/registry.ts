@@ -51,6 +51,14 @@ function entryViolations(entries: readonly TaxonomyEntry[]): string[] {
     }
     if (entry.label.trim() === '') problems.push(`"${entry.key}" needs a label`);
     if (entry.patterns.length === 0) problems.push(`"${entry.key}" has no pattern`);
+    if (entry.kind === 'effect') {
+      const patterns = new Set(entry.patterns.map((pattern) => pattern.toLowerCase()));
+      for (const active of entry.activePatterns ?? []) {
+        if (!patterns.has(active.toLowerCase())) {
+          problems.push(`"${entry.key}" lists the active form "${active}", which is not one of its patterns`);
+        }
+      }
+    }
     for (const pattern of entry.patterns) {
       if (!isPlainText(pattern)) {
         problems.push(

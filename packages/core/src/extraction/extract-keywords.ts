@@ -9,7 +9,16 @@ export type KeywordExtractor = (description: string) => KeywordHit[];
 
 export function createKeywordExtractor(taxonomy: Taxonomy): KeywordExtractor {
   const matcher = createKeywordMatcher(taxonomy);
-  return (description) => assignRoles(description, matcher.match(description));
+  const activeForms = new Map(
+    taxonomy
+      .ofKind('effect')
+      .flatMap((entry) =>
+        entry.activePatterns === undefined
+          ? []
+          : [[entry.key, new Set(entry.activePatterns.map((form) => form.toLowerCase()))] as const],
+      ),
+  );
+  return (description) => assignRoles(description, matcher.match(description), { activeForms });
 }
 
 /** The extractor over the taxonomy of the app. The pipeline and the tests use this one, so they agree (ADR-0003). */

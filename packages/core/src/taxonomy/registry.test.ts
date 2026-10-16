@@ -93,6 +93,30 @@ describe('createTaxonomy', () => {
       expect(violations([debuff(key, ['weak'])])).toMatch(/key .* must be lower case and trimmed/);
     });
 
+    it('refuses an active form that is not one of the patterns', () => {
+      const effect: TaxonomyEntry = {
+        kind: 'effect',
+        key: 'sealed',
+        label: 'Sealed',
+        patterns: ['Sealed', 'Seals'],
+        activePatterns: ['Sealing'],
+      };
+      expect(violations([effect])).toMatch(
+        /"sealed" lists the active form "Sealing", which is not one of its patterns/,
+      );
+    });
+
+    it('accepts an active form that is a pattern, whatever its case', () => {
+      const effect: TaxonomyEntry = {
+        kind: 'effect',
+        key: 'sealed',
+        label: 'Sealed',
+        patterns: ['Sealed', 'Seals'],
+        activePatterns: ['seals'],
+      };
+      expect(createTaxonomy([effect]).get('sealed')).toMatchObject({ kind: 'effect' });
+    });
+
     it('refuses an empty label', () => {
       expect(violations([{ ...debuff('weak'), label: ' ' }])).toMatch(/"weak" needs a label/);
     });

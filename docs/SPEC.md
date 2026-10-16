@@ -70,8 +70,8 @@ type PartyRequirement =             // GAME_RULES R3; `families` holds plural fo
 
 interface KeywordHit {
   key: KeywordKey;                  // "vulnerable", "start of battle", "barrier", …
-  kind: 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
-  role?: 'applies' | 'uses' | 'resists';   // only for debuff/buff; `resists` = guards against it (GAME_RULES R9)
+  kind: 'debuff' | 'buff' | 'effect' | 'mechanic' | 'trigger' | 'flag';
+  role?: 'applies' | 'uses' | 'resists';   // only for debuff/buff/effect; `resists` = guards against it (R9)
   span: [start: number, end: number];
 }
 
@@ -92,6 +92,11 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   [Codex Reference](https://steamcommunity.com/sharedfiles/filedetails/?id=2197484456). When they disagree with the
   compendium v2.0, v2.0 wins and the pipeline report lists the discrepancy: the entry keeps the canonical name in
   `canonicalName` (the compendium writes "Stoned" for the canonical "Stone").
+- **Effects** (GAME_RULES R11) are what traits give and build on beyond the canonical lists, found in the compendium: Sealed
+  (Seal, Seals, Sealed), Dire Wolves, Zombies, Mega Magic. They have roles like buffs and debuffs but match without regard
+  to letter case, and an effect can name its active forms ("Seals"): written that way the trait is the one doing it
+  (`applies`); "that Spell Gem is Sealed" is also given, "for each Sealed Spell Gem" relied on, "cannot be Sealed" guarded
+  against. Charges, Cascading (Spell Gem properties) and Fused are plain mechanics, without a role.
 - `createTaxonomy` rejects a taxonomy with duplicate keys, a pattern shared by two entries, or patterns that are not
   plain text, and lists all violations at once.
 - Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
@@ -113,7 +118,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   - protection (`immune/resistant to`, `avoid`, `less damage from`, `no longer takes damage from`, `cannot be`) → `resists`
     (GAME_RULES R9); "cannot be immune to" is the reverse and stays `uses`;
   - no signal → `uses` (e.g. "Enemies' Burning debuff lasts forever").
-  On v2.0 it gives 275 `applies`, 244 `uses` and 18 `resists`. All 537 mentions were read by hand (M3.7): the cues above came from
+  On v2.0 it gives 311 `applies`, 270 `uses` and 21 `resists` (the first 537 mentions, buffs and debuffs, are
+  275 / 244 / 18). All 537 mentions were read by hand (M3.7): the cues above came from
   that reading, and 11 mentions it could not tell apart are in `overrides.yaml` (conditional grants such as "As long as
   this creature hasn't gained or lost speed, it has … and has Agile", and a Barrier named again as a reference).
 - **Conditional sources** (`detectConditionalSources`, GAME_RULES R10): a sentence with "whichever of these debuffs
@@ -125,7 +131,7 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   An entry naming a trait, a keyword the trait does not mention, an occurrence it does not have, or a keyword without a
   role fails the build; two entries for one mention conflict; an entry that changes nothing is a warning.
 - **Snapshot tests** over the pinned v2.0 sheet, as committed files in `packages/pipeline/snapshots/`: one line per
-  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,174 lines), and one per random-debuff trait, `trait | target |
+  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,299 lines), and one per random-debuff trait, `trait | target |
   activation | note`. Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read
   and approved; refresh with `pnpm exec vitest run -u`.
 - Done in the **pipeline** (build time), not at runtime; `core` exposes the same extractor so tests and the pipeline

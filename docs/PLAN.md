@@ -12,8 +12,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 done; follow-up 3.8-3.10 in progress** (owner decisions of 2026-10-16, see "M3 follow-up"). 3.8 done
-  (`resists`) and 3.9 (`conditionalSources`). **Next: 3.10**, then M4 Query core, slice 4.1 (read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
+- **Phase 1 · M3 and its follow-up 3.8-3.10 done** (owner decisions of 2026-10-16: `resists`, `conditionalSources`, the
+  `effect` kind). **Next: M4 Query core**, slice 4.1 (lexer with spans; read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
+- Open for the owner, none blocking: GAME_RULES open questions 1-5 only (allies vs enemies; "afflicted with" as a trigger;
+  when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2: the authors agreed). The nightly `data-refresh` works: the
   dataset on `main` still has no keywords, so its next PR carries those of all 1,780 traits; read its report before
   merging, as the protocol says.
@@ -66,7 +68,7 @@ the previous build; the nightly `data-refresh.yml` opens a PR when the data chan
 (`pipeline/fixtures/traits-v2.0.csv`) and the GAME_RULES counts test (`build/real-sheet.test.ts`) landed with 2.4; nothing is
 rewritten when the hash is unchanged.
 
-### M3 Keyword extraction — done
+### M3 Keyword extraction — done (with its follow-up)
 `core`: a `taxonomy` registry (20 debuffs and 18 buffs from the wiki, cross-checked with the Codex Reference; mechanics,
 triggers with a battle phase, the no-stack flag), `createKeywordMatcher` (spans), `assignRoles`, one `extractKeywords`
 used by `enrichTraits`. `pipeline`: `overrides.yaml` with a schema, keywords in the dataset (2,174 mentions; 275 applies /
@@ -74,12 +76,10 @@ used by `enrichTraits`. `pipeline`: `overrides.yaml` with a schema, keywords in 
 differences with the canonical lists). Deviations: Barrier is a buff, not a mechanic (both sources and the compendium say
 so); buffs and debuffs match only as capitalised names (25 false positives otherwise); an opening condition makes a
 status `uses`, which refines SPEC §4. All 537 role mentions were read by hand; 11 are overridden.
-
-### M3 follow-up: owner decisions of 2026-10-16
-- [x] **3.8** Role `resists` for protective mentions (GAME_RULES R9): `immune to`, `avoid`, `less damage from`, `cannot be`.
-- [x] **3.9** `conditionalSources` on a trait: the debuffs a Flesh Rot-style pair trait applies implicitly (R10).
-- [ ] **3.10** Searchable Spell Gem properties (Charges, Cascading), Fused, and the effects Seal/Sealed, Dire Wolves,
-      Zombies, Mega Magic with roles like buffs (R11).
+Owner decisions of 2026-10-16 added three things (3.8-3.10): the role `resists` for protective mentions (GAME_RULES R9),
+`Trait.conditionalSources` for the "whichever of these debuffs" pair traits (R10), and the `effect` keyword kind with
+Seal/Sealed, Dire Wolves, Zombies and Mega Magic, plus Charges, Cascading and Fused as mechanics (R11). Dataset v2.0 now
+has 2,299 mentions: 311 applies, 270 uses, 21 resists.
 
 ### M4 Query core (TDD)
 - [ ] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.
