@@ -87,8 +87,9 @@ pnpm typecheck
 pnpm check               # lint + typecheck + test — the gate before every commit (also the pre-push hook)
 pnpm build               # static site into apps/web/build (BASE_PATH=/siralim-ultimate-teambuilder for Pages)
 pnpm format
-pnpm pipeline:fetch      # (M2) download the sheet into packages/pipeline/.cache
-pnpm pipeline:build      # (M2) cache → apps/web/static/data/traits.<hash>.json + manifest
+pnpm pipeline:fetch      # download the sheet into packages/pipeline/.cache (retries; needs network)
+pnpm pipeline:build      # cache → apps/web/static/data/traits.<hash>.json + manifest.json, report in .cache/report.md
+                         # (flags: --input <csv> --output <dir> --report <file>; writes nothing if the data is unchanged)
 ```
 
 Keep this section accurate when scripts change.

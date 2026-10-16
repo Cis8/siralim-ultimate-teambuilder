@@ -13,6 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "pnpm --filter @atlas/web test:e2e",
+    "pipeline:fetch": "pnpm --filter @atlas/pipeline fetch-sheet",
+    "pipeline:build": "pnpm --filter @atlas/pipeline build-dataset",
     "lint": "eslint . && prettier --check . && depcruise packages --config .dependency-cruiser.cjs",
     "format": "prettier --write .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r typecheck",

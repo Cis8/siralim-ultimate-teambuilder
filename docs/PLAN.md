@@ -12,8 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.6 done (`buildReport`, `loadPreviousBuild`). **Next: 2.7**
-  (`pipeline:fetch` with retry and injected `fetch`, `pipeline:build` CLI wiring parse → emit → report; root scripts).
+- **Phase 1 · M2 in progress** (2026-10-16): 2.1-2.7 done (`pnpm pipeline:fetch` / `pipeline:build` work against the
+  live sheet; nothing is committed under `apps/web/static/data/` yet). **Next: 2.8** (`data-refresh.yml`: nightly +
+  manual, runs `pnpm check`, opens a PR when `pipeline:build` changes the output; the PR body is `.cache/report.md`).
 - Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
@@ -38,6 +39,9 @@ session (after `CLAUDE.md`), update it before ending one.
   `$lib` is gone (use relative imports or `#lib/*` subpath imports).
 - `ssr.noExternal: ['cookie']` in the Vite config: without it the prerender step cannot resolve `cookie` under pnpm.
 - Internal links need `resolve()` from `$app/paths`; external links use `lib/components/external-link.svelte`.
+- The RTK hook compacts command output: vitest prints nothing useful through it. Use `rtk proxy <command>` for the
+  raw output.
+- Pipeline scripts run with `tsx` (the sources use extensionless imports, which plain Node cannot load).
 - Prettier skips Markdown on purpose (hand-wrapped prose, tables).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
@@ -62,7 +66,7 @@ app shell with tokens, self-hosted fonts and footer credits.
 - [x] **2.5** Emit `traits.<hash>.json` + `manifest.json` (clock injected). *T:* same input → identical bytes and hash.
 - [x] **2.6** Report (markdown): counts per class and kind, classes outside R7, diff vs previous build.
       *T:* two small fixture versions.
-- [ ] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`. The pinned snapshot
+- [x] **2.7** `pipeline:fetch` (retry, injected fetch, `.cache/`) and `pipeline:build`. The pinned snapshot
       (`fixtures/traits-v2.0.csv`) and the counts test (`build/real-sheet.test.ts`, 1,780 unique ids) landed with 2.4.
       *T:* fetch with an injected `fetch`; the class set of the snapshot.
 - [ ] **2.8** `data-refresh.yml`: nightly + manual; runs `pnpm check`, opens a PR when the output changes.
