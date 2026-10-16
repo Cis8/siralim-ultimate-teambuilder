@@ -14,9 +14,9 @@ session (after `CLAUDE.md`), update it before ending one.
 ## Resume here
 - **Phase 1 · M2 done** (2026-10-16). **Next: M3, slice 3.1** (canonical buff/debuff lists from the wiki and the Codex
   Reference, transcribed into the taxonomy registry with a source note).
-- Owner input pending: (1) permission from the compendium authors → then deploy on push (D2). (2) Settings → Actions →
-  General → "Allow GitHub Actions to create and approve pull requests": off today, so the nightly `data-refresh` cannot
-  open its PR yet; its first PR will carry the whole dataset (nothing is committed under `apps/web/static/data/` yet).
+- Owner input pending: permission from the compendium authors → then deploy on push (D2). Nothing else blocks.
+- The nightly `data-refresh` works (Actions may now open PRs): the first dataset (v2.0, 1,780 traits) is on `main`
+  under `apps/web/static/data/`. Read the PR report before merging later ones, as the protocol says.
 - Before coding: `git pull`, `gh run list -L 3` (main must be green), `gh pr list` (data-refresh PRs, from M2 on).
 
 ## Owner decisions (2026-10-16)
