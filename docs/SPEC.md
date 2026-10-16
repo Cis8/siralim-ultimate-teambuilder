@@ -70,7 +70,7 @@ type PartyRequirement =             // GAME_RULES R3; `families` holds plural fo
 interface KeywordHit {
   key: KeywordKey;                  // "vulnerable", "start of battle", "barrier", …
   kind: 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
-  role?: 'applies' | 'uses';        // only for debuff/buff
+  role?: 'applies' | 'uses' | 'resists';   // only for debuff/buff; `resists` = guards against it (GAME_RULES R9)
   span: [start: number, end: number];
 }
 
@@ -104,13 +104,15 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   - a status in the condition the sentence opens with (After / When / If / While / … up to the first comma) is one the
     trait waits for → `uses` ("After an enemy is afflicted with Weak, …");
   - otherwise the nearest signal before it decides. `applies`: `afflict(s/ed) … with`, `gain(s)`, `grant(s)`/`give(s)`,
-    `always has/have`, `is/are always`, `battles with`. `uses`: `has/have`, `damage from`, `immune/resistant to`,
+    `always has/have`, `is/are always`, `battles with`. `uses`: `has/have`, `damage from`,
     `enemies/creatures with`, `creatures afflicted with`, `for each … afflicted with`, `if/while/when … afflicted with`
     inside a sentence, `cannot gain`. Where two end together the one that starts first wins
     ("afflicts enemies with" over "enemies with", "always has" over "has");
   - a status after another in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable") takes its role;
+  - protection (`immune/resistant to`, `avoid`, `less damage from`, `no longer takes damage from`, `cannot be`) → `resists`
+    (GAME_RULES R9); "cannot be immune to" is the reverse and stays `uses`;
   - no signal → `uses` (e.g. "Enemies' Burning debuff lasts forever").
-  On v2.0 it gives 275 `applies` and 262 `uses`. All 537 mentions were read by hand (M3.7): the cues above came from
+  On v2.0 it gives 275 `applies`, 244 `uses` and 18 `resists`. All 537 mentions were read by hand (M3.7): the cues above came from
   that reading, and 11 mentions it could not tell apart are in `overrides.yaml` (conditional grants such as "As long as
   this creature hasn't gained or lost speed, it has … and has Agile", and a Barrier named again as a reference).
 - **Overrides** (`packages/pipeline/overrides.yaml`, `parseOverrides` / `applyOverrides`): two sections, `roles` (trait

@@ -15,7 +15,7 @@ const roleOverride = z.strictObject({
   keyword: nonEmpty,
   /** Which mention of the keyword in the trait, counting from 1. Absent: all of them. */
   occurrence: z.number().int().positive().optional(),
-  role: z.enum(['applies', 'uses']),
+  role: z.enum(['applies', 'uses', 'resists']),
   reason,
 });
 

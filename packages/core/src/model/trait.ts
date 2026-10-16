@@ -50,8 +50,11 @@ export type PartyRequirement =
 /** What a keyword is. Only buffs and debuffs have a role. */
 export type KeywordKind = 'debuff' | 'buff' | 'mechanic' | 'trigger' | 'flag';
 
-/** Whether a trait gives a buff or debuff to someone, or relies on it being there. */
-export type KeywordRole = 'applies' | 'uses';
+/**
+ * What a trait does with a buff or debuff: gives it (`applies`), relies on it being there (`uses`), or only guards
+ * against it, as in "immune to Silenced" (`resists`), which depends on nobody applying it (GAME_RULES R9).
+ */
+export type KeywordRole = 'applies' | 'uses' | 'resists';
 
 export interface KeywordHit {
   readonly key: KeywordKey;

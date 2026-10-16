@@ -144,10 +144,10 @@ function keywordCounts(traits: readonly Trait[]): string | null {
   if (mentions.length === 0) return null;
   const withKeywords = traits.filter((trait) => trait.keywords.length > 0).length;
   const statuses = mentions.filter((hit) => hit.role !== undefined);
-  const applies = statuses.filter((hit) => hit.role === 'applies').length;
+  const count = (role: 'applies' | 'uses' | 'resists') => statuses.filter((hit) => hit.role === role).length;
   return (
     `### Keywords\n\n${mentions.length} mentions in ${withKeywords} traits. Of the ${statuses.length} buffs and debuffs, ` +
-    `${applies} are given (applies) and ${statuses.length - applies} relied on (uses).`
+    `${count('applies')} are given (applies), ${count('uses')} relied on (uses) and ${count('resists')} guarded against (resists).`
   );
 }
 

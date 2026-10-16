@@ -77,7 +77,7 @@ const REAL_TRAITS: readonly (readonly [name: string, description: string, roles:
   [
     'Gemcutter',
     "Your creatures' Ultimate Spell Gems cannot be Sealed and do not consume charges. Your creatures are immune to Silenced.",
-    ['silenced:uses'],
+    ['silenced:resists'],
   ],
   [
     'Horde Limits',
@@ -181,10 +181,16 @@ describe('assignRoles', () => {
       ['This creature deals damage to enemies that have Bleeding.', 'bleeding:uses'],
       ['Enemies that already has Bleeding take damage.', 'bleeding:uses'],
       ['This creature takes damage from Poisoned.', 'poisoned:uses'],
-      ['Your creatures are immune to Silenced.', 'silenced:uses'],
-      ['Your creatures are resistant to Burning.', 'burning:uses'],
+      ['Your creatures are immune to Silenced.', 'silenced:resists'],
+      ['Your creatures are resistant to Burning.', 'burning:resists'],
       ['This deals more damage for each creature on your team afflicted with Silenced.', 'silenced:uses'],
       ['Your creatures deal more damage for each enemy that is afflicted with Cursed.', 'cursed:uses'],
+      ['This creature cannot be Silenced.', 'silenced:resists'],
+      ['This creature no longer takes damage from Blighted.', 'blighted:resists'],
+      ['This creature cannot be immune to Mania.', 'mania:uses'],
+      ['Enemies cannot be resistant to Stoned.', 'stoned:uses'],
+      ['Your creatures have a 50% chance to avoid Silenced.', 'silenced:resists'],
+      ['They have a 25% chance to avoid damage and gain Shelled.', 'shelled:applies'],
       ['This creature gives allies Shelled.', 'shelled:applies'],
       ['At the end of its turn it resurrects an ally and gives it Shelled.', 'shelled:applies'],
       ['This creature is always Berserk, and deals more damage.', 'berserk:applies'],
@@ -196,6 +202,19 @@ describe('assignRoles', () => {
       ['The damage is doubled when an enemy is afflicted with Bomb.', 'bomb:uses'],
     ])('%s', (text, role) => {
       expect(rolesIn(text)).toEqual([role]);
+    });
+
+    it('reads a protection against a status as resisting it, for the whole list', () => {
+      expect(rolesIn('Your creatures take 90% less damage from Bleeding, Poisoned, and Bomb.')).toEqual([
+        'bleeding:resists',
+        'poisoned:resists',
+        'bomb:resists',
+      ]);
+      expect(rolesIn('This creature is immune to Blighted, Confused, and Poisoned.')).toEqual([
+        'blighted:resists',
+        'confused:resists',
+        'poisoned:resists',
+      ]);
     });
 
     it('lets a later signal win over an earlier one', () => {

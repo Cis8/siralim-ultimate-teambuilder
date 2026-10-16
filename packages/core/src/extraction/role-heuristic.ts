@@ -2,8 +2,9 @@ import type { KeywordHit, KeywordKind, KeywordRole } from '../model/trait';
 import type { KeywordMatch } from './keyword-matcher';
 
 /**
- * Whether the trait gives each buff and debuff it names (`applies`) or relies on it being there (`uses`). A first
- * reading by wording, corrected where it is wrong by `overrides.yaml`. Keywords that are not buffs or debuffs get no role.
+ * What the trait does with each buff and debuff it names: gives it (`applies`), relies on it being there (`uses`) or
+ * only guards against it (`resists`, GAME_RULES R9). A first reading by wording, corrected where it is wrong by
+ * `overrides.yaml`. Keywords that are not buffs or debuffs get no role.
  *
  * - A status in the condition a sentence opens with ("After an enemy is afflicted with Weak, …") is one the trait
  *   waits for: `uses`.
@@ -51,7 +52,12 @@ const CUES: readonly Cue[] = [
   { role: 'applies', pattern: /\bbattles? with\b/gi },
   { role: 'uses', pattern: /\b(?:has|have|had)\b/gi },
   { role: 'uses', pattern: /\bdamage from\b/gi },
-  { role: 'uses', pattern: /\b(?:immune|resistant) to\b/gi },
+  { role: 'resists', pattern: /\b(?:immune|resistant) to\b/gi },
+  { role: 'resists', pattern: /\bavoid\b/gi },
+  { role: 'resists', pattern: /\btakes? (?:\d+% )?less damage from\b/gi },
+  { role: 'resists', pattern: /\bno longer takes? damage from\b/gi },
+  { role: 'resists', pattern: /\b(?:cannot|can't) be(?: afflicted with)?\b/gi },
+  { role: 'uses', pattern: /\b(?:cannot|can't) be (?:immune|resistant) to\b/gi },
   { role: 'uses', pattern: /\b(?:enem(?:y|ies)|creatures?) with\b/gi },
   { role: 'uses', pattern: /\b(?:enem(?:y|ies)|creatures?|allies|ally|team|targets?) afflicted with\b/gi },
   { role: 'uses', pattern: /\bfor each\b[^,.;]*?\bafflicted with\b/gi },

@@ -202,7 +202,7 @@ describe('buildReport', () => {
   });
 
   describe('keywords', () => {
-    const hit = (key: string, kind: 'debuff' | 'buff' | 'trigger', role?: 'applies' | 'uses') =>
+    const hit = (key: string, kind: 'debuff' | 'buff' | 'trigger', role?: 'applies' | 'uses' | 'resists') =>
       role === undefined ? { key, kind, span: [0, 1] as const } : { key, kind, span: [0, 1] as const, role };
 
     it('counts the mentions, and how many buffs and debuffs are given or relied on', () => {
@@ -215,7 +215,7 @@ describe('buildReport', () => {
         null,
       );
       expect(report).toContain(
-        '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs and debuffs, 2 are given (applies) and 1 relied on (uses).',
+        '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs and debuffs, 2 are given (applies), 1 relied on (uses) and 0 guarded against (resists).',
       );
     });
 

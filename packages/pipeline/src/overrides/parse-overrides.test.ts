@@ -47,6 +47,13 @@ roles:
       expect(parsed.roles[0]).not.toHaveProperty('occurrence');
     });
 
+    it('reads a role that only guards against a status', () => {
+      const parsed = parseOverrides(
+        "roles:\n  - { trait: x, keyword: weak, role: resists, reason: 'Immune to it.' }\n",
+      );
+      expect(parsed.roles[0]?.role).toBe('resists');
+    });
+
     it('reads random-debuff overrides', () => {
       const parsed = parseOverrides(`
 randomDebuff:

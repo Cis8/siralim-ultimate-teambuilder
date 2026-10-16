@@ -181,7 +181,7 @@ avatar--brothel | nostack | -
 avatar--fae-dust | nostack | -
 avatar--prayer-position | nostack | -
 avatar--gemcutter | spell gems | -
-avatar--gemcutter | silenced | uses
+avatar--gemcutter | silenced | resists
 avatar--the-end | nostack | -
 avatar--i-hate-you-ing-all | nostack | -
 avatar--soul-reaver | minion | -
@@ -226,7 +226,7 @@ backer--ember-soul | burning | uses
 backer--erratic | start of battle | -
 backer--excruciating-venom | after this creature attacks | -
 backer--excruciating-venom | poisoned | uses
-backer--firedevils-will | burning | uses
+backer--firedevils-will | burning | resists
 backer--firedevils-will | nostack | -
 backer--flower-power | start of battle | -
 backer--flower-power | spell gems | -
@@ -278,7 +278,7 @@ backer--minion-master | minion | -
 backer--minions-first | minion | -
 backer--myosotis | this creature's attacks | -
 backer--necromancy | nostack | -
-backer--never-fade | disarmed | uses
+backer--never-fade | disarmed | resists
 backer--ninetailss-revenge | nostack | -
 backer--ninetailss-trickery | start of battle | -
 backer--ninetailss-trickery | spell gems | -
@@ -463,10 +463,10 @@ cherub--or-else-by-none | barrier | uses
 cherub--sundered-and-undone | barrier | uses
 cherub--sundered-and-undone | barrier | uses
 cherub--sundered-and-undone | nostack | -
-cherub--triple-suns | bleeding | uses
-cherub--triple-suns | poisoned | uses
-cherub--triple-suns | burning | uses
-cherub--triple-suns | bomb | uses
+cherub--triple-suns | bleeding | resists
+cherub--triple-suns | poisoned | resists
+cherub--triple-suns | burning | resists
+cherub--triple-suns | bomb | resists
 cherub--the-two-made-one | barrier | uses
 cherub--the-two-made-one | nostack | -
 cherub--master-of-cherubs | barrier | uses
@@ -1166,7 +1166,7 @@ grimoire--book-of-the-arsonist | burning | uses
 grimoire--book-of-the-warlock | start of battle | -
 grimoire--book-of-the-warlock | arcane | applies
 grimoire--book-of-the-warlock | arcane | applies
-grimoire--master-of-grimoires | silenced | uses
+grimoire--master-of-grimoires | silenced | resists
 grimoire--master-of-grimoires | spell gems | -
 guardian--gentle-giant | start of battle | -
 harpy--kraaw | this creature's attacks | -
@@ -1274,7 +1274,7 @@ kraken--master-of-krakens | nostack | -
 leech--coming-undone | leeching | uses
 leech--coming-undone | nostack | -
 leech--cleansed-blood | leeching | uses
-leech--cleansed-blood | blighted | uses
+leech--cleansed-blood | blighted | resists
 leech--cleansed-blood | nostack | -
 leech--deeper-sucking | leeching | uses
 leech--deeper-sucking | nostack | -
@@ -1424,16 +1424,16 @@ mite--intensify | poisoned | uses
 mite--intensify | burning | uses
 mite--viscous-webs | nostack | -
 mite--master-of-mites | nostack | -
-modron--big-brained | confused | uses
+modron--big-brained | confused | resists
 modron--bravely-inspired | is killed | -
-modron--junkyard-might | blighted | uses
-modron--junkyard-might | confused | uses
-modron--junkyard-might | poisoned | uses
+modron--junkyard-might | blighted | resists
+modron--junkyard-might | confused | resists
+modron--junkyard-might | poisoned | resists
 modron--shall-not-pass | maximum health | -
 modron--shall-not-pass | barrier | applies
 modron--shall-not-pass | nostack | -
-modron--uninterrupted | silenced | uses
-modron--uninterrupted | scorned | uses
+modron--uninterrupted | silenced | resists
+modron--uninterrupted | scorned | resists
 modron--uninterrupted | nostack | -
 modron--protect-the-glass-cannon | manually cast a spell | -
 modron--protect-the-glass-cannon | nostack | -
@@ -1478,7 +1478,7 @@ nihilist--riverside | nostack | -
 nihilist--accelerated-harvest | nostack | -
 nihilist--knowledge-is-power | nostack | -
 nihilist--intuition | nostack | -
-nihilist--master-of-nihilists | scorned | uses
+nihilist--master-of-nihilists | scorned | resists
 nix--ambush | start of this creature's turn | -
 nix--ambush | timeline | -
 nix--subtlety | nostack | -
@@ -1740,7 +1740,7 @@ shadow--breach | bomb | applies
 shadow--childhoods-end | bomb | uses
 shadow--childhoods-end | nostack | -
 shadow--master-of-shadows | feared | uses
-shadow--master-of-shadows | feared | uses
+shadow--master-of-shadows | feared | resists
 shadow--master-of-shadows | nostack | -
 shapeshifter--chaos-transformation | nostack | -
 shapeshifter--death-transformation | nostack | -
@@ -1908,7 +1908,7 @@ spellmane--vilestalker | start of battle | -
 spellmane--vilestalker | invisible | applies
 spellmane--staticstalker | start of battle | -
 spellmane--staticstalker | invisible | applies
-spellmane--master-of-spellmanes | silenced | uses
+spellmane--master-of-spellmanes | silenced | resists
 spellmane--master-of-spellmanes | spell gems | -
 sphinx--desert-glory | nostack | -
 sphinx--pharaohs-boon | nostack | -

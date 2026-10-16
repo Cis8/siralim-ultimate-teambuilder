@@ -12,11 +12,8 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M3 done** (2026-10-16). **Next: M4 Query core**, slice 4.1 (lexer with spans; read
-  `docs/QUERY_LANGUAGE.md` first; TDD in `core`).
-- Open for the owner, none blocking: GAME_RULES open questions 6-7 (protective mentions; Flesh Rot-style pairs), and
-  whether to make searchable the Spell Gem properties (Sealed, Seals, Charges, Cascading), Fused and the stacking effects
-  (Mega Magic, Dire Wolves, Zombies), which are the 8 candidates left in the report.
+- **Phase 1 · M3 done; follow-up 3.8-3.10 in progress** (owner decisions of 2026-10-16, see "M3 follow-up"). 3.8 done
+  (`resists`). **Next: 3.9**, then 3.10, then M4 Query core, slice 4.1 (read `docs/QUERY_LANGUAGE.md`; TDD in `core`).
 - Every green commit on `main` is deployed to Pages (D2: the authors agreed). The nightly `data-refresh` works: the
   dataset on `main` still has no keywords, so its next PR carries those of all 1,780 traits; read its report before
   merging, as the protocol says.
@@ -77,6 +74,12 @@ used by `enrichTraits`. `pipeline`: `overrides.yaml` with a schema, keywords in 
 differences with the canonical lists). Deviations: Barrier is a buff, not a mechanic (both sources and the compendium say
 so); buffs and debuffs match only as capitalised names (25 false positives otherwise); an opening condition makes a
 status `uses`, which refines SPEC §4. All 537 role mentions were read by hand; 11 are overridden.
+
+### M3 follow-up: owner decisions of 2026-10-16
+- [x] **3.8** Role `resists` for protective mentions (GAME_RULES R9): `immune to`, `avoid`, `less damage from`, `cannot be`.
+- [ ] **3.9** `conditionalSources` on a trait: the debuffs a Flesh Rot-style pair trait applies implicitly (R10).
+- [ ] **3.10** Searchable Spell Gem properties (Charges, Cascading), Fused, and the effects Seal/Sealed, Dire Wolves,
+      Zombies, Mega Magic with roles like buffs (R11).
 
 ### M4 Query core (TDD)
 - [ ] **4.1** Lexer with spans. *T:* exact spans, `-stack:no`, `class:"rodian master"`, `-(weak OR snared)`, unclosed quote.

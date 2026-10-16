@@ -95,6 +95,13 @@ The buff and debuff lists come from canonical sources (SPEC §4), not from manua
 whether it **can be randomly applied**: Inverted and Mania cannot. When the sources disagree with the compendium v2.0,
 v2.0 wins.
 
+## R9 — Protection is not a dependency · Confirmed (2026-10-16)
+A trait that only guards against a buff or debuff does not rely on anyone applying it: "immune to Silenced", "resistant to
+Burning", "50% chance to avoid Scorned", "takes 90% less damage from Bleeding", "cannot be Sealed". Its mention has the role
+`resists`: not `applies`, not `uses`, so the analysis never calls that buff or debuff a missing source. Searching for it
+still works by keyword (`kw:`). Recovering health from a debuff instead of taking damage is not protection: it needs the
+debuff to be there (`uses`).
+
 ## Dependency statuses (derived from R3–R5)
 For each buff or debuff that at least one party trait **relies on**:
 
@@ -119,9 +126,6 @@ Order of evaluation: `covered` → `random` → `conditional` → `missing`.
 5. Dusty Struggle ends with "This trait will not activate if another creature in your party has it as well" instead of
    "This trait does not stack". It is the only trait with that wording. Should it count as non-stacking (R4)? Today
    its `stacks` is `true`, because only the exact sentence counts.
-6. Protective mentions: "immune to Silenced", "takes 90% less damage from Bleeding", "recovers health from Burning instead
-   of taking damage" (about 20 of 537 mentions) name a debuff the trait does not need anyone to apply, but today they are
-   `uses`, so the analysis would call that debuff a missing source. Should they have no dependency (a third role, or none)?
-7. Flesh Rot, Here to Die, Scared Stiff and Kindling wait for one debuff of a pair and "afflict whichever of these debuffs
+6. Flesh Rot, Here to Die, Scared Stiff and Kindling wait for one debuff of a pair and "afflict whichever of these debuffs
    the target doesn't already have": they name both debuffs only as a trigger, so both are `uses` and neither is
    `applies`. Should they count as conditional sources of the pair?
