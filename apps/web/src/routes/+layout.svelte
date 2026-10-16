@@ -68,12 +68,12 @@
     color: var(--text-muted);
   }
 
+  /* Pages lay themselves out edge to edge: Explore is three columns separated by rules. */
   main {
+    display: flex;
     flex: 1;
+    flex-direction: column;
     width: 100%;
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 24px 16px;
   }
 
   main:focus {

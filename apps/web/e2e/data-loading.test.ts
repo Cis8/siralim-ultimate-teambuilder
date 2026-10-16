@@ -10,9 +10,9 @@ test.describe('trait data', () => {
 
     await page.goto('./');
 
-    await expect(page.getByRole('status')).toContainText(
-      `${manifest.count.toLocaleString('en-US')} traits loaded from compendium version ${manifest.datasetVersion}`,
-    );
+    const count = manifest.count.toLocaleString('en-US');
+    await expect(page.getByRole('status')).toHaveText(`${count} of ${count} traits`);
+    await expect(page.getByText(`Compendium v${manifest.datasetVersion}`)).toBeVisible();
     expect(await axeViolations(page)).toEqual([]);
   });
 

@@ -12,15 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1-5.4 done.** `core`: `createSearchService(repository)` → `search(state: ExploreState)` gives
-  `{query, traits (sorted), highlight, effectiveQuery, facets}` (SPEC §8.1; ~0.5 ms on v2.0). `facets.classes` = `{name, count}`
-  A-Z; `facets.keywords` = `{key, label, kind, applies, uses, mentions}` by `FACET_KEYWORD_KINDS`. `decodeExploreState` /
-  `encodeExploreState` (SPEC §7; `EXPLORE_PARAMS` = what the codec owns). Chips: `queryChips(q)` → `{field, value, negated}[]`,
-  `toggleChipNot(q, i)` / `removeChip(q, i)` return the new query text (QUERY_LANGUAGE §4; ask `queryChips` again after each
-  edit). `web`: `loadSearchService()` in `lib/composition-root.ts`.
-  **Next: 5.5**, the first UI slice: read DESIGN and `docs/prototype/Main.dc.html` first. Still missing in `core` for 5.7/5.8:
-  "is it chosen" (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): with 5.7.
-  The sort `book` is the order of the dataset (family, then trait name): label it that way in the UI, not "Compendium order".
+- **Phase 1 · M5 in progress, 5.1-5.5 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec) and QUERY_LANGUAGE §4
+  (`queryChips`, `toggleChipNot`, `removeChip`: they return the new query text; ask `queryChips` again after each edit).
+  `web`: `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}` from
+  `loadSearchService()`; components in `lib/components/` (`query-input`, `result-count`, `results-list`, `result-row`). The page
+  has the three regions already; Filters and Party say "Coming soon.".
+  **Next: 5.6**: replace the body of `results-list.svelte` (now the first 100 rows, `ROW_LIMIT`) with the virtualised list, and
+  give `result-row.svelte` the keyword tokens and `<mark>` (its description is plain text). Still missing in `core` for 5.7/5.8:
+  "is it chosen" (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): do them in 5.7.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -63,6 +62,10 @@ session (after `CLAUDE.md`), update it before ending one.
 - `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
   data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
   `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
+- Playwright browsers are not part of `pnpm install`: once per machine, `pnpm exec playwright install chromium webkit` (in
+  `apps/web`), or every e2e fails with "Executable doesn't exist".
+- typescript-eslint cannot see the props of an imported `.svelte` component (svelte-check can): a callback passed to one
+  needs its parameters typed (`onchange={(query: string) => …}`), or `no-unsafe-assignment` fires.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
 ## Phase 1 — slices
@@ -112,7 +115,10 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
       tests on any text (`query/chips.ts`). Deviations: they edit the text in place (token surgery guided by the AST spans)
       instead of re-serialising, so the user's spelling survives; toggling a term in a negated group wraps the term, not the
       group (`-(a OR b)` → `-(-a OR b)`); a flip the parser would not read leaves the text alone.
-- [ ] **5.5** Layout (3 columns, wrapping), query input, result count in `aria-live`.
+- [x] **5.5** Layout (3 columns, wrapping), query input, result count in `aria-live`. *e2e:* `explore.test.ts`. Deviations:
+      the sort control (nobody else owned it) is in the count row; the count a screen reader hears follows the typing 400 ms
+      after it pauses (a visually hidden `role="status"`, the visible count is `aria-hidden`), so it is not said per key; the
+      panels are `section`s with a heading, not `aside`s, so no landmark nests inside `main`; the list draws 100 rows until 5.6.
 - [ ] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights.
 - [ ] **5.7** Click a keyword → counterpart filter. *e2e:* acceptance criterion 3.
 - [ ] **5.8** Facet panel (`aria-pressed`), chip row, effective query + copy, empty state.
