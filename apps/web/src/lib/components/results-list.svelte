@@ -1,14 +1,15 @@
 <script lang="ts">
-  import type { Trait } from '@atlas/core';
+  import type { Highlighter, Trait } from '@atlas/core';
   import { copy } from '../copy';
   import ResultRow from './result-row.svelte';
+  import VirtualList from './virtual-list.svelte';
 
-  /** Until the list is virtualised (M5.6) it draws this many rows, enough to scroll while the search narrows. */
-  const ROW_LIMIT = 100;
+  /** About what a row of a few lines of description takes; the real heights are measured as rows are drawn. */
+  const ESTIMATED_ROW_HEIGHT = 150;
 
-  const { traits }: { traits: readonly Trait[] } = $props();
+  const { traits, highlight }: { traits: readonly Trait[]; highlight: Highlighter } = $props();
 
-  const rows = $derived(traits.slice(0, ROW_LIMIT));
+  const keys = $derived(traits.map(({ id }) => id));
 </script>
 
 {#if traits.length === 0}
@@ -17,23 +18,15 @@
     <p>{copy.noResultsHint}</p>
   </div>
 {:else}
-  <ul>
-    {#each rows as trait (trait.id)}
-      <li><ResultRow {trait} /></li>
-    {/each}
-  </ul>
-  {#if traits.length > rows.length}
-    <p class="limited">{copy.resultsLimited(rows.length, traits.length)}</p>
-  {/if}
+  <VirtualList {keys} estimatedHeight={ESTIMATED_ROW_HEIGHT}>
+    {#snippet row(index: number)}
+      {@const trait = traits[index]}
+      {#if trait !== undefined}<ResultRow {trait} {highlight} />{/if}
+    {/snippet}
+  </VirtualList>
 {/if}
 
 <style>
-  ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
   .empty {
     display: flex;
     flex-direction: column;
@@ -51,12 +44,5 @@
   .title {
     color: var(--text-strong);
     font-size: 15px;
-  }
-
-  .limited {
-    margin: 0;
-    padding: 16px 20px;
-    color: var(--text-faint);
-    font-size: 13px;
   }
 </style>

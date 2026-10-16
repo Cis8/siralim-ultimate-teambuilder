@@ -12,14 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1-5.5 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec) and QUERY_LANGUAGE §4
-  (`queryChips`, `toggleChipNot`, `removeChip`: they return the new query text; ask `queryChips` again after each edit).
-  `web`: `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}` from
-  `loadSearchService()`; components in `lib/components/` (`query-input`, `result-count`, `results-list`, `result-row`). The page
-  has the three regions already; Filters and Party say "Coming soon.".
-  **Next: 5.6**: replace the body of `results-list.svelte` (now the first 100 rows, `ROW_LIMIT`) with the virtualised list, and
-  give `result-row.svelte` the keyword tokens and `<mark>` (its description is plain text). Still missing in `core` for 5.7/5.8:
-  "is it chosen" (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): do them in 5.7.
+- **Phase 1 · M5 in progress, 5.1-5.6 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec, `descriptionParts`) and
+  QUERY_LANGUAGE §4 (`queryChips`, `toggleChipNot`, `removeChip`: they return the new query text; ask `queryChips` again after
+  each edit). `web`: `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}`
+  from `loadSearchService()`; components in `lib/components/` (`query-input`, `result-count`, `results-list` → `virtual-list` →
+  `result-row` → `description-text` → `keyword-token` + `marked-text`). Filters and Party still say "Coming soon.".
+  **Next: 5.7**: `keyword-token.svelte` is a plain `span` (`data-kind`, `data-role`) until now: make it the button with the accessible
+  name "Applies Vulnerable — show traits that rely on it" (DESIGN). Still missing in `core` for 5.7/5.8: "is it chosen"
+  (`aria-pressed`) and the state transitions (toggle a class / keyword filter, counterpart jump): do them in 5.7.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -66,6 +66,9 @@ session (after `CLAUDE.md`), update it before ending one.
   `apps/web`), or every e2e fails with "Executable doesn't exist".
 - typescript-eslint cannot see the props of an imported `.svelte` component (svelte-check can): a callback passed to one
   needs its parameters typed (`onchange={(query: string) => …}`), or `no-unsafe-assignment` fires.
+- Changing what the pipeline emits does not change `apps/web/static/data` by itself: run `pnpm pipeline:fetch && pnpm pipeline:build`
+  and commit the result (`chore(data)`), or the app keeps showing the old shape (the dataset lacked keywords until M5.6).
+- `playwright test` reuses whatever answers on port 4173: a `vite preview` left running serves the old build. Stop it first.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
 ## Phase 1 — slices
@@ -119,7 +122,13 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
       the sort control (nobody else owned it) is in the count row; the count a screen reader hears follows the typing 400 ms
       after it pauses (a visually hidden `role="status"`, the visible count is `aria-hidden`), so it is not said per key; the
       panels are `section`s with a heading, not `aside`s, so no landmark nests inside `main`; the list draws 100 rows until 5.6.
-- [ ] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights.
+- [x] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights. *T:* `descriptionParts`
+      (table + property tests, and on the real sheet: `result-descriptions.test.ts`); e2e: rows drawn stay few and the last
+      trait is reached, descriptions read as in the dataset, shapes by role, marks (also inside a token), axe. Deviations:
+      the page scrolls and the list is virtualised against the window (spacers, not absolute positions; the offset of the
+      list is re-read when the body resizes); `descriptionParts` cuts the description into keyword and text parts in `core`
+      so `web` does not touch the spans; `resists` is a solid outline and an effect takes the mechanic colour (DESIGN); the
+      token is not interactive until 5.7. The dataset on `main` predated M3 (no keywords), so it was regenerated first.
 - [ ] **5.7** Click a keyword → counterpart filter. *e2e:* acceptance criterion 3.
 - [ ] **5.8** Facet panel (`aria-pressed`), chip row, effective query + copy, empty state.
 - [ ] **5.9** URL sync (replace while typing, push on discrete actions; back/forward). *e2e:* criteria 1 and 4 through the

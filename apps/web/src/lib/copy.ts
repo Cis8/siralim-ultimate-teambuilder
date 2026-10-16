@@ -30,8 +30,6 @@ export const copy = {
   comingSoon: 'Coming soon.',
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a term.',
-  resultsLimited: (shown: number, total: number) =>
-    `Showing the first ${formatCount(shown)} of ${formatCount(total)} traits. Narrow the search to see the rest.`,
   noMaterial: 'No material — not artifact-eligible',
   /** What stands in the creature's place for a trait that has no creature. */
   traitKind: {

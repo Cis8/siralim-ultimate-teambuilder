@@ -47,8 +47,15 @@ use the fallback `#8fa1b3`.
 `Tabs`, `Toast`.
 
 ### Keyword tokens
-Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline. Search matches add a
-yellow highlight. Tooltip/title explains the click action ("Applies Vulnerable — show traits that rely on it").
+Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
+R9) = solid outline. Colour is the kind: an *effect* (Dire Wolves, Mega Magic) takes the mechanic colour, since it is not
+a status. Search matches add a yellow highlight (`<mark>`, 22 % of `--status-warn`, which keeps every token colour above
+4.5:1), also inside a token. Tooltip/title explains the click action ("Applies Vulnerable — show traits that rely on it").
+
+### Result list
+The page scrolls, not the list: results sit among other panels and stack under the filters on narrow screens. The list
+is virtualised against the window (rows in the flow of the page between two spacers; `aria-setsize` / `aria-posinset` say
+where a row stands in the whole). Rows are as tall as their text; the browser's find-in-page sees only the rows drawn.
 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that

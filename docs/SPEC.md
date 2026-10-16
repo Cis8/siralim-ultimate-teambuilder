@@ -221,6 +221,10 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
   (`kw:`); a trigger or a mechanic has `mentions` only. The facets list the classes of the dataset from A to Z, and the
   buffs, debuffs, effects, triggers and mechanics of the taxonomy, with the counts they have, 0 included.
+- **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
+  (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
+  pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each
+  part, and joining the pieces gives the description back. The page asks for it only for the rows it draws.
 - **Sort** is a strategy per key: `book` keeps the order of the dataset (by family, then trait name, since the dataset is
   sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
 

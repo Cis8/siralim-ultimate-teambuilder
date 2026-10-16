@@ -79,3 +79,4 @@ export {
   type ExploreParams,
   type ParamReader,
 } from './explore/explore-url';
+export { descriptionParts, type DescriptionPart, type TextPiece } from './explore/description-parts';

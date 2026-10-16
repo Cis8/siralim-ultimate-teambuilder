@@ -86,7 +86,7 @@
     {:else if loaded === undefined}
       <p class="status" role="status">{copy.loadingTraits}</p>
     {:else}
-      <ResultsList traits={loaded.outcome.traits} />
+      <ResultsList traits={loaded.outcome.traits} highlight={loaded.outcome.highlight} />
     {/if}
   </section>
 

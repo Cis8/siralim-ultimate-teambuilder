@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { axeViolations } from './support/axe';
+import { publishedDataset } from './support/dataset';
 
 /** The count a screen reader is told; it follows the typing once it pauses. */
 const announcedCount = (page: Page) => page.getByRole('status');
@@ -74,6 +75,112 @@ test.describe('explore', () => {
     );
     expect(classes.length).toBeGreaterThan(1);
     expect(classes).toEqual([...classes].sort((a, b) => a.localeCompare(b)));
+  });
+
+  test.describe('the result list', () => {
+    /** Where the rows drawn stand in the list and what their description says, as the page has them. */
+    const drawnDescriptions = (page: Page) =>
+      rows(page).evaluateAll((items) =>
+        items.map((item) => ({
+          position: Number(item.getAttribute('aria-posinset')),
+          description: item.querySelector('.description')?.textContent ?? '',
+        })),
+      );
+
+    test('draws only the rows near the screen, however many traits there are', async ({ page }) => {
+      const total = await publishedCount(page);
+      await page.goto('./');
+      await expect(rows(page).first()).toBeVisible();
+
+      expect(await rows(page).count()).toBeLessThan(60);
+      await expect(rows(page).first()).toHaveAttribute('aria-posinset', '1');
+      await expect(rows(page).first()).toHaveAttribute('aria-setsize', String(total));
+    });
+
+    test('scrolls on to the last trait, and lets go of the rows left behind', async ({ page, request }) => {
+      const { traits } = await publishedDataset(request);
+      await page.goto('./');
+      await expect(rows(page).first()).toBeVisible();
+
+      // The heights of the rows below are estimated until they are drawn: the bottom of the page moves as they are.
+      await expect(async () => {
+        await page.evaluate(() => {
+          window.scrollTo(0, document.documentElement.scrollHeight);
+        });
+        await expect(rows(page).last()).toHaveAttribute('aria-posinset', String(traits.length));
+        await expect(rows(page).last()).toBeInViewport();
+      }).toPass();
+
+      await expect(rows(page).last().getByRole('heading', { level: 3 })).toHaveText(traits.at(-1)?.name ?? '');
+      await expect(page.locator('li[aria-posinset="1"]')).toHaveCount(0);
+      expect(await rows(page).count()).toBeLessThan(60);
+    });
+
+    test('reads each description exactly as the dataset has it', async ({ page, request }) => {
+      const { traits } = await publishedDataset(request);
+      await page.goto('./');
+      await expect(rows(page).first()).toBeVisible();
+
+      // The whole list, in the order of the dataset: each row is the trait at its position.
+      const drawn = await drawnDescriptions(page);
+      expect(drawn.length).toBeGreaterThan(0);
+      for (const { position, description } of drawn) {
+        expect(description, `trait ${String(position)}`).toBe(traits[position - 1]?.description);
+      }
+
+      // With marks and keywords drawn into the text, a row still says what some trait of the dataset says.
+      const descriptions = new Set(traits.map((trait) => trait.description));
+      await page.getByRole('textbox', { name: 'Search traits' }).fill('vulnerable OR "start of battle"');
+      await expect(page.locator('mark').first()).toBeVisible();
+      const marked = await drawnDescriptions(page);
+      expect(marked.length).toBeGreaterThan(0);
+      for (const { description } of marked) expect(descriptions.has(description), description).toBe(true);
+    });
+
+    test('styles a keyword by its kind and, by shape and not by colour alone, by its role', async ({ page }) => {
+      await page.goto('./');
+      const search = page.getByRole('textbox', { name: 'Search traits' });
+      const style = (token: Locator) =>
+        token.evaluate((element) => {
+          const { textDecorationLine, outlineStyle } = getComputedStyle(element);
+          return { underlined: textDecorationLine.includes('underline'), outline: outlineStyle };
+        });
+
+      await search.fill('applies:vulnerable');
+      const applies = rows(page).locator('.keyword[data-kind="debuff"][data-role="applies"]').first();
+      await expect(applies).toBeVisible();
+      expect(await style(applies)).toEqual({ underlined: true, outline: 'none' });
+
+      await search.fill('uses:vulnerable');
+      const uses = rows(page).locator('.keyword[data-kind="debuff"][data-role="uses"]').first();
+      await expect(uses).toBeVisible();
+      expect(await style(uses)).toEqual({ underlined: false, outline: 'dashed' });
+
+      await search.fill('"start of battle"');
+      const trigger = rows(page).locator('.keyword[data-kind="trigger"]').first();
+      await expect(trigger).toBeVisible();
+      expect(await trigger.getAttribute('data-role')).toBeNull();
+    });
+
+    test('marks the text the query looks for, inside a keyword too, and nothing else', async ({ page }) => {
+      await page.goto('./');
+      const search = page.getByRole('textbox', { name: 'Search traits' });
+      const marks = page.locator('mark');
+
+      await search.fill('vulnerable');
+      await expect(marks.first()).toBeVisible();
+      for (const text of await marks.allTextContents()) expect(text.toLowerCase()).toBe('vulnerable');
+      await expect(rows(page).locator('.keyword mark').first()).toBeVisible();
+      expect(await axeViolations(page)).toEqual([]);
+
+      await search.fill('-vulnerable');
+      await expect(rows(page).first()).toBeVisible();
+      await expect(marks).toHaveCount(0);
+
+      await search.fill('class:death');
+      await expect(rows(page).first()).toBeVisible();
+      await expect(marks).toHaveCount(0);
+    });
   });
 
   test('has no WCAG 2.2 AA violations, with results and with a query typed', async ({ page }) => {

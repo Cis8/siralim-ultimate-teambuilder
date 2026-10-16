@@ -1,9 +1,12 @@
 <script lang="ts">
-  import type { Trait } from '@atlas/core';
+  import { descriptionParts, type Highlighter, type Trait } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
+  import DescriptionText from './description-text.svelte';
 
-  const { trait }: { trait: Trait } = $props();
+  const { trait, highlight }: { trait: Trait; highlight: Highlighter } = $props();
+
+  const parts = $derived(descriptionParts(trait.description, trait.keywords, highlight(trait.description)));
 </script>
 
 <article>
@@ -15,7 +18,7 @@
     <span class="creature">{trait.creature ?? copy.traitKind[trait.kind]}</span>
     <span class="origin">{trait.family} · {trait.class}</span>
   </p>
-  <p class="description">{trait.description}</p>
+  <p class="description"><DescriptionText {parts} /></p>
   <p class="material" class:missing={trait.material === null}>
     <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
       <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" />
