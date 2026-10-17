@@ -120,8 +120,25 @@ Builds are made of more than the canonical buffs and debuffs, so more is a keywo
   needs a source of them, exactly as one that relies on Vulnerable needs one (see the table below).
 - **Mechanics**, without a role: the Spell Gem properties **Charges** and **Cascading**, and **Fused**.
 
-## Dependency statuses (derived from R3–R5, R9–R11)
-For each buff, debuff or effect that at least one party trait **relies on** (`uses`; a mention that only `resists` it is no dependency, R9):
+## R12 — Events · Confirmed (2026-10-17)
+What happens in battle is an **event**, named where the game has a word for it after the categories its own texts use
+(start-of-battle, start-of-turn, end-of-turn, on-attack, on-critical, on-cast, on-defend, on-provoke, on-dodge, on-death,
+on-resurrect, on-buff). The events are: start of battle, start of turn, end of turn; attack, cast spell, manual cast,
+defend, provoke; being attacked, dodge, critical hit, damage taken; heal, kill, death, resurrection; any buff, any debuff
+(ADR-0009).
+- A trait **causes** an event (it makes it happen), **pays off** when it happens (it fires on it, counts it or improves it)
+  or **prevents** it ("cannot be resurrected"), and the event has a **who**: this creature, your creatures, enemies or any
+  creature. Who it is can be searched for, and is never required.
+- **No event is a dependency.** Attacking, casting, defending and provoking are the player's choices; turns, damage,
+  kills and deaths happen by themselves. A trait that waits for an event never makes it *missing* in the party.
+- **Death** is one event: "dies" and "is killed" are not told apart (decided for lack of a source saying otherwise; the
+  texts speak of "on-death effects" as one category). **Kill** is the other side: the creature that kills.
+- **Manual cast** is a spell the player casts. A trait that casts a spell ("casts a random spell") is a cast but not a
+  manual one, so it does not feed a trait that waits for a manual cast (Culmination).
+
+## Dependency statuses (derived from R3–R5, R9–R12)
+For each buff, debuff or effect that at least one party trait **relies on** (`uses`; a mention that only `resists` it is no
+dependency, R9; events never are, R12):
 
 | Status | Meaning | Severity |
 |---|---|---|

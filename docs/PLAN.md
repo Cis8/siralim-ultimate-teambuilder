@@ -12,9 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1–8b.3 done; next is 8b.5, then 8b.4; one session each.**
-  8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
-  closes Phase 1: ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.3 and 8b.5 (the event plan) done; next is 8b.4, then 8b.6–8b.9; one session
+  each.** 8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP
+  ticks) then closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -23,8 +23,8 @@ session (after `CLAUDE.md`), update it before ending one.
   counts as a layout shift: Lighthouse CI fails above 0.1. Decide it in CSS, or hold the room.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
-- Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
-- Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green), `gh pr list` (data-refresh PRs).
+- Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main
+  must be green), `gh pr list` (read a data-refresh PR's report before merging it).
 
 ## Owner decisions (2026-10-16)
 | # | Decision | Recorded in |
@@ -124,6 +124,11 @@ session (after `CLAUDE.md`), update it before ending one.
   a component. `hidden` loses to any `display` rule on the same element, so a section hides a plain wrapper around its flex box.
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
+- The 8b.5 research lives in `packages/pipeline/.cache/research/events-v2.0/` (git-ignored, this machine only):
+  `findings.records.json` (the sweep: 4,400 records of id, quote, span, use, actor, event, qualifier), `findings.md`, the
+  prototypes and `scripts/` (`extract`, `census`, `merge`, `prompt.md` for the agents, `proto2.ts`, run from
+  `packages/pipeline` with `pnpm exec tsx`). It is a review aid, never a fixture. Without it, read every new snapshot line.
+  A Haiku agent on 75 rows costs ~110k tokens and needs no prompt changes; output to a file, one line back.
 
 ## Phase 1 — slices
 One slice = one commit (or a few) on `main`. *T:* = tests written with or before the code (TDD for `core`).
@@ -216,7 +221,7 @@ Phase 1 refinements from the owner's play-testing notes (2026-10-17). Decisions:
 the trait, in place of the disabled add; the five standard classes come first in the filters; back-to-top sits top right.
 Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
 address, not in `localStorage`); "Clear filters" keeps the query, sort and Match all/any (settings, not filters); input font
-16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4).
+16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4). Events (8b.5): GAME_RULES R12, ADR-0009.
 - [x] **8b.1** Mobile, web only. The search field and the sort are 16 px under `pointer: coarse` (iOS zooms on focus below that;
       `touch-targets.test.ts` reads the computed size of every text field and select; the viewport meta is unchanged). A fixed
       top-right "Back to top" (`back-to-top.svelte`, 44 px) after a screen of scroll, Explore only, the focus to the page heading;
@@ -251,19 +256,45 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       e2e (it presses a disabled button today); `filters-sheet.test.ts:30,197` take the first `<dialog>` for the filters: bind them
       by name. Docs: SPEC §8.2 ("a disabled add with its reason" changes), DESIGN. Out of scope: adding a plain trait to a slot
       that is not the target without moving the target.
-- [ ] **8b.5** Keywords and events: research and a plan of its own, no product code. Covers provoke and defend, "attack" and its
-      subjects (your creatures / this creature / another / "are attacked"), dodge, heal, die, "are killed", casting spells,
-      `spells` (Culmination, Crystallization), a sweep of every trait for patterns nobody mapped, and how to group it all in the UI
-      without clutter. Output: a plan the owner approves, new slices 8b.6… here, an ADR if the model changes, SPEC §4.
-      Facts (v2.0, 1,780 traits): 11 triggers (whole phrases with a phase) and 8 mechanics; no notion of subject or event. Not
-      covered, by traits: attack 569, spell/spells 447, cast 290, resurrect 73, provoke 69, killed 65, heal 61, defend 56 (55 are
-      "After this creature defends or provokes"), dodge 46, die/dies 36. Crystallization is "After this creature casts a
-      spell…"; Culmination is about "your creatures' spells … manually cast in the current battle": `spells` is not a concept
-      and the trigger is the literal "manually cast a spell" (13 of 32 such traits miss it). Engine limits: no stemming, a
-      trigger is a literal phrase, no key may start another (`kw:` matches key prefixes), `TRIGGER_PHASES` is a closed tuple, the
-      report's *Taxonomy* section cannot see lowercase words, a new entry means a re-read snapshot, a regenerated dataset
-      (`chore(data)`) and pinned lists to update. **Keep the existing trigger keys valid**: shared links carry `kw:` (ADR-0005).
-      Method: a deterministic census of uncovered opening clauses; a sweep of all 1,780 traits by `haiku` agents (about 12 chunks
-      of 150 rows from an extract in the scratchpad, a rigid schema of subject, event or mechanic, qualifier and quote, only what
-      the taxonomy misses; roughly 110k input tokens), merged and counted deterministically, judged by the main model; ask the
-      owner which distinctions matter in play; then design what is factored out, the names and the UI grouping.
+- [x] **8b.5** Keywords and events: research and plan, no product code. A census of the 774 opening clauses no trigger covers
+      (452 forms) and a sweep of all 1,780 traits by 24 Haiku agents (100% of quotes verbatim but 2 of 4,400; every known trigger
+      and census clause found; 92% agreement on a second reading of 373 traits), then a prototype on the snapshot. Outcome:
+      triggers become **events** with a role and an actor (ADR-0009), 18 of them after the game's own effect categories, plus
+      the mechanics Spells and Stats; the owner's decisions are GAME_RULES R12 (who acts is a filter, never required; no event is a
+      dependency; dies = is killed; manual cast apart; events grouped in the filters with one "Who" control). Deviation: the
+      sweep cost about 3.3M Haiku tokens, not the 0.4M estimated (each agent re-reads its context every turn).
+- [ ] **8b.6** Events in `core`, the snapshot and the data (ADR-0009, GAME_RULES R12). `core` first, TDD: the `trigger` kind
+      becomes `event` (`EventEntry`: every inflection as a pattern, a `phase` or none; `TRIGGER_PHASES` gains `endOfTurn` and
+      `defending`); the 18 entries and the mechanics Spells (spell, spells) and Stats (stat, stats); `KeywordHit.actor` (`self`,
+      `ally`, `enemy`, `any`) on events; role and actor per mention (cues found in 8b.5: an opening clause, "for each", "while",
+      "if" → `uses`; "cannot", "immune to" → `resists`; a possessive noun, "this creature's attacks" → `uses`; a verb of the main
+      clause → `applies`; actor = the nearest subject before it in its clause; "attack" after "%", "more", "its" or before
+      "and defense" is a stat and no event); turns by a grammar, "start|end of <whose> turn(s)", whose possessive gives the actor
+      ("your Phoenixes' turns" is no fixed phrase); `aliases` on an entry for the 11 old trigger keys (old key → event and
+      actor), rejected by `createTaxonomy` when an alias is a key or the start of one; `partyCoverage` ignores events (R12);
+      `overrides.yaml` can correct an actor too. Pipeline: `keywords-v2.0.txt` gains the actor column; the ~2,200 new lines are
+      read with the sweep beside them (Notes): every line where role or actor disagrees with it, or that it has no record of, is
+      read, and a sample of the rest; corrections go to `overrides.yaml` with a reason. `real-sheet.test.ts` counts,
+      `chore(data)`. Web only compiles with the new kind: the trigger colour is the event colour, the panel heading says
+      Events, one flat list until 8b.8. *T:* entries and heuristic unit tests (each cue, the failure path, the stat sense of
+      attack, turns of a family), taxonomy validation of aliases, coverage ignoring events, the snapshot. Docs: SPEC §4, DESIGN
+      (kind colours). Prototype numbers to beat (`.cache/research/events-v2.0/proto2.md`): sweep recall 83–100% per event but
+      any buff / any debuff (~50%: decide whether "immune to debuffs" and "their debuffs last 1 turn" are mentions).
+- [ ] **8b.7** Query and address. Keyword fields take an actor after a slash (`uses:provoke/self`; the key prefix still
+      applies before it; values `self`, `ally`, `enemy`, `any`); `IndexedTrait` lists event keys with and without their actor;
+      an alias is read by the keyword fields and by `decodeExploreState` (`kw=k:after this creature attacks` reads as
+      `k:attack/self` and is written back so); `filterQuery` and the chips write the suffix. *T:* lexer and serialiser round trip
+      with a slash, field tests, the URL codec, and on the real sheet each of the 11 old keys finds a superset of what it found
+      before (the 11 sets pinned). Docs: QUERY_LANGUAGE §2, SPEC §7.
+- [ ] **8b.8** Web: the Events section and the event token. The section in place of Triggers, with five groups under small
+      headings (Battle and turns, Actions, Hits, Life and death, Buffs and debuffs), each event with Causes / Reacts toggles
+      counted as a buff's Applies / Relies on; one "Who" segmented control at the top of the section (Any, This creature, Your
+      creatures, Enemies) that narrows every event filter on (writes the suffix, one step of the history, counted by
+      `activeFilterCounts`). The token of an event has a buff's role shapes in the event colour and says who in its accessible
+      name; a click leads to the counterpart without the actor. *T:* a new e2e (toggles, who, chips, address, back), the walks
+      and touch-target tests on the new controls, axe, Lighthouse layout shift (open by default, nothing moves). Docs: SPEC §8.1,
+      DESIGN (facet panel, tokens).
+- [ ] **8b.9** Report: an *Events* section in the pipeline report, as the *Taxonomy* one is for capitalised words: the event
+      words of the 8b.5 census and the opening clauses no keyword covers, with counts and an example, and a reviewed list for
+      those looked at, so a new version of the sheet shows its new forms. *T:* the finder's unit tests, `build-report` test.
+      Docs: SPEC §6.

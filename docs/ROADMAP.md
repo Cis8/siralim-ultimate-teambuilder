@@ -31,7 +31,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 - [x] **M7 Mobile.** Filters bottom sheet (focus trapped, Esc/close), Explore/Party tabs, 44 px targets, add-to-target button.
 - [ ] **M8b Owner's notes.** Refinements from play-testing, done before M8 closes: no zoom on focus and a back-to-top button on
       mobile, "Clear filters" and the class order, collapsible filter sections, a slot dialog for traits the target slot refuses,
-      and a plan of its own for keyword and event coverage (provoke, defend, attack and its subjects, spells).
+      and event keywords (provoke, defend, attack and who does it, spells; planned in 8b.5, ADR-0009).
 - [ ] **M8 Hardening.** Performance budget check on the full dataset, Lighthouse CI budgets, a11y pass (keyboard-only
       walkthrough, screen-reader smoke test), footer credits + "unofficial" label, README. Slice 8.4 (credits, README) waits
       for M8b.

@@ -105,6 +105,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   two entries, or patterns that are not plain text, and lists all violations at once.
 - Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
   taxonomy so the lists can grow.
+- **Events** (GAME_RULES R12, ADR-0009) replace the triggers in M8b.6–8b.9: keywords with a role and an actor, the old
+  trigger keys kept as aliases. Until those slices land, this section describes the triggers as they are.
 - **Matching**: whole words, longest match wins. Phrases, mechanics and triggers ignore letter case; buffs and debuffs
   are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
   "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A status followed by a
