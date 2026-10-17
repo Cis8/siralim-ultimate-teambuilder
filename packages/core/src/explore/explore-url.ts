@@ -6,15 +6,7 @@ import {
   type KeywordFilter,
   type KeywordFilterField,
 } from './explore-state';
-
-/** Where an address is read from. A browser's `URLSearchParams` is one; `core` knows no URL type of its own. */
-export interface ParamReader {
-  /** The first value of the parameter, `null` when there is none. */
-  get(name: string): string | null;
-}
-
-/** Name and value, ready to be written into an address. `URLSearchParams` takes them as they are. */
-export type ExploreParams = readonly (readonly [name: string, value: string])[];
+import { readList, writeList, type ParamReader, type UrlParams } from '../url/url-params';
 
 /**
  * The parameters of the Explore state, in the order they are written (SPEC §7). A page that shares its address with other
@@ -48,7 +40,7 @@ export function decodeExploreState(params: ParamReader): ExploreState {
  * The parameters that make an address stand for `state`: only those that differ from the initial state, so that it has
  * none. Classes and keywords are written in lower case, trimmed and once, as `decodeExploreState` reads them.
  */
-export function encodeExploreState(state: ExploreState): ExploreParams {
+export function encodeExploreState(state: ExploreState): UrlParams {
   const classes = canonicalNames(state.classes);
   const keywords = canonicalKeywords(state.keywords);
   const params: readonly (readonly [string, string | undefined])[] = [
@@ -95,15 +87,3 @@ function keywordOf(item: string): KeywordFilter | undefined {
   const field = KEYWORD_FIELDS.get(item.slice(0, colon).trim().toLowerCase());
   return field === undefined ? undefined : { field, key: item.slice(colon + 1) };
 }
-
-/**
- * Items are told apart by commas, so a comma inside one is written `%2C`, and a percent sign `%25`. The classes and
- * keywords of the compendium have neither; they are escaped so that a name never splits in two, whatever a dataset holds.
- */
-const writeList = (items: readonly string[]): string =>
-  items.map((item) => item.replace(/[%,]/gu, (character) => (character === '%' ? '%25' : '%2C'))).join(',');
-
-const readList = (text: string | null): string[] =>
-  text === null || text === ''
-    ? []
-    : text.split(',').map((item) => item.replace(/%2C|%25/giu, (escape) => (escape === '%25' ? '%' : ',')));

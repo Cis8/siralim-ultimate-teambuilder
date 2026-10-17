@@ -13,5 +13,5 @@ only conveniences: recent and saved searches, the last party.
 
 ## Consequences
 - Back/forward and reload work as expected; links are durable across dataset updates.
-- URL length must stay reasonable: use a compact encoding (base64url of a small array) for parties.
+- URL length must stay reasonable: parties are a short list of ids (ADR-0008, which replaced the first idea of a base64url).
 - Unknown IDs after a dataset update are shown as "not found in vX" with a search for the old name, never silently dropped.

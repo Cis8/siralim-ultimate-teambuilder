@@ -6,6 +6,11 @@ import { SLOT_POSITIONS, traitAt, type Party, type SlotPosition } from './party'
  */
 export type TargetStrategy = (party: Party, from: SlotPosition) => SlotPosition;
 
+/** Where the target is when nobody has chosen one: the first empty slot, or the very first when the party is full. */
+export function firstEmptySlot(party: Party): SlotPosition {
+  return SLOT_POSITIONS.find((at) => traitAt(party, at) === null) ?? { member: 0, slot: 'innate' };
+}
+
 /**
  * The first empty slot after `from` in reading order, going round to the beginning after the last one: filling a party
  * from the top is then a matter of adding trait after trait. When no other slot is empty it stays on `from`.

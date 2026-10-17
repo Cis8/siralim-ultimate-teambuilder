@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { emptyParty, SLOT_POSITIONS, traitAt, withTraitAt, type Party, type SlotPosition } from './party';
-import { nextEmptySlot } from './target-strategy';
+import { firstEmptySlot, nextEmptySlot } from './target-strategy';
 
 /** A party with a trait in each of the given slots. */
 function filled(positions: readonly SlotPosition[]): Party {
@@ -14,6 +14,26 @@ const FULL = filled(SLOT_POSITIONS);
 function indexOf(at: SlotPosition): number {
   return SLOT_POSITIONS.findIndex(({ member, slot }) => member === at.member && slot === at.slot);
 }
+
+describe('firstEmptySlot', () => {
+  it('is the Innate slot of the first creature when the party is empty', () => {
+    expect(firstEmptySlot(emptyParty)).toEqual({ member: 0, slot: 'innate' });
+  });
+
+  it('is the first slot, in reading order, that holds nothing', () => {
+    const party = filled([
+      { member: 0, slot: 'innate' },
+      { member: 0, slot: 'fused' },
+      { member: 1, slot: 'fused' },
+    ]);
+
+    expect(firstEmptySlot(party)).toEqual({ member: 0, slot: 'artifact' });
+  });
+
+  it('is the first slot of all when the party is full', () => {
+    expect(firstEmptySlot(FULL)).toEqual({ member: 0, slot: 'innate' });
+  });
+});
 
 describe('nextEmptySlot', () => {
   it('is the slot after the one just filled, in reading order: Innate, Fused, Artifact, then the next creature', () => {

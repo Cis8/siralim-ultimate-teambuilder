@@ -7,7 +7,8 @@ import {
   SORT_KEYS,
   type ExploreState,
 } from './explore-state';
-import { decodeExploreState, encodeExploreState, EXPLORE_PARAMS, type ParamReader } from './explore-url';
+import type { ParamReader } from '../url/url-params';
+import { decodeExploreState, encodeExploreState, EXPLORE_PARAMS } from './explore-url';
 
 /** The way an address reads: `name=value` pairs, `+` for a blank, percent escapes, the first of a name wins. */
 function paramsOf(search: string): ParamReader {

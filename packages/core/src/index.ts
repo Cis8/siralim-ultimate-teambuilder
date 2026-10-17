@@ -72,13 +72,8 @@ export {
 } from './explore/explore-state';
 export { FACET_KEYWORD_KINDS } from './explore/facets';
 export type { ClassFacet, FacetKeywordKind, Facets, KeywordFacet } from './explore/facets';
-export {
-  decodeExploreState,
-  encodeExploreState,
-  EXPLORE_PARAMS,
-  type ExploreParams,
-  type ParamReader,
-} from './explore/explore-url';
+export { decodeExploreState, encodeExploreState, EXPLORE_PARAMS } from './explore/explore-url';
+export type { ParamReader, UrlParams } from './url/url-params';
 export { descriptionParts, type DescriptionPart, type TextPiece } from './explore/description-parts';
 export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal } from './explore/keyword-click';
 export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './explore/facet-toggles';
@@ -118,4 +113,5 @@ export {
 export type { Placement, SlotRule } from './party/slot-rule';
 export { createSlotRuleRegistry, SlotRuleRegistryError, type SlotRuleRegistry } from './party/slot-rule-registry';
 export { slotRules } from './party/slot-rules';
-export { nextEmptySlot, type TargetStrategy } from './party/target-strategy';
+export { firstEmptySlot, nextEmptySlot, type TargetStrategy } from './party/target-strategy';
+export { decodePartyState, encodePartyState, PARTY_PARAMS, type PartyState, type SharedParty } from './party/party-url';

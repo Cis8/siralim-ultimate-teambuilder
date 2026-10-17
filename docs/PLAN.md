@@ -12,13 +12,15 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M6 under way: 6.1-6.3 done, 6.4 next.** `core/src/party/` has the immutable `Party` (+ `SLOT_POSITIONS`, the 18
-  slots in reading order), `slotRules.canPlace`, `PartyCommand` / `applyCommand` / `PartyHistory` (`executeCommand`, `undo`,
-  `redo`) and the `nextEmptySlot` target strategy (SPEC §8.2). `web` has no party state yet; the Party panel says "Coming
-  soon." **Next: 6.4** (`core`, TDD): coverage of a party (applies / relies on / missing per keyword, from the members'
-  traits) and party-wide non-stacking duplicates (R4); read GAME_RULES R4 and the keyword roles first. For 6.5-6.7 the party
-  goes in the same address as the search: reuse or generalise `explore-address` / `explore-url-writer` (the other
-  parameters are already left alone) rather than a second writer.
+- **Phase 1 · M6 under way: the `core` of the planner is done (6.1-6.5), the UI is next (6.6, then 6.7).** `core/src/party/`
+  has `Party`, `slotRules`, `PartyCommand` / `PartyHistory` (`executeCommand` / `undo` / `redo`), `nextEmptySlot` and
+  `firstEmptySlot`, `partyCoverage(party, lookup)` and the address codec `decodePartyState` / `encodePartyState`
+  (`PARTY_PARAMS`; SPEC §7, §8.2, ADR-0008). `web` has no party state yet; the Party panel says "Coming soon." **Next: 6.6**
+  (`web`). The app has no way to get a `Trait` from an id yet, which `executeCommand` (it takes the trait) and
+  `partyCoverage` (a `TraitLookup`) both need: add it to what `composition-root` builds from the dataset, in `core`, not in
+  the page. The party goes in the same address as the search: generalise `explore-address` / `explore-url-writer` so that
+  one writer clears `EXPLORE_PARAMS` and `PARTY_PARAMS` and adds both codecs' output (a party edit is a `push`, as a facet
+  is), rather than a second writer. Read DESIGN.md and `docs/prototype/Main.dc.html` (party column) first.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -136,7 +138,7 @@ panel above the list until the bottom sheet (M7); back and forward bring back th
 - [x] **6.2** Commands + history (place, clear slot, clear party). *T:* undo/redo, redo dropped after a new command, no-ops not recorded.
 - [x] **6.3** Target-slot strategy (next empty slot after placing).
 - [x] **6.4** Basic coverage (applies, relies on, missing) + party-wide non-stacking duplicates (R4). *T:* criterion 7.
-- [ ] **6.5** Party codec: base64url of `[datasetVersion, 18 IDs]` + target; unknown IDs kept. *T:* property round-trip;
+- [x] **6.5** Party codec: `[datasetVersion, 18 IDs]` as a comma list (ADR-0008, not base64url) + target; unknown IDs kept. *T:* property round-trip;
       a full party URL stays under 1,000 characters.
 - [ ] **6.6** Party panel, target selection, add from results (`aria-disabled` + visible reason), clear, undo/redo
       (buttons, Ctrl+Z / Ctrl+Shift+Z outside text fields), "in party" marker.

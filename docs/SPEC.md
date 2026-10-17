@@ -187,7 +187,7 @@ PRs at the start of a session (ADR-0007). Never deploy data that has not been th
 
 Every view is reproducible from its URL (query string for search, compact party encoding):
 - Search: `?q=<query>&class=life,nature&kw=a:vulnerable,u:weak,k:start of battle&mode=any&mat=yes&stack=no&sort=az`
-- Party: `?party=<base64url of [datasetVersion, 18 TraitIds-or-empty]>&target=<slot>`
+- Party: `?party=2.0,abomination--sin-and-sentence,,life--mender&target=3-fused` (ADR-0008)
 
 The search codec (`ExploreState`, `decodeExploreState` / `encodeExploreState`) writes only what differs from the initial
 state, so that state has no parameter at all, and reads any address: what is missing or says nothing usable is the initial
@@ -196,6 +196,16 @@ trimmed and without repeats; a comma inside an item is written `%2C` and a perce
 key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
 nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
 dataset: by family, then trait name; default), `class` (class, then family) or `az` (trait name). The party and the tab live in other parameters that the search codec leaves alone.
+
+**The party codec** (`decodePartyState` / `encodePartyState`, `party-url.ts`) follows the same rules and shares the list
+helpers (`url/url-params.ts`). `party` is a list: the dataset version, then the trait id of each of the 18 slots in reading
+order (creature by creature, Innate, Fused, Artifact), an empty item for an empty slot; the empty slots at the end are left
+out, and an empty party writes no `party`. `target` is `<creature 1–6>-<innate|fused|artifact>` and is written only when it
+is not the first empty slot (the first slot when the party is full), which is also what it is when the address names none or
+names something that is no slot. Reading trims the blanks around an item, ignores whatever is beyond the 18th slot and keeps
+every id, known to the dataset or not. `SharedParty.datasetVersion` is the version the link was made on, `null` when it
+states none; the page compares it with the dataset it has (6.7). Eighteen of the longest ids of v2.0 stay below 1,000
+characters, commas escaped (`party-acceptance.test.ts`).
 
 **The page and its address** (`explore-address.ts`, `explore-url-writer.ts`). The page reads the address when it opens and
 when the browser goes to another one (back, forward, a link); an address it cannot read is the plain page and stays as it is
