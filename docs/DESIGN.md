@@ -56,6 +56,22 @@ same to the pointer. `aria-pressed` and a 2 px ring in `--accent-border` mean it
 `--border-strong`. Never a fill: a match highlight over a lighter fill takes a debuff or the muted flag under 4.5:1, since
 the token colours are only guaranteed on the page background.
 
+### Facet panel and chips
+- **Facet buttons** (`FacetButton`) are toggles: `aria-pressed`, a fill in `--accent-surface` with a `--accent-border` outline when
+  on, and the count in mono, `--text-faint`, carrying its unit ("12 traits") for a screen reader. The two sides of a keyword
+  (*Applies*, *Relies on*) sit in fixed columns so that the buttons of every keyword line up; each keyword is a `group` named
+  after it. Kind headings (Debuffs, Buffs, Effects, Triggers, Mechanics) take the kind colour and always say it in words.
+- **The panel stays in view** beside the long list: sticky, with a scroll of its own, as tall as the window leaves it
+  (`trackViewportOffset` keeps `--viewport-offset`, the distance from the top of the window to the columns, so that at the top of
+  the page it is not cut by the fold). Stacked above the list on a narrow screen it is part of the page, until the bottom sheet
+  (M7).
+- **Chips** are `Chip`: `field:` in `--text-muted` mono, then the value. A query term is a button named after what a press does
+  ("weak — exclude it", "NOT weak — include it again": the name always holds the visible text, WCAG 2.5.3, so it is not an
+  `aria-pressed` toggle), an excluded one says NOT in words and is tinted with `--status-crit` at 9 % (axe measured 4.38:1 for `--text-faint` over a
+  14 % tint: the tint stays light enough for `--text-muted` over it to keep 4.5:1); a filter chip is plain text. The remove button is an icon with an accessible name.
+- **Effective query**: `--text` mono, wrapping (no scroll area), a quiet *Copy query* button, and "Copied" in `--status-good`
+  for 2.5 s in a polite live region (not `role="status"`: the result count owns that).
+
 ### Result list
 The page scrolls, not the list: results sit among other panels and stack under the filters on narrow screens. The list
 is virtualised against the window (rows in the flow of the page between two spacers; `aria-setsize` / `aria-posinset` say

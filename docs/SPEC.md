@@ -235,6 +235,20 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   clicked may be gone.
 - **Sort** is a strategy per key: `book` keeps the order of the dataset (by family, then trait name, since the dataset is
   sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
+- **The facet panel** turns the filters on and off with the same state-in, state-out functions as the click on a keyword
+  (`toggleClass`, `toggleKeywordFilter`; `hasClass`, `hasKeywordFilter` tell what is on). Classes are toggles with the count of
+  traits each would show; a buff, a debuff or an effect has two, *Applies* and *Relies on* (`applies:` and `uses:`), and a
+  trigger or a mechanic one (`kw:`), counted by the traits that mention it. Unlike a click in a description, the panel does
+  what it is told: both sides of a keyword can be on at once (traits that give it *and* rely on it with *Match all*, either
+  with *Match any*). *Match all / Match any* is a pair of toggle buttons; the two flags are checkboxes.
+- **The chip row** has a chip for every filter that is on (`filterChips`, `removeFilterChip`: `class:life`, `applies:vulnerable`,
+  `stack:no`, in the order of the effective query, each with a remove button), then one per term of the query bar (QUERY_LANGUAGE
+  §4: the term flips between included and excluded, or goes). The chips do not show the operators between the terms: the
+  effective query line has the exact meaning. When a chip is removed the focus goes to the next chip's remove button, or to
+  the row itself if none is left. The list starts over when a filter changes while the page is scrolled into it.
+- **The effective query line** shows `SearchOutcome.effectiveQuery` with a *Copy query* button (the clipboard; if the browser
+  refuses, the text is on the page to select), and is absent while there is no filter and no query.
+- **Empty state.** "No trait matches." with a hint; when several keywords must all be found, the hint says to try *Match any*.
 
 ### 8.2 Party planner (Phase 1)
 6 × 3 slots (GAME_RULES R1), a target slot that results fill, slot validation with a reason, basic coverage

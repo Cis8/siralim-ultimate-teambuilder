@@ -8,8 +8,18 @@
   /** About what a row of a few lines of description takes; the real heights are measured as rows are drawn. */
   const ESTIMATED_ROW_HEIGHT = 150;
 
-  const { traits, highlight, actions }: { traits: readonly Trait[]; highlight: Highlighter; actions: KeywordActions } =
-    $props();
+  const {
+    traits,
+    highlight,
+    actions,
+    suggestMatchAny,
+  }: {
+    traits: readonly Trait[];
+    highlight: Highlighter;
+    actions: KeywordActions;
+    /** Several keywords must all be found: with none to show, matching any of them is the way out the empty state offers. */
+    suggestMatchAny: boolean;
+  } = $props();
 
   const keys = $derived(traits.map(({ id }) => id));
 </script>
@@ -17,7 +27,7 @@
 {#if traits.length === 0}
   <div class="empty">
     <p class="title">{copy.noResultsTitle}</p>
-    <p>{copy.noResultsHint}</p>
+    <p>{copy.noResultsHint}{suggestMatchAny ? ` ${copy.noResultsMatchAny}` : ''}</p>
   </div>
 {:else}
   <VirtualList {keys} estimatedHeight={ESTIMATED_ROW_HEIGHT}>

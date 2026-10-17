@@ -33,20 +33,30 @@
   let items = $state.raw<readonly VirtualItem[]>([]);
   let totalHeight = $state(0);
 
-  const options = () => ({
-    count: keys.length,
-    scrollMargin,
-    overscan: OVERSCAN,
-    estimateSize: () => estimatedHeight,
-    getItemKey: (index: number) => keys[index] ?? index,
-    getScrollElement: () => window,
-    scrollToFn: windowScroll,
-    observeElementRect: observeWindowRect,
-    observeElementOffset: observeWindowOffset,
-    onChange: publish,
-  });
+  // The key function is given the keys as they are when the options are made, not the prop: it is called later, when the
+  // virtualiser rebuilds what it measured, and a prop that moved on by then would give new keys to an old count.
+  const options = () => {
+    const current = keys;
+    return {
+      count: current.length,
+      scrollMargin,
+      overscan: OVERSCAN,
+      estimateSize: () => estimatedHeight,
+      getItemKey: (index: number) => current[index] ?? index,
+      getScrollElement: () => window,
+      scrollToFn: windowScroll,
+      observeElementRect: observeWindowRect,
+      observeElementOffset: observeWindowOffset,
+      onChange: publish,
+    };
+  };
 
   const virtualizer = new Virtualizer<Window, HTMLLIElement>(options());
+
+  /** The keys the virtualiser has measured rows for: none yet. */
+  let measuredFor: readonly string[] = [];
+  const isSameList = (a: readonly string[], b: readonly string[]): boolean =>
+    a.length === b.length && a.every((key, at) => key === b[at]);
 
   function publish(): void {
     items = virtualizer.getVirtualItems();
@@ -59,6 +69,12 @@
 
   $effect(() => {
     virtualizer.setOptions(options());
+    // After a row is measured the virtualiser rebuilds from that row on and keeps the keys it had for the rows above it:
+    // were the list another one, a trait would then be in two places. A new list starts its measuring over.
+    if (!isSameList(measuredFor, keys)) {
+      measuredFor = keys;
+      virtualizer.measure();
+    }
     virtualizer._willUpdate();
     publish();
   });

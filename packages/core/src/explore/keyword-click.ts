@@ -1,6 +1,7 @@
 import type { KeywordHit } from '../model/trait';
 import { NO_STACK_KEY } from '../taxonomy/flags';
 import type { ExploreState, KeywordFilter, KeywordFilterField } from './explore-state';
+import { hasKeywordFilter, toggleKeywordFilter } from './facet-toggles';
 
 /**
  * What a click on a keyword in a description shows (SPEC §8.1): the other side of what the trait does with it (a trait
@@ -31,8 +32,7 @@ export function clickGoal({ key, kind, role }: ClickedKeyword): ClickGoal {
 export function isClickOn(state: ExploreState, keyword: ClickedKeyword): boolean {
   const goal = clickGoal(keyword);
   if (goal === 'nonStacking') return state.doesNotStack;
-  const filter = filterOf(goal, keyword);
-  return state.keywords.some((chosen) => isFilter(chosen, filter));
+  return hasKeywordFilter(state, filterOf(goal, keyword));
 }
 
 /**
@@ -45,14 +45,10 @@ export function clickKeyword(state: ExploreState, keyword: ClickedKeyword): Expl
   if (goal === 'nonStacking') return { ...state, doesNotStack: !state.doesNotStack };
 
   const filter = filterOf(goal, keyword);
-  if (state.keywords.some((chosen) => isFilter(chosen, filter))) {
-    return { ...state, keywords: state.keywords.filter((chosen) => !isFilter(chosen, filter)) };
-  }
+  if (hasKeywordFilter(state, filter)) return toggleKeywordFilter(state, filter);
   const otherSide = OTHER_SIDE[filter.field];
   const kept = state.keywords.filter((chosen) => chosen.key !== filter.key || chosen.field !== otherSide);
-  return { ...state, keywords: [...kept, filter] };
+  return toggleKeywordFilter({ ...state, keywords: kept }, filter);
 }
 
 const filterOf = (goal: KeywordGoal, { key }: ClickedKeyword): KeywordFilter => ({ field: GOAL_FIELDS[goal], key });
-
-const isFilter = (a: KeywordFilter, b: KeywordFilter): boolean => a.field === b.field && a.key === b.key;

@@ -14,6 +14,15 @@ export interface FilterQuery {
   readonly rest: string;
 }
 
+/** The terms the two flags of an Explore state stand for (QUERY_LANGUAGE §2). */
+export const FLAG_TERMS = {
+  artifactEligible: { field: 'mat', value: 'yes' },
+  doesNotStack: { field: 'stack', value: 'no' },
+} as const;
+
+const flagTerm = ({ field, value }: { readonly field: string; readonly value: string }): string =>
+  serialiseTerm(field, value);
+
 /**
  * `knownClasses` are the classes of the dataset. `class:` looks for a name inside the class, so `class:boss` finds the
  * traits of Nether Boss too; the query leaves those classes out again, to find the traits of the classes chosen and no
@@ -21,7 +30,10 @@ export interface FilterQuery {
  * chosen too (A is part of B, B of C, A and C chosen); no class of the compendium is like that.
  */
 export function filterQuery(state: ExploreState, knownClasses: readonly ClassName[]): FilterQuery {
-  const flags = [state.artifactEligible ? 'mat:yes' : '', state.doesNotStack ? 'stack:no' : ''];
+  const flags = [
+    state.artifactEligible ? flagTerm(FLAG_TERMS.artifactEligible) : '',
+    state.doesNotStack ? flagTerm(FLAG_TERMS.doesNotStack) : '',
+  ];
   return {
     classes: classesQuery(state.classes, knownClasses),
     rest: joined([keywordsQuery(state), ...flags]),

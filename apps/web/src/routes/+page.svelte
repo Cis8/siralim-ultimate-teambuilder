@@ -9,17 +9,22 @@
     type SearchService,
     type SortKey,
   } from '@atlas/core';
+  import ChipRow from '../lib/components/chip-row.svelte';
+  import EffectiveQuery from '../lib/components/effective-query.svelte';
+  import FacetPanel from '../lib/components/facet-panel.svelte';
   import QueryInput from '../lib/components/query-input.svelte';
   import ResultCount from '../lib/components/result-count.svelte';
   import ResultsList from '../lib/components/results-list.svelte';
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
   import type { KeywordActions } from '../lib/keyword-actions';
+  import { trackViewportOffset } from '../lib/viewport-offset';
 
   let service = $state.raw<SearchService>();
   let failed = $state(false);
   let explore = $state.raw<ExploreState>(initialExploreState);
   let resultsHeading = $state<HTMLHeadingElement>();
+  let resultsSection = $state<HTMLElement>();
 
   /**
    * A click on a keyword far down the list swaps the list for another: it is shown from its first trait, and the focus,
@@ -29,6 +34,22 @@
     await tick();
     window.scrollTo({ top: 0 });
     resultsHeading?.focus({ preventScroll: true });
+  }
+
+  /**
+   * A filter or a chip changed beside a list that the page is scrolled into: the new list starts over, so the page goes
+   * back to where it begins. The focus stays on the control that was pressed, and a page that is not past the list (the
+   * filters are above it on a narrow screen) stays where it is, so that the control does not move under the pointer.
+   */
+  async function showResultsFromTheTop(): Promise<void> {
+    await tick();
+    const top = (resultsSection?.getBoundingClientRect().top ?? 0) + window.scrollY;
+    if (window.scrollY > top) window.scrollTo({ top });
+  }
+
+  function exploreChanged(next: ExploreState): void {
+    explore = next;
+    void showResultsFromTheTop();
   }
 
   const keywordActions: KeywordActions = {
@@ -73,6 +94,7 @@
       }}
     />
   </search>
+  <ChipRow {explore} onchange={exploreChanged} />
   <div class="meta">
     {#if loaded}
       <ResultCount shown={loaded.outcome.traits.length} total={loaded.total} />
@@ -93,15 +115,22 @@
       </label>
     {/if}
   </div>
+  {#if loaded}<EffectiveQuery query={loaded.outcome.effectiveQuery} />{/if}
 </div>
 
-<div class="columns">
-  <section class="panel filters" aria-labelledby="filters-heading">
-    <h2 id="filters-heading">{copy.filtersHeading}</h2>
-    <p class="soon">{copy.comingSoon}</p>
+<div class="columns" {@attach trackViewportOffset}>
+  <section class="filters" aria-labelledby="filters-heading">
+    <div class="filters-body">
+      <h2 id="filters-heading">{copy.filtersHeading}</h2>
+      {#if loaded}
+        <FacetPanel facets={loaded.outcome.facets} {explore} onchange={exploreChanged} />
+      {:else if !failed}
+        <p class="soon">{copy.loadingFilters}</p>
+      {/if}
+    </div>
   </section>
 
-  <section class="results" aria-labelledby="results-heading">
+  <section class="results" aria-labelledby="results-heading" bind:this={resultsSection}>
     <h2 id="results-heading" class="visually-hidden" tabindex="-1" bind:this={resultsHeading}>{copy.resultsHeading}</h2>
     {#if failed}
       <p class="status failed" role="alert">
@@ -114,7 +143,12 @@
     {:else if loaded === undefined}
       <p class="status" role="status">{copy.loadingTraits}</p>
     {:else}
-      <ResultsList traits={loaded.outcome.traits} highlight={loaded.outcome.highlight} actions={keywordActions} />
+      <ResultsList
+        traits={loaded.outcome.traits}
+        highlight={loaded.outcome.highlight}
+        actions={keywordActions}
+        suggestMatchAny={explore.keywordMode === 'all' && explore.keywords.length > 1}
+      />
     {/if}
   </section>
 
@@ -183,6 +217,22 @@
     border-right: 1px solid var(--border);
   }
 
+  /*
+   * The list is long and the page scrolls, so the filters stay in view beside it, with a scroll of their own when they are
+   * taller than what the window shows of them (the part under the query section until the page is scrolled past it, see
+   * `trackViewportOffset`). The rule between the columns is on the column, which is as tall as the list.
+   */
+  .filters-body {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(100dvh - var(--viewport-offset, 0px));
+    padding: 16px;
+    overflow-y: auto;
+  }
+
   .party {
     border-left: 1px solid var(--border);
     background: var(--bg-bar);
@@ -235,6 +285,13 @@
     .filters {
       border-right: 0;
       border-bottom: 1px solid var(--border);
+    }
+
+    /* Stacked above the list, the filters are part of the page: a bottom sheet replaces them on a phone (M7). */
+    .filters-body {
+      position: static;
+      max-height: none;
+      overflow-y: visible;
     }
   }
 

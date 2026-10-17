@@ -1,4 +1,4 @@
-import type { ClickGoal, KeywordRole, SortKey, TraitKind } from '@atlas/core';
+import type { ClickGoal, FacetKeywordKind, KeywordMode, KeywordRole, SortKey, TraitKind } from '@atlas/core';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
@@ -43,7 +43,42 @@ export const copy = {
   partyHeading: 'Party',
   comingSoon: 'Coming soon.',
   noResultsTitle: 'No trait matches.',
-  noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a term.',
+  noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
+  noResultsMatchAny: 'Or switch the keywords to “Match any”.',
+
+  loadingFilters: 'Loading the filters…',
+  classHeading: 'Class',
+  classHint: 'any of',
+  keywordsHeading: 'Keywords',
+  keywordModeLabel: 'Keyword match mode',
+  keywordModes: { all: 'Match all', any: 'Match any' } as const satisfies Record<KeywordMode, string>,
+  keywordKinds: {
+    debuff: 'Debuffs',
+    buff: 'Buffs',
+    effect: 'Effects',
+    trigger: 'Triggers',
+    mechanic: 'Mechanics',
+  } as const satisfies Record<FacetKeywordKind, string>,
+  /** The two sides of a buff, a debuff or an effect: what a trait does with it (GAME_RULES R9 has a third, not a filter). */
+  keywordSides: { applies: 'Applies', uses: 'Relies on' } as const,
+  flagsHeading: 'Flags',
+  flagArtifactEligible: 'Artifact-eligible (has material)',
+  flagDoesNotStack: 'Only “does not stack”',
+  /** What follows a count in a facet button for a screen reader: the number alone does not say what it counts. */
+  facetCount: (count: number) => formatCount(count),
+  facetCountUnit: ' traits',
+
+  chipsLabel: 'Filters and query terms',
+  noChips: 'No filters yet. Type a query or pick filters.',
+  removeChip: (term: string) => `Remove ${term}`,
+  /** A query term is a button: it flips the term between included and excluded, and its name says what a press does. */
+  toggleChip: (term: string, excluded: boolean) => `${term} — ${excluded ? 'include it again' : 'exclude it'}`,
+  excludedTag: 'NOT',
+
+  effectiveQueryLabel: 'Effective query',
+  copyQuery: 'Copy query',
+  copiedQuery: 'Copied',
+  copyFailed: 'Could not copy — select the text instead',
   noMaterial: 'No material — not artifact-eligible',
   /** The name of a keyword in a description, a button: what the trait does with it, then what a click shows. */
   keywordButton: (text: string, role: KeywordRole | undefined, goal: ClickGoal) =>
