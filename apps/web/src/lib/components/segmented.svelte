@@ -53,9 +53,10 @@
     color: var(--text-strong);
   }
 
+  /* The buttons are the targets, not the frame around them: the frame is 6 px taller than they are. */
   @media (pointer: coarse) {
     button {
-      min-height: calc(var(--target-min) - 6px);
+      min-height: var(--target-min);
     }
   }
 </style>

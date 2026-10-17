@@ -28,7 +28,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 - [x] **M6 Party planner.** 6 × 3 slots, target slot, add from results, slot validation reasons, clear, undo/redo,
       basic coverage (applies, relies on, missing sources, non-stacking duplicates per GAME_RULES R4), share URL with
       stable IDs + dataset version, unknown-ID handling.
-- [ ] **M7 Mobile.** Filters bottom sheet (focus trapped, Esc/close), Explore/Party tabs, 44 px targets, add-to-target button.
+- [x] **M7 Mobile.** Filters bottom sheet (focus trapped, Esc/close), Explore/Party tabs, 44 px targets, add-to-target button.
 - [ ] **M8 Hardening.** Performance budget check on the full dataset, Lighthouse CI budgets, a11y pass (keyboard-only
       walkthrough, screen-reader smoke test), footer credits + "unofficial" label, README.
 

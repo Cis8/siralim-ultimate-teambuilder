@@ -91,8 +91,8 @@ the token colours are only guaranteed on the page background.
   effective query: a quiet button and a polite line that says "Link copied", or in `--status-crit` that it could not, and then the
   link is shown to select). They are `aria-disabled`, not `disabled`, when there
   is nothing to do, so that the focus is not lost when the last undo is done.
-- **Add button** on a result: `--accent-surface` with `--accent-border`, "Add to Creature 1 · Innate"; its accessible name ends
-  with the trait's name ("+" is decoration). Refused for the target slot, it is `--surface-2` with `--text-faint`, stays in the
+- **Add button** on a result: `--accent-surface` with `--accent-border`, a plus and "Add to Creature 1 · Innate"; its accessible
+  name ends with the trait's name (the plus is decoration; under 700 px the plus is all that is drawn, § Result list). Refused for the target slot, it is `--surface-2` with `--text-faint`, stays in the
   tab order (`aria-disabled`), and the reason sits under it in `--status-crit` with an icon, tied to it with
   `aria-describedby`. "In party: Creature 1 · Innate" below is `--status-good` with a check.
 - **Coverage**: chips in the colour of the keyword's kind; a dependency is a button with an icon and the word *covered*
@@ -103,6 +103,13 @@ the token colours are only guaranteed on the page background.
 The page scrolls, not the list: results sit among other panels and stack under the filters on narrow screens. The list
 is virtualised against the window (rows in the flow of the page between two spacers; `aria-setsize` / `aria-posinset` say
 where a row stands in the whole). Rows are as tall as their text; the browser's find-in-page sees only the rows drawn.
+
+A row is a **card**: the name and where the trait comes from (the *head*), the add button, the description, the material, and what
+the party says about the trait. The button comes before the description in the page, so the keyboard reaches it first and the
+keywords after it, as the eye does. From 700 px the party's notes (the reason for a refusal, "In party") sit in a column of their
+own beside the text, with the button on top. **Under 700 px** the column is gone: the button is a 44 × 44 px square with a plus,
+at the top right beside the name (as in `Mobile.dc.html`; its words are not drawn, but its name still says them and the trait:
+"Add to Creature 1 · Innate — Flesh Rot"), and the notes go under the material, left-aligned.
 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
@@ -117,8 +124,15 @@ where a row stands in the whole). Rows are as tall as their text; the browser's 
 
 ## Accessibility (WCAG 2.2 AA)
 - Real elements: `button`, `a[href]`, `input` + `label`. No click handlers on `div`/`span`.
-- Visible focus ring (`--accent`, 2 px). Touch targets ≥ 44 px on mobile. Bars fixed to the foot of the window must not hide
-  a focused control: the root's `scroll-padding-bottom` is their height (`--bars-height`, base.css).
+- Visible focus ring (`--accent`, 2 px). Bars fixed to the foot of the window must not hide a focused control: the root's
+  `scroll-padding-bottom` is their height (`--bars-height`, base.css).
+- **Touch targets** (`pointer: coarse`, which the Pixel 7 and iPhone 14 e2e projects match): every `button`, `a`, `input`,
+  `select` and tab is at least 44 × 44 px (WCAG 2.5.8 asks 24), a checkbox counting with its label. `touch-targets.test.ts`
+  measures them on Explore (with a query and a filter on), in the open filters sheet and on the Party tab, and names the
+  controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
+  target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
+  the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the
+  line beside it.
 - Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). Check `--text-faint` on every surface it is used on.
 - Combobox per ARIA APG; result count in an `aria-live="polite"` region; bottom sheets are dialogs with focus trap and
   return focus on close; tabs use `tablist`/`tab`/`tabpanel`; the coverage matrix is a real table (or ARIA table roles).

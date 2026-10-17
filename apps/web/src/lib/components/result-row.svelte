@@ -22,10 +22,15 @@
   const refusal = $derived(party.refusal(trait));
   const places = $derived(party.placesOf(trait));
   const reasonId = $derived(`add-reason-${trait.id}`);
+  const addName = $derived(copy.addToTrait(party.target, trait.name));
 </script>
 
+<!--
+  A card: the name and where the trait comes from, the button that adds it, then what it does. The button comes before the
+  description in the page as it does on the screen, so that the keyboard reaches it first and the keywords after it.
+-->
 <article>
-  <div class="trait">
+  <div class="head">
     <h3>
       <span class="dot" style:background={classColour(trait.class)} aria-hidden="true"></span>
       {trait.name}
@@ -34,68 +39,84 @@
       <span class="creature">{trait.creature ?? copy.traitKind[trait.kind]}</span>
       <span class="origin">{trait.family} · {trait.class}</span>
     </p>
-    <p class="description"><DescriptionText {parts} {actions} /></p>
-    <p class="material" class:missing={trait.material === null}>
-      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
-        <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" />
-        <path d="M4 7.5 12 12l8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" />
-      </svg>
-      {trait.material ?? copy.noMaterial}
-    </p>
   </div>
 
   <div class="party">
+    <!-- The name says what the words on a wide screen say and the trait they are about; a phone shows the plus alone. -->
     <button
       type="button"
       class="add"
+      aria-label={addName}
+      title={addName}
       aria-disabled={refusal === null ? undefined : 'true'}
       aria-describedby={refusal === null ? undefined : reasonId}
       onclick={() => {
         party.add(trait);
       }}
     >
-      <span aria-hidden="true">+</span>
-      {copy.addTo(party.target)}<span class="visually-hidden"> — {trait.name}</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+        <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
+      <span class="label">{copy.addTo(party.target)}</span>
     </button>
-    {#if refusal !== null}
-      <p class="reason" id={reasonId}>
-        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
-          <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-          <path d="M3.9 12.1 12.1 3.9" stroke="currentColor" stroke-width="1.5" />
-        </svg>
-        {refusal}
-      </p>
-    {/if}
-    {#if places.length > 0}
-      <p class="in-party">
-        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
-          <path
-            d="M3 8.5 6.5 12 13 4.5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        {copy.inParty(places.map(copy.slotLabel))}
-      </p>
+    {#if refusal !== null || places.length > 0}
+      <div class="notes">
+        {#if refusal !== null}
+          <p class="reason" id={reasonId}>
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path d="M3.9 12.1 12.1 3.9" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            {refusal}
+          </p>
+        {/if}
+        {#if places.length > 0}
+          <p class="in-party">
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+              <path
+                d="M3 8.5 6.5 12 13 4.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {copy.inParty(places.map(copy.slotLabel))}
+          </p>
+        {/if}
+      </div>
     {/if}
   </div>
+
+  <p class="description"><DescriptionText {parts} {actions} /></p>
+  <p class="material" class:missing={trait.material === null}>
+    <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
+      <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" />
+      <path d="M4 7.5 12 12l8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" />
+    </svg>
+    {trait.material ?? copy.noMaterial}
+  </p>
 </article>
 
 <style>
+  /* The party's column is as tall as the text beside it; on a phone it is gone, and the button is beside the name. */
   article {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px 16px;
+    grid-template-areas:
+      'head party'
+      'description party'
+      'material party';
+    gap: 6px 16px;
     padding: 14px 20px;
     border-bottom: 1px solid var(--surface-3);
   }
 
-  .trait {
+  .head {
     display: flex;
     flex-direction: column;
+    grid-area: head;
     gap: 6px;
     min-width: 0;
   }
@@ -137,6 +158,7 @@
   }
 
   .description {
+    grid-area: description;
     max-width: 80ch;
     font-size: 13.5px;
     line-height: 1.65;
@@ -145,6 +167,7 @@
 
   .material {
     display: flex;
+    grid-area: material;
     align-items: center;
     gap: 6px;
     color: var(--text-faint);
@@ -158,12 +181,17 @@
   .party {
     display: flex;
     flex-direction: column;
+    grid-area: party;
     align-items: flex-end;
     gap: 6px;
     max-width: 22ch;
   }
 
   .add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 28px;
     padding: 0 10px;
     border: 1px solid var(--accent-border);
@@ -173,6 +201,13 @@
     font: inherit;
     font-size: 12.5px;
     cursor: pointer;
+  }
+
+  .notes {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
   }
 
   .add:hover {
@@ -209,14 +244,45 @@
     color: var(--status-good);
   }
 
+  /*
+   * A phone has no column for the party: the button is a square beside the name (a plus, as the prototype has it: its name
+   * says the rest), and what the party says about the trait is under the text. `display: contents` hands the button and the
+   * notes to the card's own grid.
+   */
   @media (max-width: 699px) {
     article {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'head add'
+        'description description'
+        'material material'
+        'notes notes';
+      padding: 14px 16px;
     }
 
     .party {
+      display: contents;
+    }
+
+    .add {
+      grid-area: add;
+      align-self: start;
+      width: var(--target-min);
+      height: var(--target-min);
+      padding: 0;
+    }
+
+    .add svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .label {
+      display: none;
+    }
+
+    .notes {
+      grid-area: notes;
       align-items: flex-start;
-      max-width: none;
     }
 
     .reason,

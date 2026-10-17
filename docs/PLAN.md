@@ -12,15 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M7 (mobile): 7.1 and 7.2 done, 7.3 next, then M8.** 7.3 (`web`): the result row as a card with add-to-target,
-  and an e2e that every interactive element is at least 44 × 44 px on mobile (Pixel 7 and iPhone 14 projects; axe on the
-  pages it touches). Today the targets are 44 px under `pointer: coarse` (facet buttons, sort `select`, party toolbar, slots,
-  the add button, the tabs are 64 px high), but nothing checks it: measure every `button`, `a`, `input`, `select` of Explore,
-  the open filters sheet and the Party tab, and fix what falls short (the copy buttons, the chip remove buttons and the
-  keyword tokens inside descriptions are the likely ones; WCAG 2.5.8 allows a 24 px target with spacing, DESIGN asks 44).
-  Read DESIGN.md (Result list, Accessibility) and `docs/prototype/Mobile.dc.html` (its `.addb` is 44 × 44).
-  The tabs (7.2) are under **1100 px**, not 700: that is where the party stopped fitting beside the list; the filters stay a
-  sheet under 700. Two fixed bars can stack at the foot (Filters button 61 px above the tab bar 64 px): `--bars-height`.
+- **Phase 1 · M7 (mobile) is done; M8 (hardening) is next, from 8.1.** 8.1: performance (criterion 9, SPEC §Performance: search
+  + facet recount ≤ 16 ms per keystroke on the full dataset). A `vitest bench` of `search` on the pinned snapshot (1,780
+  traits), and an e2e that types into the query bar with 4× CPU throttling (a CDP session in the Chromium project) and asserts
+  p95 < 16 ms. The search is `service.search(explore)`, a `$derived` of `+page.svelte`, run on every keystroke. Build an
+  inverted index only if the budget is missed: `TraitIndex` is opaque to `evaluate`'s callers (QUERY_LANGUAGE §, "index").
+  Then 8.2 (size budgets, Lighthouse CI), 8.3 (keyboard walkthrough, contrast of the tokens), 8.4 (credits, README).
+  A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -158,16 +156,14 @@ address. Deviations worth knowing: the party is a comma list in the address, not
 replaces the history entry instead of pushing one; undo returns the target to the slot of the edit; a trait that applies and
 relies on the same keyword covers itself (as in the prototype); the last party is used only when the address names none.
 
-### M7 Mobile
-- [x] **7.1** Bottom sheet on a modal `<dialog>` (`BottomSheet`, swapped for the column by `FiltersRegion` under 700 px, opened
-      by a fixed "Filters" bar). *e2e:* focus trapped, Esc closes, focus returns (`filters-sheet.test.ts`). The e2e helpers
-      `openFilters` / `closeFilters` open and close the sheet on a narrow screen and do nothing on a wide one.
-- [x] **7.2** Explore/Party tabs (`TabBar`, ARIA tabs) under 1100 px, `tab=party` in the address (`page-tab.ts`, a step of the
-      history), the page scrolled back to where each tab was left, no Synergies tab before Phase 2. The view not shown is laid
-      out but `visibility: hidden; height: 0`, not `display: none` (the virtual list would measure its rows as 0 px). The
-      bars at the foot leave room (`--bars-height`) and the root's `scroll-padding-bottom` keeps a focused control clear of
-      them. `filledSlots` joined `core`. *e2e:* `tabs.test.ts`; the party e2e switch tabs with `showParty` / `showExplore`.
-- [ ] **7.3** Result card with add-to-target. *e2e:* every interactive element ≥ 44×44 px on mobile; axe.
+### M7 Mobile — done
+The filters are a modal bottom sheet under 700 px (`BottomSheet`, `FiltersRegion`, a fixed "Filters" bar); Explore and Party are
+ARIA tabs under 1100 px (`TabBar`, `tab=party` in the address, the page scrolled back to where each tab was left; the view not
+shown is `visibility: hidden; height: 0`, not `display: none`, or the virtual list would measure its rows as 0 px); the bars at the
+foot leave room (`--bars-height`). The result is a card: under 700 px its add button is a 44 px square beside the name, and the
+DOM puts it before the description. `touch-targets.test.ts` measures every control of Explore, the open sheet and the Party tab
+in the two phone projects. Deviations worth knowing: keywords inside a description and the footer link stay line-high (WCAG 2.5.8
+Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its border (chip 46, segmented 50).
 
 ### M8 Hardening
 - [ ] **8.1** Performance: `vitest bench` on the snapshot + e2e keystroke latency with 4× CPU throttling, p95 < 16 ms

@@ -146,6 +146,8 @@ export const copy = {
   clearSlot: (at: SlotPosition, held: string) => `Clear ${slotLabel(at)} (${held})`,
   /** The "add" button of a result: it puts the trait in the target slot. */
   addTo: (at: SlotPosition) => `Add to ${slotLabel(at)}`,
+  /** The name of that button, which says the trait too (a phone shows no words on it, and a list of them must tell them apart). */
+  addToTrait: (at: SlotPosition, name: string) => `Add to ${slotLabel(at)} — ${name}`,
   inParty: (places: readonly string[]) => `In party: ${places.join(', ')}`,
   partyAnnouncements: {
     added: (name: string, at: SlotPosition) => `Added ${name} to ${slotLabel(at)}.`,

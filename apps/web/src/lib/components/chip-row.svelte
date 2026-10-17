@@ -178,9 +178,14 @@
     font-size: 12.5px;
   }
 
+  /* The chip's border takes 2 px: its buttons are as tall as a finger needs only when the chip is that much taller. */
   @media (pointer: coarse) {
     .chip {
-      height: var(--target-min);
+      height: calc(var(--target-min) + 2px);
+    }
+
+    .body {
+      min-width: var(--target-min);
     }
 
     .remove {
