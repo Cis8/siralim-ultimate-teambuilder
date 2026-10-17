@@ -12,10 +12,12 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8 (hardening): 8.1 is done, 8.2 is next.** 8.2: size budgets (initial JS ≤ 150 KB gzip, data ≤ 300 KB gzip;
-  the dataset is ~100 KB gzip) as a test or a CI step that fails over budget, then Lighthouse CI on the built site. Then 8.3
-  (keyboard walkthrough, contrast of the tokens), 8.4 (credits, README, criteria-to-tests table).
+- **Phase 1 · M8 (hardening): 8.1 and 8.2 are done, 8.3 is next.** 8.3: keyboard-only e2e walkthrough (criterion 8), contrast
+  test of the DESIGN tokens on every surface they are used on, screen-reader checklist for the owner. Then 8.4 (credits,
+  README, criteria-to-tests table).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
+  Anything that changes the layout between the prerendered page and the loaded one (a line that appears, a layout JS decides)
+  counts as a layout shift: Lighthouse CI fails above 0.1. Decide it in CSS, or hold the room.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -98,6 +100,11 @@ session (after `CLAUDE.md`), update it before ending one.
   read by `typing-latency.test.ts` under a 4× CPU): p95 4.3 ms, so no inverted index. The whole keystroke is dearer: median
   7 ms, p95 35–45 ms at 4×, on the keys that swap the list (profile: Svelte creating ~10 rows, and the layout that
   `measureElement` forces by reading `offsetHeight`). If that ever needs to come down, it is the cost of a row, not the search.
+- Lighthouse (`pnpm lighthouse`, phone profile, simulated slow 4G): serves `apps/web/build` from the root with gzip, so the
+  build must not have a `BASE_PATH`; Chromium comes from Playwright (`playwright install chromium`). What is left to gain:
+  the LCP (3.0 s, score 0.77) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and 0.035 of
+  layout shift is the meta line, 32 px before the traits and 71 px after on a phone (the sort wraps). To see what moves, record
+  `layout-shift` entries (`sources` has the rects before and after) under a throttled Playwright page.
 - `vitest bench` (Vitest 5): `bench` is a fixture of `test` in a `*.bench.ts` file (`test.each` does not hand it over: loop);
   `vitest` alone ignores those files; `pnpm bench` needs `--reporter=verbose` to print the table.
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
@@ -173,7 +180,11 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       projects, 4× CPU, p95 of the search < 16 ms; criterion 9). Deviation: the e2e times the search through a User Timing
       measure the page emits (`apps/web/src/lib/search-timing.ts`), not the whole keystroke, as SPEC §9 words the budget;
       no inverted index was needed.
-- [ ] **8.2** Size budgets (initial JS ≤ 150 KB gzip, data ≤ 300 KB gzip) + Lighthouse CI.
+- [x] **8.2** Size budgets and Lighthouse CI. `pnpm size-budget` (`tools/size-budget`, a step of `ci.yml` after the build) fails
+      over 150 kB of initial JS or 300 kB of data, gzipped: now 69.9 and 120.4. Lighthouse CI (`@lhci/cli`, the `lighthouse` job
+      of `ci.yml`, thresholds in `apps/web/lighthouserc.cjs`). Deviation: its first run found performance 0.69 and a layout shift
+      of 0.75, so the slice fixed them: the stylesheets are inlined (`inlineStyleThreshold`), the results hold their room while
+      the traits load, and the filters column is dropped by CSS under 700 px. Now 0.92 and 0.035.
 - [ ] **8.3** Keyboard-only e2e walkthrough (criterion 8); contrast test of the DESIGN tokens on every surface they use;
       screen-reader checklist for the owner.
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.

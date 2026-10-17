@@ -77,6 +77,17 @@
   }
 
   /*
+   * The page is prerendered before it knows how wide the window is, so it holds the column. Where a sheet takes the filters'
+   * place (`compact`, the same width) the stylesheet drops it at once: otherwise it is drawn, and the list under it moves up
+   * when the page starts running (cumulative layout shift).
+   */
+  @media (max-width: 699px) {
+    .column {
+      display: none;
+    }
+  }
+
+  /*
    * The list is long and the page scrolls, so the filters stay in view beside it, with a scroll of their own when they are
    * taller than what the window shows of them (the part under the query section until the page is scrolled past it, see
    * `trackViewportOffset`). The rule between the columns is on the column, which is as tall as the list.

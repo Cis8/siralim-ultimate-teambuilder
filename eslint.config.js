@@ -17,6 +17,7 @@ export default defineConfig(
       '**/coverage/',
       '**/test-results/',
       '**/playwright-report/',
+      '**/.lighthouseci/',
       'docs/prototype/',
     ],
   },
@@ -54,6 +55,11 @@ export default defineConfig(
     // Plain JS (tool configs) is not part of any TS project, so type-aware rules are off there.
     files: ['**/*.js', '**/*.cjs'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // A CommonJS file is CommonJS: `require` is how it imports (Lighthouse CI reads only a CommonJS config).
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     // Tool configuration files must use default exports.

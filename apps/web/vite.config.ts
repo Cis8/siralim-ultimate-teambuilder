@@ -21,6 +21,8 @@ export default defineConfig({
       // 404.html doubles as the SPA fallback for deep links on GitHub Pages (ADR-0001).
       adapter: adapter({ fallback: '404.html' }),
       paths: { base: basePath(process.env.BASE_PATH) },
+      // The stylesheets (23 kB, 6 kB gzipped) go into the page: as files they block the first paint for two more round trips.
+      inlineStyleThreshold: 30_000,
     }),
   ],
   ssr: {

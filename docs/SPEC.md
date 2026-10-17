@@ -169,8 +169,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 6. **Emit** `traits.<hash>.json` (schema-versioned) and `manifest.json` `{datasetVersion, hash, count, generatedAt}`.
    The hash is the first 16 hex digits of the SHA-256 of the dataset file, which holds the traits sorted by id, one
    per line (reviewable diffs, no dependence on row order). Time never enters the hash. When the directory already
-   holds the same hash nothing is rewritten, so an unchanged sheet leaves the tree clean. Compendium v2.0: 704 KB,
-   about 100 KB gzipped.
+   holds the same hash nothing is rewritten, so an unchanged sheet leaves the tree clean. Compendium v2.0 with its
+   keywords: 878 KB, about 120 KB gzipped.
 7. **Report** (Markdown, `buildReport`): the diff against the previous build (added / removed / changed traits, by id
    and field); counts per kind, class, mastery requirement, keyword role and random debuff; a *Taxonomy* section with
    the candidates (capitalised terms in at least 3 traits that no keyword covers, that are no name of a trait,
@@ -397,7 +397,7 @@ Syntax highlighting in the input, autocomplete by context, inline diagnostics wi
 
 | Area | Target |
 |---|---|
-| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised. The search is timed by the page (`timeSearches`, a User Timing measure) and checked by an e2e on the production build with the CPU slowed down 4×: p95 of a typed query under 16 ms. Redrawing the list is not in the budget: virtualisation bounds it |
+| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised. The search is timed by the page (`timeSearches`, a User Timing measure) and checked by an e2e on the production build with the CPU slowed down 4×: p95 of a typed query under 16 ms. Redrawing the list is not in the budget: virtualisation bounds it. The sizes are checked by `pnpm size-budget` on the production build (KB = 1000 bytes; initial JS is the scripts the page preloads, data is every file under `data/`, both gzipped as GitHub Pages serves them). Lighthouse CI, on a phone profile, fails the build below performance 0.85, accessibility 1, best practices 0.95 or SEO 0.95, or above a cumulative layout shift of 0.1 (`apps/web/lighthouserc.cjs`) |
 | Accessibility | WCAG 2.2 AA; axe clean; full keyboard use; see DESIGN § Accessibility |
 | Browsers | Last 2 versions of Chrome, Firefox, Safari, Edge; iOS Safari 16+ |
 | Offline | Phase 1: none required. By end of Phase 3: PWA, data cached, works offline |

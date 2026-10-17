@@ -400,7 +400,7 @@
             {copy.traitsFailed}
           </p>
         {:else if loaded === undefined}
-          <p class="status" role="status">{copy.loadingTraits}</p>
+          <p class="status loading" role="status">{copy.loadingTraits}</p>
         {:else}
           <ResultsList
             traits={loaded.outcome.traits}
@@ -553,6 +553,14 @@
     margin: 0;
     padding: 16px 20px;
     color: var(--text-faint);
+  }
+
+  /*
+   * The list will fill the rest of the window. Holding that room while the traits load keeps the footer below the fold, so
+   * it does not jump out of view when they arrive (cumulative layout shift). The offset is set once the page is running.
+   */
+  .loading {
+    min-height: calc(100dvh - var(--viewport-offset, 0px));
   }
 
   .failed {

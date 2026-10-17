@@ -33,6 +33,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm size-budget
       - name: Install Playwright browsers
         run: pnpm --filter @atlas/web exec playwright install --with-deps chromium webkit
       - run: pnpm test:e2e
@@ -42,4 +43,30 @@ jobs:
         with:
           name: playwright-report
           path: apps/web/playwright-report
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # No BASE_PATH: Lighthouse CI serves the build from the root of its own server.
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # The Chromium the e2e uses (lighthouserc.cjs asks Playwright where it is).
+      - name: Install Chromium
+        run: pnpm --filter @atlas/web exec playwright install --with-deps chromium
+      - run: pnpm lighthouse
+      - name: Upload Lighthouse reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-reports
+          path: apps/web/.lighthouseci
           retention-days: 7

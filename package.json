@@ -13,6 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "bench": "vitest bench --run --reporter=verbose",
+    "size-budget": "tsx tools/size-budget/check-size-budget.ts",
+    "lighthouse": "pnpm --filter @atlas/web lighthouse",
     "test:e2e": "pnpm --filter @atlas/web test:e2e",
     "pipeline:fetch": "pnpm --filter @atlas/pipeline fetch-sheet",
     "pipeline:build": "pnpm --filter @atlas/pipeline build-dataset",
@@ -32,6 +34,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-svelte": "^4.1.1",
     "svelte": "^5.57.2",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2",
     "vitest": "^5.0.4"
