@@ -282,8 +282,8 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   trait ("Mastery traits can only go in the Artifact slot."), since the page shows next to it which trait it is; it is the
   visible text of a disabled "add" button. A new rule of the game is a new entry.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
-  GAME_RULES does not forbid it and a party is being planned. Duplicates of a non-stacking trait are reported (R4), not
-  refused.
+  the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
+  trait are reported (R4), not refused.
 
 ### 8.3 Smart search (Phase 2)
 Syntax highlighting in the input, autocomplete by context, inline diagnostics with one-click fixes, plain-language

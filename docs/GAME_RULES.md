@@ -18,6 +18,11 @@ A party has **6 creatures**. Each creature has up to **3 trait slots**:
 A trait with `Material Name = "No Material Exists"` can never sit in the Artifact slot. Kinds are defined in R7;
 special kinds are artifact-only (R6).
 
+**Filling order · Confirmed (2026-10-17).** In the game a fused creature always has a first creature, so a Fused trait
+without an Innate one cannot exist. The planner does not enforce it: the player may fill the Fused slot before the Innate
+one, to think in their own order, and that is never refused. Such a member has no family (R2) until its Innate slot is
+filled. The same goes for any other combination of slots: only R1 and R6 refuse a placement.
+
 ## R2 — Fusion: what each creature contributes · Confirmed (2026-10-16)
 For a fused creature:
 - **Family, personality, skin** and the **innate trait** come from the **first** creature.

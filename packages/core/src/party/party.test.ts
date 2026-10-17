@@ -37,6 +37,14 @@ describe('withTraitAt', () => {
     expect(placed.filter((_, index) => index !== 2)).toEqual(emptyParty.filter((_, index) => index !== 2));
   });
 
+  it('lets the Fused slot be filled before the Innate one, which is never refused (GAME_RULES R1, filling order)', () => {
+    const fusedFirst = withTraitAt(emptyParty, { member: 0, slot: 'fused' }, 'life--mender');
+    const completed = withTraitAt(fusedFirst, { member: 0, slot: 'innate' }, 'a--one');
+
+    expect(fusedFirst[0]).toEqual({ innate: null, fused: 'life--mender', artifact: null });
+    expect(completed[0]).toEqual({ innate: 'a--one', fused: 'life--mender', artifact: null });
+  });
+
   it('replaces what the slot held', () => {
     const first = withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'a--one');
 
