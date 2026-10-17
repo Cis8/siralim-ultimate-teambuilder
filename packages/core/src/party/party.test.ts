@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   emptyParty,
+  isEmptyParty,
   MEMBER_INDEXES,
   sameSlot,
   SLOT_NAMES,
@@ -35,6 +36,25 @@ describe('emptyParty', () => {
   it('has every slot empty', () => {
     for (const member of MEMBER_INDEXES) {
       for (const slot of SLOT_NAMES) expect(traitAt(emptyParty, { member, slot })).toBeNull();
+    }
+  });
+});
+
+describe('isEmptyParty', () => {
+  it('is true for the empty party, and for one that was filled and emptied again', () => {
+    const emptied = withTraitAt(
+      withTraitAt(emptyParty, { member: 3, slot: 'fused' }, 'a--one'),
+      { member: 3, slot: 'fused' },
+      null,
+    );
+
+    expect(isEmptyParty(emptyParty)).toBe(true);
+    expect(isEmptyParty(emptied)).toBe(true);
+  });
+
+  it('is false when any of the 18 slots holds a trait', () => {
+    for (const position of SLOT_POSITIONS) {
+      expect(isEmptyParty(withTraitAt(emptyParty, position, 'a--one'))).toBe(false);
     }
   });
 });

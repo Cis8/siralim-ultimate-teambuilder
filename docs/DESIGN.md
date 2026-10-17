@@ -76,9 +76,12 @@ the token colours are only guaranteed on the page background.
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
   the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a
   `--accent-border` outline, and the word *Target* in `--accent` (not colour alone). An empty slot says "Empty" in `--text-faint`;
-  a trait the dataset does not know shows its id in `--status-warn` and "Not in this dataset". The clear button is an icon with
+  a trait the dataset does not know shows its id in `--status-warn` and "Not found in vX", with a button under the slot,
+  "Search for “name”". The clear button is an icon with
   an accessible name; the accessible name of the slot says which slot and what it holds ("Target slot: Creature 2 · Fused, …").
-- **Toolbar**: the count (`3/18 slots`, mono), *Undo*, *Redo*, *Clear party*. They are `aria-disabled`, not `disabled`, when there
+- **Toolbar**: the count (`3/18 slots`, mono), *Undo*, *Redo*, *Clear party*, *Copy link* (`CopyButton`, shared with the
+  effective query: a quiet button and a polite line that says "Link copied", or in `--status-crit` that it could not, and then the
+  link is shown to select). They are `aria-disabled`, not `disabled`, when there
   is nothing to do, so that the focus is not lost when the last undo is done.
 - **Add button** on a result: `--accent-surface` with `--accent-border`, "Add to Creature 1 · Innate"; its accessible name ends
   with the trait's name ("+" is decoration). Refused for the target slot, it is `--surface-2` with `--text-faint`, stays in the

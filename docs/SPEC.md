@@ -327,7 +327,7 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   same planner.
 - **The party panel** (web). Six creatures of three slots; the name of a creature is the creature of its Innate trait. A slot is
   a toggle that makes it the target (`aria-pressed`, a ring and the word *Target*, named "Target slot: Creature 2 · Fused,
-  *name*"), with a button to clear it; a trait the dataset does not know is shown by its id and "Not in this dataset". Undo,
+  *name*"), with a button to clear it; a trait the dataset does not know is shown by its id and "Not found in vX". Undo,
   Redo and Clear party are `aria-disabled` when there is nothing to do, so that the focus stays on them; clearing a slot
   moves the focus to the slot's button. Ctrl/Cmd+Z undoes and Ctrl/Cmd+Shift+Z (or Ctrl+Y) redoes anywhere but in a text
   field. A polite live region says what changed ("Added X to Creature 1 · Innate.", "Undid: …") and, when a refused add is
@@ -338,6 +338,15 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   accessible description (acceptance criterion 5); a press then does nothing but announce the reason. A trait that is in the
   party is marked "In party: …" with where. Until the tabs of the mobile layout (M7), where the party is stacked under the
   list a "Go to the party" link (and "Back to the results") joins the two.
+- **Sharing and remembering.** *Copy link* copies the address of the page as it is now, the typed text included, so a link
+  opened in a browser that has never seen the app brings back the same party and search (acceptance criterion 6); when the
+  clipboard refuses, the link is shown on the page to select. An id the dataset has no trait for stays in its slot, shown
+  by the id and "Not found in vX" (X the version in use), with a button that searches the trait names for the words the id
+  keeps (`lostTraitSearch`: what follows the family in the slug, hyphens as blanks) and shows them from the start of the list
+  with every other filter off. The last party is kept in `localStorage` in the same text as the address writes it and used
+  when a page is opened at an address with no `party`, which then says it; it is replaced by every edit and by choosing a
+  target, forgotten when the party is cleared, and never read from an address that has its own party. A browser that keeps
+  nothing (a private window, blocked site data) costs the convenience and nothing else.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
   the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
   trait are reported (R4), not refused.

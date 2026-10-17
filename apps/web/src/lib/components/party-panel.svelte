@@ -13,9 +13,11 @@
     type MemberIndex,
     type Planner,
     type SlotPosition,
+    type TraitId,
     type TraitLookup,
   } from '@atlas/core';
   import { copy } from '../copy';
+  import CopyButton from './copy-button.svelte';
   import PartyCoverage from './party-coverage.svelte';
   import PartySlot from './party-slot.svelte';
 
@@ -26,24 +28,33 @@
   const {
     planner,
     lookup,
+    datasetVersion,
+    address,
     onchoose,
     onclear,
     onclearall,
     onundo,
     onredo,
     onfind,
+    onfindlost,
   }: {
     planner: Planner;
     lookup: TraitLookup;
+    /** The version of the dataset in use: the one an id that is not in it was not found in. */
+    datasetVersion: string;
+    /** The link to this party and this search, for the copy button. */
+    address: string;
     onchoose: (at: SlotPosition) => void;
     onclear: (at: SlotPosition) => void;
     onclearall: () => void;
     onundo: () => void;
     onredo: () => void;
     onfind: (keyword: ClickedKeyword) => void;
+    onfindlost: (id: TraitId) => void;
   } = $props();
 
   let panel = $state<HTMLDivElement>();
+  let linkFeedback = $state<'copied' | 'failed'>();
 
   const party = $derived(planner.history.party);
   const filled = $derived(SLOT_POSITIONS.filter((at) => traitAt(party, at) !== null).length);
@@ -83,7 +94,15 @@
     <button type="button" aria-disabled={redoable ? undefined : 'true'} onclick={redo}>{copy.redo}</button>
     <button type="button" aria-disabled={filled === 0 ? 'true' : undefined} onclick={clearAll}>{copy.clearParty}</button
     >
+    <CopyButton
+      text={address}
+      label={copy.copyLink}
+      copied={copy.linkCopied}
+      failed={copy.copyLinkFailed}
+      bind:feedback={linkFeedback}
+    />
   </div>
+  {#if linkFeedback === 'failed'}<code class="link">{address}</code>{/if}
 
   <ol class="members">
     {#each MEMBER_INDEXES as member (member)}
@@ -102,11 +121,15 @@
                 {id}
                 trait={id === null ? undefined : lookup(id)}
                 isTarget={sameSlot(at, planner.target)}
+                {datasetVersion}
                 onchoose={() => {
                   onchoose(at);
                 }}
                 onclear={() => {
                   onclear(at);
+                }}
+                onfindlost={() => {
+                  if (id !== null) onfindlost(id);
                 }}
               />
             </li>
@@ -138,6 +161,12 @@
     color: var(--text-faint);
     font-family: var(--font-mono);
     font-size: 11.5px;
+  }
+
+  .link {
+    color: var(--text);
+    font-size: 11.5px;
+    overflow-wrap: anywhere;
   }
 
   .toolbar button {

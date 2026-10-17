@@ -6,6 +6,7 @@ export { detectConditionalSources } from './enrichment/conditional-sources';
 export { writtenForms as familyWrittenForms } from './enrichment/family-matcher';
 export { CREATURE_CLASSES, KNOWN_CLASSES } from './enrichment/trait-kind';
 export { assignTraitIds } from './identity/assign-trait-ids';
+export { lostTraitSearch, type LostTraitSearch } from './identity/lost-trait-search';
 export { slugify } from './identity/slugify';
 export { traitIdBase } from './identity/trait-id-base';
 export type {
@@ -80,6 +81,7 @@ export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
 export {
   emptyParty,
+  isEmptyParty,
   MEMBER_INDEXES,
   sameSlot,
   SLOT_NAMES,

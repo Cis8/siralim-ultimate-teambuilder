@@ -38,6 +38,11 @@ const emptyMember: PartyMember = { innate: null, fused: null, artifact: null };
 
 export const emptyParty: Party = [emptyMember, emptyMember, emptyMember, emptyMember, emptyMember, emptyMember];
 
+/** Whether no slot holds a trait. */
+export function isEmptyParty(party: Party): boolean {
+  return SLOT_POSITIONS.every((at) => traitAt(party, at) === null);
+}
+
 export function traitAt(party: Party, { member, slot }: SlotPosition): TraitId | null {
   return party[member][slot];
 }

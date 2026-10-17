@@ -12,14 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M6 under way: 6.1-6.6 done, 6.7 next.** The planner works end to end: `core/src/party/` (`Planner`, history,
-  coverage, address codec; SPEC §7, §8.2, ADR-0008) and, in `web`, `party-panel` / `party-slot` / `party-coverage`, the "Add to"
-  button + "In party" marker on every result, Ctrl+Z, and one writer for the search and the party (`page-address`,
-  `page-url-writer`). **Next: 6.7** (`web`): a *Copy link* button (like `effective-query.svelte`: clipboard, "Copied", the
-  address stays on the page to select), the "not found in vX" slot (`SharedParty.datasetVersion` says what the link was made
-  on; 6.6 shows the id and "Not in this dataset") with a search for the name derived from the slug, the last party in
-  `localStorage` (try/catch every access; only when the address has no party), e2e for criterion 6 in a fresh browser context.
-  Then M7: until its tabs, the narrow layout joins the list and the party with "Go to the party" / "Back to the results" links.
+- **Phase 1 · M6 done, M7 (mobile) next.** Start with 7.1 (`web`): the filters become a bottom sheet on a modal `<dialog>`
+  (focus trapped, Esc closes, focus returns), then 7.2 the Explore / Party tabs (`tablist`, tab in the URL), which replace the
+  interim "Go to the party" / "Back to the results" links in `+page.svelte` (delete them, and `.stacked-link`, with the tabs),
+  then 7.3. The party panel and the result row are already usable on a phone (44 px targets under `pointer: coarse`); 7.3
+  checks every interactive element is at least 44 × 44. Read DESIGN.md (Layout, Accessibility) and
+  `docs/prototype/Mobile*.dc.html` first. The address already carries everything but the tab (`pageAddress` leaves other
+  parameters alone; add the tab to `PageState` and its own codec like `PARTY_PARAMS`).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -135,19 +134,16 @@ text is what is searched (`filterQuery`); a click on a token turns the other sid
 filter chips are remove-only; a pressed token is a ring, not a fill (contrast of a highlight); narrow screens stack the
 panel above the list until the bottom sheet (M7); back and forward bring back the state and start the list over.
 
-### M6 Party planner
-- [x] **6.1** Immutable party + slot-rule registry `canPlace → ok | reason` (R1, R6). *T:* criterion 5, every kind × slot.
-- [x] **6.2** Commands + history (place, clear slot, clear party). *T:* undo/redo, redo dropped after a new command, no-ops not recorded.
-- [x] **6.3** Target-slot strategy (next empty slot after placing).
-- [x] **6.4** Basic coverage (applies, relies on, missing) + party-wide non-stacking duplicates (R4). *T:* criterion 7.
-- [x] **6.5** Party codec: `[datasetVersion, 18 IDs]` as a comma list (ADR-0008, not base64url) + target; unknown IDs kept. *T:* property round-trip;
-      a full party URL stays under 1,000 characters.
-- [x] **6.6** Party panel, target selection, add from results (`aria-disabled` + visible reason), clear, undo/redo
-      (buttons, Ctrl+Z / Ctrl+Shift+Z outside text fields), "in party" marker. Also coverage + duplicates in the panel and the
-      party in the address (one writer for both, `page-address` / `page-url-writer`), the `Planner` in `core`.
-      *e2e:* `party.test.ts` (criteria 5 and 7, undo/redo, address, reload, axe).
-- [ ] **6.7** Share link (copy button); "not found in vX" slots with a search for the name derived from the slug (6.6 shows
-      the id and "Not in this dataset"); last party in localStorage. *e2e:* criterion 6 (fresh browser context).
+### M6 Party planner — done
+`core`: immutable `Party` + `SLOT_POSITIONS`, slot-rule registry (R1, R6), `PartyCommand` + `PartyHistory`, the `Planner`
+(history + target slot), `nextEmptySlot` / `firstEmptySlot`, `partyCoverage` (applies, relies on, covered / missing,
+non-stacking duplicates), the address codec, `lostTraitSearch`. `web`: party panel with coverage, target toggle per slot,
+Undo / Redo / Clear / Ctrl+Z, "Add to" on every result with the rule's reason when refused, "In party" marker, copy link,
+"not found in vX" slots with a search, the last party in `localStorage`, one writer for the search and the party in the
+address. Deviations worth knowing: the party is a comma list in the address, not base64url (ADR-0008); choosing a target
+replaces the history entry instead of pushing one; undo returns the target to the slot of the edit; a trait that applies and
+relies on the same keyword covers itself (as in the prototype); where the party is stacked under the list a "Go to the party"
+link joins the two until the tabs of M7; the last party is used only when the address names none.
 
 ### M7 Mobile
 - [ ] **7.1** Bottom sheet on a modal `<dialog>`. *e2e:* focus trapped, Esc closes, focus returns.

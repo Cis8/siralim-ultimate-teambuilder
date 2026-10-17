@@ -125,7 +125,12 @@ export const copy = {
   noCreatureYet: 'No creature yet',
   emptySlot: 'Empty',
   targetTag: 'Target',
-  unknownTrait: 'Not in this dataset',
+  /** A slot that holds an id the dataset has no trait for (SPEC §5): the version it was looked for in. */
+  notFoundIn: (version: string) => `Not found in v${version}`,
+  searchForLost: (name: string) => `Search for “${name}”`,
+  copyLink: 'Copy link',
+  linkCopied: 'Link copied',
+  copyLinkFailed: 'Could not copy — select the link instead',
   /** A slot is a toggle that makes it the target; its name says which slot and what it holds. */
   targetSlot: (at: SlotPosition, held: string | undefined) => `Target slot: ${slotLabel(at)}, ${held ?? 'empty'}`,
   clearSlot: (at: SlotPosition, held: string) => `Clear ${slotLabel(at)} (${held})`,

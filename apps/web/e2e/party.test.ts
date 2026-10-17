@@ -351,15 +351,181 @@ test.describe('the party planner', () => {
       expect(new URL(page.url()).searchParams.get('party')).toContain(first.id);
     });
 
-    test('opens a link with a party whose traits the dataset does not know, and keeps them', async ({ page }) => {
+    test('opens a link with a party whose traits the dataset does not know, and keeps them', async ({
+      page,
+      request,
+    }) => {
+      const { datasetVersion } = await publishedDataset(request);
       await page.goto('./?party=1.0,gone--from-the-sheet');
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
-        'Target slot: Creature 1 · Innate, gone--from-the-sheet (Not in this dataset)',
+        `Target slot: Creature 1 · Innate, gone--from-the-sheet (Not found in v${datasetVersion})`,
       );
 
       await slot(page, 'Creature 1 · Fused').click();
 
       await expect.poll(() => new URL(page.url()).searchParams.get('party')).toBe('1.0,gone--from-the-sheet');
+    });
+  });
+
+  test.describe('a trait the dataset does not know (SPEC §5)', () => {
+    test('offers a search for the name its id keeps, which finds the trait if it was only moved', async ({
+      page,
+      request,
+    }) => {
+      const { traits } = await publishedDataset(request);
+      const moved = withUniqueName(traits).find((trait) => /^[A-Za-z ]+$/.test(trait.name) && trait.id.includes('--'));
+      if (moved === undefined) throw new Error('the dataset has no trait with a plain name');
+      const oldId = `an-old-family--${moved.id.split('--')[1] ?? ''}`;
+      await page.goto(`./?party=1.0,${oldId}`);
+      await expect(slot(page, 'Creature 1 · Innate')).toBeVisible();
+
+      await partyPanel(page)
+        .getByRole('button', { name: `Search for “${moved.name.toLowerCase()}”` })
+        .click();
+
+      await expect(searchBox(page)).toHaveValue(`trait:"${moved.name.toLowerCase()}"`);
+      await expect(
+        page.getByRole('region', { name: 'Results' }).getByRole('heading', { level: 3, name: moved.name, exact: true }),
+      ).toBeVisible();
+      // The party is as it was: the slot still holds the id the link had.
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(new RegExp(`, ${oldId} \\(Not found in v`));
+    });
+
+    test('has no search to offer for an id that keeps no name', async ({ page }) => {
+      await page.goto('./?party=1.0,family--');
+      await expect(slot(page, 'Creature 1 · Innate')).toBeVisible();
+
+      await expect(partyPanel(page).getByRole('button', { name: /^Search for / })).toHaveCount(0);
+    });
+  });
+
+  test.describe('the link (acceptance criterion 6)', () => {
+    test('copies the party and the search, and a fresh browser opens the same page', async ({
+      page,
+      context,
+      browser,
+      browserName,
+      request,
+    }) => {
+      if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+      const [first, second] = plainTraits((await publishedDataset(request)).traits);
+      if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
+      await openExplore(page);
+      await addToParty(page, first);
+      await slot(page, 'Creature 4 · Fused').click();
+      await addToParty(page, second);
+      await searchBox(page).fill('weak OR snared');
+
+      await partyPanel(page).getByRole('button', { name: 'Copy link' }).click();
+      await expect(partyPanel(page).getByText('Link copied', { exact: true })).toBeVisible();
+
+      // The copied text is the address, typed text included, even before the address has caught up with it.
+      const link =
+        browserName === 'chromium'
+          ? await page.evaluate(() => navigator.clipboard.readText())
+          : await (async () => {
+              await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe('weak OR snared');
+              return page.url();
+            })();
+      expect(new URL(link).searchParams.get('q')).toBe('weak OR snared');
+      expect(new URL(link).searchParams.get('party')).toContain(first.id);
+
+      // A browser that has never seen the app: no storage, no history.
+      const fresh = await browser.newContext();
+      try {
+        const other = await fresh.newPage();
+        await other.goto(link);
+        await expect(searchBox(other)).toHaveValue('weak OR snared');
+        await expect(slot(other, 'Creature 1 · Innate')).toHaveAccessibleName(
+          `Target slot: Creature 1 · Innate, ${first.name}`,
+        );
+        await expect(slot(other, 'Creature 4 · Fused')).toHaveAccessibleName(
+          `Target slot: Creature 4 · Fused, ${second.name}`,
+        );
+        await expect(partyPanel(other).getByText('2/18 slots')).toBeVisible();
+      } finally {
+        await fresh.close();
+      }
+    });
+
+    test('opens as an empty party in a browser that has never seen the app', async ({ browser }) => {
+      const fresh = await browser.newContext();
+      try {
+        const other = await fresh.newPage();
+        await other.goto('./');
+        await expect(slot(other, 'Creature 1 · Innate')).toHaveAccessibleName(/, empty$/);
+        await expect(partyPanel(other).getByText('0/18 slots')).toBeVisible();
+      } finally {
+        await fresh.close();
+      }
+    });
+  });
+
+  test.describe('the last party (ADR-0005)', () => {
+    test('comes back on the next visit to the plain address, and is written into it', async ({ page, request }) => {
+      const dataset = await publishedDataset(request);
+      const [first] = plainTraits(dataset.traits);
+      if (first === undefined) throw new Error('the dataset has no plain trait');
+      await openExplore(page);
+      await addToParty(page, first);
+      await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
+
+      await page.goto('./');
+
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Innate, ${first.name}`,
+      );
+      await expect(slot(page, 'Creature 1 · Fused')).toHaveAttribute('aria-pressed', 'true');
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get('party'))
+        .toBe(`${dataset.datasetVersion},${first.id}`);
+    });
+
+    test('is not used when the address has a party of its own', async ({ page, request }) => {
+      const [first, second] = plainTraits((await publishedDataset(request)).traits);
+      if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
+      await openExplore(page);
+      await addToParty(page, first);
+      await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
+
+      await page.goto(`./?party=2.0,${second.id}`);
+
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Innate, ${second.name}`,
+      );
+    });
+
+    test('is forgotten when the party is cleared', async ({ page, request }) => {
+      const [first] = plainTraits((await publishedDataset(request)).traits);
+      if (first === undefined) throw new Error('the dataset has no plain trait');
+      await openExplore(page);
+      await addToParty(page, first);
+      await toolbarButton(page, 'Clear party').click();
+      await expect(partyPanel(page).getByText('0/18 slots')).toBeVisible();
+
+      await page.goto('./');
+
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(/, empty$/);
+    });
+
+    test('is not needed: the planner works when the browser keeps nothing', async ({ page, request }) => {
+      const [first] = plainTraits((await publishedDataset(request)).traits);
+      if (first === undefined) throw new Error('the dataset has no plain trait');
+      await page.addInitScript(() => {
+        Object.defineProperty(window, 'localStorage', {
+          get() {
+            throw new DOMException('blocked', 'SecurityError');
+          },
+        });
+      });
+      await openExplore(page);
+
+      await addToParty(page, first);
+
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Innate, ${first.name}`,
+      );
+      await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
     });
   });
 

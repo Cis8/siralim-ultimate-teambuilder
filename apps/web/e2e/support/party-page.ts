@@ -15,7 +15,7 @@ export const toolbarButton = (page: Page, name: 'Undo' | 'Redo' | 'Clear party')
   partyPanel(page).getByRole('button', { name, exact: true });
 
 /** The text of the polite line that tells a screen reader what changed in the party. */
-export const partyAnnouncement = (page: Page): Locator => partyPanel(page).locator('[aria-live="polite"]');
+export const partyAnnouncement = (page: Page): Locator => partyPanel(page).locator('p[aria-live="polite"]');
 
 /** Traits the tests can find by name alone: no other trait of the dataset is called the same. */
 export function withUniqueName(traits: readonly Trait[]): Trait[] {

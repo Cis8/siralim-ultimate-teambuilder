@@ -1,33 +1,40 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import type { SlotPosition, Trait } from '@atlas/core';
+  import { lostTraitSearch, type SlotPosition, type Trait } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
 
   /**
    * One of the 18 slots of the party: a button that makes it the target (a toggle: `aria-pressed` says it is) and, when it
    * holds a trait, one that clears it. `id` is what the slot holds, `trait` what the dataset knows of it: an id it does not
-   * know (a link made on another version) is still shown, as it is.
+   * know (a link made on another version) is kept and shown as it is, "not found in" the version in use, with a search for
+   * the name its id keeps (SPEC §5).
    */
   const {
     at,
     id,
     trait,
     isTarget,
+    datasetVersion,
     onchoose,
     onclear,
+    onfindlost,
   }: {
     at: SlotPosition;
     id: string | null;
     trait: Trait | undefined;
     isTarget: boolean;
+    datasetVersion: string;
     onchoose: () => void;
     onclear: () => void;
+    /** Search for the trait the id stood for. */
+    onfindlost: () => void;
   } = $props();
 
   let chooseButton = $state<HTMLButtonElement>();
 
-  const held = $derived(id === null ? undefined : (trait?.name ?? `${id} (${copy.unknownTrait})`));
+  const held = $derived(id === null ? undefined : (trait?.name ?? `${id} (${copy.notFoundIn(datasetVersion)})`));
+  const lostName = $derived(id !== null && trait === undefined ? lostTraitSearch(id).name : '');
 
   /** The clear button goes with the trait, and would take the focus with it: it goes to the slot's other button. */
   async function clear(): Promise<void> {
@@ -53,7 +60,7 @@
       <span class="dot" style:background={classColour(trait.class)} aria-hidden="true"></span>
       <span class="name">{trait.name}</span>
     {:else}
-      <span class="name unknown">{id}<span class="note"> · {copy.unknownTrait}</span></span>
+      <span class="name unknown">{id}<span class="note"> · {copy.notFoundIn(datasetVersion)}</span></span>
     {/if}
     {#if isTarget}<span class="tag">{copy.targetTag}</span>{/if}
   </button>
@@ -71,6 +78,9 @@
     </button>
   {/if}
 </div>
+{#if lostName !== ''}
+  <button type="button" class="find" onclick={onfindlost}>{copy.searchForLost(lostName)}</button>
+{/if}
 
 <style>
   .slot {
@@ -158,6 +168,14 @@
     font-weight: 600;
   }
 
+  .find {
+    align-self: flex-start;
+    min-height: 28px;
+    margin-top: 2px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
   .clear {
     display: grid;
     place-items: center;
@@ -173,6 +191,10 @@
 
     .clear {
       width: var(--target-min);
+    }
+
+    .find {
+      min-height: var(--target-min);
     }
   }
 </style>

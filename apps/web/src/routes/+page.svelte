@@ -14,6 +14,7 @@
     decodePartyState,
     initialExploreState,
     isClickOn,
+    lostTraitSearch,
     redoEdit,
     samePartyState,
     slotRules,
@@ -28,6 +29,7 @@
     type SlotPosition,
     type SortKey,
     type Trait,
+    type TraitId,
     type TraitLookup,
   } from '@atlas/core';
   import ChipRow from '../lib/components/chip-row.svelte';
@@ -40,6 +42,8 @@
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
   import type { KeywordActions } from '../lib/keyword-actions';
+  import { createLastPartyStore } from '../lib/last-party-store';
+  import { pageAddress } from '../lib/page-address';
   import type { PageState } from '../lib/page-state';
   import { createPageUrlWriter } from '../lib/page-url-writer';
   import type { PartyActions } from '../lib/party-actions';
@@ -78,6 +82,9 @@
     if (window.scrollY > top) window.scrollTo({ top });
   }
 
+  /** The party of the last visit (ADR-0005): a convenience, used only when the address names no party of its own. */
+  const lastParty = createLastPartyStore(() => (typeof localStorage === 'undefined' ? undefined : localStorage));
+
   /** Everything the address stands for: the search and the party, under the version of the dataset in use. */
   function pageState(): PageState {
     return {
@@ -112,6 +119,15 @@
     if (!samePartyState({ party: planner.history.party, target: planner.target }, shared)) {
       planner = createPlanner(shared);
     }
+    // A visit to an address with no party starts from the one of the last visit, which the address then says.
+    if (type === 'enter' && !to.url.searchParams.has('party')) {
+      const remembered = lastParty.load();
+      if (remembered !== undefined) {
+        planner = createPlanner(remembered);
+        linkedVersion = remembered.datasetVersion;
+        urlWriter.refined(pageState());
+      }
+    }
     if (type !== 'enter') void showResultsFromTheTop();
   });
 
@@ -134,11 +150,20 @@
     },
   };
 
+  /** Keeps the party for the next visit. */
+  function remember(): void {
+    lastParty.save(
+      { party: planner.history.party, target: planner.target },
+      service?.datasetVersion ?? linkedVersion ?? '',
+    );
+  }
+
   /** An edit of the party, told to the address as a step of its own and to a screen reader in words. */
   function edited(next: Planner, announcement: string): void {
     planner = next;
     partyMessage = announcement;
     urlWriter.chosen(pageState());
+    remember();
   }
 
   function addToParty(trait: Trait): void {
@@ -177,6 +202,7 @@
     if (next === planner) return;
     planner = next;
     urlWriter.refined(pageState());
+    remember();
   }
 
   /** Ctrl+Z / Ctrl+Shift+Z undo and redo the party, but not in a field where the keys undo the typing. */
@@ -198,6 +224,15 @@
   /** A click on a missing dependency of the party shows the traits that apply it, as a click on a keyword does. */
   function findAppliers(keyword: ClickedKeyword): void {
     chosen(clickKeyword(explore, keyword));
+    void showResultsFromTheStart();
+  }
+
+  /** The party and the search as one address, to copy: what the address bar says, without waiting for the typing to pause. */
+  const shareAddress = $derived(pageAddress(new URL(page.url.href), pageState()).href);
+
+  /** A slot holds an id the dataset has no trait for: a fresh search for the name its id keeps. */
+  function findLostTrait(id: TraitId): void {
+    chosen({ ...initialExploreState, query: lostTraitSearch(id).query });
     void showResultsFromTheStart();
   }
 
@@ -319,12 +354,15 @@
       <PartyPanel
         {planner}
         {lookup}
+        datasetVersion={loaded.version}
+        address={shareAddress}
         onchoose={chooseSlot}
         onclear={clearPartySlot}
         onclearall={clearWholeParty}
         onundo={undoParty}
         onredo={redoParty}
         onfind={findAppliers}
+        onfindlost={findLostTrait}
       />
     {:else if !failed}
       <p class="soon">{copy.loadingParty}</p>

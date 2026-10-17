@@ -1,5 +1,5 @@
 import type { Trait } from '../model/trait';
-import { emptyParty, SLOT_POSITIONS, traitAt, withTraitAt, type Party, type SlotPosition } from './party';
+import { emptyParty, isEmptyParty, withTraitAt, type Party, type SlotPosition } from './party';
 import type { Placement } from './slot-rule';
 import type { SlotRuleRegistry } from './slot-rule-registry';
 import { slotRules } from './slot-rules';
@@ -32,10 +32,6 @@ export function applyCommand(party: Party, command: PartyCommand, rules: SlotRul
     case 'clear-slot':
       return { ok: true, party: withTraitAt(party, command.at, null) };
     case 'clear-party':
-      return { ok: true, party: isEmpty(party) ? party : emptyParty };
+      return { ok: true, party: isEmptyParty(party) ? party : emptyParty };
   }
-}
-
-function isEmpty(party: Party): boolean {
-  return SLOT_POSITIONS.every((at) => traitAt(party, at) === null);
 }
