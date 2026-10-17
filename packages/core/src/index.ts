@@ -96,6 +96,14 @@ export {
   type SlotName,
   type SlotPosition,
 } from './party/party';
+export {
+  partyCoverage,
+  type Dependency,
+  type DependencyStatus,
+  type DuplicateTrait,
+  type PartyCoverage,
+  type TraitLookup,
+} from './party/party-coverage';
 export { applyCommand, type CommandResult, type PartyCommand, type Refusal } from './party/party-command';
 export {
   canRedo,

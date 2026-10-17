@@ -294,6 +294,14 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   by creature, Innate, Fused, Artifact), going round after the last one, and stays where it is when no other slot is empty.
   It does not look at the rules or at the trait that comes next: a target the next trait cannot use is a disabled "add"
   with its reason, not a skipped slot.
+- **Coverage** (`partyCoverage(party, lookup)`, `lookup` gives the `Trait` of an id or `undefined`) is `{ applies, relies,
+  duplicates }`. `applies` and `relies` list the buffs, debuffs and effects the party's traits give (`applies`) or need
+  (`uses`), once each, in the order of the slots; a `relies` entry is `covered` when some trait of the party applies the
+  same key (a trait that does both covers itself, as in the prototype) and `missing` otherwise. Phase 1 has only those two
+  statuses: random and conditional sources, inactive masteries and "no payoff" are Phase 3 (D9), every mastery counts as a
+  source (D6), a `resists` mention is neither (R9), and an id the dataset does not know is passed over. `duplicates` lists
+  each non-stacking trait found more than once, with the positions of its copies (R4, acceptance criterion 7); a stacking
+  trait, or an unknown id (it is not known whether it stacks), is never listed.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
   the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
   trait are reported (R4), not refused.
