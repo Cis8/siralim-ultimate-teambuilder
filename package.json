@@ -12,6 +12,7 @@
     "build": "pnpm --filter @atlas/web build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench --run --reporter=verbose",
     "test:e2e": "pnpm --filter @atlas/web test:e2e",
     "pipeline:fetch": "pnpm --filter @atlas/pipeline fetch-sheet",
     "pipeline:build": "pnpm --filter @atlas/pipeline build-dataset",

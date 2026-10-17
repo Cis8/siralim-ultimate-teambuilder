@@ -82,6 +82,7 @@ pnpm install
 pnpm dev                 # web dev server
 pnpm test                # all unit tests (Vitest projects: core, pipeline, web, tools)
 pnpm test:e2e            # Playwright: desktop Chromium, Pixel 7, iPhone 14 WebKit; builds first
+pnpm bench               # Vitest bench: times the search on the pinned snapshot (no budget; the e2e holds it)
 pnpm lint                # ESLint + Prettier check + dependency-cruiser
 pnpm typecheck
 pnpm check               # lint + typecheck + test — the gate before every commit (also the pre-push hook)

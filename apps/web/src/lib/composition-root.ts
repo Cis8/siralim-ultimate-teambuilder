@@ -1,6 +1,7 @@
 import { asset } from '$app/paths';
 import { createSearchService, type SearchService } from '@atlas/core';
 import { createStaticTraitRepository } from './data/static-trait-repository';
+import { timeSearches } from './search-timing';
 
 // `asset` takes only the names of files that exist when the app is built, and the dataset file is renamed whenever the
 // data changes: the manifest is the one stable name, so the files are found next to it.
@@ -18,9 +19,11 @@ export function loadSearchService(): Promise<SearchService> {
       fetch: (url, init) => fetch(url, init),
       urlOf: (fileName) => dataDirectory() + fileName,
     }),
-  ).catch((failure: unknown) => {
-    searchService = undefined;
-    throw failure;
-  });
+  )
+    .then((service) => timeSearches(service))
+    .catch((failure: unknown) => {
+      searchService = undefined;
+      throw failure;
+    });
   return searchService;
 }

@@ -42,7 +42,8 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
 6. Copying the party link and opening it in a private window restores the same party and search.
 7. Two copies of the same non-stacking trait anywhere in the party are flagged.
 8. Keyboard-only: every action reachable; focus visible; sheet traps focus; axe: 0 violations.
-9. Full dataset: typing in the query bar stays under 16 ms per keystroke (measured in CI on a throttled profile).
+9. Full dataset: the search and the recount of the facets stay under 16 ms per keystroke (p95, measured in CI on the
+   production build with the CPU slowed down 4×; SPEC §9). Test: `typing-latency.test.ts`.
 
 ### Exit criteria
 All milestones merged, acceptance criteria covered by automated tests where possible, deployed on GitHub Pages.

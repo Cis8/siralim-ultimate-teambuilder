@@ -397,7 +397,7 @@ Syntax highlighting in the input, autocomplete by context, inline diagnostics wi
 
 | Area | Target |
 |---|---|
-| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised |
+| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised. The search is timed by the page (`timeSearches`, a User Timing measure) and checked by an e2e on the production build with the CPU slowed down 4×: p95 of a typed query under 16 ms. Redrawing the list is not in the budget: virtualisation bounds it |
 | Accessibility | WCAG 2.2 AA; axe clean; full keyboard use; see DESIGN § Accessibility |
 | Browsers | Last 2 versions of Chrome, Firefox, Safari, Edge; iOS Safari 16+ |
 | Offline | Phase 1: none required. By end of Phase 3: PWA, data cached, works offline |

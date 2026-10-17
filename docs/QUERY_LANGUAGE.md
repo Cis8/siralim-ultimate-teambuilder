@@ -81,8 +81,10 @@ serialising) that turns the tree into one `TraitMatcher`: each term asks the fie
 combine them (`every`, `some`, short-circuiting), and the index is filtered with the result. Fields are read from the registry
 passed in, the one of the app by default. `compileQuery(ast)` is that test on its own, for a caller that asks it of more than
 one set of traits (the Explore facets count the traits twice, with and without the class filter).
-For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough; add an index (inverted index + keyword
-bitsets) only if the 16 ms budget is missed: `TraitIndex` is opaque to `evaluate`'s callers, so it can change without them.
+For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast enough: a search with the recount of the facets
+takes 0.1–0.8 ms natively and about 3 ms (p95 4.3 ms) in the page with the CPU slowed down 4×, against a 16 ms budget (SPEC §9).
+Add an index (inverted index + keyword bitsets) only if that e2e misses the budget: `TraitIndex` is opaque to `evaluate`'s
+callers, so it can change without them.
 
 ## 4. Highlighting, writing a query back and chips
 **Highlighting.** `createHighlighter(ast)` works out once what the query marks, and returns a function from a text (the

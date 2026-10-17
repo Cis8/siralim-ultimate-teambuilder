@@ -5,7 +5,16 @@ export default defineConfig({
   test: {
     projects: [
       { test: { name: 'core', root: 'packages/core', include: ['src/**/*.test.ts'] } },
-      { test: { name: 'pipeline', root: 'packages/pipeline', include: ['src/**/*.test.ts'] } },
+      {
+        test: {
+          name: 'pipeline',
+          root: 'packages/pipeline',
+          include: ['src/**/*.test.ts'],
+          // Sorting reads a function of core through the module runner once per comparison, which Vitest warns can skew a
+          // result. A search that sorts is only measured a little slower here than in the page: the warning is no news.
+          benchmark: { suppressExportGetterWarnings: true },
+        },
+      },
       { test: { name: 'web', root: 'apps/web', include: ['src/**/*.test.ts'] } },
       { test: { name: 'tools', root: 'tools', include: ['**/*.test.ts'] } },
     ],
