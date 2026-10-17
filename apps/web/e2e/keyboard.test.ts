@@ -3,13 +3,17 @@ import type { Trait } from '@atlas/core';
 import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
 import {
+  backToTopButton,
   facet,
   filtersButton,
   filtersSheet,
   isCompact,
   isTabbed,
   openExplore,
+  pageHeading,
   rows,
+  scrollScreens,
+  scrolledBy,
   searchBox,
 } from './support/explore-page';
 import { problemsOf, tabTo, walkTabOrder, type TabWalk } from './support/keyboard';
@@ -172,6 +176,22 @@ test.describe('the keyboard alone', () => {
       await page.keyboard.press('Enter');
       await expect(slot(page, slotName)).toHaveAccessibleName(`Target slot: ${slotName}, empty`);
     });
+  });
+
+  test('goes back to the top of a long list with the Back to top button, and lands on the heading of the page', async ({
+    page,
+  }) => {
+    await openExplore(page);
+    await scrollScreens(page, 3);
+    await expect(backToTopButton(page)).toBeVisible();
+    // The list never ends to a tab key going forward (it draws more of it at every press), so the button is the last control
+    // of the page's content and Shift+Tab from the foot finds it. The Home key is the quick way for a keyboard.
+    await tabTo(page, backToTopButton(page), { backwards: true, limit: 10 });
+    await page.keyboard.press('Enter');
+
+    await expect(pageHeading(page)).toBeFocused();
+    await expect.poll(() => scrolledBy(page)).toBe(0);
+    await expect(searchBox(page)).not.toBeFocused();
   });
 
   test('turns a filter on and off with Space, in the sheet where there is one', async ({ page }) => {

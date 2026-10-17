@@ -46,6 +46,8 @@ export const copy = {
   /** After the query, before the filters: a keyboard passes the filters button by button, a hundred and more of them. */
   skipFilters: 'Skip filters',
   exploreHeading: 'Explore traits',
+  /** The button fixed at the top right of a page scrolled well into the list: drawn as an arrow, so this is its name. */
+  backToTop: 'Back to top',
   loadingTraits: 'Loading the traits…',
   traitsFailed: 'The trait data could not be loaded. Check your connection and reload the page.',
 

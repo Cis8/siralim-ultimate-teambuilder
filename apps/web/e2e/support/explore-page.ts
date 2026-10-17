@@ -23,6 +23,22 @@ export async function publishedCount(page: Page): Promise<number> {
   return manifest.count;
 }
 
+/** Scrolls the page down by `screens` heights of the window (a fraction too), as a person does with a long list. */
+export async function scrollScreens(page: Page, screens: number): Promise<void> {
+  await page.evaluate((count) => {
+    window.scrollTo(0, window.innerHeight * count);
+  }, screens);
+}
+
+/** How far the page is scrolled. */
+export const scrolledBy = (page: Page): Promise<number> => page.evaluate(() => window.scrollY);
+
+/** The button fixed at the top right of a page that is scrolled more than a screen into the list. */
+export const backToTopButton = (page: Page) => page.getByRole('button', { name: 'Back to top' });
+
+/** The heading of the page, where the focus goes when the page is taken back to its top. */
+export const pageHeading = (page: Page) => page.getByRole('heading', { level: 1, name: 'Explore traits' });
+
 export const searchBox = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
 export const chips = (page: Page) => page.getByRole('group', { name: 'Filters and query terms' });
 

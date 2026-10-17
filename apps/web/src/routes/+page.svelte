@@ -35,6 +35,7 @@
     type TraitId,
     type TraitLookup,
   } from '@atlas/core';
+  import BackToTop from '../lib/components/back-to-top.svelte';
   import ChipRow from '../lib/components/chip-row.svelte';
   import EffectiveQuery from '../lib/components/effective-query.svelte';
   import FacetPanel from '../lib/components/facet-panel.svelte';
@@ -44,11 +45,13 @@
   import ResultCount from '../lib/components/result-count.svelte';
   import ResultsList from '../lib/components/results-list.svelte';
   import TabBar from '../lib/components/tab-bar.svelte';
+  import { showsBackToTop } from '../lib/back-to-top';
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
   import type { KeywordActions } from '../lib/keyword-actions';
   import { createLastPartyStore } from '../lib/last-party-store';
   import { pageAddress } from '../lib/page-address';
+  import { pageScroll } from '../lib/page-scroll';
   import type { PageState } from '../lib/page-state';
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
   import { createPageUrlWriter } from '../lib/page-url-writer';
@@ -66,8 +69,11 @@
   let partyMessage = $state('');
   /** The version of the dataset the address stated for its party: written back as it was while the data loads. */
   let linkedVersion = $state<string | null>(null);
+  let pageHeading = $state<HTMLHeadingElement>();
   let resultsHeading = $state<HTMLHeadingElement>();
   let resultsSection = $state<HTMLElement>();
+  /** Whether the page is scrolled more than a screen from its top: the Back to top button is then on offer. */
+  let scrolledAway = $state(false);
 
   /**
    * Where the views stop sharing a row (the stylesheet of the page asks for the opposite, `width >= 1100px`, in its media
@@ -103,6 +109,16 @@
     await tick();
     window.scrollTo({ top: 0 });
     resultsHeading?.focus({ preventScroll: true });
+  }
+
+  /**
+   * Back to the top of the page, and the focus with it: the button goes away as the page leaves the list, and the focus would
+   * be lost with it. It goes to the heading of the page and not to the search field, which would raise the keyboard on a phone.
+   * The page jumps: the list corrects the scroll as it measures the rows it passes, which stops a smooth scroll within pixels.
+   */
+  function backToTop(): void {
+    window.scrollTo({ top: 0 });
+    pageHeading?.focus({ preventScroll: true });
   }
 
   /** The skip link: the focus goes to the head of the results, the next stop of the tab key is the first trait. */
@@ -326,6 +342,13 @@
         failed = true;
       },
     );
+
+    // A reload leaves the page where it was scrolled to: the button is read before the first scroll.
+    const readScroll = (): void => {
+      scrolledAway = showsBackToTop(window.scrollY, window.innerHeight);
+    };
+    readScroll();
+    return pageScroll().subscribe(readScroll);
   });
 </script>
 
@@ -335,7 +358,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<h1 class="visually-hidden">{copy.exploreHeading}</h1>
+<h1 class="visually-hidden" tabindex="-1" bind:this={pageHeading}>{copy.exploreHeading}</h1>
 
 <div class="views">
   <div
@@ -456,6 +479,14 @@
   <!-- Outside the views: a change of the party made from the results is told while the party is not on screen. -->
   <p class="visually-hidden" aria-live="polite">{partyMessage}</p>
 </div>
+
+<!--
+  The last control of the page's content: the list is endless to a tab key going forward (it draws more at every press), and
+  the party, wide, sits at the top of the page, where the focus would scroll it away. Shift+Tab from the foot finds it here.
+-->
+{#if exploreOnScreen && scrolledAway}
+  <BackToTop onpress={backToTop} />
+{/if}
 
 {#if tabbed.current}
   <TabBar selected={tab} partyFilled={filledSlots(planner.history.party)} onselect={selectTab} />
@@ -639,9 +670,11 @@
     }
   }
 
+  /* A finger needs a larger target, and iOS zooms the page in when a field of less than 16 px takes the focus. */
   @media (pointer: coarse) {
     select {
       min-height: var(--target-min);
+      font-size: 16px;
     }
   }
 </style>

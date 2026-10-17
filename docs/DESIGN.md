@@ -49,7 +49,7 @@ use the fallback `#8fa1b3`.
 `QueryInput` (combobox), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
 `FacetButton`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
 `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`, `TimelinePhase`, `BottomSheet`,
-`TabBar`, `Toast`.
+`TabBar`, `BackToTop`, `Toast`.
 
 ### Keyword tokens
 Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
@@ -115,6 +115,19 @@ own beside the text, with the button on top. **Under 700 px** the column is gone
 at the top right beside the name (as in `Mobile.dc.html`; its words are not drawn, but its name still says them and the trait:
 "Add to Creature 1 · Innate — Flesh Rot"), and the notes go under the material, left-aligned.
 
+### Back to top
+A 44 px square, icon only (an arrow under a rule; the name "Back to top" is its `aria-label`), fixed 8 px from the top and the
+right of the window, in `--surface-3` with a `--border-strong` outline and `--text-strong`. It is on the page only once the page is
+scrolled more than a screen (`showsBackToTop`) and only while Explore is in view: not on the Party tab. A press takes the page to
+its top **at once**, not smoothly (a smooth scroll is stopped within pixels by the virtual list, which corrects the scroll as it
+measures the rows it passes), and moves the focus to the heading of the page, which is visually hidden and takes
+`tabindex="-1"`. Never to the search field: on a phone that raises the keyboard. A person who asked for less motion loses nothing.
+While it is there the root has `scroll-padding-top` (`--top-room`, base.css) larger than the button, so a control that takes the
+focus from above is scrolled clear of it, as the bars at the foot are (§ Accessibility). The button is the last control of the
+page's content in the document (the list is endless to a tab key going forward, and wide, the party is at the top of the page
+and would scroll it away): Shift+Tab from the foot finds it, and the Home key is the quick way for a keyboard. The scroll and
+size of the window are watched once for it and for `trackViewportOffset` (`page-scroll.ts`).
+
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
   wrap on narrow widths.
@@ -145,6 +158,10 @@ at the top right beside the name (as in `Mobile.dc.html`; its words are not draw
   target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
   the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the
   line beside it.
+- **Text fields and selects** (the search field, the sort) are 16 px under `pointer: coarse`: iOS zooms the page in when a field
+  with less takes the focus, and leaves it zoomed. The viewport meta stays as it is (`initial-scale=1`, no `maximum-scale`):
+  stopping the zoom would stop a person from zooming (WCAG 1.4.4). `touch-targets.test.ts` reads the computed size of every text
+  field and select on Explore, in the open sheet and on the Party tab.
 - Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). `contrast.test.ts` reads `tokens.css` and checks every text colour on every surface
   (`--bg`, `--bg-bar`, `--surface-1…3`, `--accent-surface`), the text of a description under the match highlight (on `--bg`, where
   the descriptions are: a text colour that passes there can fail on a lighter surface, as `--text-muted` does on `--surface-2`),

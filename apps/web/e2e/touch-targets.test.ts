@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { CONTROLS } from './support/controls';
 import { publishedDataset } from './support/dataset';
 import {
+  backToTopButton,
   chips,
   closeFilters,
   facet,
@@ -9,6 +10,7 @@ import {
   openExplore,
   openFilters,
   rows,
+  scrollScreens,
   searchBox,
 } from './support/explore-page';
 import { addButton, addToParty, findRow, partyPanel, plainTraits, withUniqueName } from './support/party-page';
@@ -80,6 +82,48 @@ async function expectTargetsLargeEnough(scope: Locator, including: readonly RegE
   expect(tooSmall).toEqual([]);
 }
 
+/** The fields iOS zooms the page in on when they take the focus, if their text is under 16 px (a checkbox has no text). */
+const TEXT_FIELDS = 'input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"]), select, textarea';
+
+/** What iOS asks of a field's text so that it does not zoom. */
+const MIN_FIELD_FONT_SIZE = 16;
+
+/**
+ * Every text field and select drawn inside `scope` has text of 16 px or more, and the ones in `including` were among those
+ * looked at (the sheet and the Party tab have none today: the check holds for the day they have).
+ */
+async function expectFieldsNotZoomedIn(scope: Locator, including: readonly RegExp[]): Promise<void> {
+  const { names, tooSmall } = await scope.evaluate(
+    (root, { fields, min }) => {
+      const words = (element: Element): string => element.textContent.replace(/\s+/g, ' ').trim();
+      const names: string[] = [];
+      const tooSmall: string[] = [];
+      for (const field of root.querySelectorAll(fields)) {
+        if (!field.checkVisibility({ checkVisibilityCSS: true })) continue;
+        const labelled =
+          field instanceof HTMLInputElement ||
+          field instanceof HTMLSelectElement ||
+          field instanceof HTMLTextAreaElement
+            ? Array.from(field.labels ?? [])
+            : [];
+        const name = field.getAttribute('aria-label') ?? labelled.map(words).join(' ');
+        names.push(name);
+        const size = Number.parseFloat(getComputedStyle(field).fontSize);
+        if (size < min) tooSmall.push(`${field.tagName.toLowerCase()} “${name}” has text of ${String(size)} px`);
+      }
+      return { names, tooSmall };
+    },
+    { fields: TEXT_FIELDS, min: MIN_FIELD_FONT_SIZE },
+  );
+  for (const wanted of including) {
+    expect(
+      names.some((name) => wanted.test(name)),
+      `a field named ${String(wanted)} was looked at`,
+    ).toBe(true);
+  }
+  expect(tooSmall).toEqual([]);
+}
+
 /** The box of something drawn, which the test has already seen on the page. */
 async function boxOf(locator: Locator): Promise<{ left: number; right: number; top: number; bottom: number }> {
   const box = await locator.boundingBox();
@@ -115,6 +159,25 @@ test.describe('touch targets on a phone', () => {
       /^Explore/,
       /^Party/,
     ]);
+
+    // Scrolled into the list, the button at the top right of the window is there to be measured as well.
+    await scrollScreens(page, 3);
+    await expect(backToTopButton(page)).toBeVisible();
+    await expectTargetsLargeEnough(page.locator('body'), [/^Back to top$/, /^Add to /]);
+  });
+
+  test('has text of 16 px or more in every text field and select, below which iOS zooms the page in on focus', async ({
+    page,
+  }) => {
+    await openExplore(page);
+    await expectFieldsNotZoomedIn(page.locator('body'), [/^Search traits$/, /^Sort/]);
+
+    await openFilters(page);
+    await expectFieldsNotZoomedIn(filtersSheet(page), []);
+
+    await page.goto('./?tab=party');
+    await expect(partyPanel(page)).toBeVisible();
+    await expectFieldsNotZoomedIn(page.locator('body'), []);
   });
 
   test('has every control of the open filters sheet at least 44 × 44 px', async ({ page }) => {

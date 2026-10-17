@@ -289,6 +289,12 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 - **The effective query line** shows `SearchOutcome.effectiveQuery` with a *Copy query* button (the clipboard; if the browser
   refuses, the text is on the page to select), and is absent while there is no filter and no query.
 - **Empty state.** "No trait matches." with a hint; when several keywords must all be found, the hint says to try *Match any*.
+- **Back to top.** Once the page is scrolled more than a screen (`showsBackToTop`), a button fixed at the top right of the window
+  takes it back to its top and moves the focus to the heading of the page, never to the search field (on a phone that raises
+  the keyboard). It is on Explore only (not on the Party tab), jumps instead of scrolling smoothly (the virtual list corrects
+  the scroll as it measures the rows it passes, which stops a smooth scroll within pixels), and while it is there the page
+  keeps a control that takes the focus clear of it (`scroll-padding-top`, WCAG 2.2 2.4.11). Under `pointer: coarse` the search
+  field and the sort are 16 px, so that iOS does not zoom the page in when they take the focus (DESIGN § Accessibility).
 
 ### 8.2 Party planner (Phase 1)
 6 × 3 slots (GAME_RULES R1), a target slot that results fill, slot validation with a reason, basic coverage

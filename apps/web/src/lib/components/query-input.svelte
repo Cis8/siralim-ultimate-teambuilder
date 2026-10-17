@@ -66,4 +66,11 @@
     color: var(--text-faint);
     opacity: 1;
   }
+
+  /* iOS zooms the page in when a field of less than 16 px takes the focus, and leaves it zoomed. */
+  @media (pointer: coarse) {
+    input {
+      font-size: 16px;
+    }
+  }
 </style>

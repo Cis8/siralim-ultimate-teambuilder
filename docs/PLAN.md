@@ -12,10 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. Next is M8b (the owner's notes), slice 8b.1, then 8b.2 → 8b.3 → 8b.5 → 8b.4; one session each.**
+- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1 done; next is 8b.2, then 8b.3 → 8b.5 → 8b.4; one session each.**
   8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
   closes Phase 1: ask the owner before starting Phase 2.
-  Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong.
+  Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
+  on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
   A control that draws an outline of its own needs a `:focus-visible` rule, or `keyboard.test.ts` names it (no 2 px ring).
   Anything that changes the layout between the prerendered page and the loaded one (a line that appears, a layout JS decides)
@@ -74,6 +75,11 @@ session (after `CLAUDE.md`), update it before ending one.
   the rows above it, so a key function that reads the `keys` prop when called, or a list that changes under a pending
   measure, draws a trait twice (`each_key_duplicate`, a 500 page). `options()` snapshots the keys and `measure()` runs when
   the list is another one. The e2e that proves it is the chain of filters taken off one by one (`draws no trait twice…`).
+- `virtual-list` and scrolling: `@tanstack/virtual-core` corrects the scroll (a `scrollTo` with no behaviour) whenever it measures
+  a row above the window, which cancels any native smooth scroll the page starts: one from six screens down stopped 35 px in. Only the
+  library's own `scrollToOffset(…, { behavior: 'smooth' })` is exempt (`scrollState`). The page therefore jumps
+  (`window.scrollTo({ top: 0 })`, as "Back to top" does). A scroll test must go far down (20 screens): near the top the rows
+  are measured already.
 - e2e: wait for the first row before typing or clicking (`openExplore`): the traits load after hydration, and a field filled
   earlier is lost (WebKit gets there last). Safari does not focus a button that is clicked: to test focus, use the keyboard.
 - SvelteKit 3 navigation: `pushState` / `replaceState` are deprecated and a shallow entry keeps `page.url` on the page
@@ -209,14 +215,15 @@ the trait, in place of the disabled add; the five standard classes come first in
 Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
 address, not in `localStorage`); "Clear filters" keeps the query, sort and Match all/any (settings, not filters); input font
 16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4).
-- [ ] **8b.1** Mobile, web only. (a) iOS zooms on focus below 16 px: the search field is 14 px (`query-input.svelte`) and the sort
-      select 12.5 px (`.meta` in `+page.svelte`); set 16 px under `pointer: coarse`, e2e on the two phone projects asserts the
-      computed size of every text input and select (the owner confirms the real zoom on an iPhone, Safari and Chrome). (b) A
-      fixed top-right "Back to top" (44 px, `copy.ts`) after about a screen of scroll, Explore view only, `smooth` unless
-      `prefers-reduced-motion`; focus goes to the page heading (`tabindex="-1"`), never the search field (it raises the keyboard
-      on iOS); one scroll listener shared with `viewport-offset.ts`; `scroll-padding-top` while it shows so it never covers a
-      focused control (WCAG 2.4.11). New `e2e/back-to-top.test.ts`, entries in `touch-targets` and `keyboard`, axe, size budget
-      and Lighthouse unchanged. Docs: DESIGN, SPEC §8.1.
+- [x] **8b.1** Mobile, web only. The search field and the sort are 16 px under `pointer: coarse` (iOS zooms on focus below that;
+      `touch-targets.test.ts` reads the computed size of every text field and select; the viewport meta is unchanged). A fixed
+      top-right "Back to top" (`back-to-top.svelte`, 44 px) after a screen of scroll, Explore only, the focus to the page heading;
+      the window's scroll is watched once for it and for `trackViewportOffset` (`page-scroll.ts`); `scroll-padding-top` while it
+      shows (WCAG 2.4.11). `e2e/back-to-top.test.ts`, entries in `touch-targets` and `keyboard`, axe. Deviations: the page
+      jumps instead of scrolling smoothly (see Notes: the virtual list stops a native smooth scroll), so reduced motion needs
+      no case of its own; and the button is the last control of the page's content in the document, because forward the list
+      is endless to the tab key and, wide, the party at the top of the page scrolls the button away: Shift+Tab from the foot
+      finds it (Home is the quick way).
 - [ ] **8b.2** Filters: "Clear filters" and the order of the classes. `core` first: `clearFilters(state)` (next to
       `filter-chips.ts`; keeps query, sort and mode; the same object when nothing is on) and the class order in
       `explore/facets.ts` (`STANDARD_CLASSES`, GAME_RULES R7: Chaos, Death, Life, Nature, Sorcery from A to Z, then the others by
