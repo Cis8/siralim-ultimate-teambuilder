@@ -95,6 +95,17 @@ export {
   type SlotName,
   type SlotPosition,
 } from './party/party';
+export { applyCommand, type CommandResult, type PartyCommand, type Refusal } from './party/party-command';
+export {
+  canRedo,
+  canUndo,
+  createPartyHistory,
+  executeCommand,
+  redo,
+  undo,
+  type PartyEdit,
+  type PartyHistory,
+} from './party/party-history';
 export type { Placement, SlotRule } from './party/slot-rule';
 export { createSlotRuleRegistry, SlotRuleRegistryError, type SlotRuleRegistry } from './party/slot-rule-registry';
 export { slotRules } from './party/slot-rules';

@@ -281,6 +281,14 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   `avatar-innate-only` (R6), `artifact-needs-material` (R1). The reason speaks of the kind of trait and the slot, not of the
   trait ("Mastery traits can only go in the Artifact slot."), since the page shows next to it which trait it is; it is the
   visible text of a disabled "add" button. A new rule of the game is a new entry.
+- **Edits are commands, and the history keeps them** (`party-command`, `party-history`). A `PartyCommand` is data: `place-trait`
+  (a slot and the `Trait`, since the rules need the trait and not its id), `clear-slot`, `clear-party`. `applyCommand(party,
+  command, rules = slotRules)` gives `{ ok: true, party }` or the refusal of the rules (`{ ok: false, rule, reason }`), and the
+  very same party when nothing changed. `PartyHistory` is `{ party, done, undone }`, two stacks of `PartyEdit` (`command`,
+  `before`, `after`); `executeCommand` records an edit only when the party changed, and then empties `undone`. A refused
+  command and one that changed nothing give the history back untouched (the same object, redo list included), `undo` / `redo`
+  do the same when there is nothing to step over. A history starts on a given party (one from a link) with nothing to undo;
+  `clear-party` is one edit, undone in one step.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
   the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
   trait are reported (R4), not refused.
