@@ -13,6 +13,7 @@ import {
   flag,
   format,
   isCompact,
+  isTabbed,
   mode,
   openExplore,
   openFilters,
@@ -32,7 +33,9 @@ test.describe('explore', () => {
     if (isCompact(page)) await expect(filtersButton(page)).toBeVisible();
     else await expect(page.getByRole('region', { name: 'Filters' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Results' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Party' })).toBeVisible();
+    // Where the party has no room beside the list it is a tab of its own (tabs.test.ts).
+    if (isTabbed(page)) await expect(page.getByRole('region', { name: 'Party' })).toBeHidden();
+    else await expect(page.getByRole('region', { name: 'Party' })).toBeVisible();
   });
 
   test('shows each trait with its creature, family, class, description and material', async ({ page }) => {
@@ -145,7 +148,7 @@ test.describe('explore', () => {
       await openExplore(page);
 
       // The heights of the rows below are estimated until they are drawn: the bottom of the list moves as they are.
-      // Where the party is stacked under the list the bottom of the page is the party's, so it is the list that is scrolled to.
+      // The window is scrolled to the foot of the list itself: below it there is the footer, and beside it the party.
       await expect(async () => {
         await results(page).evaluate((list) => {
           window.scrollTo(0, list.getBoundingClientRect().bottom + window.scrollY - window.innerHeight);

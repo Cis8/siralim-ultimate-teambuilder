@@ -197,6 +197,10 @@ key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE
 nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
 dataset: by family, then trait name; default), `class` (class, then family) or `az` (trait name). The party and the tab live in other parameters that the search codec leaves alone.
 
+**The tab codec** (`decodeTab` / `encodeTab`, `page-tab.ts` in `web`: the tabs are a layout, not a domain concept) follows
+the same rules. `tab` is the view a narrow screen shows, `explore` (default, never written) or `party`; reading ignores case
+and the blanks around the name, and a name that is no tab is `explore`. The Synergies tab of Phase 2 adds a value here.
+
 **The party codec** (`decodePartyState` / `encodePartyState`, `party-url.ts`) follows the same rules and shares the list
 helpers (`url/url-params.ts`). `party` is a list: the dataset version, then the trait id of each of the 18 slots in reading
 order (creature by creature, Innate, Fused, Artifact), an empty item for an empty slot; the empty slots at the end are left
@@ -209,12 +213,13 @@ characters, commas escaped (`party-acceptance.test.ts`).
 
 **The page and its address** (`page-address.ts`, `page-url-writer.ts`). The page reads the address when it opens and
 when the browser goes to another one (back, forward, a link); an address it cannot read is the plain page and stays as it is
-until something changes. Every change of the state, the search and the party, is written back by one writer, and the
-parameters that are neither's stay:
+until something changes. Every change of the state, the search, the party and the tab, is written back by one writer, and
+the parameters that are none of theirs stay:
 - typing *replaces* the current history entry once the text has stayed as it is for 400 ms, so a stretch of typing is one
   entry (and a browser's limit on how often the history may change is out of reach);
-- a facet, a chip, a click on a keyword, the sort and each edit of the party (an add, a clear, an undo, a redo) *push* an
-  entry, after the text typed so far has been written to the entry it was typed in, so that back returns to it. Choosing the
+- a facet, a chip, a click on a keyword, the sort, each edit of the party (an add, a clear, an undo, a redo) and a change of
+  tab *push* an entry, after the text typed so far has been written to the entry it was typed in, so that back returns to
+  it. Choosing the
   target slot *replaces* the entry at once: it is in the address but no step of its own. A state that is already the address
   writes nothing;
 - the writes are made one after another, and an arrival by back or forward drops the text that was waiting;
@@ -224,7 +229,7 @@ parameters that are neither's stay:
   what can be undone, another party starts a new history.
 
 Back and forward bring back the state and start the list over; they do not restore the scroll position (the list is another
-one).
+one). Going back to a tab with the same search finds the page where that tab was left (§ 8.2, *The tabs*).
 
 The URL is the source of truth; local storage keeps only conveniences (recent searches, saved searches, last party).
 
@@ -339,8 +344,19 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 - **Add from the results.** Every result has "Add to *target*" (the creature and slot named). When the slot rules refuse the
   trait for that slot the button is `aria-disabled`, stays in the tab order, and the reason is on the page under it and its
   accessible description (acceptance criterion 5); a press then does nothing but announce the reason. A trait that is in the
-  party is marked "In party: …" with where. Until the tabs of the mobile layout (M7), where the party is stacked under the
-  list a "Go to the party" link (and "Back to the results") joins the two.
+  party is marked "In party: …" with where.
+- **The tabs.** Where the party has no room beside the list (under 1100 px: the width at which it used to be stacked under
+  the list) Explore (the query, the facets and the results) and Party are the two views of a `tablist` of tabs at the foot of
+  the window (ARIA tabs: the selected tab is the one in the tab order, the arrows, Home and End move along them and select
+  as they go, each tab names its `tabpanel`). The Party tab says how many slots are filled ("1/18", and "1 of 18 slots filled"
+  to a screen reader). Pressing a tab, or going back to one, shows that view with the page scrolled to where the tab was left
+  (to its top the first time). The view that is not shown stays laid out but takes no room and nothing of it can be reached
+  (not `display: none`: the virtual list of the results would measure its rows as 0 px tall). The Filters button (under
+  700 px) is part of Explore: it sits above the tabs, and goes with the view. A search the party asks for (a missing
+  dependency, a trait that was lost) brings Explore forward, from the start of its list. A trait added from the results is
+  announced while the party is out of sight (the live region is beside the views, not in one). On a wider screen all of it
+  is side by side and the tab in an address is ignored. The bars at the foot of the window leave room at the foot of the page,
+  and a control that takes the focus is scrolled clear of them (`scroll-padding-bottom`, WCAG 2.2 Focus Not Obscured).
 - **Sharing and remembering.** *Copy link* copies the address of the page as it is now, the typed text included, so a link
   opened in a browser that has never seen the app brings back the same party and search (acceptance criterion 6); when the
   clipboard refuses, the link is shown on the page to select. An id the dataset has no trait for stays in its slot, shown

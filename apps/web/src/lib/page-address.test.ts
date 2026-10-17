@@ -11,14 +11,21 @@ import {
 import { describe, expect, it } from 'vitest';
 import { pageAddress } from './page-address';
 import type { PageState } from './page-state';
+import { decodeTab } from './page-tab';
 
 const page = new URL('https://example.test/siralim-ultimate-teambuilder/');
 const stateWith = (overrides: Partial<ExploreState>): PageState => ({
   explore: { ...initialExploreState, ...overrides },
   party: initialPartyState,
+  tab: 'explore',
   datasetVersion: '2.0',
 });
-const partyWith = (party: PartyState): PageState => ({ explore: initialExploreState, party, datasetVersion: '2.0' });
+const partyWith = (party: PartyState): PageState => ({
+  explore: initialExploreState,
+  party,
+  tab: 'explore',
+  datasetVersion: '2.0',
+});
 
 describe('pageAddress: the search', () => {
   it('is the page itself for the initial state', () => {
@@ -55,19 +62,19 @@ describe('pageAddress: the search', () => {
   });
 
   it('replaces the parameters of a search and keeps the others, in their place', () => {
-    const current = new URL('https://example.test/?tab=party&q=old&class=death');
+    const current = new URL('https://example.test/?ref=chat&q=old&class=death');
 
     const address = pageAddress(current, stateWith({ query: 'new' }));
 
     expect(address.searchParams.get('q')).toBe('new');
     expect(address.searchParams.has('class')).toBe(false);
-    expect(address.searchParams.get('tab')).toBe('party');
+    expect(address.searchParams.get('ref')).toBe('chat');
   });
 
   it('drops the parameters of a search that has gone back to the initial state', () => {
-    const current = new URL('https://example.test/?q=old&sort=az&tab=party');
+    const current = new URL('https://example.test/?q=old&sort=az&ref=chat');
 
-    expect(pageAddress(current, stateWith({})).search).toBe('?tab=party');
+    expect(pageAddress(current, stateWith({})).search).toBe('?ref=chat');
   });
 
   it('leaves the address it was given as it was', () => {
@@ -132,11 +139,11 @@ describe('pageAddress: the party', () => {
   });
 
   it('replaces the parameters of an older party', () => {
-    const current = new URL('https://example.test/?party=1.0,old--one&target=4-innate&tab=party');
+    const current = new URL('https://example.test/?party=1.0,old--one&target=4-innate&ref=chat');
 
     const address = pageAddress(current, partyWith(initialPartyState));
 
-    expect(address.search).toBe('?tab=party');
+    expect(address.search).toBe('?ref=chat');
   });
 
   it('writes the version the party is under, empty when there is none to state', () => {
@@ -151,5 +158,48 @@ describe('pageAddress: the party', () => {
     const reparsed = new URL(pageAddress(page, state).href);
 
     expect(decodePartyState(reparsed.searchParams)).toEqual({ ...state.party, datasetVersion: '2.0' });
+  });
+});
+
+describe('pageAddress: the tab', () => {
+  const partyTab: PageState = { ...stateWith({}), tab: 'party' };
+
+  it('is the page itself for the tab it opens on', () => {
+    expect(pageAddress(page, stateWith({})).href).toBe(page.href);
+  });
+
+  it('writes the other tab', () => {
+    expect(pageAddress(page, partyTab).search).toBe('?tab=party');
+  });
+
+  it('writes it after the search and the party, and keeps all three when one changes', () => {
+    const state: PageState = {
+      ...partyTab,
+      explore: { ...initialExploreState, query: 'weak' },
+      party: {
+        party: withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'life--mender'),
+        target: { member: 0, slot: 'fused' },
+      },
+    };
+
+    const address = pageAddress(page, state);
+    const again = pageAddress(address, { ...state, explore: { ...state.explore, query: 'snared' } });
+
+    expect([...address.searchParams.keys()]).toEqual(['q', 'party', 'tab']);
+    expect([...again.searchParams.keys()]).toEqual(['q', 'party', 'tab']);
+    expect(again.searchParams.get('tab')).toBe('party');
+  });
+
+  it('replaces the tab an older address had, and drops it for the initial one', () => {
+    const current = new URL('https://example.test/?tab=party&ref=chat');
+
+    expect(pageAddress(current, stateWith({})).search).toBe('?ref=chat');
+    expect(pageAddress(new URL('https://example.test/?ref=chat'), partyTab).search).toBe('?ref=chat&tab=party');
+  });
+
+  it('is read back as the same tab', () => {
+    const reparsed = new URL(pageAddress(page, partyTab).href);
+
+    expect(decodeTab(reparsed.searchParams)).toBe('party');
   });
 });

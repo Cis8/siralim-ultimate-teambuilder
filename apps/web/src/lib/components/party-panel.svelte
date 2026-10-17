@@ -3,11 +3,11 @@
   import {
     canRedo,
     canUndo,
+    filledSlots,
     MEMBER_INDEXES,
     partyCoverage,
     sameSlot,
     SLOT_NAMES,
-    SLOT_POSITIONS,
     traitAt,
     type ClickedKeyword,
     type MemberIndex,
@@ -57,7 +57,7 @@
   let linkFeedback = $state<'copied' | 'failed'>();
 
   const party = $derived(planner.history.party);
-  const filled = $derived(SLOT_POSITIONS.filter((at) => traitAt(party, at) !== null).length);
+  const filled = $derived(filledSlots(party));
   const coverage = $derived(partyCoverage(party, lookup));
   const undoable = $derived(canUndo(planner.history));
   const redoable = $derived(canRedo(planner.history));

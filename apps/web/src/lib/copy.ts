@@ -10,6 +10,7 @@ import type {
   SortKey,
   TraitKind,
 } from '@atlas/core';
+import type { PageTab } from './page-tab';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
@@ -61,9 +62,12 @@ export const copy = {
   resultsHeading: 'Results',
   partyHeading: 'Party',
   loadingParty: 'Loading the party…',
-  /** Where the party panel is stacked below a long list, until the tabs of the mobile layout: a way there and back. */
-  jumpToParty: 'Go to the party',
-  backToResults: 'Back to the results',
+  /** The tabs that stand where the party is stacked under the list (DESIGN § Layout): one view at a time. */
+  sectionsLabel: 'Sections',
+  tabs: { explore: 'Explore', party: 'Party' } as const satisfies Record<PageTab, string>,
+  /** The count beside the Party tab: written short for the eye, in words for a screen reader. */
+  partyTabCount: (filled: number) => `${String(filled)}/18`,
+  partyTabCountSpoken: (filled: number) => `${String(filled)} of 18 slots filled`,
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',

@@ -81,6 +81,7 @@ export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
 export {
   emptyParty,
+  filledSlots,
   isEmptyParty,
   MEMBER_INDEXES,
   sameSlot,

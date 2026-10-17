@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   emptyParty,
+  filledSlots,
   isEmptyParty,
   MEMBER_INDEXES,
   sameSlot,
@@ -56,6 +57,39 @@ describe('isEmptyParty', () => {
     for (const position of SLOT_POSITIONS) {
       expect(isEmptyParty(withTraitAt(emptyParty, position, 'a--one'))).toBe(false);
     }
+  });
+});
+
+describe('filledSlots', () => {
+  it('is 0 for the empty party', () => {
+    expect(filledSlots(emptyParty)).toBe(0);
+  });
+
+  it('counts the slots that hold a trait, whichever creature and slot they are', () => {
+    const party = [
+      { member: 0, slot: 'innate' },
+      { member: 0, slot: 'artifact' },
+      { member: 5, slot: 'fused' },
+    ].reduce<Party>((built, at, index) => withTraitAt(built, at as SlotPosition, `a--${String(index)}`), emptyParty);
+
+    expect(filledSlots(party)).toBe(3);
+  });
+
+  it('counts a trait once for every slot it sits in', () => {
+    const twice = withTraitAt(
+      withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'a--one'),
+      { member: 1, slot: 'innate' },
+      'a--one',
+    );
+
+    expect(filledSlots(twice)).toBe(2);
+  });
+
+  it('is 18 for a full party, and goes down by one when a slot is emptied', () => {
+    const full = SLOT_POSITIONS.reduce((built, at, index) => withTraitAt(built, at, `a--${String(index)}`), emptyParty);
+
+    expect(filledSlots(full)).toBe(SLOT_POSITIONS.length);
+    expect(filledSlots(withTraitAt(full, { member: 2, slot: 'fused' }, null))).toBe(SLOT_POSITIONS.length - 1);
   });
 });
 

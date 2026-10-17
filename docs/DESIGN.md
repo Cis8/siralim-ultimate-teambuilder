@@ -45,7 +45,7 @@ use the fallback `#8fa1b3`.
 `QueryInput` (combobox), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
 `FacetButton`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
 `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`, `TimelinePhase`, `BottomSheet`,
-`Tabs`, `Toast`.
+`TabBar`, `Toast`.
 
 ### Keyword tokens
 Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
@@ -107,12 +107,18 @@ where a row stands in the whole). Rows are as tall as their text; the browser's 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
   wrap on narrow widths.
-- Mobile (under 700 px): header + search + chip row; results; bottom nav (Explore · Synergies · Party, M7.2). Filters and fixes
-  open as bottom sheets (§ Facet panel and chips). No fake status bars or keyboards in mockups; the syntax toolbar docks above the system keyboard.
+- Narrow (under 1100 px, where the party has no room beside the list): one view at a time, picked by a bottom tab bar
+  (`TabBar`: Explore · Party, with Synergies in Phase 2; 64 px, icon over name, the selected tab has a rule above it and an
+  accent colour; the Party tab carries the count of filled slots). Explore is the header, search, chip row, facets (a
+  column from 700 px) and results; Party is the planner alone, at most 520 px wide and centred.
+- Mobile (under 700 px): header + search + chip row; results; the tab bar. Filters and fixes open as bottom sheets (§ Facet
+  panel and chips), the Filters button in a bar of its own above the tab bar, on Explore only. No fake status bars or keyboards
+  in mockups; the syntax toolbar docks above the system keyboard.
 
 ## Accessibility (WCAG 2.2 AA)
 - Real elements: `button`, `a[href]`, `input` + `label`. No click handlers on `div`/`span`.
-- Visible focus ring (`--accent`, 2 px). Touch targets ≥ 44 px on mobile.
+- Visible focus ring (`--accent`, 2 px). Touch targets ≥ 44 px on mobile. Bars fixed to the foot of the window must not hide
+  a focused control: the root's `scroll-padding-bottom` is their height (`--bars-height`, base.css).
 - Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). Check `--text-faint` on every surface it is used on.
 - Combobox per ARIA APG; result count in an `aria-live="polite"` region; bottom sheets are dialogs with focus trap and
   return focus on close; tabs use `tablist`/`tab`/`tabpanel`; the coverage matrix is a real table (or ARIA table roles).

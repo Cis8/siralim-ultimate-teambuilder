@@ -9,14 +9,16 @@
    * list scrolls; on a narrow one a sheet over the page, opened by a button at the foot of the window so that it is at hand
    * wherever the list is scrolled to. The panel is the same one, handed over as `children`; `closeLabel` and `status` say what
    * it shows now, on the sheet's close button and to a screen reader. The button comes first in the page (the tab key reaches
-   * it before the list), and the page leaves room for it.
+   * it before the list), and the page leaves room for it. The button is offered only while `onScreen`: the filters are those
+   * of the Explore view, and a view that is not shown has no use for them. It sits above the tabs when there are tabs.
    */
   const {
     activeCount,
     closeLabel,
     status,
+    onScreen,
     children,
-  }: { activeCount: number; closeLabel: string; status: string; children: Snippet } = $props();
+  }: { activeCount: number; closeLabel: string; status: string; onScreen: boolean; children: Snippet } = $props();
 
   /** The stylesheet of the page has the same width in its media queries: it cannot read this one. */
   const compact = new MediaQuery('max-width: 699px');
@@ -37,24 +39,26 @@
 </script>
 
 {#if compact.current}
-  <div class="filters-bar">
-    <button
-      type="button"
-      aria-haspopup="dialog"
-      bind:this={button}
-      onclick={() => {
-        open = true;
-      }}
-    >
-      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-        <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
-      {copy.openFilters}
-      {#if activeCount > 0}
-        <span class="badge">{activeCount}<span class="visually-hidden">{copy.openFiltersActiveUnit}</span></span>
-      {/if}
-    </button>
-  </div>
+  {#if onScreen}
+    <div class="filters-bar">
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        bind:this={button}
+        onclick={() => {
+          open = true;
+        }}
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+          <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        {copy.openFilters}
+        {#if activeCount > 0}
+          <span class="badge">{activeCount}<span class="visually-hidden">{copy.openFiltersActiveUnit}</span></span>
+        {/if}
+      </button>
+    </div>
+  {/if}
   <BottomSheet {open} title={copy.filtersHeading} {closeLabel} {status} onclose={closed}>
     {@render children()}
   </BottomSheet>
@@ -88,15 +92,14 @@
     overflow-y: auto;
   }
 
-  /* The bar covers the foot of the window, so the foot of the page is that much lower. */
-  :global(body:has(.filters-bar)) {
+  /* The bar covers the foot of the window: the root takes its height into the room it leaves at the foot (see base.css). */
+  :global(:root:has(.filters-bar)) {
     --filters-bar-height: 61px;
-    padding-bottom: var(--filters-bar-height);
   }
 
   .filters-bar {
     position: fixed;
-    inset: auto 0 0;
+    inset: auto 0 var(--tab-bar-height, 0px);
     z-index: 5;
     display: flex;
     align-items: center;

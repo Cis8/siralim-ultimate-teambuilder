@@ -30,6 +30,10 @@ export const chips = (page: Page) => page.getByRole('group', { name: 'Filters an
 const COMPACT_BELOW = 700;
 export const isCompact = (page: Page): boolean => (page.viewportSize()?.width ?? COMPACT_BELOW) < COMPACT_BELOW;
 
+/** Below this width (the `tabbed` query of the page) Explore and Party are tabs, not a column beside the list. */
+const TABBED_BELOW = 1100;
+export const isTabbed = (page: Page): boolean => (page.viewportSize()?.width ?? TABBED_BELOW) < TABBED_BELOW;
+
 /** The button that opens the filters on a narrow screen. */
 export const filtersButton = (page: Page) => page.getByRole('button', { name: /^Filters/ });
 export const filtersSheet = (page: Page) => page.getByRole('dialog', { name: 'Filters', includeHidden: true });

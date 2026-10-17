@@ -43,6 +43,11 @@ export function isEmptyParty(party: Party): boolean {
   return SLOT_POSITIONS.every((at) => traitAt(party, at) === null);
 }
 
+/** How many of the 18 slots hold a trait; a trait in two slots counts twice. */
+export function filledSlots(party: Party): number {
+  return SLOT_POSITIONS.filter((at) => traitAt(party, at) !== null).length;
+}
+
 export function traitAt(party: Party, { member, slot }: SlotPosition): TraitId | null {
   return party[member][slot];
 }

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { taxonomy, type Trait } from '@atlas/core';
 import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
-import { openExplore, searchBox } from './support/explore-page';
+import { openExplore, results, searchBox } from './support/explore-page';
 import {
   addButton,
   addToParty,
@@ -10,6 +10,9 @@ import {
   findRow,
   partyAnnouncement,
   partyPanel,
+  plainTraits,
+  showExplore,
+  showParty,
   slot,
   toolbarButton,
   withUniqueName,
@@ -17,21 +20,21 @@ import {
 
 // The party planner (SPEC §8.2) through the page: acceptance criteria 5 and 7, undo and redo, and the party in the address.
 // The traits come from the dataset the build published, so that a data refresh does not break the tests.
+// On a narrow screen the party is a tab of its own: a test shows it (`showParty`) before it reads or presses anything in it,
+// and `findRow` / `addToParty` bring the search forward again. On a wide screen both are in sight and these do nothing.
 
 const isCreature = (trait: Trait): boolean => trait.kind === 'creature';
-
-/** Two creature traits that stack and have a material, so that they can go in any slot of a creature. */
-const plainTraits = (traits: readonly Trait[]): Trait[] =>
-  withUniqueName(traits).filter((trait) => isCreature(trait) && trait.stacks && trait.material !== null);
 
 test.describe('the party planner', () => {
   test('fills the target slot from a result, moves the target on, and says so', async ({ page, request }) => {
     const [first, second] = plainTraits((await publishedDataset(request)).traits);
     if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
     await openExplore(page);
+    await showParty(page);
 
     await expect(slot(page, 'Creature 1 · Innate')).toHaveAttribute('aria-pressed', 'true');
     await addToParty(page, first);
+    await showParty(page);
 
     await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
       `Target slot: Creature 1 · Innate, ${first.name}`,
@@ -42,6 +45,7 @@ test.describe('the party planner', () => {
     await expect(partyAnnouncement(page)).toHaveText(`Added ${first.name} to Creature 1 · Innate.`);
 
     await addToParty(page, second);
+    await showParty(page);
 
     await expect(slot(page, 'Creature 1 · Fused')).toHaveAccessibleName(
       `Target slot: Creature 1 · Fused, ${second.name}`,
@@ -54,10 +58,12 @@ test.describe('the party planner', () => {
     const [first] = plainTraits((await publishedDataset(request)).traits);
     if (first === undefined) throw new Error('the dataset has no plain trait');
     await openExplore(page);
+    await showParty(page);
 
     await slot(page, 'Creature 3 · Fused').click();
     await expect(slot(page, 'Creature 3 · Fused')).toHaveAttribute('aria-pressed', 'true');
     await addToParty(page, first);
+    await showParty(page);
 
     await expect(slot(page, 'Creature 3 · Fused')).toHaveAccessibleName(
       `Target slot: Creature 3 · Fused, ${first.name}`,
@@ -83,6 +89,7 @@ test.describe('the party planner', () => {
       const noMaterial = withUniqueName(traits).find((trait) => isCreature(trait) && trait.material === null);
       if (noMaterial === undefined) throw new Error('the dataset has no creature trait without a material');
       await openExplore(page);
+      await showParty(page);
       await slot(page, 'Creature 1 · Artifact').click();
 
       const row = await findRow(page, noMaterial);
@@ -94,11 +101,18 @@ test.describe('the party planner', () => {
       await expect(add).toHaveAccessibleDescription(reason);
 
       // Playwright will not click what `aria-disabled` says is disabled; a person can, and nothing happens but the reason.
+      // The button is brought to the middle of the window first, as a person scrolls to it: a click that is forced is made at
+      // the spot where the button is, and at the foot of a narrow screen that is under the bars.
+      await add.evaluate((button) => {
+        button.scrollIntoView({ block: 'center' });
+      });
       await add.click({ force: true });
+      // The reason is told with the party out of sight, too.
+      await expect(partyAnnouncement(page)).toHaveText(reason);
+      await showParty(page);
 
       await expect(slot(page, 'Creature 1 · Artifact')).toHaveAccessibleName(/, empty$/);
       await expect(partyPanel(page).getByText('0/18 slots')).toBeVisible();
-      await expect(partyAnnouncement(page)).toHaveText(reason);
     });
 
     test('is added to the Innate slot all the same: the material matters only to an artifact', async ({
@@ -114,6 +128,7 @@ test.describe('the party planner', () => {
 
       await expect(addButton(row)).not.toHaveAttribute('aria-disabled', 'true');
       await addButton(row).click();
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${noMaterial.name}`,
       );
@@ -128,7 +143,9 @@ test.describe('the party planner', () => {
       const row = await findRow(page, mastery);
       await expect(row.getByText('Mastery traits can only go in the Artifact slot.')).toBeVisible();
 
+      await showParty(page);
       await slot(page, 'Creature 1 · Artifact').click();
+      await showExplore(page);
       await expect(addButton(row)).not.toHaveAttribute('aria-disabled', 'true');
     });
   });
@@ -142,9 +159,11 @@ test.describe('the party planner', () => {
     await openExplore(page);
 
     await addToParty(page, noStack);
+    await showParty(page);
     await expect(partyPanel(page).getByText('Duplicate non-stacking traits')).toHaveCount(0);
 
     await addToParty(page, noStack);
+    await showParty(page);
 
     await expect(partyPanel(page).getByText('Duplicate non-stacking traits')).toBeVisible();
     await expect(
@@ -168,6 +187,7 @@ test.describe('the party planner', () => {
     await openExplore(page);
 
     await addToParty(page, user);
+    await showParty(page);
 
     const dependency = (status: 'missing' | 'covered') =>
       partyPanel(page).getByRole('button', { name: `${label} — ${status} — show traits that apply it` });
@@ -175,6 +195,7 @@ test.describe('the party planner', () => {
     await expect(dependency('covered')).toHaveCount(0);
 
     await addToParty(page, applier);
+    await showParty(page);
 
     await expect(dependency('covered')).toBeVisible();
     await expect(dependency('missing')).toHaveCount(0);
@@ -198,12 +219,16 @@ test.describe('the party planner', () => {
     const label = taxonomy.get('vulnerable')?.label ?? 'Vulnerable';
     await openExplore(page);
     await addToParty(page, user);
+    await showParty(page);
 
     await partyPanel(page)
       .getByRole('button', { name: `${label} — missing — show traits that apply it` })
       .click();
 
     await expect.poll(() => new URL(page.url()).searchParams.get('kw')).toBe('a:vulnerable');
+    // The traits that apply it are on the search, which a narrow screen has to bring forward: the party was on screen.
+    await expect(results(page)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Results' })).toBeFocused();
   });
 
   test('clears a slot, and the whole party', async ({ page, request }) => {
@@ -212,6 +237,7 @@ test.describe('the party planner', () => {
     await openExplore(page);
     await addToParty(page, first);
     await addToParty(page, second);
+    await showParty(page);
 
     await clearButton(page, 'Creature 1 · Innate').click();
 
@@ -234,9 +260,11 @@ test.describe('the party planner', () => {
       const [first, second] = plainTraits((await publishedDataset(request)).traits);
       if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
       await openExplore(page);
+      await showParty(page);
       await expect(toolbarButton(page, 'Undo')).toHaveAttribute('aria-disabled', 'true');
       await addToParty(page, first);
       await addToParty(page, second);
+      await showParty(page);
       await expect(toolbarButton(page, 'Undo')).not.toHaveAttribute('aria-disabled', 'true');
 
       await toolbarButton(page, 'Undo').click();
@@ -266,6 +294,7 @@ test.describe('the party planner', () => {
       // In the query box the keys are the box's own.
       await searchBox(page).focus();
       await page.keyboard.press('Control+z');
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${first.name}`,
       );
@@ -286,10 +315,12 @@ test.describe('the party planner', () => {
       if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
       await openExplore(page);
       await addToParty(page, first);
+      await showParty(page);
       await toolbarButton(page, 'Undo').click();
       await expect(toolbarButton(page, 'Redo')).not.toHaveAttribute('aria-disabled', 'true');
 
       await addToParty(page, second);
+      await showParty(page);
 
       await expect(toolbarButton(page, 'Redo')).toHaveAttribute('aria-disabled', 'true');
     });
@@ -311,6 +342,7 @@ test.describe('the party planner', () => {
         .toBe(`${dataset.datasetVersion},${first.id}`);
       expect(new URL(page.url()).searchParams.has('target')).toBe(false);
 
+      await showParty(page);
       await slot(page, 'Creature 3 · Fused').click();
       await expect.poll(() => new URL(page.url()).searchParams.get('target')).toBe('3-fused');
     });
@@ -320,11 +352,13 @@ test.describe('the party planner', () => {
       if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
       await openExplore(page);
       await addToParty(page, first);
+      await showParty(page);
       await slot(page, 'Creature 4 · Artifact').click();
       await addToParty(page, second);
       await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(second.id);
 
       await page.reload();
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${first.name}`,
       );
@@ -357,13 +391,16 @@ test.describe('the party planner', () => {
     }) => {
       const { datasetVersion } = await publishedDataset(request);
       await page.goto('./?party=1.0,gone--from-the-sheet');
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, gone--from-the-sheet (Not found in v${datasetVersion})`,
       );
 
-      await slot(page, 'Creature 1 · Fused').click();
+      // Choosing another slot writes the address again: the id stays in it, under the version of the dataset now in use.
+      await slot(page, 'Creature 3 · Fused').click();
 
-      await expect.poll(() => new URL(page.url()).searchParams.get('party')).toBe('1.0,gone--from-the-sheet');
+      await expect.poll(() => new URL(page.url()).searchParams.get('target')).toBe('3-fused');
+      expect(new URL(page.url()).searchParams.get('party')).toBe(`${datasetVersion},gone--from-the-sheet`);
     });
   });
 
@@ -377,22 +414,26 @@ test.describe('the party planner', () => {
       if (moved === undefined) throw new Error('the dataset has no trait with a plain name');
       const oldId = `an-old-family--${moved.id.split('--')[1] ?? ''}`;
       await page.goto(`./?party=1.0,${oldId}`);
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toBeVisible();
 
       await partyPanel(page)
         .getByRole('button', { name: `Search for “${moved.name.toLowerCase()}”` })
         .click();
 
+      // The search is on the Explore tab, which a narrow screen brings forward.
       await expect(searchBox(page)).toHaveValue(`trait:"${moved.name.toLowerCase()}"`);
       await expect(
         page.getByRole('region', { name: 'Results' }).getByRole('heading', { level: 3, name: moved.name, exact: true }),
       ).toBeVisible();
       // The party is as it was: the slot still holds the id the link had.
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(new RegExp(`, ${oldId} \\(Not found in v`));
     });
 
     test('has no search to offer for an id that keeps no name', async ({ page }) => {
       await page.goto('./?party=1.0,family--');
+      await showParty(page);
       await expect(slot(page, 'Creature 1 · Innate')).toBeVisible();
 
       await expect(partyPanel(page).getByRole('button', { name: /^Search for / })).toHaveCount(0);
@@ -412,10 +453,13 @@ test.describe('the party planner', () => {
       if (first === undefined || second === undefined) throw new Error('the dataset has no two plain traits');
       await openExplore(page);
       await addToParty(page, first);
+      await showParty(page);
       await slot(page, 'Creature 4 · Fused').click();
       await addToParty(page, second);
       await searchBox(page).fill('weak OR snared');
 
+      // On a narrow screen the link is copied from the party tab, and a link to it opens on that tab.
+      await showParty(page);
       await partyPanel(page).getByRole('button', { name: 'Copy link' }).click();
       await expect(partyPanel(page).getByText('Link copied', { exact: true })).toBeVisible();
 
@@ -435,7 +479,9 @@ test.describe('the party planner', () => {
       try {
         const other = await fresh.newPage();
         await other.goto(link);
+        await showExplore(other);
         await expect(searchBox(other)).toHaveValue('weak OR snared');
+        await showParty(other);
         await expect(slot(other, 'Creature 1 · Innate')).toHaveAccessibleName(
           `Target slot: Creature 1 · Innate, ${first.name}`,
         );
@@ -453,6 +499,7 @@ test.describe('the party planner', () => {
       try {
         const other = await fresh.newPage();
         await other.goto('./');
+        await showParty(other);
         await expect(slot(other, 'Creature 1 · Innate')).toHaveAccessibleName(/, empty$/);
         await expect(partyPanel(other).getByText('0/18 slots')).toBeVisible();
       } finally {
@@ -471,6 +518,7 @@ test.describe('the party planner', () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
 
       await page.goto('./');
+      await showParty(page);
 
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${first.name}`,
@@ -489,6 +537,7 @@ test.describe('the party planner', () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
 
       await page.goto(`./?party=2.0,${second.id}`);
+      await showParty(page);
 
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${second.name}`,
@@ -500,10 +549,12 @@ test.describe('the party planner', () => {
       if (first === undefined) throw new Error('the dataset has no plain trait');
       await openExplore(page);
       await addToParty(page, first);
+      await showParty(page);
       await toolbarButton(page, 'Clear party').click();
       await expect(partyPanel(page).getByText('0/18 slots')).toBeVisible();
 
       await page.goto('./');
+      await showParty(page);
 
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(/, empty$/);
     });
@@ -521,31 +572,13 @@ test.describe('the party planner', () => {
       await openExplore(page);
 
       await addToParty(page, first);
+      await showParty(page);
 
       await expect(slot(page, 'Creature 1 · Innate')).toHaveAccessibleName(
         `Target slot: Creature 1 · Innate, ${first.name}`,
       );
       await expect.poll(() => new URL(page.url()).searchParams.get('party')).toContain(first.id);
     });
-  });
-
-  test('is reached from the results by a link where the party is stacked under them, and left by another', async ({
-    page,
-  }) => {
-    await openExplore(page);
-    const jump = page.getByRole('link', { name: 'Go to the party' });
-    const stacked = (page.viewportSize()?.width ?? 0) < 1100;
-
-    if (!stacked) {
-      await expect(jump).toBeHidden();
-      return;
-    }
-    await jump.click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Party' })).toBeFocused();
-    await expect(slot(page, 'Creature 1 · Innate')).toBeInViewport();
-
-    await partyPanel(page).getByRole('link', { name: 'Back to the results' }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Results' })).toBeFocused();
   });
 
   test('has no accessibility violations with a party and a refusal on the page (axe)', async ({ page, request }) => {
@@ -559,10 +592,15 @@ test.describe('the party planner', () => {
     await addToParty(page, first);
     await addToParty(page, second);
     await addToParty(page, second);
+    await showParty(page);
     await slot(page, 'Creature 2 · Artifact').click();
-    await findRow(page, noMaterial);
-    await expect(partyPanel(page).getByText('3/18 slots')).toBeVisible();
+    // The refusal is on the results; on a narrow screen the party is on its tab, so each is checked where it is.
+    const refused = await findRow(page, noMaterial);
+    await expect(addButton(refused)).toHaveAttribute('aria-disabled', 'true');
+    expect(await axeViolations(page)).toEqual([]);
 
+    await showParty(page);
+    await expect(partyPanel(page).getByText('3/18 slots')).toBeVisible();
     expect(await axeViolations(page)).toEqual([]);
   });
 });

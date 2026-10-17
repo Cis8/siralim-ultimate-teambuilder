@@ -4,6 +4,16 @@
   box-sizing: border-box;
 }
 
+/*
+ * Bars fixed to the foot of the window (the tabs, the Filters button) cover the foot of the page. Each one sets its height
+ * on the root while it is there. The page is that much longer, and a control that takes the focus is scrolled clear of the
+ * bars instead of being left under one (WCAG 2.2 2.4.11, Focus Not Obscured).
+ */
+:root {
+  --bars-height: calc(var(--tab-bar-height, 0px) + var(--filters-bar-height, 0px));
+  scroll-padding-bottom: var(--bars-height);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -19,6 +29,7 @@ body {
   font-family: var(--font-ui);
   font-size: var(--text-base);
   line-height: 1.5;
+  padding-bottom: var(--bars-height);
 }
 
 a {

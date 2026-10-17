@@ -12,16 +12,15 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M7 (mobile): 7.1 done (filters bottom sheet), 7.2 next.** 7.2 (`web`): the Explore / Party tabs (`tablist`, tab
-  in the URL), which replace the interim "Go to the party" / "Back to the results" links in `+page.svelte` (delete them, and
-  `.stacked-link`, with the tabs); then 7.3. Under 700 px the page is one column; `FiltersRegion` already puts a fixed
-  "Filters" bar at the foot of the window (`body:has(.filters-bar)` pads the page by `--filters-bar-height`): the bottom nav of
-  the tabs has to sit with it (nav at the very bottom, the Filters bar above it or in the Explore tab only), and the padding
-  rule has to count both. The party panel and the result row are already usable on a phone (44 px targets under
-  `pointer: coarse`); 7.3 checks every interactive element is at least 44 × 44 (the facet buttons in the sheet are 44 under
-  `pointer: coarse` already). Read DESIGN.md (Layout, Accessibility) and `docs/prototype/Mobile.dc.html`. The address already
-  carries everything but the tab (`pageAddress` leaves other parameters alone; add the tab to `PageState` and its own codec
-  like `PARTY_PARAMS`).
+- **Phase 1 · M7 (mobile): 7.1 and 7.2 done, 7.3 next, then M8.** 7.3 (`web`): the result row as a card with add-to-target,
+  and an e2e that every interactive element is at least 44 × 44 px on mobile (Pixel 7 and iPhone 14 projects; axe on the
+  pages it touches). Today the targets are 44 px under `pointer: coarse` (facet buttons, sort `select`, party toolbar, slots,
+  the add button, the tabs are 64 px high), but nothing checks it: measure every `button`, `a`, `input`, `select` of Explore,
+  the open filters sheet and the Party tab, and fix what falls short (the copy buttons, the chip remove buttons and the
+  keyword tokens inside descriptions are the likely ones; WCAG 2.5.8 allows a 24 px target with spacing, DESIGN asks 44).
+  Read DESIGN.md (Result list, Accessibility) and `docs/prototype/Mobile.dc.html` (its `.addb` is 44 × 44).
+  The tabs (7.2) are under **1100 px**, not 700: that is where the party stopped fitting beside the list; the filters stay a
+  sheet under 700. Two fixed bars can stack at the foot (Filters button 61 px above the tab bar 64 px): `--bars-height`.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -95,6 +94,11 @@ session (after `CLAUDE.md`), update it before ending one.
   (`includeHidden`), a press needs `openFilters`, and anything on the page behind needs `closeFilters` first (a modal dialog
   blocks it). `explore-page.ts` is the one place that knows the 700 px breakpoint, as `FiltersRegion` and `+page.svelte` are
   for the app.
+- e2e, tabs: under 1100 px the party is on its own tab, so a test shows it (`showParty` in `party-page.ts`) before it reads or
+  presses anything in it, and `findRow` / `addToParty` bring the search forward; both do nothing on a wide screen.
+  `explore-page.ts` knows the 1100 px breakpoint as well as the 700 px one. A `toHaveCount(0)` on a locator inside `partyPanel`
+  passes without the tab (the region is not in the page then): show it first. A `click({ force: true })` does not look at what
+  covers the element: under the fixed bars it hits a bar (scroll the element to the middle first).
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
@@ -152,14 +156,17 @@ Undo / Redo / Clear / Ctrl+Z, "Add to" on every result with the rule's reason wh
 "not found in vX" slots with a search, the last party in `localStorage`, one writer for the search and the party in the
 address. Deviations worth knowing: the party is a comma list in the address, not base64url (ADR-0008); choosing a target
 replaces the history entry instead of pushing one; undo returns the target to the slot of the edit; a trait that applies and
-relies on the same keyword covers itself (as in the prototype); where the party is stacked under the list a "Go to the party"
-link joins the two until the tabs of M7; the last party is used only when the address names none.
+relies on the same keyword covers itself (as in the prototype); the last party is used only when the address names none.
 
 ### M7 Mobile
 - [x] **7.1** Bottom sheet on a modal `<dialog>` (`BottomSheet`, swapped for the column by `FiltersRegion` under 700 px, opened
       by a fixed "Filters" bar). *e2e:* focus trapped, Esc closes, focus returns (`filters-sheet.test.ts`). The e2e helpers
       `openFilters` / `closeFilters` open and close the sheet on a narrow screen and do nothing on a wide one.
-- [ ] **7.2** Explore/Party tabs (`tablist`), tab in the URL; no Synergies tab before Phase 2.
+- [x] **7.2** Explore/Party tabs (`TabBar`, ARIA tabs) under 1100 px, `tab=party` in the address (`page-tab.ts`, a step of the
+      history), the page scrolled back to where each tab was left, no Synergies tab before Phase 2. The view not shown is laid
+      out but `visibility: hidden; height: 0`, not `display: none` (the virtual list would measure its rows as 0 px). The
+      bars at the foot leave room (`--bars-height`) and the root's `scroll-padding-bottom` keeps a focused control clear of
+      them. `filledSlots` joined `core`. *e2e:* `tabs.test.ts`; the party e2e switch tabs with `showParty` / `showExplore`.
 - [ ] **7.3** Result card with add-to-target. *e2e:* every interactive element ≥ 44×44 px on mobile; axe.
 
 ### M8 Hardening

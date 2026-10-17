@@ -14,6 +14,7 @@ const start = 'https://example.test/app/';
 const stateWith = (overrides: Partial<ExploreState>): PageState => ({
   explore: { ...initialExploreState, ...overrides },
   party: initialPartyState,
+  tab: 'explore',
   datasetVersion: '2.0',
 });
 
@@ -200,14 +201,29 @@ describe('createPageUrlWriter', () => {
     expect(gone).toEqual([{ href: `${start}?class=life&party=2.0,a--one`, entry: 'push' }]);
   });
 
+  it('writes the tab with the rest, a step of its own', async () => {
+    const { bar, gone } = addressBar();
+    const writer = createPageUrlWriter(bar);
+
+    writer.chosen({ ...stateWith({}), tab: 'party' });
+    await vi.advanceTimersByTimeAsync(0);
+    writer.chosen(stateWith({}));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(gone).toEqual([
+      { href: `${start}?tab=party`, entry: 'push' },
+      { href: start, entry: 'push' },
+    ]);
+  });
+
   it('leaves the other parameters of the address alone', async () => {
-    const { bar, gone } = addressBar(`${start}?tab=abc&q=old`);
+    const { bar, gone } = addressBar(`${start}?ref=abc&q=old`);
     const writer = createPageUrlWriter(bar);
 
     writer.chosen(stateWith({ query: 'old', classes: ['death'] }));
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(new URL(gone[0]?.href ?? '').searchParams.get('tab')).toBe('abc');
+    expect(new URL(gone[0]?.href ?? '').searchParams.get('ref')).toBe('abc');
   });
 
   describe('writes made one after another', () => {
@@ -233,7 +249,7 @@ describe('createPageUrlWriter', () => {
 
       writer.chosen(stateWith({ classes: ['life'] }));
       await vi.advanceTimersByTimeAsync(0);
-      moveTo(`${start}?tab=abc`);
+      moveTo(`${start}?ref=abc`);
       settleNext('fail');
       await vi.advanceTimersByTimeAsync(0);
       writer.chosen(stateWith({ classes: ['life', 'death'] }));
@@ -241,7 +257,7 @@ describe('createPageUrlWriter', () => {
 
       const last = new URL(gone.at(-1)?.href ?? '');
       expect(gone).toHaveLength(2);
-      expect(last.searchParams.get('tab')).toBe('abc');
+      expect(last.searchParams.get('ref')).toBe('abc');
       expect(last.searchParams.get('class')).toBe('life,death');
     });
   });
@@ -263,13 +279,13 @@ describe('createPageUrlWriter', () => {
       const writer = createPageUrlWriter(bar);
 
       writer.chosen(stateWith({ classes: ['life'] }));
-      writer.arrived(new URL(`${start}?tab=abc`));
+      writer.arrived(new URL(`${start}?ref=abc`));
       writer.chosen(stateWith({ query: 'weak' }));
       await vi.advanceTimersByTimeAsync(0);
 
       const last = gone.at(-1)?.href ?? '';
       expect(queryOf(last)).toBe('weak');
-      expect(new URL(last).searchParams.get('tab')).toBe('abc');
+      expect(new URL(last).searchParams.get('ref')).toBe('abc');
       expect(new URL(last).searchParams.has('class')).toBe(false);
     });
 
