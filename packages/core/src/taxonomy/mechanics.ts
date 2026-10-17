@@ -11,4 +11,7 @@ export const mechanics = [
   mechanic('charges', 'Charges', ['charges', 'charge']),
   mechanic('cascading', 'Cascading', ['Cascading']),
   mechanic('fused', 'Fused', ['Fused']),
+  // Traits about spells that cast none, and about stats: searched for like the others (GAME_RULES R12, ADR-0009).
+  mechanic('spells', 'Spells', ['spell', 'spells']),
+  mechanic('stats', 'Stats', ['stat', 'stats']),
 ] as const;

@@ -160,7 +160,7 @@ Context = token at the caret (prefix up to caret) and the previous token.
 | Empty token otherwise | fields with one-line help |
 | `field:` + partial value | values for that field: keywords (role fields only offer buffs/debuffs), classes, families, trait/creature names, yes/no |
 | Unknown `fiel:` | closest field |
-| Free partial | matching fields, `applies:`/`uses:` per matching keyword, triggers as phrases, `kw:` mechanics, `trait:` names, `family:` names, the raw text |
+| Free partial | matching fields, `applies:`/`uses:` per matching keyword, events by their keys, `kw:` mechanics, `trait:` names, `family:` names, the raw text |
 
 Each complete suggestion shows the **result count** it would produce. Max 9 items. Accepting replaces the token
 (adds a trailing space unless it is a bare field). Top suggestion is shown as ghost text after the caret; Tab accepts.

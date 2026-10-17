@@ -11,6 +11,7 @@ import {
   isCompact,
   openExplore,
   openFilters,
+  side,
 } from './support/explore-page';
 
 // On a narrow screen the filters are a modal sheet over the page (DESIGN § Accessibility: focus trapped, Esc closes, focus
@@ -135,9 +136,9 @@ test.describe('the filters sheet', () => {
       await openFilters(page);
 
       // A control far down the panel: focusing it scrolls the filters to it.
-      await facet(page, 'Start of battle').focus();
+      await side(page, 'Start of battle', 'Relies on').focus();
 
-      await expect(facet(page, 'Start of battle')).toBeInViewport();
+      await expect(side(page, 'Start of battle', 'Relies on')).toBeInViewport();
       await expect(filtersSheet(page).getByRole('heading', { level: 2, name: 'Filters' })).toBeInViewport();
       await expect(filtersSheet(page).getByRole('button', { name: /^Show / })).toBeInViewport();
       // Nothing of the panel reaches beyond the sheet itself (text for a screen reader is placed out of the way, and

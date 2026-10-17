@@ -12,6 +12,7 @@ export { traitIdBase } from './identity/trait-id-base';
 export type {
   ClassName,
   IdentifiedTraitRow,
+  KeywordActor,
   KeywordHit,
   KeywordKey,
   KeywordKind,
@@ -23,7 +24,7 @@ export type {
   TraitKind,
   TraitRow,
 } from './model/trait';
-export { hasRole } from './model/keyword-kind';
+export { canBeDependency, hasActor, hasRole } from './model/keyword-kind';
 export { DATASET_SCHEMA_VERSION, MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
 export { compareText } from './text/compare-text';
@@ -47,10 +48,11 @@ export type {
   BuffEntry,
   DebuffEntry,
   EffectEntry,
+  EventAlias,
+  EventEntry,
   FlagEntry,
   MechanicEntry,
   TaxonomyEntry,
-  TriggerEntry,
   TriggerPhase,
 } from './taxonomy/entry';
 export { TRIGGER_PHASES } from './taxonomy/entry';

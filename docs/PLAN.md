@@ -12,9 +12,12 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.3 and 8b.5 (the event plan) done; next is 8b.4, then 8b.6–8b.9; one session
-  each.** 8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP
-  ticks) then closes Phase 1: ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.3, 8b.5 (the event plan) and 8b.6 (events in core and the data) done; next is
+  8b.4 (party), then 8b.7–8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README;
+  the criteria-to-tests table; ROADMAP ticks) then closes Phase 1: ask the owner before starting Phase 2.
+  Until 8b.8 the panel lists the 18 events flat with Applies / Relies on sides, and a click on an event token shows the traits
+  that mention it (`clickGoal`: an event has no counterpart yet, nobody causes the start of a battle); 8b.7 gives the actor a
+  place in the query and 8b.8 the section, the "Who" control and the token.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -126,9 +129,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 - The 8b.5 research lives in `packages/pipeline/.cache/research/events-v2.0/` (git-ignored, this machine only):
   `findings.records.json` (the sweep: 4,400 records of id, quote, span, use, actor, event, qualifier), `findings.md`, the
-  prototypes and `scripts/` (`extract`, `census`, `merge`, `prompt.md` for the agents, `proto2.ts`, run from
-  `packages/pipeline` with `pnpm exec tsx`). It is a review aid, never a fixture. Without it, read every new snapshot line.
-  A Haiku agent on 75 rows costs ~110k tokens and needs no prompt changes; output to a file, one line back.
+  prototypes and `scripts/` (`extract`, `census`, `merge`, `prompt.md` for the agents, `proto2.ts`, and `measure.ts`: it runs
+  `extractKeywords` over the dataset and lists, beside the sweep, the records no mention covers, the mentions the sweep did not
+  record, and the disagreements in role and actor; run from `packages/pipeline` with `pnpm exec tsx scripts/measure.ts
+  <dataset.json> <records.json> <out.md> [<lines.txt>]`). It is a review aid, never a fixture. Without it, read every new
+  snapshot line. A Haiku agent on 75 rows costs ~110k tokens and needs no prompt changes; output to a file, one line back.
+- Bash tool: a heredoc with apostrophes and quotes mixed can fail with "unexpected EOF" before anything runs; write the script
+  with the Write tool and run it. Node 24 is not on Git Bash's PATH either: `export PATH=/c/Users/<user>/AppData/Roaming/fnm/node-versions/v24.22.0/installation:$PATH`.
 
 ## Phase 1 — slices
 One slice = one commit (or a few) on `main`. *T:* = tests written with or before the code (TDD for `core`).
@@ -263,23 +270,18 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       the mechanics Spells and Stats; the owner's decisions are GAME_RULES R12 (who acts is a filter, never required; no event is a
       dependency; dies = is killed; manual cast apart; events grouped in the filters with one "Who" control). Deviation: the
       sweep cost about 3.3M Haiku tokens, not the 0.4M estimated (each agent re-reads its context every turn).
-- [ ] **8b.6** Events in `core`, the snapshot and the data (ADR-0009, GAME_RULES R12). `core` first, TDD: the `trigger` kind
-      becomes `event` (`EventEntry`: every inflection as a pattern, a `phase` or none; `TRIGGER_PHASES` gains `endOfTurn` and
-      `defending`); the 18 entries and the mechanics Spells (spell, spells) and Stats (stat, stats); `KeywordHit.actor` (`self`,
-      `ally`, `enemy`, `any`) on events; role and actor per mention (cues found in 8b.5: an opening clause, "for each", "while",
-      "if" → `uses`; "cannot", "immune to" → `resists`; a possessive noun, "this creature's attacks" → `uses`; a verb of the main
-      clause → `applies`; actor = the nearest subject before it in its clause; "attack" after "%", "more", "its" or before
-      "and defense" is a stat and no event); turns by a grammar, "start|end of <whose> turn(s)", whose possessive gives the actor
-      ("your Phoenixes' turns" is no fixed phrase); `aliases` on an entry for the 11 old trigger keys (old key → event and
-      actor), rejected by `createTaxonomy` when an alias is a key or the start of one; `partyCoverage` ignores events (R12);
-      `overrides.yaml` can correct an actor too. Pipeline: `keywords-v2.0.txt` gains the actor column; the ~2,200 new lines are
-      read with the sweep beside them (Notes): every line where role or actor disagrees with it, or that it has no record of, is
-      read, and a sample of the rest; corrections go to `overrides.yaml` with a reason. `real-sheet.test.ts` counts,
-      `chore(data)`. Web only compiles with the new kind: the trigger colour is the event colour, the panel heading says
-      Events, one flat list until 8b.8. *T:* entries and heuristic unit tests (each cue, the failure path, the stat sense of
-      attack, turns of a family), taxonomy validation of aliases, coverage ignoring events, the snapshot. Docs: SPEC §4, DESIGN
-      (kind colours). Prototype numbers to beat (`.cache/research/events-v2.0/proto2.md`): sweep recall 83–100% per event but
-      any buff / any debuff (~50%: decide whether "immune to debuffs" and "their debuffs last 1 turn" are mentions).
+- [x] **8b.6** Events in `core`, the snapshot and the data (ADR-0009, GAME_RULES R12). `trigger` became `event` (`EventEntry`:
+      inflections as patterns, a `phase` or none, `aliases`, `turnEdge`, `statPatterns`, `moment`); the 18 events, Spells and
+      Stats; `KeywordHit.actor`; `readEvent` (role and actor by wording), `findTurns` (the turns by a grammar), `isStatSense`;
+      `partyCoverage` ignores events; `overrides.yaml` takes an `actor` and holds 22 corrections. Data: 4,453 mentions (2,149
+      of events), 139 kB gzip; the snapshot has the actor column; the web compiles with the new kind (colour, "Events"). SPEC §4,
+      DESIGN. Deviations: the extractor alone agrees with the sweep on role in 91–100% of the mentions both found (dodge 58%,
+      critical hit 53%: the sweep calls "has a 50% chance to dodge" a modifier, the rules call it causing) and on actor in
+      93–100%; recall is 84–100% per event, but 53% and 45% for the two buff events (the sweep counts every gain of a named
+      buff; "immune to debuffs" and "their debuffs last 1 turn" are not mentions). Reading every disagreement and 60 other lines
+      taught the heuristics nouns, names ("Death creatures"), "attacked", pronouns, lists and the start of battle as a moment;
+      what is left is the 22 overrides. `triggers-before-events-v2.0.txt` pins the 564 traits of the old phrases (the aliases
+      find at least those, tested).
 - [ ] **8b.7** Query and address. Keyword fields take an actor after a slash (`uses:provoke/self`; the key prefix still
       applies before it; values `self`, `ally`, `enemy`, `any`); `IndexedTrait` lists event keys with and without their actor;
       an alias is read by the keyword fields and by `decodeExploreState` (`kw=k:after this creature attacks` reads as

@@ -48,23 +48,34 @@ export type PartyRequirement =
   | { readonly type: 'none' };
 
 /**
- * What a keyword is. Buffs, debuffs and effects have a role (see `hasRole`); mechanics, triggers and flags do not. An
+ * What a keyword is. Buffs, debuffs, effects and events have a role (see `hasRole`); mechanics and flags do not. An
  * *effect* is something traits give and others build on that the canonical buff and debuff lists do not have: stacking
- * minions (Dire Wolves, Zombies), Mega Magic, Sealed Spell Gems (GAME_RULES R11).
+ * minions (Dire Wolves, Zombies), Mega Magic, Sealed Spell Gems (GAME_RULES R11). An *event* is something that happens in
+ * battle: a turn begins, a creature attacks, casts, dies (GAME_RULES R12).
  */
-export type KeywordKind = 'debuff' | 'buff' | 'effect' | 'mechanic' | 'trigger' | 'flag';
+export type KeywordKind = 'debuff' | 'buff' | 'effect' | 'event' | 'mechanic' | 'flag';
 
 /**
- * What a trait does with a buff or debuff: gives it (`applies`), relies on it being there (`uses`), or only guards
- * against it, as in "immune to Silenced" (`resists`), which depends on nobody applying it (GAME_RULES R9).
+ * What a trait does with a keyword that has a role. A buff, debuff or effect: gives it (`applies`), relies on it being
+ * there (`uses`), or only guards against it, as in "immune to Silenced" (`resists`), which depends on nobody applying it
+ * (GAME_RULES R9). An event: makes it happen (`applies`: "attacks 1 additional time"), pays off when it happens (`uses`:
+ * "after this creature attacks") or prevents it (`resists`: "cannot be resurrected"), GAME_RULES R12.
  */
 export type KeywordRole = 'applies' | 'uses' | 'resists';
+
+/**
+ * Who an event happens to or is done by (GAME_RULES R12): this creature (`self`), your creatures or an ally (`ally`), an
+ * enemy (`enemy`) or any creature (`any`). It is what the text says, and a text may say nothing ("at the start of battle").
+ */
+export type KeywordActor = 'self' | 'ally' | 'enemy' | 'any';
 
 export interface KeywordHit {
   readonly key: KeywordKey;
   readonly kind: KeywordKind;
-  /** Only for keywords that have a role (`hasRole`): buffs, debuffs and effects. */
+  /** Only for keywords that have a role (`hasRole`): buffs, debuffs, effects and events. */
   readonly role?: KeywordRole;
+  /** Only for events (`hasActor`), and only where the text says who. */
+  readonly actor?: KeywordActor;
   /** Half-open character range `[start, end)` in the trait description. */
   readonly span: readonly [start: number, end: number];
 }

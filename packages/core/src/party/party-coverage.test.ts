@@ -112,11 +112,28 @@ describe('partyCoverage: what the party applies and relies on', () => {
     });
   });
 
-  it('ignores mechanics, triggers and flags: they have no role', () => {
-    const noRole: KeywordHit = { key: 'start of battle', kind: 'trigger', span: [0, 15] };
-    const { party, lookup } = setUp([[at(0, 'innate'), trait('trigger--one', { keywords: [noRole] })]]);
+  it('ignores mechanics and flags: they have no role', () => {
+    const noRole: KeywordHit = { key: 'timeline', kind: 'mechanic', span: [0, 8] };
+    const { party, lookup } = setUp([[at(0, 'innate'), trait('mechanic--one', { keywords: [noRole] })]]);
 
     expect(partyCoverage(party, lookup)).toEqual({ applies: [], relies: [], duplicates: [] });
+  });
+
+  // GAME_RULES R12: attacking, casting and provoking are the player's choices, and turns, damage and deaths happen by
+  // themselves, so a trait that waits for one never needs the party to supply it, and one that causes it supplies nothing.
+  it('ignores events: none is a dependency, none is a source', () => {
+    const { party, lookup } = setUp([
+      [at(0, 'innate'), trait('waits--for-attack', { keywords: [keyword('attack', 'uses', 'event')] })],
+      [at(0, 'fused'), trait('causes--attack', { keywords: [keyword('attack', 'applies', 'event')] })],
+      [at(1, 'innate'), trait('stops--death', { keywords: [keyword('death', 'resists', 'event')] })],
+      [at(1, 'fused'), trait('needs--weak', { keywords: [keyword('weak', 'uses')] })],
+    ]);
+
+    expect(partyCoverage(party, lookup)).toEqual({
+      applies: [],
+      relies: [{ key: 'weak', status: 'missing' }],
+      duplicates: [],
+    });
   });
 
   it('takes a mastery trait for a source, active or not (D6)', () => {

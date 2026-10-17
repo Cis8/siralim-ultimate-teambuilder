@@ -1,8 +1,8 @@
 import type { ClassName, KeywordKey } from '../model/trait';
 
 /**
- * The query fields a keyword facet stands for (QUERY_LANGUAGE §2): `applies` and `uses` for the role of a buff, debuff or
- * effect, `kw` for any other keyword (a trigger, a mechanic) or any role.
+ * The query fields a keyword facet stands for (QUERY_LANGUAGE §2): `applies` and `uses` for the role of a buff, debuff,
+ * effect or event, `kw` for any other keyword (a mechanic) or any role.
  */
 export const KEYWORD_FILTER_FIELDS = ['applies', 'uses', 'kw'] as const;
 export type KeywordFilterField = (typeof KEYWORD_FILTER_FIELDS)[number];

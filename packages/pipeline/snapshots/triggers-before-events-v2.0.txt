@@ -1,0 +1,564 @@
+after an enemy dodges | clutcher--brain-zap
+after an enemy dodges | clutcher--contagion
+after an enemy dodges | clutcher--lash
+after an enemy dodges | clutcher--pain-flurry
+after an enemy dodges | clutcher--seize
+after an enemy dodges | clutcher--smack-around
+after an enemy dodges | clutcher--sticky-fingers
+after an enemy dodges | clutcher--vehemence
+after an enemy dodges | dragon--menacing-dragon-fangs
+after this creature attacks | abomination--sin-and-sentence
+after this creature attacks | angel--soul-to-keep
+after this creature attacks | angel--storm-of-the-century
+after this creature attacks | apis--threshold
+after this creature attacks | avatar--trick-shot
+after this creature attacks | backer--anointed
+after this creature attacks | backer--excruciating-venom
+after this creature attacks | backer--gem-leech
+after this creature attacks | backer--guards
+after this creature attacks | backer--heads-or-tails
+after this creature attacks | backer--hederass-grasp
+after this creature attacks | backer--obey
+after this creature attacks | backer--plunder
+after this creature attacks | backer--screech-of-domination
+after this creature attacks | backer--soul-steal
+after this creature attacks | backer--sword-of-will
+after this creature attacks | brownie--brain-bash
+after this creature attacks | brownie--kirisute-gomen
+after this creature attacks | brownie--overkill
+after this creature attacks | brownie--sweeping-smash
+after this creature attacks | brownie--ultimatum
+after this creature attacks | brownie--wallop
+after this creature attacks | brownie--wrecking-ball
+after this creature attacks | centaur--infinite-struggle
+after this creature attacks | centaur--square-nothing
+after this creature attacks | cerberus--burst-of-power
+after this creature attacks | cerberus--zero-to-one
+after this creature attacks | concoction--overcome
+after this creature attacks | construct--safety-pin
+after this creature attacks | cruncher--munch
+after this creature attacks | crusader--amalgamy
+after this creature attacks | crusader--bathed-in-light
+after this creature attacks | crusader--faiths-armor
+after this creature attacks | crusader--galvanization
+after this creature attacks | crusader--lunar-ending
+after this creature attacks | demigod--reconstructed-memories
+after this creature attacks | doom-fortress--pandemonium-death
+after this creature attacks | dragon--dragon-dance
+after this creature attacks | efreet--ashes-to-ashes
+after this creature attacks | efreet--smolder
+after this creature attacks | eft--dismemberment
+after this creature attacks | eft--hamstring
+after this creature attacks | eft--maim
+after this creature attacks | eft--render-flesh
+after this creature attacks | elf--brawl
+after this creature attacks | ent--stampede
+after this creature attacks | exotic--alchemists-fury
+after this creature attacks | exotic--backup-packup
+after this creature attacks | exotic--bloodbath
+after this creature attacks | exotic--bloodripper
+after this creature attacks | exotic--cantripology
+after this creature attacks | exotic--chase-down
+after this creature attacks | exotic--chilling-assault
+after this creature attacks | exotic--clawtail-symbiosis
+after this creature attacks | exotic--double-vision
+after this creature attacks | exotic--dusty-struggle
+after this creature attacks | exotic--giant-bite
+after this creature attacks | exotic--lovesick
+after this creature attacks | exotic--malpractice
+after this creature attacks | exotic--perfect-replica
+after this creature attacks | exotic--potion-time
+after this creature attacks | exotic--road-rage
+after this creature attacks | exotic--sting-martyr
+after this creature attacks | exotic--trick-or-treat
+after this creature attacks | exotic--turbulent-waters
+after this creature attacks | fiend--relentless-hunger
+after this creature attacks | ghoul--foot-eater
+after this creature attacks | godspawn--elimination-process
+after this creature attacks | godspawn--karma
+after this creature attacks | godspawn--release-the-cure
+after this creature attacks | godspawn--revolt
+after this creature attacks | hemomancer--abation
+after this creature attacks | hemomancer--depression
+after this creature attacks | hemomancer--from-hero-to-zero
+after this creature attacks | hemomancer--heartstopper
+after this creature attacks | hemomancer--mind-eraser
+after this creature attacks | herbling--photomorphogenesis
+after this creature attacks | hound--eye-of-the-thylacine
+after this creature attacks | hunter--directors-cut
+after this creature attacks | hunter--glaive-of-destruction
+after this creature attacks | hunter--glaive-of-hungering
+after this creature attacks | hunter--glaive-of-justice
+after this creature attacks | hunter--glaive-of-power
+after this creature attacks | hunter--glaive-of-prayer
+after this creature attacks | hunter--hunters-season
+after this creature attacks | hunter--razorsharp
+after this creature attacks | inquisitor--open-the-portals
+after this creature attacks | lucanian--the-high-hunt
+after this creature attacks | manticore--whiplash
+after this creature attacks | masochist--binary-affliction
+after this creature attacks | minotaur--rise-to-fall
+after this creature attacks | mite--corrosion
+after this creature attacks | mite--intensify
+after this creature attacks | mite--neon-grave
+after this creature attacks | mite--swell
+after this creature attacks | mummy--pharaohs-beckoning
+after this creature attacks | mythicant--of-fate-unwritten
+after this creature attacks | nihilist--nihilism
+after this creature attacks | pit-wraith--decrepify
+after this creature attacks | pit-wraith--soul-squelch
+after this creature attacks | plague-doctor--maximize
+after this creature attacks | reaper--assumption
+after this creature attacks | reaper--bonecraft
+after this creature attacks | reaper--decapitation
+after this creature attacks | reaper--defy-the-gods
+after this creature attacks | reaper--shadow-scythe
+after this creature attacks | reaper--soul-corruption
+after this creature attacks | reaper--soul-siphon
+after this creature attacks | siren--dream-touch
+after this creature attacks | skeleton--cannon-shot
+after this creature attacks | skeleton--quick-shot
+after this creature attacks | skeleton--scatter-shot
+after this creature attacks | smith--iannes-eccentricity
+after this creature attacks | smith--iannes-quirk
+after this creature attacks | smog--transfusion
+after this creature attacks | soulflayer--xyrxzys-control
+after this creature attacks | spectre--cold-touch
+after this creature attacks | sphinx--prejudice
+after this creature attacks | unicorn--chrysaors-ambition
+after this creature attacks | unicorn--circle-of-life
+after this creature attacks | unicorn--divine-mending
+after this creature attacks | unicorn--eruption
+after this creature attacks | unicorn--reinvigoration
+after this creature attacks | unicorn--righteous-winds
+after this creature attacks | unicorn--spur-of-the-heavens
+after this creature attacks | warhog--blade-eater
+after this creature attacks | warhog--life-eater
+after this creature attacks | warhog--magic-eater
+after this creature attacks | warhog--spirit-eater
+after this creature attacks | warhog--steel-eater
+after this creature attacks | waspid--endless-swarm
+after this creature attacks | waspid--final-sting
+after this creature attacks | waspid--hive-mind
+after this creature attacks | wolpertinger--colorblind
+after this creature is attacked | abomination--turn-to-gray
+after this creature is attacked | amaranth--memento-mori
+after this creature is attacked | amaranth--solar-flare
+after this creature is attacked | arachnalisk--entrapment
+after this creature is attacked | arachnalisk--spit-poison
+after this creature is attacked | backer--harbingers-sign
+after this creature is attacked | backer--toxic-karma
+after this creature is attacked | centaur--paradigm
+after this creature is attacked | concoction--acid-body
+after this creature is attacked | cruncher--shellshock
+after this creature is attacked | demigod--solence
+after this creature is attacked | ent--optimism
+after this creature is attacked | exotic--counter-slash
+after this creature is attacked | exotic--counter-sweep
+after this creature is attacked | exotic--crab-trap
+after this creature is attacked | exotic--malpractice
+after this creature is attacked | exotic--puff-up
+after this creature is attacked | exotic--red-in-tooth-and-claw
+after this creature is attacked | gargantuan--come-hither
+after this creature is attacked | gargantuan--spontaneous-combustion
+after this creature is attacked | golem--cataclysm
+after this creature is attacked | golem--chip-off-the-block
+after this creature is attacked | golem--slop
+after this creature is attacked | manticore--razor-hide
+after this creature is attacked | minotaur--blood-crazed
+after this creature is attacked | minotaur--fracture
+after this creature is attacked | sanctus--humility
+after this creature is attacked | siren--forbidden-lullaby
+after this creature is attacked | sparktail--recompense
+after this creature is attacked | spectre--creation-dirge
+after this creature is attacked | vortex--ovular-barrage
+after this creature is attacked | watcher--boing-boing-boing
+after this creature is attacked | yeti--brain-freeze
+deals critical damage | animation--yellow-tether
+deals critical damage | aspect--crown-prince-syndrome
+deals critical damage | aspect--never-yield
+deals critical damage | asura--quadhits
+deals critical damage | asura--sidewinder
+deals critical damage | centaur--war-stomp
+deals critical damage | dragon--sweeping-dragon-tail
+deals critical damage | lucanian--big-wings
+deals critical damage | rift-dancer--sword-dance
+deals critical damage | wisp--poof
+deals critical damage | yeti--frost-breath
+is killed | animation--silver-tether
+is killed | backer--determination
+is killed | backer--panicked-overheals
+is killed | backer--restoration
+is killed | backer--sword-of-will
+is killed | backer--the-shadows
+is killed | brownie--kirisute-gomen
+is killed | carbuncle--vitjas-games
+is killed | carbuncle--vitjas-surprise
+is killed | centaur--anticipation
+is killed | cruncher--myrtles-greed
+is killed | cruncher--myrtles-hunger
+is killed | cruncher--myrtles-perseverence
+is killed | exotic--croak-of-the-king
+is killed | exotic--dont-touch-my-garbage
+is killed | exotic--grubby-strength
+is killed | exotic--loyaltys-light
+is killed | exotic--redemption
+is killed | exotic--sacrificial-will
+is killed | exotic--thunder-buddy
+is killed | fae--dead-butterflies
+is killed | golem--mechanical-illusion
+is killed | imp--hoo-ho-ha
+is killed | luckmantria--implied-odds
+is killed | maniac--meat-bomb
+is killed | mimic--sad-birthday-song
+is killed | modron--bravely-inspired
+is killed | nihilist--careful-planning
+is killed | phoenix--terminus
+is killed | reaper--assumption
+is killed | reaper--bonecraft
+is killed | reaper--decapitation
+is killed | reaper--defy-the-gods
+is killed | reaper--shadow-scythe
+is killed | reaper--soul-corruption
+is killed | reaper--soul-siphon
+is killed | shade--pariah
+is killed | shadow--breach
+is killed | uralos--cull-the-weak
+is killed | waspid--final-sting
+kills a creature | carnage--augmentation
+kills a creature | carnage--consumption
+kills a creature | carnage--demoralize
+kills a creature | carnage--midnight-feast
+kills a creature | carnage--rapid-digestion
+kills a creature | exotic--souls-of-the-damned
+manually cast a spell | alemental--slosh
+manually cast a spell | avatar--lune
+manually cast a spell | avatar--pandora
+manually cast a spell | backer--arcane-echo
+manually cast a spell | backer--charging-rod
+manually cast a spell | centaur--sunny-disposition
+manually cast a spell | djinn--chain-spells
+manually cast a spell | djinn--pyromaniac
+manually cast a spell | doom-fortress--pandemonium-wrath
+manually cast a spell | exotic--shared-consciousness
+manually cast a spell | gargoyle--the-wicked-end
+manually cast a spell | godspawn--hopelessly-hopeful
+manually cast a spell | grimoire--book-of-the-lost
+manually cast a spell | modron--protect-the-glass-cannon
+manually cast a spell | occultist--apprenticeship
+manually cast a spell | revenant--fireworks
+manually cast a spell | soulflayer--xyrxzys-subversion
+manually cast a spell | uralos--escalation
+manually cast a spell | vortex--disturbance
+start of battle | abomination--extra-padding
+start of battle | alemental--master-of-alementals
+start of battle | amaranth--incandescence
+start of battle | amaranth--master-of-amaranths
+start of battle | apis--grit
+start of battle | apis--master-of-apises
+start of battle | apis--necessitarianism
+start of battle | avatar--brothel
+start of battle | avatar--perfect-imperfection
+start of battle | backer--boss-powers
+start of battle | backer--eldritch-rune
+start of battle | backer--erratic
+start of battle | backer--flower-power
+start of battle | backer--imposter-syndrome
+start of battle | backer--insane-polarity
+start of battle | backer--ninetailss-trickery
+start of battle | backer--tribe-mentality
+start of battle | banshee--empowered-bone-spear
+start of battle | banshee--empowered-chain-lightning
+start of battle | banshee--empowered-death-blossom
+start of battle | banshee--empowered-death-siphon
+start of battle | banshee--empowered-fireball
+start of battle | banshee--empowered-magic-missile
+start of battle | banshee--empowered-savage-spores
+start of battle | banshee--empowered-soul-sacrifice
+start of battle | bard--fable
+start of battle | bard--hymn-of-panic
+start of battle | beacon--master-of-beacons
+start of battle | cerberus--spell-tap
+start of battle | chimera--divine-form
+start of battle | chimera--eldritch-creation
+start of battle | chimera--fairy-blood
+start of battle | cockatrice--blending-in
+start of battle | cockatrice--cock-a-doodle-doo
+start of battle | cockatrice--outcast-no-longer
+start of battle | cockatrice--weird-dance
+start of battle | construct--defiance
+start of battle | construct--masquerade
+start of battle | crusader--master-of-crusaders
+start of battle | demigod--consciousness
+start of battle | demigod--master-of-demigods
+start of battle | denizen--tardy-to-the-party
+start of battle | devil--eggnapper
+start of battle | diabolic-horde--diabolic-celebration
+start of battle | diabolic-horde--diabolic-link
+start of battle | diabolic-horde--master-of-diabolic-horde
+start of battle | doom-fortress--pandemonium-alacrity
+start of battle | doom-fortress--pandemonium-fever
+start of battle | doomguard--rampart
+start of battle | dragon--blend
+start of battle | dumpling--glucose
+start of battle | dumpling--master-of-dumplings
+start of battle | dumpling--secret-ingredient
+start of battle | electropod--infinite-scaling
+start of battle | elementasaur--master-of-elementasaurs
+start of battle | elf--master-of-elves
+start of battle | exotic--ancient-buffoonery
+start of battle | exotic--color-shift
+start of battle | exotic--duality
+start of battle | exotic--eery-veil
+start of battle | exotic--lunatic-generosity
+start of battle | exotic--mass-mutation
+start of battle | exotic--mega-spider-blast
+start of battle | exotic--natural-beauty
+start of battle | exotic--thunder-buddy
+start of battle | exotic--warped-soul
+start of battle | exotic--weapons-of-mass-distortion
+start of battle | familiar--group-meditation
+start of battle | fiend--eyesore
+start of battle | gargoyle--discord
+start of battle | gargoyle--ransack
+start of battle | gemling--distribution
+start of battle | giant--master-of-giants
+start of battle | giant--strength-of-the-world
+start of battle | godspawn--master-of-godspawn
+start of battle | godspawn--silence-speaks
+start of battle | godspawn--skyttels
+start of battle | godspawn--tools-of-creation
+start of battle | godspawn--whats-yours-is-mine
+start of battle | golem--bad-dreams
+start of battle | golem--master-of-golems
+start of battle | golem--pumpkin-spice
+start of battle | golem--treasure-golems-boon
+start of battle | golem--treasure-golems-revenge
+start of battle | gorgon--treachery
+start of battle | grimoire--book-of-the-dead
+start of battle | grimoire--book-of-the-warlock
+start of battle | guardian--gentle-giant
+start of battle | harpy--bad-omen
+start of battle | hound--nature-of-the-beast
+start of battle | imling--rapid-evolution
+start of battle | imling--trove
+start of battle | imp--earthen-attunement
+start of battle | imp--master-of-imps
+start of battle | inquisitor--mass-summoning
+start of battle | inquisitor--pleasant-disease
+start of battle | inquisitor--the-walking-dead
+start of battle | koloss--big-boned
+start of battle | koloss--master-of-kolosses
+start of battle | lich--hail-to-the-king
+start of battle | lich--unholy-prayer
+start of battle | lucanian--soul-exchange
+start of battle | lucanian--the-golden-sign
+start of battle | luckmantria--master-of-luckmantrias
+start of battle | maniac--master-of-maniacs
+start of battle | manticore--covert
+start of battle | mimic--giftwrapped-army
+start of battle | mimic--hydration
+start of battle | mimic--master-of-mimics
+start of battle | mimic--pandoras-box
+start of battle | mimic--ultimate-trickery
+start of battle | mireling--prismatic-one
+start of battle | mireling--rain-of-magic
+start of battle | mythicant--of-creation-undivided
+start of battle | mythicant--of-rituals-unbound
+start of battle | nephilim--master-of-nephilim
+start of battle | nix--master-of-nixes
+start of battle | nix--reroute-to-remain
+start of battle | nix--supersonic
+start of battle | occultist--sareas-command
+start of battle | ophan--center-of-the-universe
+start of battle | ophan--mantra
+start of battle | ophan--solace
+start of battle | ossein--girans-strategy
+start of battle | ossein--master-of-osseins
+start of battle | ossein--solitary-empowerment
+start of battle | paragon--ruby-attunement
+start of battle | pilwiz--throat-slash
+start of battle | pit-wraith--stricken
+start of battle | plague-doctor--master-of-plague-doctors
+start of battle | raven--everythings-gone
+start of battle | revenant--pact-of-the-deep
+start of battle | robodomi--communication-services
+start of battle | salamander--hotspur
+start of battle | sanctus--master-of-sanctuses
+start of battle | sanctus--temperance
+start of battle | satyr--master-of-satyrs
+start of battle | shade--spook
+start of battle | shadow--horrifying-visage
+start of battle | shapeshifter--rapid-learning
+start of battle | sin--envy
+start of battle | sin--gluttony
+start of battle | sin--greed
+start of battle | sin--lust
+start of battle | sin--master-of-sins
+start of battle | sin--sloth
+start of battle | siren--in-plain-view
+start of battle | siren--katarinas-guidance
+start of battle | siren--siren-charms
+start of battle | smith--master-of-smiths
+start of battle | soulflayer--xyrxzys-plan
+start of battle | spellmane--flamestalker
+start of battle | spellmane--sandstalker
+start of battle | spellmane--skystalker
+start of battle | spellmane--snowstalker
+start of battle | spellmane--staticstalker
+start of battle | spellmane--vilestalker
+start of battle | sphinx--master-of-sphinxes
+start of battle | sphinx--recombobulation
+start of battle | stag--christmas-is-canceled
+start of battle | storm--best-kind-of-weather
+start of battle | toxdweller--and-you-get-a-bomb
+start of battle | tremor--solidarity
+start of battle | underdweller--dark-ritual
+start of battle | vortex--impedance
+start of battle | vortex--master-of-vortexes
+start of battle | vulpes--cana
+start of battle | vulpes--corsac
+start of battle | vulpes--lagopus
+start of battle | vulpes--pallida
+start of battle | vulpes--velox
+start of battle | vulpes--zerda
+start of battle | waspid--master-of-waspids
+start of battle | wolpertinger--prey
+start of battle | yeti--master-of-yetis
+start of battle | yeti--winter-has-come
+start of battle | zantai--zantais-boon
+start of battle | zantai--zantais-call
+start of battle | zantai--zantais-cunning
+start of battle | zantai--zantais-embrace
+start of battle | zantai--zantais-envy
+start of battle | zantai--zantais-havoc
+start of battle | zantai--zantais-inhibition
+start of battle | zantai--zantais-perfection
+start of battle | zantai--zantais-reign
+start of battle | zantai--zantais-stratagem
+start of this creature's turn | angel--final-act-of-judgment
+start of this creature's turn | angel--final-act-of-mercy
+start of this creature's turn | aspect--never-yield
+start of this creature's turn | aspect--stand-alone-complex
+start of this creature's turn | automaton--battle-from-within
+start of this creature's turn | automaton--downturn
+start of this creature's turn | automaton--euphoria
+start of this creature's turn | automaton--instigation
+start of this creature's turn | automaton--momentum
+start of this creature's turn | automaton--motivation
+start of this creature's turn | automaton--pandemic
+start of this creature's turn | avatar--wintermaul
+start of this creature's turn | backer--dragons-rage
+start of this creature's turn | backer--dualcast
+start of this creature's turn | backer--improbable-catapult
+start of this creature's turn | backer--in-all-things
+start of this creature's turn | backer--incoming-tide
+start of this creature's turn | backer--minion-master
+start of this creature's turn | backer--shield-mastery
+start of this creature's turn | backer--snack-break
+start of this creature's turn | carver--confrontation
+start of this creature's turn | clockwork--autonomous-attack
+start of this creature's turn | clockwork--autonomous-defense
+start of this creature's turn | clockwork--autonomous-health
+start of this creature's turn | clockwork--autonomous-intelligence
+start of this creature's turn | clockwork--autonomous-speed
+start of this creature's turn | dryad--ettas-seduction
+start of this creature's turn | electropod--spin-cycle
+start of this creature's turn | ent--infested-with-ants
+start of this creature's turn | exotic--eternal-rest
+start of this creature's turn | exotic--freezer-blast
+start of this creature's turn | exotic--healing-breath
+start of this creature's turn | exotic--hearts-and-minds
+start of this creature's turn | exotic--hungering-void
+start of this creature's turn | exotic--lights-out
+start of this creature's turn | exotic--petrified-hope
+start of this creature's turn | exotic--red-hot-kiss
+start of this creature's turn | exotic--rollout
+start of this creature's turn | exotic--unrelenting-sun
+start of this creature's turn | exotic--what-are-you-buying
+start of this creature's turn | gargantuan--furor
+start of this creature's turn | gargantuan--resprout
+start of this creature's turn | gargantuan--scrutiny
+start of this creature's turn | godspawn--dimensions
+start of this creature's turn | godspawn--ultimate-sacrifice
+start of this creature's turn | golem--sense-of-purpose
+start of this creature's turn | manticore--conservation
+start of this creature's turn | manticore--parry
+start of this creature's turn | nephilim--unbound-corruption
+start of this creature's turn | nix--ambush
+start of this creature's turn | occultist--vipers-mind
+start of this creature's turn | phoenix--terminus
+start of this creature's turn | pit-worm--ceaseless-vitality
+start of this creature's turn | priest--apostle-of-water
+start of this creature's turn | priest--bearer-of-needs
+start of this creature's turn | priest--disciple-of-war
+start of this creature's turn | priest--fanaticism
+start of this creature's turn | priest--preacher-of-stone
+start of this creature's turn | priest--radiant-eclipse
+start of this creature's turn | priest--shepherd-of-fire
+start of this creature's turn | priest--tender-of-earth
+start of this creature's turn | priest--zealot-of-the-forest
+start of this creature's turn | raven--blood-magic
+start of this creature's turn | raven--psychic-barrier
+start of this creature's turn | robodomi--destruction-beam
+start of this creature's turn | sanctus--kindness
+start of this creature's turn | tanukrook--monster-crown
+start of this creature's turn | toxdweller--spoonors-breath
+start of this creature's turn | toxdweller--spoonors-gift
+start of this creature's turn | toxdweller--spoonors-other-breath
+start of this creature's turn | tremor--constrict
+start of this creature's turn | troll--resin
+start of this creature's turn | troll--sadism
+start of this creature's turn | wisp--spasm
+start of this creature's turn | wisp--the-virtue-of-patience
+start of this creature's turn | wolpertinger--furness-instability
+this creature's attacks | angel--black-hole-halo
+this creature's attacks | angel--hand-of-light
+this creature's attacks | angel--pyre
+this creature's attacks | angel--rime
+this creature's attacks | angel--scourge
+this creature's attacks | angel--soul-to-keep
+this creature's attacks | angel--stasis
+this creature's attacks | apis--crunch
+this creature's attacks | backer--hederass-grasp
+this creature's attacks | backer--myosotis
+this creature's attacks | backer--soul-steal
+this creature's attacks | backer--true-strike
+this creature's attacks | brownie--independence
+this creature's attacks | carbuncle--absolute-power
+this creature's attacks | carver--subversion
+this creature's attacks | exotic--her-embrace
+this creature's attacks | exotic--piercing-speed
+this creature's attacks | exotic--sting-martyr
+this creature's attacks | exotic--twin-souls
+this creature's attacks | godspawn--fear-of-success
+this creature's attacks | godspawn--to-move-on-is-to-grow
+this creature's attacks | gorgon--blink
+this creature's attacks | harpy--kraaw
+this creature's attacks | minotaur--piercing-focus
+this creature's attacks | mogwai--no-sanctuary
+this creature's attacks | mummy--gimp-touch
+this creature's attacks | mythicant--of-fate-unwritten
+this creature's attacks | pilwiz--flay
+this creature's attacks | shadow--haunt
+this creature's attacks | skeleton--aimed-shot
+this creature's attacks | skeleton--vital-shot
+this creature's attacks | smog--contamination
+this creature's attacks | toxdweller--a-gift-for-you
+when this creature attacks | abomination--frailty
+when this creature attacks | abomination--quell
+when this creature attacks | arachnalisk--consume
+when this creature attacks | asura--quadhits
+when this creature attacks | carver--roulette
+when this creature attacks | centaur--on-the-rocks
+when this creature attacks | cruncher--no-prayers
+when this creature attacks | exotic--multibite
+when this creature attacks | exotic--pull-the-strings
+when this creature attacks | gargantuan--bide
+when this creature attacks | giant--hostile-vitality
+when this creature attacks | giant--wreck
+when this creature attacks | godspawn--iniquity
+when this creature attacks | mireling--conduit-strike
+when this creature attacks | revenant--blood-for-blood
+when this creature attacks | robodomi--phasers
+when this creature attacks | skeleton--head-shot

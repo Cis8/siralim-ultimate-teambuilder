@@ -54,6 +54,21 @@ roles:
       expect(parsed.roles[0]?.role).toBe('resists');
     });
 
+    it('reads the actor of an event, with or without a role', () => {
+      const parsed = parseOverrides(`
+roles:
+  - { trait: x, keyword: attack, actor: self, reason: 'The attacker is this creature.' }
+  - { trait: y, keyword: death, role: uses, actor: enemy, reason: 'The enemy dies.' }
+`);
+      expect(parsed.roles[0]).toEqual({
+        trait: 'x',
+        keyword: 'attack',
+        actor: 'self',
+        reason: 'The attacker is this creature.',
+      });
+      expect(parsed.roles[1]).toMatchObject({ role: 'uses', actor: 'enemy' });
+    });
+
     it('reads random-debuff overrides', () => {
       const parsed = parseOverrides(`
 randomDebuff:
@@ -104,6 +119,16 @@ randomDebuff:
       expect(failureOf('roles:\n  - { trait: x, keyword: weak, role: gives, reason: r }\n')).toMatch(
         /roles\[0\]\.role.*applies.*uses/s,
       );
+    });
+
+    it('refuses an actor it does not know', () => {
+      expect(failureOf('roles:\n  - { trait: x, keyword: attack, actor: nobody, reason: r }\n')).toMatch(
+        /roles\[0\]\.actor.*self.*ally.*enemy.*any/s,
+      );
+    });
+
+    it('refuses an override that corrects neither the role nor the actor', () => {
+      expect(failureOf('roles:\n  - { trait: x, keyword: weak, reason: r }\n')).toMatch(/roles\[0\].*role.*actor/s);
     });
 
     it('refuses a target or activation it does not know', () => {

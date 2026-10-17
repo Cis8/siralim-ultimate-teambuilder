@@ -4,7 +4,7 @@
 
   /**
    * A facet of the filter panel: a toggle button with the number of traits it would show. `row` fills the line (a class, a
-   * trigger), `compact` is one of the two sides of a keyword. The state is `aria-pressed` and a filled, outlined button;
+   * mechanic), `compact` is one of the two sides of a keyword. The state is `aria-pressed` and a filled, outlined button;
    * the count carries its unit for a screen reader, which would hear a bare number.
    */
   const {

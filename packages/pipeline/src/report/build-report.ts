@@ -1,4 +1,5 @@
 import {
+  canBeDependency,
   compareText,
   KNOWN_CLASSES,
   taxonomy as appTaxonomy,
@@ -143,16 +144,23 @@ function keywordCounts(traits: readonly Trait[]): string | null {
   const mentions = traits.flatMap((trait) => trait.keywords);
   if (mentions.length === 0) return null;
   const withKeywords = traits.filter((trait) => trait.keywords.length > 0).length;
-  const statuses = mentions.filter((hit) => hit.role !== undefined);
+  const statuses = mentions.filter((hit) => hit.role !== undefined && canBeDependency(hit.kind));
+  const events = mentions.filter((hit) => hit.kind === 'event');
   const count = (role: 'applies' | 'uses' | 'resists') => statuses.filter((hit) => hit.role === role).length;
+  const countEvents = (role: 'applies' | 'uses' | 'resists') => events.filter((hit) => hit.role === role).length;
   const conditional = traits.filter((trait) => trait.conditionalSources.length > 0).length;
   const pairs =
     conditional === 0
       ? ''
       : ` ${conditional} ${conditional === 1 ? 'trait applies' : 'traits apply'} debuffs only through a pair (conditional sources).`;
+  const eventLine =
+    events.length === 0
+      ? ''
+      : ` Of the ${events.length} events, ${countEvents('applies')} are caused (applies), ${countEvents('uses')} waited for (uses) and ${countEvents('resists')} prevented (resists).`;
   return (
-    `### Keywords\n\n${mentions.length} mentions in ${withKeywords} traits. Of the ${statuses.length} buffs and debuffs, ` +
+    `### Keywords\n\n${mentions.length} mentions in ${withKeywords} traits. Of the ${statuses.length} buffs, debuffs and effects, ` +
     `${count('applies')} are given (applies), ${count('uses')} relied on (uses) and ${count('resists')} guarded against (resists).` +
+    eventLine +
     pairs
   );
 }

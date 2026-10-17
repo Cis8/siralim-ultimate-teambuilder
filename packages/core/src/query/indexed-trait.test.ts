@@ -59,7 +59,7 @@ describe('indexTrait', () => {
       hit('silenced', 'debuff', 'resists'),
       hit('barrier', 'buff', 'applies'),
       hit('dire wolves', 'effect', 'uses'),
-      hit('start of battle', 'trigger'),
+      hit('start of battle', 'event'),
       hit('fused', 'mechanic'),
     ];
     const indexed = indexTrait(trait({ keywords }));

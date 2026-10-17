@@ -203,20 +203,36 @@ describe('buildReport', () => {
   });
 
   describe('keywords', () => {
-    const hit = (key: string, kind: 'debuff' | 'buff' | 'trigger', role?: 'applies' | 'uses' | 'resists') =>
+    const hit = (key: string, kind: 'debuff' | 'buff' | 'event' | 'mechanic', role?: 'applies' | 'uses' | 'resists') =>
       role === undefined ? { key, kind, span: [0, 1] as const } : { key, kind, span: [0, 1] as const, role };
 
     it('counts the mentions, and how many buffs and debuffs are given or relied on', () => {
       const report = buildReport(
         build('2.0', [
-          trait('a', { keywords: [hit('weak', 'debuff', 'applies'), hit('start of battle', 'trigger')] }),
+          trait('a', { keywords: [hit('weak', 'debuff', 'applies'), hit('timeline', 'mechanic')] }),
           trait('b', { keywords: [hit('weak', 'debuff', 'uses'), hit('barrier', 'buff', 'applies')] }),
           trait('c'),
         ]),
         null,
       );
       expect(report).toContain(
-        '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs and debuffs, 2 are given (applies), 1 relied on (uses) and 0 guarded against (resists).',
+        '### Keywords\n\n4 mentions in 2 traits. Of the 3 buffs, debuffs and effects, 2 are given (applies), 1 relied on (uses) and 0 guarded against (resists).',
+      );
+    });
+
+    it('counts the events apart: they are caused, waited for or prevented, never given or relied on', () => {
+      const report = buildReport(
+        build('2.0', [
+          trait('a', { keywords: [hit('weak', 'debuff', 'applies'), hit('attack', 'event', 'applies')] }),
+          trait('b', {
+            keywords: [hit('attack', 'event', 'uses'), hit('death', 'event', 'uses'), hit('heal', 'event', 'resists')],
+          }),
+        ]),
+        null,
+      );
+      expect(report).toContain('Of the 1 buffs, debuffs and effects, 1 are given (applies), 0 relied on (uses)');
+      expect(report).toContain(
+        'Of the 4 events, 1 are caused (applies), 2 waited for (uses) and 1 prevented (resists).',
       );
     });
 

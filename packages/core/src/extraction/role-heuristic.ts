@@ -1,40 +1,65 @@
-import { hasRole } from '../model/keyword-kind';
+import { hasActor, hasRole } from '../model/keyword-kind';
 import type { KeywordHit, KeywordKey, KeywordKind, KeywordRole } from '../model/trait';
+import { readEvent, type EventReading } from './event-reading';
 import type { KeywordMatch } from './keyword-matcher';
+import { sentenceStart } from './sentences';
 
 /**
- * What the trait does with each buff and debuff it names: gives it (`applies`), relies on it being there (`uses`) or
- * only guards against it (`resists`, GAME_RULES R9). A first reading by wording, corrected where it is wrong by
- * `overrides.yaml`. Only keywords that have a role (buffs, debuffs, effects: `hasRole`) get one.
+ * What the trait does with each buff, debuff, effect and event it names: gives it (`applies`), relies on it being there
+ * (`uses`) or only guards against it (`resists`, GAME_RULES R9). A first reading by wording, corrected where it is wrong by
+ * `overrides.yaml`. Only keywords that have a role (`hasRole`) get one, and an event also gets an actor (`readEvent`).
  *
  * - A status in the condition a sentence opens with ("After an enemy is afflicted with Weak, …") is one the trait
  *   waits for: `uses`.
  * - A keyword written in an active form ("Seals", from `activeForms`) is the trait doing it: `applies`.
  * - Otherwise the nearest signal before it in the sentence decides (see `CUES`); with none, `uses`.
- * - A status that follows another in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable") takes its role.
+ * - A keyword that follows another of its kind in a list ("Poisoned, Burning and Bomb", "Weak or Vulnerable", "attack, cast,
+ *   defend or provoke") takes its role, and an event its actor.
  */
 export function assignRoles(text: string, matches: readonly KeywordMatch[], options: RoleOptions = {}): KeywordHit[] {
   const hits: KeywordHit[] = [];
-  let previous: { readonly match: KeywordMatch; readonly role: KeywordRole } | undefined;
+  let previous: { readonly match: KeywordMatch; readonly read: Read } | undefined;
 
   for (const match of matches) {
     if (!hasRole(match.kind)) {
       hits.push({ key: match.key, kind: match.kind, span: match.span });
       continue;
     }
-    const role =
-      previous !== undefined && continuesList(text, previous.match, match)
-        ? previous.role
-        : detectRole(text, match, isActiveForm(text, match, options));
-    hits.push({ key: match.key, kind: match.kind, span: match.span, role });
-    previous = { match, role };
+    const carried =
+      previous !== undefined &&
+      previous.read.listable &&
+      hasActor(previous.match.kind) === hasActor(match.kind) &&
+      continuesList(text, previous.match, match)
+        ? previous.read
+        : undefined;
+    const read = carried ?? readMention(text, match, options);
+    hits.push({ key: match.key, kind: match.kind, span: match.span, ...read.reading });
+    previous = { match, read };
   }
   return hits;
+}
+
+/** What a mention says, and whether the keywords listed after it may take it (an event read as a noun may not). */
+interface Read {
+  readonly reading: EventReading;
+  readonly listable: boolean;
+}
+
+function readMention(text: string, match: KeywordMatch, options: RoleOptions): Read {
+  if (!hasActor(match.kind)) {
+    return { reading: { role: detectRole(text, match, isActiveForm(text, match, options)) }, listable: true };
+  }
+  const { listable, ...reading } = readEvent(text, match);
+  // A moment is waited for, never made, and nobody does it (`EventEntry.moment`).
+  const isMoment = options.moments?.has(match.key) === true;
+  return { reading: isMoment ? { role: reading.role === 'resists' ? 'resists' : 'uses' } : reading, listable };
 }
 
 export interface RoleOptions {
   /** For a keyword, the written forms (lower case) in which the trait is the one doing it: `sealed` → `seals`. */
   readonly activeForms?: ReadonlyMap<KeywordKey, ReadonlySet<string>>;
+  /** The events that are moments of the battle (`EventEntry.moment`): `uses` or `resists`, with no actor. */
+  readonly moments?: ReadonlySet<KeywordKey>;
 }
 
 function isActiveForm(text: string, match: KeywordMatch, options: RoleOptions): boolean {
@@ -103,17 +128,17 @@ function detectRole(text: string, match: KeywordMatch, active: boolean): Keyword
   return nearest?.role ?? 'uses';
 }
 
-/** Where the sentence that contains `position` begins: after the last full stop, "!" or "?" followed by a blank. */
-function sentenceStart(text: string, position: number): number {
-  const boundary = /[.!?]\s+/g;
-  let start = 0;
-  for (const found of text.slice(0, position).matchAll(boundary)) start = found.index + found[0].length;
-  return start;
-}
-
 const LIST_SEPARATOR = /^\s*(?:,|,?\s*(?:and|or|and\/or))?\s*$/i;
 
-/** Only "and", "or" or a comma between two statuses: they are one list. */
+/** Events are verbs and nouns that can follow each other with nothing between ("dodge attacks"): a list has a separator. */
+const EVENT_LIST_SEPARATOR = /^(?:\s*,\s*(?:(?:and|or)\s+)?|\s+(?:and|or|and\/or)\s+)$/i;
+
+/** Only "and", "or" or a comma between two keywords of a kind: they are one list. */
 function continuesList(text: string, previous: KeywordMatch, next: KeywordMatch): boolean {
-  return LIST_SEPARATOR.test(text.slice(previous.span[1], next.span[0]));
+  const between = text.slice(previous.span[1], next.span[0]);
+  if (!hasActor(next.kind)) return LIST_SEPARATOR.test(between);
+  // "the start and end of their turn" is two mentions side by side, the first of which ends with "and".
+  const joinedByItsOwnWords =
+    between.trim() === '' && /\b(?:and|or)$/i.test(text.slice(previous.span[0], previous.span[1]));
+  return EVENT_LIST_SEPARATOR.test(between) || joinedByItsOwnWords;
 }

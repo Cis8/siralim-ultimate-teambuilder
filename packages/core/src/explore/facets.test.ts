@@ -41,7 +41,7 @@ const taxonomy = createTaxonomy([
   entry('buff', 'shelled'),
   entry('debuff', 'weak', { canBeRandomlyApplied: true }),
   entry('flag', 'nostack'),
-  entry('trigger', 'start of battle', { phase: 'startOfBattle' }),
+  entry('event', 'start of battle', { phase: 'startOfBattle' }),
   entry('debuff', 'vulnerable', { canBeRandomlyApplied: true }),
   entry('effect', 'zombies'),
 ]);
@@ -128,7 +128,7 @@ describe('facetVocabulary', () => {
       'debuff:vulnerable',
       'buff:shelled',
       'effect:zombies',
-      'trigger:start of battle',
+      'event:start of battle',
       'mechanic:timeline',
     ]);
   });
@@ -153,7 +153,7 @@ describe('countFacets', () => {
     trait('guards-against-weak', { class: 'Nature', keywords: [mention('weak', 'debuff', 'resists')] }),
     trait('at-the-start', {
       class: 'Nature',
-      keywords: [mention('start of battle', 'trigger'), mention('timeline', 'mechanic')],
+      keywords: [mention('start of battle', 'event', 'uses'), mention('timeline', 'mechanic')],
     }),
     trait('plain', { class: 'Nature' }),
   ];
@@ -219,8 +219,11 @@ describe('countFacets', () => {
       expect(keywordFacet(['guards-against-weak'], 'weak')).toMatchObject({ applies: 0, uses: 0, mentions: 1 });
     });
 
-    it('counts a trigger or a mechanic as a mention, with no role', () => {
-      expect(keywordFacet(everyone, 'start of battle')).toMatchObject({ applies: 0, uses: 0, mentions: 1 });
+    it('counts an event by its role, as a buff', () => {
+      expect(keywordFacet(everyone, 'start of battle')).toMatchObject({ applies: 0, uses: 1, mentions: 1 });
+    });
+
+    it('counts a mechanic as a mention, with no role', () => {
       expect(keywordFacet(everyone, 'timeline')).toMatchObject({ applies: 0, uses: 0, mentions: 1 });
     });
 

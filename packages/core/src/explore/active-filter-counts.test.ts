@@ -12,11 +12,11 @@ const vocabulary: readonly Pick<KeywordFacet, 'key' | 'kind'>[] = [
   { key: 'weak', kind: 'debuff' },
   { key: 'barrier', kind: 'buff' },
   { key: 'dire wolves', kind: 'effect' },
-  { key: 'start of battle', kind: 'trigger' },
+  { key: 'start of battle', kind: 'event' },
   { key: 'charges', kind: 'mechanic' },
 ];
 
-const none = { class: 0, debuff: 0, buff: 0, effect: 0, trigger: 0, mechanic: 0, flags: 0 };
+const none = { class: 0, debuff: 0, buff: 0, effect: 0, event: 0, mechanic: 0, flags: 0 };
 
 describe('activeFilterCounts', () => {
   it('is zero in every section for a state with no filter, whatever the query bar and the settings say', () => {
@@ -48,7 +48,7 @@ describe('activeFilterCounts', () => {
       debuff: 2,
       buff: 1,
       effect: 1,
-      trigger: 1,
+      event: 1,
       mechanic: 1,
     });
   });
@@ -79,7 +79,7 @@ describe('activeFilterCounts', () => {
   });
 
   it('has a count for every section, in the order the panel shows them', () => {
-    expect(FILTER_SECTIONS).toEqual(['class', 'debuff', 'buff', 'effect', 'trigger', 'mechanic', 'flags']);
+    expect(FILTER_SECTIONS).toEqual(['class', 'debuff', 'buff', 'effect', 'event', 'mechanic', 'flags']);
     expect(Object.keys(activeFilterCounts(initialExploreState, vocabulary))).toEqual([...FILTER_SECTIONS]);
   });
 

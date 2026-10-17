@@ -6,9 +6,16 @@ describe('extractKeywords', () => {
   it('finds the keywords of a trait with their spans and roles', () => {
     const text = 'At the start of battle, this creature gains a Barrier. This trait does not stack.';
     expect(extractKeywords(text)).toEqual([
-      { key: 'start of battle', kind: 'trigger', span: [7, 22] },
+      { key: 'start of battle', kind: 'event', span: [7, 22], role: 'uses' },
       { key: 'barrier', kind: 'buff', span: [46, 53], role: 'applies' },
       { key: 'nostack', kind: 'flag', span: [55, 80] },
+    ]);
+  });
+
+  it('gives an event the role and the actor the words around it say', () => {
+    expect(extractKeywords('After an enemy dodges, this creature recovers 10% health.')).toEqual([
+      { key: 'dodge', kind: 'event', span: [15, 21], role: 'uses', actor: 'enemy' },
+      { key: 'heal', kind: 'event', span: [37, 45], role: 'applies', actor: 'self' },
     ]);
   });
 

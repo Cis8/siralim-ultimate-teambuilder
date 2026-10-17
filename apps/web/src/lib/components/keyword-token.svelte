@@ -71,10 +71,8 @@
     color: var(--kw-buff);
   }
 
-  [data-kind='trigger'] {
-    color: var(--kw-trigger);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
+  [data-kind='event'] {
+    color: var(--kw-event);
   }
 
   [data-kind='flag'] {

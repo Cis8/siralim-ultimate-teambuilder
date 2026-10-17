@@ -1,13 +1,18 @@
-import type { KeywordKey, KeywordKind } from '../model/trait';
+import type { KeywordActor, KeywordKey, KeywordKind } from '../model/trait';
 
-/** Where in a battle a trigger fires, in the order a battle goes. Traits with no trigger are "always on". */
+/**
+ * Where in a battle an event happens, in the order a battle goes. An event with no phase happens at any time (healing, a
+ * buff, a debuff), and a trait with no event is "always on".
+ */
 export const TRIGGER_PHASES = [
   'startOfBattle',
   'startOfTurn',
   'attacking',
   'beingAttacked',
+  'defending',
   'spellcasting',
   'killsAndDeaths',
+  'endOfTurn',
 ] as const;
 export type TriggerPhase = (typeof TRIGGER_PHASES)[number];
 
@@ -47,8 +52,35 @@ export interface EffectEntry extends EntryBase<'effect'> {
 }
 export type FlagEntry = EntryBase<'flag'>;
 
-export interface TriggerEntry extends EntryBase<'trigger'> {
-  readonly phase: TriggerPhase;
+/**
+ * An old key that stands for an event, and for who does it: `after this creature attacks` is `attack` by `self`. Queries
+ * and addresses written before events (ADR-0009) keep working. Without an actor the alias is the event of any creature.
+ */
+export interface EventAlias {
+  readonly key: KeywordKey;
+  readonly actor?: KeywordActor;
 }
 
-export type TaxonomyEntry = DebuffEntry | BuffEntry | EffectEntry | MechanicEntry | TriggerEntry | FlagEntry;
+/**
+ * Something that happens in battle (GAME_RULES R12, ADR-0009). A mention has a role, as a buff has, and an actor, which
+ * the extractor reads from the text around it: the entry only says what the event is called in the texts.
+ */
+export interface EventEntry extends EntryBase<'event'> {
+  /** Absent for the events that can happen at any time. */
+  readonly phase?: TriggerPhase;
+  /** The edge of a turn this event is, which is not a phrase but a grammar ("start of <whose> turn"): see `findTurns`. */
+  readonly turnEdge?: 'start' | 'end';
+  /**
+   * A moment of the battle and not something a creature does: nobody makes the battle start, so a mention has no actor and
+   * is never `applies` ("Your creatures start battles with Shelled" waits for the start like "At the start of battle").
+   */
+  readonly moment?: boolean;
+  /**
+   * Patterns that are also the name of a stat ("50% more attack"). Where the text uses one that way, it is no event.
+   * Each must be one of `patterns`.
+   */
+  readonly statPatterns?: readonly string[];
+  readonly aliases?: readonly EventAlias[];
+}
+
+export type TaxonomyEntry = DebuffEntry | BuffEntry | EffectEntry | MechanicEntry | EventEntry | FlagEntry;

@@ -18,7 +18,13 @@ export function createKeywordExtractor(taxonomy: Taxonomy): KeywordExtractor {
           : [[entry.key, new Set(entry.activePatterns.map((form) => form.toLowerCase()))] as const],
       ),
   );
-  return (description) => assignRoles(description, matcher.match(description), { activeForms });
+  const moments = new Set(
+    taxonomy
+      .ofKind('event')
+      .filter((entry) => entry.moment === true)
+      .map((entry) => entry.key),
+  );
+  return (description) => assignRoles(description, matcher.match(description), { activeForms, moments });
 }
 
 /** The extractor over the taxonomy of the app. The pipeline and the tests use this one, so they agree (ADR-0003). */

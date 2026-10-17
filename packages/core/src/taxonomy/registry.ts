@@ -18,8 +18,8 @@ export interface Taxonomy {
 
 /**
  * Checks the entries and wraps them: keys are unique, lower case and none the start of another (a query finds a keyword
- * by the start of its key), every entry has a label and plain-text patterns, and no pattern names two entries. Adding a
- * keyword is adding an entry; nothing else changes.
+ * by the start of its key), every entry has a label and plain-text patterns, no pattern names two entries, and an alias
+ * of an event is neither a key nor the start of one. Adding a keyword is adding an entry; nothing else changes.
  *
  * @throws TaxonomyError listing every violation.
  */
@@ -29,6 +29,7 @@ export function createTaxonomy(entries: readonly TaxonomyEntry[]): Taxonomy {
     ...keyPrefixViolations(entries),
     ...entryViolations(entries),
     ...patternViolations(entries),
+    ...aliasViolations(entries),
   ];
   if (violations.length > 0) {
     throw new TaxonomyError(`The taxonomy is not valid:\n- ${violations.join('\n- ')}`);
@@ -77,6 +78,14 @@ function entryViolations(entries: readonly TaxonomyEntry[]): string[] {
         }
       }
     }
+    if (entry.kind === 'event') {
+      const patterns = new Set(entry.patterns.map((pattern) => pattern.toLowerCase()));
+      for (const word of entry.statPatterns ?? []) {
+        if (!patterns.has(word.toLowerCase())) {
+          problems.push(`"${entry.key}" lists the stat word "${word}", which is not one of its patterns`);
+        }
+      }
+    }
     for (const pattern of entry.patterns) {
       if (!isPlainText(pattern)) {
         problems.push(
@@ -101,6 +110,42 @@ function patternViolations(entries: readonly TaxonomyEntry[]): string[] {
   }
   for (const [pattern, keys] of owners) {
     if (keys.length > 1) problems.push(`pattern "${pattern}" belongs to ${describeOwners(keys)}`);
+  }
+  return problems;
+}
+
+/**
+ * An alias is read by the keyword fields and the address as the event it names. It must not also be read as a key: a
+ * query is the start of a key, so an alias that was the start of one could not be told from it.
+ */
+function aliasViolations(entries: readonly TaxonomyEntry[]): string[] {
+  const keys = [...new Set(entries.map(({ key }) => key))];
+  const owners = new Map<string, string[]>();
+  const problems: string[] = [];
+  for (const entry of entries) {
+    if (entry.kind !== 'event') continue;
+    for (const { key: alias } of entry.aliases ?? []) {
+      owners.set(alias, [...(owners.get(alias) ?? []), entry.key]);
+      if (alias === '' || alias !== alias.trim().toLowerCase() || !isPlainText(alias)) {
+        problems.push(`alias ${JSON.stringify(alias)} of "${entry.key}" must be lower case, plain text and not empty`);
+        continue;
+      }
+      for (const key of keys.filter((candidate) => candidate.startsWith(alias))) {
+        problems.push(
+          key === alias
+            ? `alias "${alias}" of "${entry.key}" is the key "${key}"`
+            : `alias "${alias}" of "${entry.key}" is the start of key "${key}", so a query for it could mean either`,
+        );
+      }
+    }
+  }
+  for (const [alias, aliasOwners] of owners) {
+    if (aliasOwners.length < 2) continue;
+    problems.push(
+      new Set(aliasOwners).size === 1
+        ? `alias "${alias}" is given twice`
+        : `alias "${alias}" belongs to ${describeOwners(aliasOwners)}`,
+    );
   }
   return problems;
 }

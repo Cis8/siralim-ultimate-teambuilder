@@ -48,7 +48,7 @@ const entry = (kind: TaxonomyEntry['kind'], key: string, extra: object = {}): Ta
 const taxonomy = createTaxonomy([
   entry('debuff', 'vulnerable', { canBeRandomlyApplied: true }),
   entry('debuff', 'weak', { canBeRandomlyApplied: true }),
-  entry('trigger', 'start of battle', { phase: 'startOfBattle' }),
+  entry('event', 'start of battle', { phase: 'startOfBattle' }),
 ]);
 
 // In the order of a dataset: by family, then name. Two classes have a name that is part of another's: Boss and Nether Boss.
@@ -84,7 +84,7 @@ const traits = [
   trait('f-opening', {
     class: 'Nature',
     description: 'At the start of battle, heals.',
-    keywords: [mention('start of battle', 'trigger')],
+    keywords: [mention('start of battle', 'event')],
   }),
   trait('g-heal', { class: 'Life' }),
 ];
@@ -209,7 +209,7 @@ describe('createSearchService', () => {
       expect(await found({ keywords: [usesWeak] })).toEqual(['a-frail']);
     });
 
-    it('finds a keyword of any role, and a trigger, with kw', async () => {
+    it('finds a keyword of any role, and an event, with kw', async () => {
       expect(await found({ keywords: [{ field: 'kw', key: 'weak' }] })).toEqual([
         'a-frail',
         'b-bite',

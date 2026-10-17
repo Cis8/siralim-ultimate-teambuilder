@@ -30,26 +30,181 @@ describe('createKeywordMatcher', () => {
 
   describe('letter case', () => {
     it.each(['start of battle', 'Start of battle', 'START OF BATTLE'])('is ignored in a phrase: %s', (written) => {
-      expect(keysIn(`${written}, it attacks.`)).toEqual(['start of battle']);
+      expect(keysIn(`${written}, it rests.`)).toEqual(['start of battle']);
     });
 
     it('is ignored in a mechanic: "spell gems" and "Spell Gems"', () => {
-      expect(keysIn('Cast spell gems. Cast Spell Gems.')).toEqual(['spell gems', 'spell gems']);
+      expect(keysIn('See spell gems. See Spell Gems.')).toEqual(['spell gems', 'spell gems']);
     });
 
     it('matters for a buff or debuff, which is a name: only the written form counts', () => {
-      expect(keysIn('Enemies with Weak attack.')).toEqual(['weak']);
-      expect(keysIn('Enemies with weak attack.')).toEqual([]);
-      expect(keysIn('Enemies with WEAK attack.')).toEqual([]);
+      expect(keysIn('Enemies with Weak rest.')).toEqual(['weak']);
+      expect(keysIn('Enemies with weak rest.')).toEqual([]);
+      expect(keysIn('Enemies with WEAK rest.')).toEqual([]);
     });
 
     it.each([
       ['are immune to Silenced', ['silenced']],
-      ['are immune to damage from spells', []],
+      ['are immune to damage from effects', []],
       ['gain Immune', ['immune']],
       ['creatures that are weak against their class', []],
     ])('keeps an adjective from being a status: "%s"', (text, keys) => {
       expect(keysIn(`Your creatures ${text}.`)).toEqual(keys);
+    });
+  });
+
+  describe('events (GAME_RULES R12)', () => {
+    it.each([
+      ['This creature attacks twice', 'attack'],
+      ['Attacking enemies', 'attack'],
+      ['their on-attack effects', 'attack'],
+      ['an enemy is attacked', 'being attacked'],
+      ['it casts Fireball', 'cast spell'],
+      ['on-cast effects', 'cast spell'],
+      ['it manually casts Fireball', 'manual cast'],
+      ['your creatures defend', 'defend'],
+      ['it provokes', 'provoke'],
+      ['an enemy dodges', 'dodge'],
+      ['it deals critical damage', 'critical hit'],
+      ['when it takes damage', 'damage taken'],
+      ['it heals 10% health', 'heal'],
+      ['it kills the target', 'kill'],
+      ['when it dies', 'death'],
+      ['when it is killed', 'death'],
+      ['it is resurrected', 'resurrection'],
+      ['it gains a random buff', 'any buff'],
+      ['it is afflicted with a random debuff', 'any debuff'],
+    ])('finds the event in "%s"', (text, key) => {
+      expect(matcher.match(text).filter((match) => match.kind === 'event')).toEqual([
+        expect.objectContaining({ key, kind: 'event' }),
+      ]);
+    });
+
+    it('prefers the longer phrase: "manually cast" is a manual cast, not a cast', () => {
+      expect(keysIn('it manually cast Fireball')).toEqual(['manual cast']);
+    });
+
+    it('ignores letter case', () => {
+      expect(keysIn('Attacks. ATTACKS. attacks.')).toEqual(['attack', 'attack', 'attack']);
+    });
+
+    it('reads the edges of a turn by the grammar, with the owner when the words name one', () => {
+      const text = "At the start of your Phoenixes' turns and at the end of each enemy's turn, it rests.";
+      expect(matcher.match(text).map(({ key, span, actor }) => [key, text.slice(span[0], span[1]), actor])).toEqual([
+        ['start of turn', "start of your Phoenixes' turns", 'ally'],
+        ['end of turn', "end of each enemy's turn", 'enemy'],
+      ]);
+    });
+
+    it('gives the turn of "their" no owner: the sentence around it has to say', () => {
+      expect(matcher.match('at the end of their turn')).toEqual([{ key: 'end of turn', kind: 'event', span: [7, 24] }]);
+    });
+
+    it('reads "the start and end of their turn" as both edges', () => {
+      expect(keysIn('at the start and end of their turn')).toEqual(['start of turn', 'end of turn']);
+    });
+
+    it('reads the hyphenated forms of the turns', () => {
+      expect(keysIn('their start-of-turn and end-of-turn effects')).toEqual(['start of turn', 'end of turn']);
+    });
+
+    // The words of a turn can name a status ("each Cursed enemy's turn"): the status is a mention of its own, and the turn
+    // keeps the words before it, so that no span overlaps another.
+    it('keeps a status named inside a turn, and shortens the turn to the words before it', () => {
+      const text = "At the start of each Cursed enemy's turn, it rests.";
+      expect(matcher.match(text).map(({ key, span, actor }) => [key, text.slice(span[0], span[1]), actor])).toEqual([
+        ['start of turn', 'start of each', 'enemy'],
+        ['cursed', 'Cursed', undefined],
+      ]);
+    });
+
+    it('drops the turn when the status starts it', () => {
+      expect(keysIn('Cursed turns end')).toEqual(['cursed']);
+    });
+
+    it('reads "its turn ends" as the end of a turn', () => {
+      expect(keysIn('it defends and then its turn ends')).toEqual(['defend', 'end of turn']);
+    });
+
+    it('does not read a turn out of a phrase that is not one', () => {
+      expect(keysIn('This creature can take an additional turn.')).toEqual([]);
+    });
+
+    // "Death" is a class, "Healing" and "Kill Streak" are spells: a name is capitalised in the middle of a sentence.
+    describe('a name that looks like an event', () => {
+      it.each([
+        'Your Death creatures take 10% less damage.',
+        'This creature casts Death Siphon on the target.',
+        'It gains Major Healing at the start of battle.',
+        'Then it casts Kill Streak.',
+        'Chaos, Sorcery, Nature, Death, or Life Spell Gems',
+      ])('is no event: %s', (text) => {
+        const events = matcher.match(text).filter((match) => match.kind === 'event' && match.key !== 'start of battle');
+        expect(events.map((match) => text.slice(match.span[0], match.span[1]))).not.toContain('Death');
+        expect(events.map((match) => text.slice(match.span[0], match.span[1]))).not.toContain('Healing');
+        expect(events.map((match) => text.slice(match.span[0], match.span[1]))).not.toContain('Kill');
+      });
+
+      it.each(['Attack a random enemy.', 'After it hits. Heal one ally.', 'When this creature dies. Death follows.'])(
+        'is an event at the start of a sentence: %s',
+        (text) => {
+          expect(keysIn(text).length).toBeGreaterThan(0);
+        },
+      );
+
+      it('is an event after a dash, and no event as the label of a list', () => {
+        expect(keysIn('Chaos - Attack a random enemy. Death - Enemies are afflicted with Weak.')).toEqual([
+          'attack',
+          'weak',
+        ]);
+      });
+
+      it('is an event at the start of the next sentence', () => {
+        expect(keysIn('It rests. Death follows.')).toEqual(['death']);
+      });
+    });
+
+    describe('"attacked": the attack when the creature did it, being attacked when it was done to it', () => {
+      it.each([
+        ['After this creature is attacked, it gains a Barrier.', 'being attacked'],
+        ['When your creatures are attacked, they heal.', 'being attacked'],
+        ['If this creature was attacked last turn', 'being attacked'],
+        ['their on-attack and when-attacked effects', 'attack'],
+        ['for each time they have attacked in the current battle', 'attack'],
+        ['if it attacked last turn', 'attack'],
+        ['the damage it took since it last attacked', 'attack'],
+      ])('reads %s', (text, key) => {
+        expect(matcher.match(text).map((match) => match.key)).toContain(key);
+      });
+
+      it('reads "when-attacked" as being attacked', () => {
+        expect(keysIn('their when-attacked effects')).toEqual(['being attacked']);
+      });
+    });
+
+    describe('"attack" as a stat', () => {
+      it.each([
+        'This creature has 15% more attack and intelligence.',
+        "It reduces the enemies' attack by 15%.",
+        'It gains Attack equal to 20% of the damage.',
+        'Its stats other than attack are doubled.',
+      ])('is no event: %s', (text) => {
+        expect(keysIn(text).filter((key) => key === 'attack')).toEqual([]);
+      });
+
+      it('is never the stat in the plural, and an action as a verb', () => {
+        expect(keysIn('Its attacks deal 75% more damage.')).toEqual(['attack']);
+        expect(keysIn('Your creatures attack 1 additional time.')).toEqual(['attack']);
+      });
+
+      it('is only a stat where the entry says so: a word of another event keeps its meaning', () => {
+        const custom = createKeywordMatcher(
+          createTaxonomy([
+            { kind: 'event', key: 'attack', label: 'Attack', patterns: ['attack', 'strike'], statPatterns: ['attack'] },
+          ]),
+        );
+        expect(custom.match('15% more attack and a strike').map((match) => match.span)).toEqual([[22, 28]]);
+      });
     });
   });
 
@@ -89,7 +244,7 @@ describe('createKeywordMatcher', () => {
       ['Unshelled', 'shelled'],
       ['Bombard', 'bomb'],
     ])('does not read a keyword inside %s', (word, key) => {
-      expect(keysIn(`Your ${word} attack.`)).not.toContain(key);
+      expect(keysIn(`Your ${word} rest.`)).not.toContain(key);
     });
 
     it('does not take a status for part of a longer name: "Savage Spores" is not Savage', () => {
@@ -100,7 +255,7 @@ describe('createKeywordMatcher', () => {
     it('still reads a status followed by a lower-case word, a punctuation mark or another status', () => {
       expect(keysIn('Weak enemies with Snared and Feared.')).toEqual(['weak', 'snared', 'feared']);
       expect(keysIn('It gains Savage, Berserk and Agile creatures.')).toEqual(['savage', 'berserk', 'agile']);
-      expect(keysIn('Afflicts Weak. Then it casts Fireball.')).toEqual(['weak']);
+      expect(keysIn('Afflicts Weak. Then it rests.')).toEqual(['weak']);
     });
 
     it('still finds a keyword next to punctuation', () => {
@@ -114,15 +269,15 @@ describe('createKeywordMatcher', () => {
   });
 
   describe('longest match', () => {
-    it('reads "start of battle" and "start of this creature\'s turn" as different triggers', () => {
-      expect(keysIn("At the start of battle and at the start of this creature's turn, it attacks.")).toEqual([
+    it('reads "start of battle" and the start of a turn as different events', () => {
+      expect(keysIn("At the start of battle and at the start of this creature's turn, it rests.")).toEqual([
         'start of battle',
-        "start of this creature's turn",
+        'start of turn',
       ]);
     });
 
     it('reads Sleeping as one keyword, not Sleep followed by "ing"', () => {
-      expect(matcher.match('Your creatures with Sleeping attack.')).toEqual([
+      expect(matcher.match('Your creatures with Sleeping rest.')).toEqual([
         { key: 'sleeping', kind: 'debuff', span: [20, 28] },
       ]);
     });
@@ -158,8 +313,8 @@ describe('createKeywordMatcher', () => {
       ['Stoned', 'stoned'],
       ['Spell Gem', 'spell gems'],
       ['Spell Gems', 'spell gems'],
-      ['manually cast a spell', 'manually cast a spell'],
-      ['manually casts a spell', 'manually cast a spell'],
+      ['manually cast', 'manual cast'],
+      ['manually casts', 'manual cast'],
       ['start battles', 'start of battle'],
     ])('reads %s as %s', (written, key) => {
       expect(keysIn(`It ${written} here.`)).toEqual([key]);
@@ -169,7 +324,7 @@ describe('createKeywordMatcher', () => {
       const curly = 'At the start of this creature’s turn, it gains Shelled.';
       const straight = curly.replace('’', "'");
       expect(matcher.match(curly)).toEqual(matcher.match(straight));
-      expect(keysIn(curly)).toEqual(["start of this creature's turn", 'shelled']);
+      expect(keysIn(curly)).toEqual(['start of turn', 'shelled']);
     });
 
     it('reads any run of blanks inside a phrase as one space', () => {
@@ -197,7 +352,8 @@ describe('createKeywordMatcher', () => {
     });
 
     it('finds the flag and the mechanics too', () => {
-      expect(keysIn('Your spells always deal critical damage to the Timeline. This trait does not stack.')).toEqual([
+      expect(keysIn('Your spells gain 50% critical damage on the Timeline. This trait does not stack.')).toEqual([
+        'spells',
         'critical damage',
         'timeline',
         'nostack',

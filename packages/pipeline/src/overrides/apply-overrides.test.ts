@@ -11,6 +11,19 @@ const hit = (key: string, role: 'applies' | 'uses', start = 0): KeywordHit => ({
   role,
 });
 
+const eventHit = (
+  key: string,
+  role: 'applies' | 'uses',
+  actor: 'self' | 'ally' | 'enemy' | 'any',
+  start = 0,
+): KeywordHit => ({
+  key,
+  kind: 'event',
+  span: [start, start + key.length],
+  role,
+  actor,
+});
+
 function trait(id: string, keywords: KeywordHit[], overrides: Partial<Trait> = {}): Trait {
   return {
     id,
@@ -37,6 +50,13 @@ const roleOf = (key: string, role: 'applies' | 'uses', extra: object = {}) => ({
   trait: 'sandstorm',
   keyword: key,
   role,
+  reason: 'r',
+  ...extra,
+});
+const actorOf = (key: string, actor: 'self' | 'ally' | 'enemy' | 'any', extra: object = {}) => ({
+  trait: 'sandstorm',
+  keyword: key,
+  actor,
   reason: 'r',
   ...extra,
 });
@@ -110,6 +130,46 @@ describe('applyOverrides', () => {
     });
   });
 
+  describe('actors', () => {
+    const FEAST = trait('sandstorm', [
+      eventHit('attack', 'uses', 'self', 0),
+      eventHit('attack', 'applies', 'ally', 20),
+    ]);
+
+    it('sets the actor of an event mention and leaves its role', () => {
+      const { traits } = applyOverrides([FEAST], roles(actorOf('attack', 'enemy', { occurrence: 2 })));
+      expect(traits[0]?.keywords.map((h) => `${h.role}/${h.actor}`)).toEqual(['uses/self', 'applies/enemy']);
+    });
+
+    it('sets the role and the actor together', () => {
+      const { traits } = applyOverrides([FEAST], roles(roleOf('attack', 'uses', { actor: 'any', occurrence: 2 })));
+      expect(traits[0]?.keywords[1]).toEqual({
+        key: 'attack',
+        kind: 'event',
+        span: [20, 26],
+        role: 'uses',
+        actor: 'any',
+      });
+    });
+
+    it('gives an actor to a mention that has none', () => {
+      const nobody: KeywordHit = { key: 'start of battle', kind: 'event', span: [0, 15], role: 'uses' };
+      const { traits } = applyOverrides([trait('sandstorm', [nobody])], roles(actorOf('start of battle', 'ally')));
+      expect(traits[0]?.keywords[0]).toEqual({ ...nobody, actor: 'ally' });
+    });
+
+    it('warns about an actor that is already the one detected', () => {
+      const { warnings } = applyOverrides([FEAST], roles(actorOf('attack', 'self', { occurrence: 1 })));
+      expect(warnings).toEqual([expect.stringMatching(/roles\[0\].*sandstorm.*attack.*already/)]);
+    });
+
+    it('refuses an actor on a keyword that is not an event', () => {
+      expect(failureOf([SANDSTORM], roles(actorOf('blind', 'self')))).toMatch(
+        /roles\[0\].*"blind" is a debuff.*no actor/,
+      );
+    });
+  });
+
   describe('what it refuses', () => {
     it('an override for a trait that does not exist', () => {
       expect(failureOf([SANDSTORM], roles(roleOf('weak', 'uses', { trait: 'nothing' })))).toMatch(
@@ -130,8 +190,8 @@ describe('applyOverrides', () => {
     });
 
     it('a role on a keyword that has none', () => {
-      const withTrigger = trait('sandstorm', [{ key: 'start of battle', kind: 'trigger', span: [0, 15] }]);
-      expect(failureOf([withTrigger], roles(roleOf('start of battle', 'uses')))).toMatch(/roles\[0\].*no role/);
+      const withMechanic = trait('sandstorm', [{ key: 'timeline', kind: 'mechanic', span: [0, 8] }]);
+      expect(failureOf([withMechanic], roles(roleOf('timeline', 'uses')))).toMatch(/roles\[0\].*no role/);
     });
 
     it('two overrides for the same mention', () => {

@@ -32,6 +32,8 @@ aid kept out of the repository; nothing it wrote ships, and every count the docs
 - **An event mention has an actor**: `self` (this creature), `ally` (your creatures, an ally), `enemy`, `any` (any
   creature); for something that happens to a creature (being attacked, death, resurrection, heal) it is that creature.
   A keyword field takes it after a slash: `uses:provoke` finds every actor, `uses:provoke/self` only this creature.
+- **The start of battle is a moment, not an act**: nobody makes a battle start, so a mention of it has no actor and is never
+  `applies` ("Your Crusaders start battles with Shelled" waits for the start). The other events keep the actor the text names.
 - **Turns are read by a small grammar** ("start|end of <whose> turn(s)"), since the possessive can be a family
   ("your Phoenixes' turns") and patterns are plain text. "attack" written as a stat ("50% more attack") is not an event.
 - **The 11 old trigger keys stay valid as aliases** of an event and an actor (`after this creature attacks` →
@@ -42,8 +44,8 @@ aid kept out of the repository; nothing it wrote ships, and every count the docs
 - **No event is ever a dependency** (GAME_RULES R12): party coverage lists buffs, debuffs and effects only.
 
 ## Consequences
-- About 2,200 more mentions on v2.0 (2,299 → ~4,500) and ~20 kB more gzipped data (~140 of the 300 kB budget); the
-  snapshot file grows by as many lines, each read before it is accepted.
+- About 2,200 more mentions on v2.0 (2,299 → 4,453, with Spells and Stats) and ~20 kB more gzipped data (139 of the 300 kB
+  budget); the snapshot file grows by as many lines, each read before it is accepted.
 - A query that used the start of an old phrase (`kw:after`) no longer finds it: only whole old keys are aliases.
 - Every new form of an event in a future sheet needs a pattern, so the report lists event words no keyword covers, as it
   lists capitalised terms today.

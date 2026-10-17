@@ -1,6 +1,20 @@
-import { hasRole, type KeywordHit, type KeywordRole, type RandomDebuffSource, type Trait } from '@atlas/core';
+import {
+  hasActor,
+  hasRole,
+  type KeywordActor,
+  type KeywordHit,
+  type KeywordRole,
+  type RandomDebuffSource,
+  type Trait,
+} from '@atlas/core';
 import { OverridesError } from './overrides-error';
 import type { Overrides, RandomDebuffOverride, RoleOverride } from './parse-overrides';
+
+/** What an override sets on a mention: its role, its actor or both. */
+interface MentionChange {
+  readonly role?: KeywordRole;
+  readonly actor?: KeywordActor;
+}
 
 export interface AppliedOverrides {
   readonly traits: readonly Trait[];
@@ -19,7 +33,7 @@ export function applyOverrides(traits: readonly Trait[], overrides: Overrides): 
   const problems: string[] = [];
   const warnings: string[] = [];
 
-  const newRoles = new Map<string, Map<number, KeywordRole>>(); // trait id → keyword index → role
+  const newRoles = new Map<string, Map<number, MentionChange>>(); // trait id → keyword index → role and actor
   const claimed = new Map<string, number>(); // "trait id|keyword index" → the override that set it
   overrides.roles.forEach((override, index) => {
     const label = `roles[${index}]`;
@@ -39,13 +53,14 @@ export function applyOverrides(traits: readonly Trait[], overrides: Overrides): 
     }
 
     for (const { position } of targets) claimed.set(`${trait.id}|${position}`, index);
-    if (targets.every(({ hit }) => hit.role === override.role)) {
+    const change = changeOf(override);
+    if (targets.every(({ hit }) => sameAs(hit, change))) {
       warnings.push(
-        `${label}: in "${trait.id}", "${override.keyword}" is already "${override.role}"; this changes nothing`,
+        `${label}: in "${trait.id}", "${override.keyword}" is already ${describeChange(change)}; this changes nothing`,
       );
     }
-    const changes = newRoles.get(trait.id) ?? new Map<number, KeywordRole>();
-    for (const { position } of targets) changes.set(position, override.role);
+    const changes = newRoles.get(trait.id) ?? new Map<number, MentionChange>();
+    for (const { position } of targets) changes.set(position, change);
     newRoles.set(trait.id, changes);
   });
 
@@ -81,7 +96,7 @@ export function applyOverrides(traits: readonly Trait[], overrides: Overrides): 
       return {
         ...trait,
         keywords:
-          changes === undefined ? trait.keywords : trait.keywords.map((hit, i) => withRole(hit, changes.get(i))),
+          changes === undefined ? trait.keywords : trait.keywords.map((hit, i) => withChange(hit, changes.get(i))),
         randomDebuff: source ?? trait.randomDebuff,
       };
     }),
@@ -100,8 +115,12 @@ function mentionsToChange(trait: Trait, override: RoleOverride, label: string, p
     problems.push(`${label}: "${trait.id}" does not mention "${override.keyword}"`);
     return [];
   }
-  if (!hasRole(first.hit.kind)) {
+  if (override.role !== undefined && !hasRole(first.hit.kind)) {
     problems.push(`${label}: "${override.keyword}" is a ${first.hit.kind} and has no role`);
+    return [];
+  }
+  if (override.actor !== undefined && !hasActor(first.hit.kind)) {
+    problems.push(`${label}: "${override.keyword}" is a ${first.hit.kind} and has no actor`);
     return [];
   }
   if (override.occurrence === undefined) return mentions;
@@ -116,8 +135,26 @@ function mentionsToChange(trait: Trait, override: RoleOverride, label: string, p
   return [chosen];
 }
 
-function withRole(hit: KeywordHit, role: KeywordRole | undefined): KeywordHit {
-  return role === undefined ? hit : { ...hit, role };
+const changeOf = ({ role, actor }: RoleOverride): MentionChange => ({
+  ...(role === undefined ? {} : { role }),
+  ...(actor === undefined ? {} : { actor }),
+});
+
+function withChange(hit: KeywordHit, change: MentionChange | undefined): KeywordHit {
+  if (change === undefined) return hit;
+  return {
+    ...hit,
+    ...(change.role === undefined ? {} : { role: change.role }),
+    ...(change.actor === undefined ? {} : { actor: change.actor }),
+  };
+}
+
+/** The mention already says everything the override does. */
+const sameAs = (hit: KeywordHit, { role, actor }: MentionChange) =>
+  (role === undefined || hit.role === role) && (actor === undefined || hit.actor === actor);
+
+function describeChange({ role, actor }: MentionChange): string {
+  return [role === undefined ? [] : [`"${role}"`], actor === undefined ? [] : [`by "${actor}"`]].flat().join(' ');
 }
 
 function toSource(override: RandomDebuffOverride): RandomDebuffSource {

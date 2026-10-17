@@ -10,7 +10,7 @@ export const FACET_KEYWORD_KINDS = [
   'debuff',
   'buff',
   'effect',
-  'trigger',
+  'event',
   'mechanic',
 ] as const satisfies readonly KeywordKind[];
 export type FacetKeywordKind = (typeof FACET_KEYWORD_KINDS)[number];
@@ -23,7 +23,7 @@ export interface ClassFacet {
   readonly standard: boolean;
 }
 
-/** How many of the traits shown mention a keyword. A trigger or a mechanic has no role: only `mentions` counts for it. */
+/** How many of the traits shown mention a keyword. A mechanic has no role: only `mentions` counts for it. */
 export interface KeywordFacet {
   readonly key: KeywordKey;
   readonly label: string;

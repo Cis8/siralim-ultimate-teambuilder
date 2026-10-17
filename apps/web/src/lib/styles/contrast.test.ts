@@ -63,12 +63,12 @@ const TEXT = [
   'kw-debuff',
   'kw-buff',
   'kw-mechanic',
-  'kw-trigger',
+  'kw-event',
 ] as const;
 
 /** Where the match highlight is drawn: in the description of a result, which sits on the page, and in what that holds. */
 const HIGHLIGHT_ON = 'bg';
-const IN_A_DESCRIPTION = ['text', 'text-muted', 'kw-debuff', 'kw-buff', 'kw-mechanic', 'kw-trigger'] as const;
+const IN_A_DESCRIPTION = ['text', 'text-muted', 'kw-debuff', 'kw-buff', 'kw-mechanic', 'kw-event'] as const;
 
 /** The highlight as `marked-text.svelte` draws it: a share of one token over what is behind. */
 function highlight(): { readonly colour: Rgb; readonly share: number } {

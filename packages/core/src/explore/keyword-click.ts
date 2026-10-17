@@ -22,9 +22,12 @@ const OTHER_SIDE: Partial<Record<KeywordFilterField, KeywordFilterField>> = { ap
 
 export function clickGoal({ key, kind, role }: ClickedKeyword): ClickGoal {
   if (kind === 'flag' && key === NO_STACK_KEY) return 'nonStacking';
+  // An event has no counterpart to jump to yet (nobody causes the start of a battle): a click shows the traits that mention
+  // it, until the events section gives it the one that fits (M8b.8).
+  if (kind === 'event') return 'mentions';
   if (role === 'applies') return 'users';
   if (role === 'uses') return 'appliers';
-  // A mention that only guards against the keyword (GAME_RULES R9) has no side, nor has a trigger or a mechanic.
+  // A mention that only guards against the keyword (GAME_RULES R9) has no side, nor has a mechanic.
   return 'mentions';
 }
 

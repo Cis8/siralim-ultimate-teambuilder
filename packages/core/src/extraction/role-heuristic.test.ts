@@ -6,10 +6,10 @@ import { taxonomy } from '../taxonomy/taxonomy';
 
 const matcher = createKeywordMatcher(taxonomy);
 
-/** `key:role` for every mention that has a role, in order, as the whole extractor reads them. */
+/** `key:role` for every buff, debuff and effect, in order, as the whole extractor reads them (events: event-reading.test.ts). */
 function rolesIn(text: string): string[] {
   return extractKeywords(text)
-    .filter((hit) => hit.role !== undefined)
+    .filter((hit) => hit.role !== undefined && hit.kind !== 'event')
     .map((hit) => `${hit.key}:${hit.role}`);
 }
 
@@ -300,19 +300,24 @@ describe('assignRoles', () => {
   });
 
   describe('what gets a role', () => {
-    it('is buffs and debuffs only', () => {
-      const text =
-        'At the start of battle, this creature gains Barrier and casts Spell Gems. This trait does not stack.';
+    it('is buffs, debuffs, effects and events only', () => {
+      const text = 'At the start of battle, this creature gains Barrier and Spell Gems. This trait does not stack.';
       const hits = assignRoles(text, matcher.match(text));
       expect(hits.map((hit) => [hit.key, hit.role])).toEqual([
-        ['start of battle', undefined],
+        ['start of battle', 'uses'],
         ['barrier', 'applies'],
         ['spell gems', undefined],
         ['nostack', undefined],
       ]);
-      for (const hit of hits.filter((hit) => hit.kind !== 'buff' && hit.kind !== 'debuff')) {
+      for (const hit of hits.filter((hit) => !['buff', 'debuff', 'effect', 'event'].includes(hit.kind))) {
         expect(hit).not.toHaveProperty('role');
       }
+    });
+
+    it('gives an actor to an event and to nothing else', () => {
+      const text = 'When this creature attacks, it gains Barrier and Spell Gems.';
+      const hits = assignRoles(text, matcher.match(text));
+      expect(hits.filter((hit) => 'actor' in hit).map((hit) => [hit.key, hit.actor])).toEqual([['attack', 'self']]);
     });
 
     it('keeps the kind and the span of every match', () => {

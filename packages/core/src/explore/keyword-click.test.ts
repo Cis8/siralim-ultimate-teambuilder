@@ -20,7 +20,9 @@ describe('clickGoal', () => {
     ['a buff that is applied', { key: 'shelled', kind: 'buff', role: 'applies' }, 'users'],
     ['an effect that is relied on', { key: 'zombies', kind: 'effect', role: 'uses' }, 'appliers'],
     ['a debuff that is only guarded against', debuff('silenced', 'resists'), 'mentions'],
-    ['a trigger', { key: 'start of battle', kind: 'trigger' }, 'mentions'],
+    ['an event that is caused', { key: 'attack', kind: 'event', role: 'applies' }, 'mentions'],
+    ['an event that is waited for', { key: 'start of battle', kind: 'event', role: 'uses' }, 'mentions'],
+    ['an event that is prevented', { key: 'death', kind: 'event', role: 'resists' }, 'mentions'],
     ['a mechanic', { key: 'charges', kind: 'mechanic' }, 'mentions'],
     ['the flag "does not stack"', { key: 'nostack', kind: 'flag' }, 'nonStacking'],
     ['a flag nobody has a filter for', { key: 'unheard-of', kind: 'flag' }, 'mentions'],
@@ -47,7 +49,7 @@ describe('clickKeyword', () => {
     expect(clickKeyword(initialExploreState, debuff('silenced', 'resists')).keywords).toEqual([
       { field: 'kw', key: 'silenced' },
     ]);
-    expect(clickKeyword(initialExploreState, { key: 'start of battle', kind: 'trigger' }).keywords).toEqual([
+    expect(clickKeyword(initialExploreState, { key: 'start of battle', kind: 'event' }).keywords).toEqual([
       { field: 'kw', key: 'start of battle' },
     ]);
   });
@@ -167,7 +169,7 @@ describe('isClickOn', () => {
 describe('a click, on any state', () => {
   const clicked = fc.record({
     key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'nostack'),
-    kind: fc.constantFrom<KeywordKind>('debuff', 'buff', 'effect', 'trigger', 'mechanic', 'flag'),
+    kind: fc.constantFrom<KeywordKind>('debuff', 'buff', 'effect', 'event', 'mechanic', 'flag'),
     role: fc.option(fc.constantFrom<KeywordRole>('applies', 'uses', 'resists'), { nil: undefined }),
   });
   const state = fc.record({

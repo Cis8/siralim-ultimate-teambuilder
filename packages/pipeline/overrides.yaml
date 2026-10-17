@@ -5,11 +5,13 @@
 # longer exists, and warns when an entry changes nothing: then delete it. Put a `reason` that contains a colon or
 # quotes between single quotes, as below.
 #
-# roles: who gives a buff or debuff and who relies on it, where the wording fooled the heuristic.
+# roles: who gives a buff, debuff or effect and who relies on it, what an event does (causes it: applies, pays off: uses,
+# prevents it: resists) and who does it, where the wording fooled the heuristic.
 #   - trait: sandstorm            # trait id
-#     keyword: blind              # key of a buff or debuff in the taxonomy
+#     keyword: blind              # key of a buff, debuff, effect or event in the taxonomy
 #     occurrence: 2               # optional: which mention in the trait, counting from 1; leave out for all of them
-#     role: uses                  # applies | uses
+#     role: uses                  # applies | uses | resists; leave out to correct only the actor
+#     actor: enemy                # events only: self | ally | enemy | any; leave out to correct only the role
 #     reason: 'Sandstorm, second sentence: "your creatures with Blind" only reads the debuff.'
 #
 # randomDebuff: who a "random debuff" trait afflicts, and whether it can do so on its own (GAME_RULES R5).
@@ -73,5 +75,104 @@ roles:
     keyword: shelled
     role: applies
     reason: 'Master of Wights: Wights "always resurrect with 100% Health and Shelled", so the mastery gives Shelled.'
+
+  # Events (GAME_RULES R12, ADR-0009). Read on 2026-10-17 beside the sweep of 8b.5: every mention where the role or the actor
+  # differs from what the sweep recorded was looked at, and what is here is where the wording fooled the heuristic. The
+  # sweep calls "modifier" what the rules call causing or improving, so a difference of that kind is not a mistake.
+  - trait: backer--impatience
+    keyword: start of turn
+    role: applies
+    actor: any
+    reason: 'Impatience: "this creature and a random enemy activate their start-of-turn and end-of-turn effects" makes those effects happen, for both creatures.'
+  - trait: backer--impatience
+    keyword: end of turn
+    role: applies
+    actor: any
+    reason: 'Impatience: "this creature and a random enemy activate their start-of-turn and end-of-turn effects" makes those effects happen, for both creatures.'
+  - trait: exotic--the-end-of-all-things
+    keyword: end of turn
+    occurrence: 2
+    role: applies
+    reason: 'The End of All Things: "adjacent creatures activate their end-of-turn effects" makes those effects happen.'
+  - trait: griffon--master-of-griffons
+    keyword: attack
+    role: applies
+    reason: 'Master of Griffons: "on-attack and on-critical effects occur 1 additional time" makes those effects happen again.'
+  - trait: asura--master-of-asuras
+    keyword: critical hit
+    role: applies
+    reason: 'Master of Asuras: "on-critical effects activate 2 additional times" makes those effects happen again.'
+  - trait: hemomancer--master-of-hemomancers
+    keyword: attack
+    role: applies
+    reason: 'Master of Hemomancers: "on-attack and when-attacked effects activate 1 additional time" makes those effects happen again.'
+  - trait: backer--death-threats
+    keyword: dodge
+    role: applies
+    actor: enemy
+    reason: 'Death Threats: "3 random enemies activate their on-dodge effects" makes the enemies'' effects happen.'
+  - trait: underdweller--mortal-terror
+    keyword: death
+    role: applies
+    reason: 'Mortal Terror: "activates that enemy''s on-death effects" makes those effects happen.'
+  - trait: smith--iannes-quirk
+    keyword: cast spell
+    role: applies
+    reason: 'Ianne''s Quirk: "After this creature attacks it casts Metamorphosis" has no comma, so the cast was read as part of the condition.'
+  - trait: construct--chaos-through-creation
+    keyword: attack
+    role: uses
+    reason: 'Chaos through Creation: "Afer this creature attacks, it casts …" has a typo that hides the condition.'
+  - trait: slime--dispersion
+    keyword: heal
+    occurrence: 1
+    role: applies
+    reason: 'Dispersion: "your other creatures that don''t have this trait are healed for 50% of the amount": the trait heals them.'
+  - trait: exotic--projection
+    keyword: defend
+    role: uses
+    reason: 'Projection: "After an adjacent ally attacks, casts a spell, defends, or provokes" is one list: all of it is the condition.'
+  - trait: exotic--projection
+    keyword: provoke
+    role: uses
+    reason: 'Projection: "After an adjacent ally attacks, casts a spell, defends, or provokes" is one list: all of it is the condition.'
+  - trait: marionette--hoodwink
+    keyword: provoke
+    role: uses
+    actor: ally
+    reason: 'Hoodwink: "target provoking allies" describes the allies the enemies choose, it does not make them provoke.'
+  - trait: marionette--hoodwink
+    keyword: attack
+    actor: enemy
+    reason: 'Hoodwink: "Enemies with Blind … target provoking allies with attacks": the enemies attack.'
+  - trait: backer--shrapnel-blast
+    keyword: start of turn
+    actor: enemy
+    reason: 'Shrapnel Blast: "After an enemy takes damage at the start of its turn from Bomb": its turn is the enemy''s.'
+  - trait: concoction--master-of-concoctions
+    keyword: start of turn
+    actor: ally
+    reason: 'Master of Concoctions: "they have a 50% chance to attack each enemy … at the start of their turns": their turns are those of the Concoctions.'
+  - trait: mummy--pharaohs-beckoning
+    keyword: attack
+    occurrence: 3
+    actor: enemy
+    reason: 'Pharaoh''s Beckoning: "the target is forced to attack this creature 3 times. These attacks …" are the target''s.'
+  - trait: cruncher--shellshock
+    keyword: provoke
+    actor: self
+    reason: 'Shellshock: "After this creature is attacked, it Seals … and provokes": it is this creature, not the target.'
+  - trait: hunter--glaive-of-justice
+    keyword: cast spell
+    actor: self
+    reason: 'Glaive of Justice: "it deals damage to a random enemy … and has a 50% chance to cast Holy Smite": it is this creature.'
+  - trait: hunter--glaive-of-hungering
+    keyword: heal
+    actor: self
+    reason: 'Glaive of Hungering: "it … heals itself for 100% of this damage": this creature heals itself.'
+  - trait: hunter--glaive-of-prayer
+    keyword: resurrection
+    actor: self
+    reason: 'Glaive of Prayer: "it … has a 20% chance to resurrect a random ally": this creature resurrects.'
 
 randomDebuff: []

@@ -80,7 +80,7 @@ export async function closeFilters(page: Page): Promise<void> {
 export const format = (count: number) => count.toLocaleString('en-US');
 export const countText = (shown: number, all: readonly unknown[]) => `${format(shown)} of ${format(all.length)} traits`;
 
-/** A class or a trigger in the panel: its name, then the number of traits it would show. */
+/** A class or a mechanic in the panel: its name, then the number of traits it would show. */
 export const facet = (page: Page, label: string, count?: number): Locator =>
   filters(page).getByRole('button', {
     name: new RegExp(`^${label}\\s*${count === undefined ? '[\\d,]+' : format(count)}\\s*traits$`),
@@ -99,7 +99,7 @@ export const clearFiltersButton = (page: Page): Locator =>
   filters(page).getByRole('button', { name: /^Clear filters/, includeHidden: true });
 
 /**
- * The button that opens and closes a section of the panel (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags). It
+ * The button that opens and closes a section of the panel (Class, Debuffs, Buffs, Effects, Events, Mechanics, Flags). It
  * says how many filters are on inside while the section is shut ("Debuffs 2 on").
  */
 export const section = (page: Page, name: string): Locator =>

@@ -12,9 +12,9 @@ describe('what is extracted from the compendium v2.0', () => {
     ({ traits } = await buildRealSheet());
   });
 
-  it('keywords: trait | key | role', async () => {
+  it('keywords: trait | key | role | actor', async () => {
     const lines = traits.flatMap((trait) =>
-      trait.keywords.map((hit) => `${trait.id} | ${hit.key} | ${hit.role ?? '-'}`),
+      trait.keywords.map((hit) => `${trait.id} | ${hit.key} | ${hit.role ?? '-'} | ${hit.actor ?? '-'}`),
     );
     await expect(`${lines.join('\n')}\n`).toMatchFileSnapshot('../../snapshots/keywords-v2.0.txt');
   });

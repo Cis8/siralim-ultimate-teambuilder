@@ -26,7 +26,7 @@
   --kw-debuff: #ff9b87;
   --kw-buff: #74dbb0;
   --kw-mechanic: #a9c1ff;
-  --kw-trigger: #f3c969;
+  --kw-event: #f3c969;
 
   /* Class identity dots: only next to a class or trait name, never alone (DESIGN § Colour rules). */
   --class-chaos: #ef6b5b;

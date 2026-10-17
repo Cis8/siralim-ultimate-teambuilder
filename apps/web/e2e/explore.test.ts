@@ -204,9 +204,9 @@ test.describe('explore', () => {
       expect(await style(uses)).toEqual({ underlined: false, outline: 'dashed' });
 
       await search.fill('"start of battle"');
-      const trigger = rows(page).locator('.keyword[data-kind="trigger"]').first();
-      await expect(trigger).toBeVisible();
-      expect(await trigger.getAttribute('data-role')).toBeNull();
+      const event = rows(page).locator('.keyword[data-kind="event"]').first();
+      await expect(event).toBeVisible();
+      expect(await event.getAttribute('data-role')).toBe('uses');
     });
 
     test('marks the text the query looks for, inside a keyword too, and nothing else', async ({ page }) => {
@@ -344,12 +344,12 @@ test.describe('explore', () => {
       await expect(rows(page).first()).toHaveAttribute('aria-posinset', '1');
     });
 
-    test('filters by a trigger, with no side to take, and by the flag "does not stack"', async ({ page, request }) => {
+    test('filters by an event, with no side to take, and by the flag "does not stack"', async ({ page, request }) => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
       await searchBox(page).fill('"start of battle"');
       await rows(page)
-        .getByRole('button', { name: /^start of battle — show traits that mention it$/i })
+        .getByRole('button', { name: /start of battle — show traits that mention it$/i })
         .first()
         .click();
       // The phrase typed above also has to be found in the trait, so the filter is looked at on its own.
@@ -360,7 +360,7 @@ test.describe('explore', () => {
       await expectShown(page, mentioningIt, traits);
       await expect(
         rows(page)
-          .getByRole('button', { name: /^start of battle/i, pressed: true })
+          .getByRole('button', { name: /start of battle/i, pressed: true })
           .first(),
       ).toBeVisible();
 
@@ -399,7 +399,7 @@ test.describe('explore', () => {
       expect(perClass.size).toBeGreaterThan(5);
       for (const [name, count] of perClass) await expect(facet(page, name, count), name).toBeVisible();
 
-      for (const kind of ['Debuffs', 'Buffs', 'Effects', 'Triggers', 'Mechanics']) {
+      for (const kind of ['Debuffs', 'Buffs', 'Effects', 'Events', 'Mechanics']) {
         await expect(filters(page).getByRole('heading', { level: 4, name: kind, exact: true })).toBeVisible();
       }
       await expect(side(page, 'Vulnerable', 'Applies')).toHaveAccessibleName(
@@ -572,7 +572,7 @@ test.describe('explore', () => {
       await expect(announcedCount(page)).toHaveText(countText(vulnerable.size, traits));
     });
 
-    test('keeps the two sides of a keyword apart, and filters by a trigger on its own', async ({ page, request }) => {
+    test('keeps the two sides of a keyword apart, and filters by an event', async ({ page, request }) => {
       const { traits } = await publishedDataset(request);
       const relying = withRole(traits, 'vulnerable', 'uses');
       const mentioning = traits.filter((trait) => trait.keywords.some((keyword) => keyword.key === 'start of battle'));
@@ -584,8 +584,8 @@ test.describe('explore', () => {
       await expect(side(page, 'Vulnerable', 'Applies')).toHaveAttribute('aria-pressed', 'false');
       await side(page, 'Vulnerable', 'Relies on').click();
 
-      await facet(page, 'Start of battle', mentioning.length).click();
-      await expect(facet(page, 'Start of battle')).toHaveAttribute('aria-pressed', 'true');
+      await side(page, 'Start of battle', 'Relies on').click();
+      await expect(side(page, 'Start of battle', 'Relies on')).toHaveAttribute('aria-pressed', 'true');
       await expect(announcedCount(page)).toHaveText(countText(mentioning.length, traits));
     });
 
@@ -752,7 +752,7 @@ test.describe('explore', () => {
       await openFilters(page);
       await facet(page, 'Life').click();
       await side(page, 'Vulnerable', 'Applies').click();
-      await facet(page, 'Start of battle').click();
+      await side(page, 'Start of battle', 'Relies on').click();
       await flag(page, 'Artifact-eligible (has material)').check();
       await closeFilters(page);
       await searchBox(page).fill('weak OR snared');

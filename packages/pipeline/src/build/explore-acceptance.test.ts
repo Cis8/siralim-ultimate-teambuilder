@@ -147,11 +147,11 @@ describe('the Explore filters on the compendium v2.0', () => {
       }
     });
 
-    it('list every buff, debuff, effect, trigger and mechanic of the taxonomy', () => {
+    it('list every buff, debuff, effect, event and mechanic of the taxonomy', () => {
       const listed = search().facets.keywords.map(({ key }) => key);
 
       expect(listed).toEqual(FACET_KEYWORD_KINDS.flatMap((kind) => taxonomy.ofKind(kind).map(({ key }) => key)));
-      expect(listed).toHaveLength(61);
+      expect(listed).toHaveLength(70);
     });
 
     it('count the traits that apply, rely on and mention each, among those shown', () => {

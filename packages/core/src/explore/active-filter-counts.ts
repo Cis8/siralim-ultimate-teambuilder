@@ -20,7 +20,7 @@ export function activeFilterCounts(
     debuff: 0,
     buff: 0,
     effect: 0,
-    trigger: 0,
+    event: 0,
     mechanic: 0,
     flags: Number(state.artifactEligible) + Number(state.doesNotStack),
   };

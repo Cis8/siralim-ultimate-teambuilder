@@ -70,8 +70,9 @@ type PartyRequirement =             // GAME_RULES R3; `families` holds plural fo
 
 interface KeywordHit {
   key: KeywordKey;                  // "vulnerable", "start of battle", "barrier", …
-  kind: 'debuff' | 'buff' | 'effect' | 'mechanic' | 'trigger' | 'flag';
-  role?: 'applies' | 'uses' | 'resists';   // only for debuff/buff/effect; `resists` = guards against it (R9)
+  kind: 'debuff' | 'buff' | 'effect' | 'event' | 'mechanic' | 'flag';
+  role?: 'applies' | 'uses' | 'resists';   // only for debuff/buff/effect/event; `resists` = guards against it (R9, R12)
+  actor?: 'self' | 'ally' | 'enemy' | 'any';   // only for events, and only where the text says who (R12)
   span: [start: number, end: number];
 }
 
@@ -86,8 +87,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 
 ## 4. Keyword extraction
 
-- **Taxonomy as data** (`packages/core/src/taxonomy/*.ts`): debuffs, buffs, mechanics, triggers, flags — each entry has
-  `key`, `label`, `kind`, `patterns` (one or more phrases), for triggers a `phase` (see §8.5), and for debuffs
+- **Taxonomy as data** (`packages/core/src/taxonomy/*.ts`): debuffs, buffs, effects, events, mechanics, flags — each entry
+  has `key`, `label`, `kind`, `patterns` (one or more phrases), for events a `phase` (see §8.5) or none, and for debuffs
   `canBeRandomlyApplied` (GAME_RULES R8).
 - **Buffs and debuffs come from canonical lists** (20 debuffs, 18 buffs; Barrier is a buff), transcribed once with a
   source note, not classified by hand:
@@ -102,17 +103,58 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   against. Charges, Cascading (Spell Gem properties) and Fused are plain mechanics, without a role.
 - `createTaxonomy` rejects a taxonomy with duplicate keys, a key that is the start of another (a query finds a keyword by
   the start of its key, so the two could not be told apart: `applies:seal` would find `sealed` too), a pattern shared by
-  two entries, or patterns that are not plain text, and lists all violations at once.
-- Mechanics and triggers start from the prototypes; the pipeline also reports frequent capitalised words not in the
-  taxonomy so the lists can grow.
-- **Events** (GAME_RULES R12, ADR-0009) replace the triggers in M8b.6–8b.9: keywords with a role and an actor, the old
-  trigger keys kept as aliases. Until those slices land, this section describes the triggers as they are.
-- **Matching**: whole words, longest match wins. Phrases, mechanics and triggers ignore letter case; buffs and debuffs
+  two entries, patterns that are not plain text, an alias of an event that is a key or the start of one, an alias given
+  twice, and a stat word that is not one of the patterns, and lists all violations at once.
+- Mechanics start from the prototypes; the pipeline also reports frequent capitalised words not in the taxonomy so the
+  lists can grow.
+- **Events** (GAME_RULES R12, ADR-0009) are the 18 things that happen in battle, in the order of the rules: start of battle,
+  start of turn, end of turn; attack, cast spell, manual cast, defend, provoke; being attacked, dodge, critical hit, damage
+  taken; heal, kill, death, resurrection; any buff, any debuff. An entry lists every inflection as a pattern ("die", "dies",
+  "died", "dead", "killed" are a death) and has a `phase` (`TRIGGER_PHASES`: start of battle, start of turn, attacking, being
+  attacked, defending, spellcasting, kills and deaths, end of turn; none for heal and the two buff events). Spells and Stats
+  are mechanics. The eleven trigger phrases of the first version are `aliases` of the event (and, where the phrase names
+  one, the actor) they stand for: `after this creature attacks` is `attack` by `self`. A mention of an event is read by
+  `readEvent`, by wording, like the roles of §4 below:
+  - **Role.** `uses` in the condition a sentence opens with (After / When / If / While / At / Each time / The first 3 times
+    / For each …, up to a comma that is not followed by "or" or "and"), in a later clause that is a condition ("for each",
+    "while", "if", "that die", "at the end of", "until"), and for a noun: the creature's own ("this creature's attacks deal
+    75% more damage"), the object of a preposition or a verb ("damage from attacks", "dodge attacks", "after death"), or a
+    quantity ("100% more healing", "the amount healed"). `resists` after "cannot", "can't", "immune to", "never" or
+    "can only" (not "can only activate"), up to the clause's end, "but", or an "and" that starts something else. Otherwise
+    `applies`: a verb of the main clause ("attacks 1 additional time", "casts a random spell", "is resurrected", "has a 50%
+    chance to dodge"). A keyword that follows another of its kind in a list ("attack, cast, defend, or provoke") takes its
+    role and actor, but not from a noun ("dodge attacks and deal critical damage" are two readings).
+  - **Actor.** The nearest subject before the event in its clause (this creature, it → `self`; your creatures, a family of
+    yours, they → `ally`; an enemy, the target → `enemy`; a creature, all creatures → `any`), or in its sentence when the
+    clause has none. "It" and "they" stand for the first subject of their number the sentence named ("After an enemy
+    loses stats, it …": the enemy). A spell that was cast takes the subject after "by", or any creature; "for each debuff
+    the enemy has", the one named after it. The words of a turn name their owner themselves.
+  - **The start of battle is a moment**, not something a creature does: nobody makes it start, so a mention is always `uses`
+    (or `resists`), whichever way it is written ("Your Crusaders start battles with Shelled" waits for the start like "At the
+    start of battle"), and has no actor (`EventEntry.moment`).
+  - **Turns are read by a grammar** (`findTurns`), since whose turn it is can be a family: "start|end of <owner> [ordinal]
+    turn(s)", "its turn ends", and "start and end of …" as two mentions ("start and" and "end of …", so that no span overlaps
+    another). A status inside the owner ("each Cursed enemy's turn") keeps its own mention and the turn shrinks to the words
+    before it.
+  - **"Attack" is also a stat** ("50% more attack", "its attack", "attack and defense", "gains Attack equal to"): the word
+    next to words that own, count, compare or list it is the stat and no event (`EventEntry.statPatterns`, `isStatSense`);
+    "attacks" never is. "Attacked" is an attack in the active ("for each time it attacked") and being attacked in the passive
+    ("is attacked", "when-attacked").
+  - **A name is no event.** An event is written in lower case unless it starts a sentence (or follows a dash): "Death
+    creatures" (a class), "Major Healing" and "Kill Streak" (spells) are not, nor "Death - Enemies are afflicted …" (the
+    label of a list).
+  - **No event is a dependency** (R12): `partyCoverage` lists the buffs, debuffs and effects only (`canBeDependency`).
+  The two buff events are the counts and the random ones ("for each debuff", "afflicted with a random debuff", "gains a random
+  buff"): "immune to debuffs" and "their debuffs last 1 turn" are not mentions.
+  On v2.0: 2,149 mentions of events in 1,332 traits (1,519 `uses`, 594 `applies`, 36 `resists`; 223 with no actor, 214 of them
+  the start of battle). An event that makes something happen by chance ("has a 50% chance to dodge") is `applies`: the
+  trait makes the event happen, which is what a later phase can match with what pays off on it.
+- **Matching**: whole words, longest match wins. Phrases, mechanics and events ignore letter case; buffs and debuffs
   are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
   "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A status followed by a
   capitalised word is the start of a longer name ("Savage Spores" is not Savage). A run of blanks matches the
   space of a pattern and a curly apostrophe a straight one, without moving spans.
-- **Role detection** for buffs and debuffs (`assignRoles`; heuristic, then overrides), per sentence:
+- **Role detection** for buffs, debuffs and effects (`assignRoles`; heuristic, then overrides), per sentence:
   - a status in the condition the sentence opens with (After / When / If / While / … up to the first comma) is one the
     trait waits for → `uses` ("After an enemy is afflicted with Weak, …");
   - otherwise the nearest signal before it decides. `applies`: `afflict(s/ed) … with`, `gain(s)`, `grant(s)`/`give(s)`,
@@ -132,13 +174,17 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   (buffs) …" makes the trait a conditional source of every buff and debuff it names. They stay `uses` in `keywords`,
   since the trait waits for them; `conditionalSources` records the other half. Four traits on v2.0.
 - **Overrides** (`packages/pipeline/overrides.yaml`, `parseOverrides` / `applyOverrides`): two sections, `roles` (trait
-  id, keyword key, optional `occurrence` counting from 1 or all mentions, `role`) and `randomDebuff` (trait id, `target`,
-  `activation`, optional `note`; GAME_RULES R5). Every entry needs a `reason` citing the trait; unknown fields are refused.
-  An entry naming a trait, a keyword the trait does not mention, an occurrence it does not have, or a keyword without a
-  role fails the build; two entries for one mention conflict; an entry that changes nothing is a warning.
+  id, keyword key, optional `occurrence` counting from 1 or all mentions, `role` and, for an event, `actor`: at least one of
+  the two) and `randomDebuff` (trait id, `target`, `activation`, optional `note`; GAME_RULES R5). Every entry needs a
+  `reason` citing the trait; unknown fields are refused. An entry naming a trait, a keyword the trait does not mention, an
+  occurrence it does not have, a role on a keyword without one or an actor on a keyword that is not an event fails the build;
+  two entries for one mention conflict; an entry that changes nothing is a warning. The events were read on 2026-10-17 beside
+  the sweep of 8b.5 (every mention where role or actor differs from the sweep's, and a sample of the rest): 22 entries.
 - **Snapshot tests** over the pinned v2.0 sheet, as committed files in `packages/pipeline/snapshots/`: one line per
-  mention, `trait | key | role` (`keywords-v2.0.txt`, 2,299 lines), and one per random-debuff trait, `trait | target |
-  activation | note`. Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read
+  mention, `trait | key | role | actor` (`keywords-v2.0.txt`, 4,453 lines; `-` where there is none), and one per
+  random-debuff trait, `trait | target | activation | note`. `triggers-before-events-v2.0.txt` pins the traits that had each
+  of the eleven trigger phrases of the first version (564), so that an alias finds at least those (tested on the real
+  sheet). Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read
   and approved; refresh with `pnpm exec vitest run -u`.
 - Done in the **pipeline** (build time), not at runtime; `core` exposes the same extractor so tests and the pipeline
   share code.
@@ -239,7 +285,7 @@ The URL is the source of truth; local storage keeps only conveniences (recent se
 
 ### 8.1 Explore (Phase 1)
 Query bar (QUERY_LANGUAGE), facets (class: any-of; keywords: per keyword "applies"/"uses" toggles with match all/any;
-triggers; mechanics; flags: artifact-eligible, does-not-stack), result list with keyword tokens styled by kind and role,
+events; mechanics; flags: artifact-eligible, does-not-stack), result list with keyword tokens styled by kind and role,
 match highlighting, and click-a-keyword → counterpart jump (applies ↔ uses). Facet counts reflect the current results
 (class counts ignore the class filter itself). An "effective query" line shows the full query the UI state stands for.
 The terms of the query bar are shown as chips, each with a toggle-NOT and a remove button that edit the text of the bar in
@@ -258,8 +304,8 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   those fields, which the taxonomy keeps exact (no key is the start of another).
 - **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
-  (`kw:`); a trigger or a mechanic has `mentions` only. The facets list the classes of the dataset and the buffs, debuffs,
-  effects, triggers and mechanics of the taxonomy, with the counts they have, 0 included.
+  (`kw:`); a mechanic has `mentions` only. The facets list the classes of the dataset and the buffs, debuffs, effects,
+  events and mechanics of the taxonomy, with the counts they have, 0 included.
 - **The order of the classes** is fixed when the dataset is loaded (`facetVocabulary`), so the list does not move as the
   filters change: the five classes of a creature first (Chaos, Death, Life, Nature, Sorcery, from A to Z; GAME_RULES R7),
   then the others by the number of traits they have in the dataset, the largest first and from A to Z among equals. In
@@ -268,7 +314,7 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 - **Clear filters** (`clearFilters`) takes off the classes, the keywords and the two flags, and leaves the query bar, the
   sort and the match mode, which are settings of the search and not filters of it. It gives back the same state when no
   filter is on. It is one step of the history, like any other change of the filters.
-- **Sections.** The classes, each kind of keyword (debuffs, buffs, effects, triggers, mechanics) and the flags are sections of
+- **Sections.** The classes, each kind of keyword (debuffs, buffs, effects, events, mechanics) and the flags are sections of
   the panel that open and close (`FILTER_SECTIONS`); *Match all / Match any* stays in view above the kinds. All are open to
   begin with, so nothing moves on load. Which are shut is a state of the page (it outlives the panel, which is built again
   whenever the window crosses 700 px, and the sheet being closed), and no part of the address or of the local storage: a
@@ -283,7 +329,7 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   the query bar alone. A keyword a trait applies leads to the traits that rely on it (`uses:key`), one it relies on to the
   traits that apply it (`applies:key`): the two are sides of one keyword, so turning one on takes the other off
   (`applies:vulnerable` becomes `uses:vulnerable`, and the click shows the counterpart, not the traits that are both).
-  A keyword with no side (a trigger, a mechanic, a mention that only `resists`, GAME_RULES R9) is `kw:key`; the flag "does
+  A keyword with no side (an event for now, M8b.8 gives it one; a mechanic; a mention that only `resists`, GAME_RULES R9) is `kw:key`; the flag "does
   not stack" is `doesNotStack`. A second click on a token whose filter is on turns it off, which leaves the other side as
   it was. The page then shows the new list from its first trait and moves the focus to the results heading, since the row
   clicked may be gone.
@@ -291,8 +337,8 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
 - **The facet panel** turns the filters on and off with the same state-in, state-out functions as the click on a keyword
   (`toggleClass`, `toggleKeywordFilter`; `hasClass`, `hasKeywordFilter` tell what is on). Classes are toggles with the count of
-  traits each would show; a buff, a debuff or an effect has two, *Applies* and *Relies on* (`applies:` and `uses:`), and a
-  trigger or a mechanic one (`kw:`), counted by the traits that mention it. Unlike a click in a description, the panel does
+  traits each would show; a buff, a debuff, an effect or an event has two, *Applies* and *Relies on* (`applies:` and
+  `uses:`), and a mechanic one (`kw:`), counted by the traits that mention it. Unlike a click in a description, the panel does
   what it is told: both sides of a keyword can be on at once (traits that give it *and* rely on it with *Match all*, either
   with *Match any*). *Match all / Match any* is a pair of toggle buttons; the two flags are checkboxes. Under 700 px the panel is
   not on the page but in a modal bottom sheet that a "Filters" button (with the number of filters on) opens; Esc, its close

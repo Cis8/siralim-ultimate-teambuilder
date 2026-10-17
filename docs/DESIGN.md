@@ -26,7 +26,7 @@ Define as CSS custom properties; never hard-code hex values in components.
 | `--status-crit` | `#ff9b87` | missing, invalid |
 | `--scrim` | `rgb(4 6 9 / 0.62)` | the page behind a modal sheet |
 
-Keyword kinds: debuff `#ff9b87`, buff `#74dbb0`, mechanic `#a9c1ff`, trigger `#f3c969` (dotted underline), flag muted italic.
+Keyword kinds: debuff `#ff9b87`, buff `#74dbb0`, mechanic `#a9c1ff`, event `#f3c969` (the role shapes of a buff), flag muted italic.
 Class identity dots: Chaos `#ef6b5b`, Death `#b49cf5`, Life `#e9c46a`, Nature `#63c98a`, Sorcery `#5fb0f5`,
 Rodian Master `#d98fc4`, Backer `#8fa1b3`, Nether Boss `#f08c4a`. Boss, Pandemonium, Nether Room and any unknown class
 use the fallback `#8fa1b3`.
@@ -54,7 +54,7 @@ use the fallback `#8fa1b3`.
 ### Keyword tokens
 Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
 R9) = solid outline. Colour is the kind: an *effect* (Dire Wolves, Mega Magic) takes the mechanic colour, since it is not
-a status. Search matches add a yellow highlight (`<mark>`, 22 % of `--status-warn`, which keeps every token colour above
+a status, and an *event* (attack, start of battle) its own, with the same shapes (it is caused, waited for or prevented). Search matches add a yellow highlight (`<mark>`, 22 % of `--status-warn`, which keeps every token colour above
 4.5:1), also inside a token. The token is a toggle `button`: its accessible name says what the trait does with the keyword
 (a shape cannot be heard) and what a click shows ("Applies Vulnerable — show traits that rely on it"), and `title` says the
 same to the pointer. `aria-pressed` and a 2 px ring in `--accent-border` mean its filter is on; a hover is a 1 px ring in
@@ -65,7 +65,7 @@ the token colours are only guaranteed on the page background.
 - **Facet buttons** (`FacetButton`) are toggles: `aria-pressed`, a fill in `--accent-surface` with a `--accent-border` outline when
   on, and the count in mono, `--text-faint`, carrying its unit ("12 traits") for a screen reader. The two sides of a keyword
   (*Applies*, *Relies on*) sit in fixed columns so that the buttons of every keyword line up; each keyword is a `group` named
-  after it. Kind headings (Debuffs, Buffs, Effects, Triggers, Mechanics) take the kind colour and always say it in words.
+  after it. Kind headings (Debuffs, Buffs, Effects, Events, Mechanics) take the kind colour and always say it in words.
 - **Clear filters** is the first control of the panel, a quiet button (as the party toolbar's) that says how many filters it takes
   off ("Clear filters (3)"). With none on it is `aria-disabled`, not `disabled`, and says "Clear filters": the focus stays on it
   when its own press clears the last filter, and a polite line says what was done ("Cleared 3 filters."). Under a coarse

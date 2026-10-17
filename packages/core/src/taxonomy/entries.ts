@@ -1,12 +1,4 @@
-import type {
-  BuffEntry,
-  DebuffEntry,
-  EffectEntry,
-  FlagEntry,
-  MechanicEntry,
-  TriggerEntry,
-  TriggerPhase,
-} from './entry';
+import type { BuffEntry, DebuffEntry, EffectEntry, EventEntry, FlagEntry, MechanicEntry } from './entry';
 
 // Short ways to write the entries of the lists. The key is the lower-cased label unless said otherwise, and a
 // label is also its own pattern unless `patterns` lists the phrases (which then must include it).
@@ -60,13 +52,14 @@ export function mechanic(key: string, label: string, patterns: readonly string[]
   return { kind: 'mechanic', key, label, patterns };
 }
 
-export function trigger(
-  key: string,
-  label: string,
-  phase: TriggerPhase,
-  extraPatterns: readonly string[] = [],
-): TriggerEntry {
-  return { kind: 'trigger', key, label, patterns: [key, ...extraPatterns], phase };
+export interface EventOptions extends Pick<EventEntry, 'phase' | 'turnEdge' | 'moment' | 'statPatterns' | 'aliases'> {
+  /** Every written form, the inflections included. Absent: the key alone. */
+  readonly patterns?: readonly string[];
+}
+
+export function event(key: string, label: string, options: EventOptions = {}): EventEntry {
+  const { patterns = [key], ...rest } = options;
+  return { kind: 'event', key, label, patterns, ...rest };
 }
 
 export function flag(key: string, label: string, patterns: readonly string[]): FlagEntry {

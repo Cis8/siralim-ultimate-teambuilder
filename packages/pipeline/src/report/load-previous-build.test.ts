@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Trait } from '@atlas/core';
+import { DATASET_SCHEMA_VERSION, type Trait } from '@atlas/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { emitDataset } from '../emit/emit-dataset';
 import { writeDataset } from '../emit/write-dataset';
@@ -66,7 +66,7 @@ describe('loadPreviousBuild', () => {
     ['another schema version', JSON.stringify({ schemaVersion: 999, datasetVersion: '2.0', traits: [] })],
     [
       'traits that are not objects with an id',
-      JSON.stringify({ schemaVersion: 1, datasetVersion: '2.0', traits: [1] }),
+      JSON.stringify({ schemaVersion: DATASET_SCHEMA_VERSION, datasetVersion: '2.0', traits: [1] }),
     ],
   ])('finds nothing in a dataset file with %s', async (_label, contents) => {
     await mkdir(directory, { recursive: true });

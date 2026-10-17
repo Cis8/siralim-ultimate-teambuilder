@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TRIGGER_PHASES } from './entry';
 import { taxonomy } from './taxonomy';
 
 // The names below are transcribed from the canonical sources, not from the code under test:
@@ -73,23 +74,105 @@ describe('the taxonomy', () => {
     });
   });
 
-  describe('triggers', () => {
-    it('each belong to a phase of battle, and every phase has one', () => {
-      const phases = new Set(taxonomy.ofKind('trigger').map((trigger) => trigger.phase));
-      expect([...phases].toSorted()).toEqual(
-        ['attacking', 'beingAttacked', 'killsAndDeaths', 'spellcasting', 'startOfBattle', 'startOfTurn'].toSorted(),
-      );
+  describe('events (GAME_RULES R12, ADR-0009)', () => {
+    const events = taxonomy.ofKind('event');
+
+    it('are the eighteen of the rules, in the order the rules give them', () => {
+      expect(events.map((event) => event.key)).toEqual([
+        'start of battle',
+        'start of turn',
+        'end of turn',
+        'attack',
+        'cast spell',
+        'manual cast',
+        'defend',
+        'provoke',
+        'being attacked',
+        'dodge',
+        'critical hit',
+        'damage taken',
+        'heal',
+        'kill',
+        'death',
+        'resurrection',
+        'any buff',
+        'any debuff',
+      ]);
     });
 
-    it('tell the start of battle from the start of the creature’s own turn', () => {
-      expect(taxonomy.get('start of battle')?.patterns).toEqual(['start of battle', 'start battles']);
-      expect(taxonomy.get("start of this creature's turn")).toMatchObject({ kind: 'trigger', phase: 'startOfTurn' });
+    it('belong to a phase of battle, except the three that can happen at any time, and every phase has one', () => {
+      expect(events.filter((event) => event.phase === undefined).map((event) => event.key)).toEqual([
+        'heal',
+        'any buff',
+        'any debuff',
+      ]);
+      expect(new Set(events.map((event) => event.phase))).toEqual(new Set([...TRIGGER_PHASES, undefined]));
     });
 
-    it('read both "manually cast a spell" and "manually casts a spell"', () => {
-      expect(taxonomy.get('manually cast a spell')?.patterns).toEqual(
-        expect.arrayContaining(['manually cast a spell', 'manually casts a spell']),
+    it.each([
+      ['start of turn', 'startOfTurn'],
+      ['end of turn', 'endOfTurn'],
+      ['defend', 'defending'],
+      ['provoke', 'defending'],
+      ['manual cast', 'spellcasting'],
+      ['dodge', 'beingAttacked'],
+      ['resurrection', 'killsAndDeaths'],
+    ])('put %s in the phase %s', (key, phase) => {
+      expect(taxonomy.get(key)).toMatchObject({ kind: 'event', phase });
+    });
+
+    it('read the two edges of a turn by the grammar of turns, and nothing else by it', () => {
+      expect(
+        events.filter((event) => event.turnEdge !== undefined).map((event) => [event.key, event.turnEdge]),
+      ).toEqual([
+        ['start of turn', 'start'],
+        ['end of turn', 'end'],
+      ]);
+    });
+
+    it('read every inflection: "dies", "died" and "dead" are a death, "kills" a kill', () => {
+      expect(taxonomy.get('death')?.patterns).toEqual(
+        expect.arrayContaining(['die', 'dies', 'died', 'dead', 'killed']),
       );
+      expect(taxonomy.get('kill')?.patterns).toEqual(expect.arrayContaining(['kill', 'kills']));
+    });
+
+    it('know that "attack" is also a stat, and "attacks" is not', () => {
+      expect(taxonomy.get('attack')).toMatchObject({ statPatterns: ['attack'] });
+    });
+
+    it('keep the manual cast apart from the cast: the one pays off only the player’s own spells (R12)', () => {
+      expect(taxonomy.get('manual cast')?.patterns).toEqual(
+        expect.arrayContaining(['manually cast', 'manually casts']),
+      );
+      expect(taxonomy.get('cast spell')?.patterns).not.toContain('manually cast');
+    });
+
+    // The eleven trigger phrases of Phase 1. A query or an address that names one finds the event, and who did it where the
+    // phrase said (a phrase with no one in it is the event of any creature). "start of battle" is a key of its own.
+    it.each([
+      ["start of this creature's turn", 'start of turn', 'self'],
+      ["this creature's attacks", 'attack', 'self'],
+      ['when this creature attacks', 'attack', 'self'],
+      ['after this creature attacks', 'attack', 'self'],
+      ['deals critical damage', 'critical hit', undefined],
+      ['after this creature is attacked', 'being attacked', 'self'],
+      ['after an enemy dodges', 'dodge', 'enemy'],
+      ['manually cast a spell', 'manual cast', undefined],
+      ['manually casts a spell', 'manual cast', undefined],
+      ['kills a creature', 'kill', undefined],
+      ['is killed', 'death', undefined],
+    ])('keep the old trigger "%s" as an alias of %s by %s', (old, key, actor) => {
+      const named = events.flatMap((event) =>
+        (event.aliases ?? [])
+          .filter((alias) => alias.key === old)
+          .map((alias) => ({ key: event.key, actor: alias.actor })),
+      );
+      expect(named).toEqual([{ key, actor }]);
+    });
+
+    it('keep the key of the old trigger that is still a key', () => {
+      expect(taxonomy.get('start of battle')).toMatchObject({ kind: 'event', phase: 'startOfBattle' });
     });
   });
 
@@ -110,7 +193,7 @@ describe('the taxonomy', () => {
     });
   });
 
-  it('has the mechanics of the prototypes, and the Spell Gem properties and Fused (GAME_RULES R11)', () => {
+  it('has the mechanics of the prototypes, the Spell Gem properties and Fused (R11), Spells and Stats (R12)', () => {
     expect(taxonomy.ofKind('mechanic').map((entry) => entry.key)).toEqual([
       'minion',
       'spell gems',
@@ -120,8 +203,15 @@ describe('the taxonomy', () => {
       'charges',
       'cascading',
       'fused',
+      'spells',
+      'stats',
     ]);
     expect(taxonomy.get('charges')?.patterns).toEqual(['charges', 'charge']);
+  });
+
+  it('reads "spell" and "stat" as the mechanics Spells and Stats: the traits about them that cast or change none', () => {
+    expect(taxonomy.get('spells')?.patterns).toEqual(['spell', 'spells']);
+    expect(taxonomy.get('stats')?.patterns).toEqual(['stat', 'stats']);
   });
 
   it('has the flag of the prototypes', () => {

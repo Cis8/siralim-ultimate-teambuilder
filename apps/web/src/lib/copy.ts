@@ -95,7 +95,7 @@ export const copy = {
     debuff: 'Debuffs',
     buff: 'Buffs',
     effect: 'Effects',
-    trigger: 'Triggers',
+    event: 'Events',
     mechanic: 'Mechanics',
   } as const satisfies Record<FacetKeywordKind, string>,
   /** The two sides of a buff, a debuff or an effect: what a trait does with it (GAME_RULES R9 has a third, not a filter). */

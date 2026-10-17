@@ -10,14 +10,20 @@ const section = <T extends z.ZodType>(entry: T) =>
     .nullish()
     .transform((entries) => entries ?? []);
 
-const roleOverride = z.strictObject({
-  trait: nonEmpty,
-  keyword: nonEmpty,
-  /** Which mention of the keyword in the trait, counting from 1. Absent: all of them. */
-  occurrence: z.number().int().positive().optional(),
-  role: z.enum(['applies', 'uses', 'resists']),
-  reason,
-});
+const roleOverride = z
+  .strictObject({
+    trait: nonEmpty,
+    keyword: nonEmpty,
+    /** Which mention of the keyword in the trait, counting from 1. Absent: all of them. */
+    occurrence: z.number().int().positive().optional(),
+    role: z.enum(['applies', 'uses', 'resists']).optional(),
+    /** Who does it or has it done to them: only for an event. */
+    actor: z.enum(['self', 'ally', 'enemy', 'any']).optional(),
+    reason,
+  })
+  .refine(({ role, actor }) => role !== undefined || actor !== undefined, {
+    message: 'say what to correct: the role, the actor or both',
+  });
 
 const randomDebuffOverride = z.strictObject({
   trait: nonEmpty,

@@ -290,8 +290,8 @@
     color: var(--kw-buff);
   }
 
-  h4[data-kind='trigger'] {
-    color: var(--kw-trigger);
+  h4[data-kind='event'] {
+    color: var(--kw-event);
   }
 
   .hint {

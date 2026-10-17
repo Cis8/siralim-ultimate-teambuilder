@@ -16,7 +16,7 @@ import {
 // The panel's sections open and close (SPEC §8.1): a shut one hides its filters, says how many are on inside, and keeps
 // its state while the page lives, however the window moves the panel between a column and a sheet.
 
-const SECTIONS = ['Class', 'Debuffs', 'Buffs', 'Effects', 'Triggers', 'Mechanics', 'Flags'] as const;
+const SECTIONS = ['Class', 'Debuffs', 'Buffs', 'Effects', 'Events', 'Mechanics', 'Flags'] as const;
 
 test.describe('the sections of the filters', () => {
   test('are all open to begin with, each a button that says so and what it controls', async ({ page }) => {
@@ -110,10 +110,10 @@ test.describe('the sections of the filters', () => {
   test('stay as they were left when the window moves the panel between a column and a sheet', async ({ page }) => {
     await openExplore(page);
     await openFilters(page);
-    await section(page, 'Triggers').click();
+    await section(page, 'Events').click();
     await section(page, 'Flags').click();
     const expectShut = async (): Promise<void> => {
-      await expect(section(page, 'Triggers')).toHaveAttribute('aria-expanded', 'false');
+      await expect(section(page, 'Events')).toHaveAttribute('aria-expanded', 'false');
       await expect(section(page, 'Flags')).toHaveAttribute('aria-expanded', 'false');
       await expect(section(page, 'Class')).toHaveAttribute('aria-expanded', 'true');
     };

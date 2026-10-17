@@ -150,7 +150,7 @@ describe('the fields of the query language', () => {
         hit('weak', 'debuff', 'uses'),
         hit('silenced', 'debuff', 'resists'),
         hit('dire wolves', 'effect', 'applies'),
-        hit('start of battle', 'trigger'),
+        hit('start of battle', 'event'),
         hit('fused', 'mechanic'),
       ],
     });

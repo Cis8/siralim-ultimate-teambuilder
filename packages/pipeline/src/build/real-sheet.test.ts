@@ -1,4 +1,5 @@
-import { hasRole, KNOWN_CLASSES, slotRules, taxonomy, type SlotName, type Trait } from '@atlas/core';
+import { readFileSync } from 'node:fs';
+import { hasActor, hasRole, KNOWN_CLASSES, slotRules, taxonomy, type SlotName, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
@@ -9,6 +10,9 @@ import { buildRealSheet } from '../testing/real-build';
 
 // The pinned snapshot of the compendium, v2.0, built with the committed overrides. The counts below are the ones in
 // docs/GAME_RULES.md.
+
+/** The turns are read by a grammar, not by patterns: "start of your Phoenixes' turns", "its turn ends", "start and". */
+const TURN_WORDS = /^(?:start|end)\b|\bturns? ends?$/;
 
 function countBy<T>(items: readonly T[], key: (item: T) => string): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -167,7 +171,9 @@ describe('the compendium v2.0 snapshot', () => {
       for (const trait of traits) {
         for (const hit of trait.keywords) {
           const written = trait.description.slice(hit.span[0], hit.span[1]).replace(/\s+/g, ' ').toLowerCase();
-          const patterns = taxonomy.get(hit.key)?.patterns.map((pattern) => pattern.toLowerCase());
+          const entry = taxonomy.get(hit.key);
+          if (entry?.kind === 'event' && entry.turnEdge !== undefined && TURN_WORDS.test(written)) continue;
+          const patterns = entry?.patterns.map((pattern) => pattern.toLowerCase());
           expect(patterns, `${trait.id}: ${hit.key}`).toContain(written);
         }
       }
@@ -187,10 +193,18 @@ describe('the compendium v2.0 snapshot', () => {
       }
     });
 
-    it('have a role exactly when they are buffs, debuffs or effects', () => {
+    it('have a role exactly when they are buffs, debuffs, effects or events', () => {
       for (const { id, keywords } of traits) {
         for (const hit of keywords) {
           expect(hit.role !== undefined, `${id}: ${hit.key}`).toBe(hasRole(hit.kind));
+        }
+      }
+    });
+
+    it('have an actor only when they are events, and then only where the text names one', () => {
+      for (const { id, keywords } of traits) {
+        for (const hit of keywords) {
+          if (hit.actor !== undefined) expect(hasActor(hit.kind), `${id}: ${hit.key}`).toBe(true);
         }
       }
     });
@@ -206,7 +220,7 @@ describe('the compendium v2.0 snapshot', () => {
       const rolesOf = (id: string) =>
         traits
           .find((trait) => trait.id === id)
-          ?.keywords.filter((hit) => hit.role !== undefined)
+          ?.keywords.filter((hit) => hit.role !== undefined && hit.kind !== 'event')
           .map((hit) => `${hit.key}:${hit.role}`);
       expect(rolesOf('abomination--flesh-rot')).toEqual(['weak:uses', 'vulnerable:uses']);
       expect(rolesOf('abomination--master-of-abominations')).toEqual(['weak:applies', 'vulnerable:applies']);
@@ -215,6 +229,112 @@ describe('the compendium v2.0 snapshot', () => {
     it('use every key of the taxonomy at least once, so that no entry is dead', () => {
       const used = new Set(traits.flatMap((trait) => trait.keywords.map((hit) => hit.key)));
       expect(taxonomy.entries.map((entry) => entry.key).filter((key) => !used.has(key))).toEqual([]);
+    });
+
+    it('give the buffs, debuffs and effects the roles they had before there were events', () => {
+      const statuses = traits.flatMap((trait) => trait.keywords).filter((hit) => hit.kind !== 'event' && hit.role);
+      expect(countBy(statuses, (hit) => hit.role ?? '')).toEqual({ applies: 311, uses: 270, resists: 21 });
+    });
+  });
+
+  describe('events (GAME_RULES R12, ADR-0009)', () => {
+    const events = () => traits.flatMap((trait) => trait.keywords.filter((hit) => hit.kind === 'event'));
+    const eventsOf = (id: string) =>
+      (traits.find((trait) => trait.id === id)?.keywords ?? [])
+        .filter((hit) => hit.kind === 'event')
+        .map((hit) => `${hit.key}:${hit.role}${hit.actor === undefined ? '' : `/${hit.actor}`}`);
+
+    it('are mentioned 2,149 times in 1,332 traits, out of 4,453 mentions', () => {
+      expect(events()).toHaveLength(2149);
+      expect(traits.filter((trait) => trait.keywords.some((hit) => hit.kind === 'event'))).toHaveLength(1332);
+      expect(traits.flatMap((trait) => trait.keywords)).toHaveLength(4453);
+    });
+
+    it('have the mentions of the table in the rules', () => {
+      expect(countBy(events(), (hit) => hit.key)).toEqual({
+        'start of battle': 214,
+        'start of turn': 134,
+        'end of turn': 61,
+        attack: 518,
+        'cast spell': 304,
+        'manual cast': 41,
+        defend: 61,
+        provoke: 73,
+        'being attacked': 49,
+        dodge: 52,
+        'critical hit': 38,
+        'damage taken': 149,
+        heal: 122,
+        kill: 19,
+        death: 135,
+        resurrection: 77,
+        'any buff': 50,
+        'any debuff': 52,
+      });
+    });
+
+    it('are waited for far more than they are caused or prevented', () => {
+      expect(countBy(events(), (hit) => hit.role ?? '')).toEqual({ uses: 1519, applies: 594, resists: 36 });
+    });
+
+    it('say who in most mentions: only the start of battle names nobody (and nine others)', () => {
+      expect(countBy(events(), (hit) => hit.actor ?? 'nobody')).toEqual({
+        self: 978,
+        ally: 585,
+        enemy: 285,
+        any: 78,
+        nobody: 223,
+      });
+      expect(events().filter((hit) => hit.actor === undefined && hit.key !== 'start of battle')).toHaveLength(9);
+    });
+
+    it.each([
+      ['abomination--extra-padding', ['start of battle:uses']],
+      ['abomination--quell', ['attack:uses/self', 'death:applies/enemy']],
+      ['amaranth--crystallization', ['cast spell:uses/self']],
+      ['alemental--slosh', ['manual cast:uses/ally', 'any debuff:applies/enemy']],
+      ['backer--abyss-orbs', ['any debuff:applies/enemy', 'start of turn:uses/enemy', 'end of turn:uses/enemy']],
+      ['clutcher--lash', ['dodge:uses/enemy', 'attack:uses/enemy', 'damage taken:applies/enemy']],
+    ])('read %s as the rules do', (id, expected) => {
+      expect(eventsOf(id)).toEqual(expected);
+    });
+
+    // The first version of the app had eleven trigger phrases. A shared link or a saved query that names one finds the
+    // traits it found, and possibly more (ADR-0009): the event the phrase stands for, by the actor it names if it names one.
+    describe('the trigger phrases of the first version', () => {
+      const pinned = readFileSync(new URL('../../snapshots/triggers-before-events-v2.0.txt', import.meta.url), 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => line.split(' | ') as [phrase: string, trait: string]);
+      const meaningOf = (phrase: string) => {
+        const event = taxonomy.ofKind('event').find((entry) => entry.key === phrase);
+        if (event !== undefined) return { key: event.key, actor: undefined };
+        for (const entry of taxonomy.ofKind('event')) {
+          const alias = entry.aliases?.find((each) => each.key === phrase);
+          if (alias !== undefined) return { key: entry.key, actor: alias.actor };
+        }
+        return undefined;
+      };
+
+      it('are the eleven of the snapshot, 564 traits in all', () => {
+        expect(new Set(pinned.map(([phrase]) => phrase)).size).toBe(11);
+        expect(pinned).toHaveLength(564);
+      });
+
+      it.each([...new Set(pinned.map(([phrase]) => phrase))])('find at least the traits they found: %s', (phrase) => {
+        const meaning = meaningOf(phrase);
+        expect(meaning, phrase).toBeDefined();
+        const lost = pinned
+          .filter(([each]) => each === phrase)
+          .map(([, id]) => id)
+          .filter((id) => {
+            const trait = traits.find((each) => each.id === id);
+            return !trait?.keywords.some(
+              (hit) => hit.key === meaning?.key && (meaning.actor === undefined || hit.actor === meaning.actor),
+            );
+          });
+        expect(lost).toEqual([]);
+      });
     });
   });
 });

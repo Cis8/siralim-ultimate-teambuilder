@@ -1,3 +1,4 @@
+import { canBeDependency } from '../model/keyword-kind';
 import type { KeywordKey, KeywordRole, Trait, TraitId } from '../model/trait';
 import { SLOT_POSITIONS, traitAt, type Party, type SlotPosition } from './party';
 
@@ -38,8 +39,9 @@ interface Placed {
 }
 
 /**
- * What the party gives and what it needs. A mention that only guards against a keyword (`resists`) is neither (GAME_RULES
- * R9), and every mastery counts as a source (D6). An id the lookup does not know is passed over.
+ * What the party gives and what it needs: buffs, debuffs and effects. A mention that only guards against a keyword
+ * (`resists`) is neither (GAME_RULES R9), an event is neither either (R12), and every mastery counts as a source (D6). An
+ * id the lookup does not know is passed over.
  */
 export function partyCoverage(party: Party, lookup: TraitLookup): PartyCoverage {
   const placed = placedTraits(party, lookup);
@@ -62,7 +64,9 @@ function placedTraits(party: Party, lookup: TraitLookup): Placed[] {
 
 /** The keys the traits mention with that role, once each, in the order they are met. */
 function keysWithRole(placed: readonly Placed[], role: KeywordRole): KeywordKey[] {
-  const keys = placed.flatMap(({ trait }) => trait.keywords.filter((hit) => hit.role === role).map((hit) => hit.key));
+  const keys = placed.flatMap(({ trait }) =>
+    trait.keywords.filter((hit) => hit.role === role && canBeDependency(hit.kind)).map((hit) => hit.key),
+  );
   return [...new Set(keys)];
 }
 

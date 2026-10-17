@@ -10,12 +10,13 @@ const debuff = (key: string, patterns: string[] = [key]): TaxonomyEntry => ({
   canBeRandomlyApplied: true,
 });
 const buff = (key: string, patterns: string[] = [key]): TaxonomyEntry => ({ kind: 'buff', key, label: key, patterns });
-const trigger = (key: string): TaxonomyEntry => ({
-  kind: 'trigger',
+const event = (key: string, extra: Partial<Extract<TaxonomyEntry, { kind: 'event' }>> = {}): TaxonomyEntry => ({
+  kind: 'event',
   key,
   label: key,
   patterns: [key],
   phase: 'startOfBattle',
+  ...extra,
 });
 
 function violations(entries: TaxonomyEntry[]): string {
@@ -30,7 +31,7 @@ function violations(entries: TaxonomyEntry[]): string {
 
 describe('createTaxonomy', () => {
   describe('looking entries up', () => {
-    const taxonomy = createTaxonomy([debuff('weak'), buff('shelled'), debuff('snared'), trigger('start of battle')]);
+    const taxonomy = createTaxonomy([debuff('weak'), buff('shelled'), debuff('snared'), event('start of battle')]);
 
     it('keeps the entries in the order given', () => {
       expect(taxonomy.entries.map((entry) => entry.key)).toEqual(['weak', 'shelled', 'snared', 'start of battle']);
@@ -45,7 +46,7 @@ describe('createTaxonomy', () => {
       const debuffs = taxonomy.ofKind('debuff');
       expect(debuffs.map((entry) => entry.key)).toEqual(['weak', 'snared']);
       expect(debuffs.every((entry) => entry.canBeRandomlyApplied)).toBe(true);
-      expect(taxonomy.ofKind('trigger')[0]?.phase).toBe('startOfBattle');
+      expect(taxonomy.ofKind('event')[0]?.phase).toBe('startOfBattle');
       expect(taxonomy.ofKind('mechanic')).toEqual([]);
     });
 
@@ -78,7 +79,7 @@ describe('createTaxonomy', () => {
     });
 
     it('accepts keys that only share their first words', () => {
-      expect(createTaxonomy([trigger('start of battle'), trigger('start of turn')]).entries).toHaveLength(2);
+      expect(createTaxonomy([event('start of battle'), event('start of turn')]).entries).toHaveLength(2);
     });
   });
 
@@ -129,8 +130,66 @@ describe('createTaxonomy', () => {
       expect(createTaxonomy([effect]).get('sealed')).toMatchObject({ kind: 'effect' });
     });
 
+    it('refuses a stat word that is not one of the patterns', () => {
+      expect(violations([event('attack', { patterns: ['attack'], statPatterns: ['strike'] })])).toMatch(
+        /"attack" lists the stat word "strike", which is not one of its patterns/,
+      );
+    });
+
+    it('accepts a stat word that is a pattern, whatever its case', () => {
+      const attack = event('attack', { patterns: ['attack', 'attacks'], statPatterns: ['Attack'] });
+      expect(createTaxonomy([attack]).get('attack')).toMatchObject({ kind: 'event' });
+    });
+
     it('refuses an empty label', () => {
       expect(violations([{ ...debuff('weak'), label: ' ' }])).toMatch(/"weak" needs a label/);
+    });
+  });
+
+  // An old key (a trigger phrase of Phase 1) names an event and an actor in addresses and queries (ADR-0009). A query is
+  // read by the start of a key, so an alias that was one could not be told from it.
+  describe('refusing aliases that would be ambiguous', () => {
+    const aliased = (...aliases: { key: string; actor?: 'self' | 'ally' | 'enemy' | 'any' }[]) =>
+      event('attack', { patterns: ['attack'], aliases });
+
+    it('accepts an alias that is neither a key nor the start of one', () => {
+      const taxonomy = createTaxonomy([aliased({ key: 'after this creature attacks', actor: 'self' }), event('dodge')]);
+      expect(taxonomy.get('attack')).toMatchObject({
+        aliases: [{ key: 'after this creature attacks', actor: 'self' }],
+      });
+    });
+
+    it('refuses an alias that is the key of an entry', () => {
+      expect(violations([aliased({ key: 'dodge' }), event('dodge')])).toMatch(
+        /alias "dodge" of "attack" is the key "dodge"/,
+      );
+    });
+
+    it('refuses an alias that is the start of a key', () => {
+      expect(violations([aliased({ key: 'start of' }), event('start of battle')])).toMatch(
+        /alias "start of" of "attack" is the start of key "start of battle"/,
+      );
+    });
+
+    it('accepts an alias that starts with a key: a query for the alias is no start of the key', () => {
+      expect(
+        createTaxonomy([event('dodge', { aliases: [{ key: 'attack on' }] }), event('attack')]).entries,
+      ).toHaveLength(2);
+    });
+
+    it('refuses an alias given twice, in one entry or in two', () => {
+      expect(violations([aliased({ key: 'strike' }, { key: 'strike' })])).toMatch(/alias "strike" is given twice/);
+      expect(
+        violations([aliased({ key: 'strike' }), event('dodge', { aliases: [{ key: 'strike', actor: 'enemy' }] })]),
+      ).toMatch(/alias "strike" belongs to both "attack" and "dodge"/);
+    });
+
+    it.each([
+      ['empty', ''],
+      ['not lower case', 'Strike'],
+      ['padded', ' strike'],
+    ])('refuses an alias that is %s', (_label, key) => {
+      expect(violations([aliased({ key })])).toMatch(/alias .* must be lower case, plain text/);
     });
   });
 
