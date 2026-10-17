@@ -184,7 +184,9 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       over 150 kB of initial JS or 300 kB of data, gzipped: now 69.9 and 120.4. Lighthouse CI (`@lhci/cli`, the `lighthouse` job
       of `ci.yml`, thresholds in `apps/web/lighthouserc.cjs`). Deviation: its first run found performance 0.69 and a layout shift
       of 0.75, so the slice fixed them: the stylesheets are inlined (`inlineStyleThreshold`), the results hold their room while
-      the traits load, and the filters column is dropped by CSS under 700 px. Now 0.92 and 0.035.
+      the traits load, the filters column is dropped by CSS under 700 px, and the fonts are `font-display: optional`
+      (`styles/fonts.css`; DESIGN § Typography). Now 0.93 and 0.035. The runner (Linux) measured 0.139 where Windows said 0.036:
+      the fallback font there is wider than Plex and the swap moved the page three times, so judge a layout shift on CI.
 - [ ] **8.3** Keyboard-only e2e walkthrough (criterion 8); contrast test of the DESIGN tokens on every surface they use;
       screen-reader checklist for the owner.
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.

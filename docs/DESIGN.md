@@ -39,6 +39,9 @@ use the fallback `#8fa1b3`.
 
 ## Typography
 - UI: **IBM Plex Sans** 400/500/600. Code/query/counts: **JetBrains Mono** 400/500. Self-host (no third-party requests).
+- `font-display: optional`: a face that has not arrived as the page is first drawn waits for the next visit (the system font
+  is shown meanwhile). Swapping it in re-flows the text and moves the page, much on Linux and Android (layout shift 0.4 in a
+  test with a wide fallback); a first visit on a slow link may therefore not show Plex. A page must not depend on Plex metrics.
 - Base 14 px desktop, 14–15 px mobile; trait names 15 px semibold; descriptions 13.5–14.5 px, line-height 1.6.
 
 ## Components (build once, reuse)

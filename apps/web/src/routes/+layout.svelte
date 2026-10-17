@@ -1,9 +1,5 @@
 <script lang="ts">
-  import '@fontsource/ibm-plex-sans/latin-400.css';
-  import '@fontsource/ibm-plex-sans/latin-500.css';
-  import '@fontsource/ibm-plex-sans/latin-600.css';
-  import '@fontsource/jetbrains-mono/latin-400.css';
-  import '@fontsource/jetbrains-mono/latin-500.css';
+  import '../lib/styles/fonts.css';
   import '../lib/styles/tokens.css';
   import '../lib/styles/base.css';
   import type { Snippet } from 'svelte';
