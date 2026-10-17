@@ -83,3 +83,18 @@ export { descriptionParts, type DescriptionPart, type TextPiece } from './explor
 export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal } from './explore/keyword-click';
 export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './explore/facet-toggles';
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
+export {
+  emptyParty,
+  MEMBER_INDEXES,
+  SLOT_NAMES,
+  traitAt,
+  withTraitAt,
+  type MemberIndex,
+  type Party,
+  type PartyMember,
+  type SlotName,
+  type SlotPosition,
+} from './party/party';
+export type { Placement, SlotRule } from './party/slot-rule';
+export { createSlotRuleRegistry, SlotRuleRegistryError, type SlotRuleRegistry } from './party/slot-rule-registry';
+export { slotRules } from './party/slot-rules';

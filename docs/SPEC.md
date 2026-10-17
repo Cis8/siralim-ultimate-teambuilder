@@ -79,6 +79,9 @@ interface PartyMember { innate: TraitId | null; fused: TraitId | null; artifact:
 type Party = readonly [PartyMember, PartyMember, PartyMember, PartyMember, PartyMember, PartyMember];
 ```
 
+A slot is addressed by a `SlotPosition` `{ member: 0–5, slot: 'innate' | 'fused' | 'artifact' }`. The party holds ids, not
+traits, and keeps an id the dataset does not know (§5).
+
 Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if present, else innate.
 
 ## 4. Keyword extraction
@@ -266,6 +269,21 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 ### 8.2 Party planner (Phase 1)
 6 × 3 slots (GAME_RULES R1), a target slot that results fill, slot validation with a reason, basic coverage
 (applies / relies on / missing sources, non-stacking duplicates), share link, undo/redo (Command pattern).
+
+- **The party is immutable.** `emptyParty`, `traitAt(party, position)` and `withTraitAt(party, position, id | null)`, which
+  gives another party and returns the very same one when the slot already holds that, so a change that changed nothing is
+  told by identity (the history of 6.2 records no such change). `withTraitAt` only writes: it holds ids, and whether a
+  trait may sit in a slot needs the trait.
+- **Slot rules are a registry** (`createSlotRuleRegistry`, the default `slotRules`). A `SlotRule` has an `id` and
+  `refusal(trait, slot)`, a sentence or `null`; `slotRules.canPlace(trait, slot)` is `{ ok: true }` or `{ ok: false, rule,
+  reason }`, with the reason of the first rule in the registry's order that refuses. Three rules, which together give the
+  table of GAME_RULES R1: `special-traits-artifact-only` (mastery, backer and `other` traits, R6),
+  `avatar-innate-only` (R6), `artifact-needs-material` (R1). The reason speaks of the kind of trait and the slot, not of the
+  trait ("Mastery traits can only go in the Artifact slot."), since the page shows next to it which trait it is; it is the
+  visible text of a disabled "add" button. A new rule of the game is a new entry.
+- **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
+  GAME_RULES does not forbid it and a party is being planned. Duplicates of a non-stacking trait are reported (R4), not
+  refused.
 
 ### 8.3 Smart search (Phase 2)
 Syntax highlighting in the input, autocomplete by context, inline diagnostics with one-click fixes, plain-language

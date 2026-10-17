@@ -12,13 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 done, M6 next.** Explore is complete and its state lives in the URL. `web`: `routes/+page.svelte` holds
-  `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}`, reads the address in `afterNavigate`
-  and writes it through `createExploreUrlWriter` (`typed` replaces after a pause, `chosen` pushes). The Party panel still
-  says "Coming soon." and the page has no party state yet.
-  **Next: 6.1** (`core`, TDD): the immutable party and the slot-rule registry `canPlace → ok | reason` (GAME_RULES R1, R6;
-  criterion 5, every kind × slot). For 6.5-6.7 the party goes in the same address as the search: reuse or generalise
-  `explore-address` / `explore-url-writer` (the other parameters are already left alone) rather than a second writer.
+- **Phase 1 · M6 under way: 6.1 done, 6.2 next.** `core/src/party/` has the immutable `Party` (6 × `PartyMember` of trait
+  ids; `withTraitAt` returns the same object when nothing changes), `SlotPosition`, and `slotRules.canPlace(trait, slot)` →
+  `{ ok: true } | { ok: false, rule, reason }` (SPEC §8.2). `web` has no party state yet; the Party panel says "Coming
+  soon." **Next: 6.2** (`core`, TDD): commands + history over `Party`. A place command needs the `Trait` (the party has ids), so it
+  takes the trait and asks `slotRules`; a refused placement is an error result, not a recorded command.
+  For 6.5-6.7 the party goes in the same address as the search: reuse or generalise `explore-address` /
+  `explore-url-writer` (the other parameters are already left alone) rather than a second writer.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -132,7 +132,7 @@ filter chips are remove-only; a pressed token is a ring, not a fill (contrast of
 panel above the list until the bottom sheet (M7); back and forward bring back the state and start the list over.
 
 ### M6 Party planner
-- [ ] **6.1** Immutable party + slot-rule registry `canPlace → ok | reason` (R1, R6). *T:* criterion 5, every kind × slot.
+- [x] **6.1** Immutable party + slot-rule registry `canPlace → ok | reason` (R1, R6). *T:* criterion 5, every kind × slot.
 - [ ] **6.2** Commands + history (place, clear slot, clear party). *T:* undo/redo, redo dropped after a new command, no-ops not recorded.
 - [ ] **6.3** Target-slot strategy (next empty slot after placing).
 - [ ] **6.4** Basic coverage (applies, relies on, missing) + party-wide non-stacking duplicates (R4). *T:* criterion 7.

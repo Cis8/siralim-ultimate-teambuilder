@@ -1,0 +1,120 @@
+import fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
+import { emptyParty, MEMBER_INDEXES, SLOT_NAMES, traitAt, withTraitAt, type Party, type SlotPosition } from './party';
+
+const position = fc.record({
+  member: fc.constantFrom(...MEMBER_INDEXES),
+  slot: fc.constantFrom(...SLOT_NAMES),
+}) satisfies fc.Arbitrary<SlotPosition>;
+
+const traitId = fc.option(fc.constantFrom('abomination--sin-and-sentence', 'master-of-mirelings', 'x--y'), {
+  nil: null,
+});
+
+/** A party built slot by slot through the only way to write one. */
+const party = fc
+  .array(fc.tuple(position, traitId), { maxLength: 30 })
+  .map((writes) => writes.reduce((built, [at, id]) => withTraitAt(built, at, id), emptyParty));
+
+describe('emptyParty', () => {
+  it('has six creatures, each with its three slots empty (GAME_RULES R1)', () => {
+    expect(emptyParty).toHaveLength(6);
+    for (const member of emptyParty) expect(member).toEqual({ innate: null, fused: null, artifact: null });
+  });
+
+  it('has every slot empty', () => {
+    for (const member of MEMBER_INDEXES) {
+      for (const slot of SLOT_NAMES) expect(traitAt(emptyParty, { member, slot })).toBeNull();
+    }
+  });
+});
+
+describe('withTraitAt', () => {
+  it('puts the trait in that slot of that creature and in no other', () => {
+    const placed = withTraitAt(emptyParty, { member: 2, slot: 'fused' }, 'life--mender');
+
+    expect(placed[2]).toEqual({ innate: null, fused: 'life--mender', artifact: null });
+    expect(placed.filter((_, index) => index !== 2)).toEqual(emptyParty.filter((_, index) => index !== 2));
+  });
+
+  it('replaces what the slot held', () => {
+    const first = withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'a--one');
+
+    expect(traitAt(withTraitAt(first, { member: 0, slot: 'innate' }, 'b--two'), { member: 0, slot: 'innate' })).toBe(
+      'b--two',
+    );
+  });
+
+  it('empties a slot when given null', () => {
+    const first = withTraitAt(emptyParty, { member: 5, slot: 'artifact' }, 'a--one');
+
+    expect(withTraitAt(first, { member: 5, slot: 'artifact' }, null)).toEqual(emptyParty);
+  });
+
+  it('does not touch the party it was given', () => {
+    const before: Party = withTraitAt(emptyParty, { member: 1, slot: 'innate' }, 'a--one');
+    const snapshot = before.map((member) => ({ ...member }));
+
+    withTraitAt(before, { member: 1, slot: 'innate' }, 'b--two');
+    withTraitAt(before, { member: 3, slot: 'artifact' }, 'c--three');
+
+    expect(before).toEqual(snapshot);
+  });
+
+  it('keeps the same party when the slot already holds that, so a no-op is told by identity', () => {
+    const filled = withTraitAt(emptyParty, { member: 4, slot: 'fused' }, 'a--one');
+
+    expect(withTraitAt(filled, { member: 4, slot: 'fused' }, 'a--one')).toBe(filled);
+    expect(withTraitAt(emptyParty, { member: 4, slot: 'fused' }, null)).toBe(emptyParty);
+  });
+
+  it('keeps an id nobody knows: a party can come from a dataset that has changed', () => {
+    const placed = withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'no-longer--in-the-sheet');
+
+    expect(traitAt(placed, { member: 0, slot: 'innate' })).toBe('no-longer--in-the-sheet');
+  });
+
+  it('does not check the slot rules: those need the trait, not its id (see slotRules)', () => {
+    expect(() => withTraitAt(emptyParty, { member: 0, slot: 'fused' }, 'rodian-master--anything')).not.toThrow();
+  });
+});
+
+describe('a write to a party, on any party', () => {
+  it('reads back from the slot it was written to', () => {
+    fc.assert(
+      fc.property(party, position, traitId, (before, at, id) => {
+        expect(traitAt(withTraitAt(before, at, id), at)).toBe(id);
+      }),
+    );
+  });
+
+  it('leaves the 17 other slots as they were', () => {
+    fc.assert(
+      fc.property(party, position, traitId, (before, at, id) => {
+        const after = withTraitAt(before, at, id);
+        for (const member of MEMBER_INDEXES) {
+          for (const slot of SLOT_NAMES) {
+            if (member === at.member && slot === at.slot) continue;
+            expect(traitAt(after, { member, slot })).toBe(traitAt(before, { member, slot }));
+          }
+        }
+      }),
+    );
+  });
+
+  it('keeps six creatures', () => {
+    fc.assert(
+      fc.property(party, position, traitId, (before, at, id) => {
+        expect(withTraitAt(before, at, id)).toHaveLength(6);
+      }),
+    );
+  });
+
+  it('is the same party only when nothing changes', () => {
+    fc.assert(
+      fc.property(party, position, traitId, (before, at, id) => {
+        expect(withTraitAt(before, at, id) === before).toBe(traitAt(before, at) === id);
+      }),
+    );
+  });
+});

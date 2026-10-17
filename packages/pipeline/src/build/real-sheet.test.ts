@@ -1,4 +1,4 @@
-import { hasRole, KNOWN_CLASSES, taxonomy, type Trait } from '@atlas/core';
+import { hasRole, KNOWN_CLASSES, slotRules, taxonomy, type SlotName, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
@@ -60,6 +60,16 @@ describe('the compendium v2.0 snapshot', () => {
 
   it('has the 41 traits that can never sit in the Artifact slot', () => {
     expect(traits.filter((trait) => trait.material === null)).toHaveLength(41);
+  });
+
+  it('fills the slots of GAME_RULES R1 and R6 with the traits they accept', () => {
+    const accepted = (slot: SlotName) => traits.filter((trait) => slotRules.canPlace(trait, slot).ok);
+
+    // Innate: creature + Avatar. Fused: creature. Artifact: everything with a material, but the Avatars.
+    expect(accepted('innate')).toHaveLength(1331 + 31);
+    expect(accepted('fused')).toHaveLength(1331);
+    expect(accepted('artifact')).toHaveLength(1780 - 41);
+    expect(accepted('artifact').every((trait) => trait.material !== null && trait.kind !== 'avatar')).toBe(true);
   });
 
   it('has 723 traits that say they do not stack', () => {
