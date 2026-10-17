@@ -2,26 +2,20 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { KeywordRole, Trait } from '@atlas/core';
 import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
-
-/** The count a screen reader is told; it follows the typing once it pauses. */
-const announcedCount = (page: Page) => page.getByRole('status');
-
-const rows = (page: Page) => page.getByRole('listitem');
-
-/**
- * Opens Explore and waits for the first row. The traits are fetched once the page is hydrated, so a field typed in before
- * that is lost to the hydration (WebKit gets there last).
- */
-async function openExplore(page: Page): Promise<void> {
-  await page.goto('./');
-  await expect(rows(page).first()).toBeVisible();
-}
-
-/** The total the build published: the tests read it so that a data refresh does not break them. */
-async function publishedCount(page: Page): Promise<number> {
-  const manifest = (await (await page.request.get('./data/manifest.json')).json()) as { count: number };
-  return manifest.count;
-}
+import {
+  announcedCount,
+  chips,
+  countText,
+  facet,
+  filters,
+  format,
+  mode,
+  openExplore,
+  publishedCount,
+  rows,
+  searchBox,
+  side,
+} from './support/explore-page';
 
 test.describe('explore', () => {
   test('has the filters, the results and the party side by side', async ({ page }) => {
@@ -226,7 +220,6 @@ test.describe('explore', () => {
   });
 
   test.describe('a keyword in a description', () => {
-    const search = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
     const total = (traits: readonly Trait[]) => traits.length.toLocaleString('en-US');
 
     /** The traits of the dataset that do this with the keyword: what the page has to show after the click. */
@@ -258,7 +251,7 @@ test.describe('explore', () => {
 
     test('is a button that says what the trait does with it and what a click shows', async ({ page }) => {
       await openExplore(page);
-      await search(page).fill('vulnerable');
+      await searchBox(page).fill('vulnerable');
 
       await expect(
         rows(page)
@@ -279,7 +272,7 @@ test.describe('explore', () => {
     }) => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
-      await search(page).fill('vulnerable');
+      await searchBox(page).fill('vulnerable');
       const appliedHere = rows(page).getByRole('button', { name: /^Applies Vulnerable — / });
       await expect(appliedHere.first()).toBeVisible();
 
@@ -299,7 +292,7 @@ test.describe('explore', () => {
     }) => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
-      await search(page).fill('vulnerable');
+      await searchBox(page).fill('vulnerable');
       await expect(announcedCount(page)).toContainText('of');
       const before = (await announcedCount(page).textContent()) ?? '';
       await rows(page)
@@ -338,13 +331,13 @@ test.describe('explore', () => {
     test('filters by a trigger, with no side to take, and by the flag "does not stack"', async ({ page, request }) => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
-      await search(page).fill('"start of battle"');
+      await searchBox(page).fill('"start of battle"');
       await rows(page)
         .getByRole('button', { name: /^start of battle — show traits that mention it$/i })
         .first()
         .click();
       // The phrase typed above also has to be found in the trait, so the filter is looked at on its own.
-      await search(page).fill('');
+      await searchBox(page).fill('');
       const mentioningIt = traits.filter((trait) =>
         trait.keywords.some((keyword) => keyword.key === 'start of battle'),
       );
@@ -355,7 +348,7 @@ test.describe('explore', () => {
           .first(),
       ).toBeVisible();
 
-      await search(page).fill('weak');
+      await searchBox(page).fill('weak');
       const before = (await announcedCount(page).textContent()) ?? '';
       await rows(page)
         .getByRole('button', { name: /show only traits that do not stack$/ })
@@ -371,27 +364,6 @@ test.describe('explore', () => {
   });
 
   test.describe('the filters', () => {
-    const search = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
-    const filters = (page: Page) => page.getByRole('region', { name: 'Filters' });
-    const chips = (page: Page) => page.getByRole('group', { name: 'Filters and query terms' });
-    const format = (count: number) => count.toLocaleString('en-US');
-    const countText = (shown: number, all: readonly Trait[]) => `${format(shown)} of ${format(all.length)} traits`;
-
-    /** A class or a trigger in the panel: its name, then the number of traits it would show. */
-    const facet = (page: Page, label: string, count?: number) =>
-      filters(page).getByRole('button', {
-        name: new RegExp(`^${label}\\s*${count === undefined ? '[\\d,]+' : format(count)}\\s*traits$`),
-      });
-
-    /** One of the two sides of a buff, a debuff or an effect in the panel. */
-    const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on') =>
-      filters(page)
-        .getByRole('group', { name: keyword, exact: true })
-        .getByRole('button', { name: new RegExp(`^${which}\\s`) });
-
-    const mode = (page: Page, label: 'Match all' | 'Match any') =>
-      filters(page).getByRole('group', { name: 'Keyword match mode' }).getByRole('button', { name: label });
-
     const applying = (traits: readonly Trait[], key: string) => withRole(traits, key, 'applies');
     const withRole = (traits: readonly Trait[], key: string, role: KeywordRole) =>
       traits.filter((trait) => trait.keywords.some((keyword) => keyword.key === key && keyword.role === role));
@@ -559,24 +531,24 @@ test.describe('explore', () => {
       page,
     }) => {
       await openExplore(page);
-      await search(page).fill('vulnerable OR weak');
+      await searchBox(page).fill('vulnerable OR weak');
       await expect(chips(page).getByRole('button', { name: 'vulnerable — exclude it' })).toBeVisible();
       await expect(chips(page).getByRole('button', { name: 'weak — exclude it' })).toBeVisible();
 
       await chips(page).getByRole('button', { name: 'vulnerable — exclude it' }).click();
-      await expect(search(page)).toHaveValue('-vulnerable OR weak');
+      await expect(searchBox(page)).toHaveValue('-vulnerable OR weak');
       const excluded = chips(page).getByRole('button', { name: 'vulnerable — include it again' });
       await expect(excluded).toContainText('NOT');
 
       await excluded.click();
-      await expect(search(page)).toHaveValue('vulnerable OR weak');
+      await expect(searchBox(page)).toHaveValue('vulnerable OR weak');
 
       await chips(page).getByRole('button', { name: 'Remove vulnerable' }).click();
-      await expect(search(page)).toHaveValue('weak');
+      await expect(searchBox(page)).toHaveValue('weak');
       await expect(chips(page).getByRole('button', { name: 'Remove weak' })).toBeFocused();
 
       await chips(page).getByRole('button', { name: 'Remove weak' }).click();
-      await expect(search(page)).toHaveValue('');
+      await expect(searchBox(page)).toHaveValue('');
       await expect(chips(page)).toBeFocused();
     });
 
@@ -589,7 +561,7 @@ test.describe('explore', () => {
       await openExplore(page);
       await expect(page.getByText('Effective query')).toBeHidden();
 
-      await search(page).fill('weak');
+      await searchBox(page).fill('weak');
       await facet(page, 'Life').click();
       await expect(page.getByRole('code')).toHaveText('class:life weak');
 
@@ -642,7 +614,7 @@ test.describe('explore', () => {
       await openExplore(page);
       await side(page, 'Vulnerable', 'Applies').click();
       await side(page, 'Weak', 'Applies').click();
-      await search(page).fill('zzzqxj');
+      await searchBox(page).fill('zzzqxj');
       await expect(page.getByText('No trait matches.')).toBeVisible();
       await expect(page.getByText('Or switch the keywords to “Match any”.')).toBeVisible();
 
@@ -659,7 +631,7 @@ test.describe('explore', () => {
       await side(page, 'Vulnerable', 'Applies').click();
       await facet(page, 'Start of battle').click();
       await filters(page).getByRole('checkbox', { name: 'Artifact-eligible (has material)' }).check();
-      await search(page).fill('weak OR snared');
+      await searchBox(page).fill('weak OR snared');
       await chips(page).getByRole('button', { name: 'weak — exclude it' }).click();
       await expect(page.getByRole('button', { name: 'Copy query' })).toBeVisible();
 

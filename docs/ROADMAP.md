@@ -22,7 +22,7 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
       dataset-wide snapshot test, report of unknown capitalised terms. Review the 30 most frequent keywords' roles by hand.
 - [x] **M4 Query core.** Tokenizer with spans, error-tolerant parser, field registry, evaluator, highlight visitor,
       serialiser (AST → canonical text). Property test: `parse(serialise(ast))` equals `ast`.
-- [ ] **M5 Explore UI.** Query input, chips (toggle NOT, remove), effective-query line, facets with live counts,
+- [x] **M5 Explore UI.** Query input, chips (toggle NOT, remove), effective-query line, facets with live counts,
       keyword applies/uses toggles + match all/any, flags, sort, results with keyword tokens, highlighting, click-to-counterpart,
       virtualised list, empty state. URL state for everything.
 - [ ] **M6 Party planner.** 6 × 3 slots, target slot, add from results, slot validation reasons, clear, undo/redo,

@@ -122,6 +122,8 @@
     align-items: center;
     gap: 4px;
     height: 100%;
+    /* A one-letter term (`a`) would be narrower than the 24 px that WCAG 2.5.8 asks of a target. */
+    min-width: 24px;
     padding: 0 6px 0 10px;
     border: 0;
     border-radius: var(--radius) 0 0 var(--radius);

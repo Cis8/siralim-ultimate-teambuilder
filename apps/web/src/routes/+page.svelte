@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { afterNavigate, goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
+  import { page } from '$app/state';
   import { onMount, tick } from 'svelte';
   import {
     clickKeyword,
+    decodeExploreState,
     initialExploreState,
     isClickOn,
     SORT_KEYS,
@@ -17,6 +21,7 @@
   import ResultsList from '../lib/components/results-list.svelte';
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
+  import { createExploreUrlWriter } from '../lib/explore-url-writer';
   import type { KeywordActions } from '../lib/keyword-actions';
   import { trackViewportOffset } from '../lib/viewport-offset';
 
@@ -47,15 +52,43 @@
     if (window.scrollY > top) window.scrollTo({ top });
   }
 
-  function exploreChanged(next: ExploreState): void {
+  /**
+   * The address is the source of truth (ADR-0005): the state is read from it when the page opens and when the browser
+   * goes to another address, and every change of the state is written to it. A write is a navigation to the same page,
+   * so it leaves the scroll and the focus where they are (`reset: false`).
+   */
+  const urlWriter = createExploreUrlWriter({
+    current: () => new URL(page.url.href),
+    go: (url, entry) =>
+      goto(resolve(url.search === '' ? '/' : `/?${url.search.slice(1)}`), {
+        replace: entry === 'replace',
+        reset: false,
+      }),
+  });
+
+  afterNavigate(({ type, to }) => {
+    // The page wrote that address itself (`goto`): the state is already what it says.
+    if (type === 'goto' || to === null) return;
+    urlWriter.arrived(to.url);
+    explore = decodeExploreState(to.url.searchParams);
+    if (type !== 'enter') void showResultsFromTheTop();
+  });
+
+  /** The state changed by a choice (a facet, a chip, a keyword, the sort): a history entry of its own. */
+  function chosen(next: ExploreState): void {
     explore = next;
+    urlWriter.chosen(next);
+  }
+
+  function exploreChanged(next: ExploreState): void {
+    chosen(next);
     void showResultsFromTheTop();
   }
 
   const keywordActions: KeywordActions = {
     isOn: (keyword) => isClickOn(explore, keyword),
     click: (keyword) => {
-      explore = clickKeyword(explore, keyword);
+      chosen(clickKeyword(explore, keyword));
       void showResultsFromTheStart();
     },
   };
@@ -91,6 +124,7 @@
       value={explore.query}
       onchange={(query: string) => {
         explore = { ...explore, query };
+        urlWriter.typed(explore);
       }}
     />
   </search>
@@ -105,7 +139,7 @@
           value={explore.sort}
           onchange={(event) => {
             const sort = event.currentTarget.value;
-            if (isSortKey(sort)) explore = { ...explore, sort };
+            if (isSortKey(sort)) chosen({ ...explore, sort });
           }}
         >
           {#each SORT_KEYS as key (key)}

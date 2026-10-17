@@ -12,15 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M5 in progress, 5.1-5.8 done.** `core` side is SPEC §7/§8.1 (`search(state)`, facets, codec, `descriptionParts`,
-  `clickKeyword` / `isClickOn`, `toggleClass` / `toggleKeywordFilter`, `filterChips` / `removeFilterChip`: all state in, state out)
-  and QUERY_LANGUAGE §4 (`queryChips`, `toggleChipNot`, `removeChip`: they return the new query text; ask again after each
-  edit). `web`: `routes/+page.svelte` holds `explore: ExploreState` (`$state.raw`) and derives `loaded = {outcome, total,
-  version}`; components in `lib/components/`: `query-input`, `chip-row`, `result-count`, `effective-query`, `facet-panel`
-  (`facet-button`, `segmented`), `results-list` → `virtual-list` → `result-row` → `description-text` → `keyword-token`.
-  Party still says "Coming soon." The state is not in the URL yet.
-  **Next: 5.9**: URL sync with `encodeExploreState` / `decodeExploreState` (replace while typing, push on discrete actions:
-  a facet, a chip, a click on a keyword, the sort; back/forward), e2e criteria 1 and 4 through the UI, reload restores the state.
+- **Phase 1 · M5 done, M6 next.** Explore is complete and its state lives in the URL. `web`: `routes/+page.svelte` holds
+  `explore: ExploreState` (`$state.raw`), derives `loaded = {outcome, total, version}`, reads the address in `afterNavigate`
+  and writes it through `createExploreUrlWriter` (`typed` replaces after a pause, `chosen` pushes). The Party panel still
+  says "Coming soon." and the page has no party state yet.
+  **Next: 6.1** (`core`, TDD): the immutable party and the slot-rule registry `canPlace → ok | reason` (GAME_RULES R1, R6;
+  criterion 5, every kind × slot). For 6.5-6.7 the party goes in the same address as the search: reuse or generalise
+  `explore-address` / `explore-url-writer` (the other parameters are already left alone) rather than a second writer.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -77,6 +75,13 @@ session (after `CLAUDE.md`), update it before ending one.
   the list is another one. The e2e that proves it is the chain of filters taken off one by one (`draws no trait twice…`).
 - e2e: wait for the first row before typing or clicking (`openExplore`): the traits load after hydration, and a field filled
   earlier is lost (WebKit gets there last). Safari does not focus a button that is clicked: to test focus, use the keyboard.
+- SvelteKit 3 navigation: `pushState` / `replaceState` are deprecated and a shallow entry keeps `page.url` on the page
+  underneath, so the address is written with `goto(resolve('/?…'), { replace, reset: false })`: a real navigation on the same
+  route, with no load to run. `reset: false` leaves scroll and focus alone, also on back/forward. `afterNavigate` tells the
+  page's own write (`type: 'goto'`, ignored: reading it back would put the text of the last pause over what was typed since)
+  from `enter` / `popstate` / `link` (read). A navigation started while another is in flight drops the first one's history
+  entry, hence the writer's queue. The lint rule `no-navigation-without-resolve` accepts `resolve()` only with `'/'` or
+  `` `/?${string}` ``, and `page.url` is a read-only type: build a `URL` from its `href`.
 - `rtk` is not on every machine: run `pnpm exec vitest …` directly; in PowerShell prefix `$env:PATH` with the Node 24 folder.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
@@ -116,45 +121,15 @@ field registry (`FieldDefinition` with `highlightsDescription`), per-trait index
 the serialiser quotes a value exactly when the lexer would read it otherwise (it asks the lexer), and writes `-`, a space and
 ` OR `.
 
-### M5 Explore UI
-- [x] **5.1** `TraitRepository` port (core) + static JSON adapter + fixture adapter; composition root; `SearchService`.
-- [x] **5.2** `ExploreState` + URL codec (`q, class, kw, mode, mat, stack, sort`). *T:* property round-trip; bad params ignored.
-- [x] **5.3** Facets: class counts ignore the class filter, applies/uses counts, all/any, flags, effective query, sort
-      strategies. *T:* acceptance criterion 4 (`pipeline/src/build/explore-acceptance.test.ts`). Deviations: the filters
-      are written as a query and the search runs that text (`class:boss -class:"nether boss"`); `createTaxonomy` refuses a
-      key that is the start of another; `search` takes the whole `ExploreState`.
-- [x] **5.4** Chip operations on the query text (toggle NOT, remove term + adjacent operator). *T:* table cases + property
-      tests on any text (`query/chips.ts`). Deviations: they edit the text in place (token surgery guided by the AST spans)
-      instead of re-serialising, so the user's spelling survives; toggling a term in a negated group wraps the term, not the
-      group (`-(a OR b)` → `-(-a OR b)`); a flip the parser would not read leaves the text alone.
-- [x] **5.5** Layout (3 columns, wrapping), query input, result count in `aria-live`. *e2e:* `explore.test.ts`. Deviations:
-      the sort control (nobody else owned it) is in the count row; the count a screen reader hears follows the typing 400 ms
-      after it pauses (a visually hidden `role="status"`, the visible count is `aria-hidden`), so it is not said per key; the
-      panels are `section`s with a heading, not `aside`s, so no landmark nests inside `main`; the list draws 100 rows until 5.6.
-- [x] **5.6** Virtualised results (`@tanstack/virtual-core`), `KeywordToken` (role by shape), `<mark>` highlights. *T:* `descriptionParts`
-      (table + property tests, and on the real sheet: `result-descriptions.test.ts`); e2e: rows drawn stay few and the last
-      trait is reached, descriptions read as in the dataset, shapes by role, marks (also inside a token), axe. Deviations:
-      the page scrolls and the list is virtualised against the window (spacers, not absolute positions; the offset of the
-      list is re-read when the body resizes); `descriptionParts` cuts the description into keyword and text parts in `core`
-      so `web` does not touch the spans; `resists` is a solid outline and an effect takes the mechanic colour (DESIGN); the
-      token is not interactive until 5.7. The dataset on `main` predated M3 (no keywords), so it was regenerated first.
-- [x] **5.7** Click a keyword → counterpart filter. *T:* `keyword-click.test.ts` (table + property tests); e2e: criterion 3 on the
-      real data in both directions (the second by keyboard), pressed state and second click, list restarts from the top with
-      the focus on the results heading, trigger and flag, axe. Deviations: the filter is toggled on and off (as in the
-      prototype), and turning one side of a keyword on takes the other off, or the click on `applies:vulnerable` would show the
-      traits that are both; a keyword with no side is `kw:`; the pressed state is a ring, not a fill (a fill broke the
-      contrast of a match highlight, DESIGN).
-- [x] **5.8** Facet panel (`aria-pressed`), chip row, effective query + copy, empty state. *T:* `facet-toggles.test.ts`,
-      `filter-chips.test.ts` (table + property tests, the chips against `filterQuery` on any state); e2e: counts from the
-      published dataset for classes (any-of, Boss without Nether Boss), keywords (match all / any, both sides), trigger, flags,
-      chips (filters and terms: NOT, remove, focus), effective query + copy, the list starting over, empty-state hint, axe.
-      Deviations: the panel does not jump between the two sides of a keyword (both can be on; only the click on a token
-      does); filter chips are remove-only and the chips show no operators (the effective query line has the meaning); the panel
-      is sticky with its own scroll, `max-height` from `--viewport-offset` (`trackViewportOffset`); a query chip is a button
-      named by its action, not an `aria-pressed` toggle (label in name); the "Copied" feedback is `aria-live`, not
-      `role="status"` (the count owns it). Stacked on a narrow screen the panel is long: the bottom sheet is M7.
-- [ ] **5.9** URL sync (replace while typing, push on discrete actions; back/forward). *e2e:* criteria 1 and 4 through the
-      UI, reload restores state, axe.
+### M5 Explore UI — done
+`core`: `ExploreState` + URL codec, `search(state)` with facets and sort strategies, chip operations on the query text,
+`clickKeyword`, `descriptionParts`. `web`: three columns (filters | results | party), query input, chip row, result count in
+`aria-live`, virtualised results against the window (`@tanstack/virtual-core`), keyword tokens by role shape, `<mark>`
+highlights, facet panel (`aria-pressed`), effective query + copy, empty state, and the URL kept in step with the state
+(`explore-address`, `explore-url-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
+text is what is searched (`filterQuery`); a click on a token turns the other side of the keyword off, the panel does not;
+filter chips are remove-only; a pressed token is a ring, not a fill (contrast of a highlight); narrow screens stack the
+panel above the list until the bottom sheet (M7); back and forward bring back the state and start the list over.
 
 ### M6 Party planner
 - [ ] **6.1** Immutable party + slot-rule registry `canPlace → ok | reason` (R1, R6). *T:* criterion 5, every kind × slot.

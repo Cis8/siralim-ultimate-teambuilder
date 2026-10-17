@@ -194,6 +194,19 @@ key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE
 nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
 dataset: by family, then trait name; default), `class` (class, then family) or `az` (trait name). The party and the tab live in other parameters that the search codec leaves alone.
 
+**The page and its address** (`explore-address.ts`, `explore-url-writer.ts`). The page reads the address when it opens and
+when the browser goes to another one (back, forward, a link); an address it cannot read is the plain page and stays as it is
+until something changes. Every change of the state is written back, and the parameters that are not Explore's stay:
+- typing *replaces* the current history entry once the text has stayed as it is for 400 ms, so a stretch of typing is one
+  entry (and a browser's limit on how often the history may change is out of reach);
+- a facet, a chip, a click on a keyword and the sort each *push* an entry, after the text typed so far has been written to
+  the entry it was typed in, so that back returns to it. A state that is already the address writes nothing;
+- the writes are made one after another, and an arrival by back or forward drops the text that was waiting;
+- a link is written to be read: the colon of `a:vulnerable` and the comma between two items are not escaped.
+
+Back and forward bring back the state and start the list over; they do not restore the scroll position (the list is another
+one).
+
 The URL is the source of truth; local storage keeps only conveniences (recent searches, saved searches, last party).
 
 ## 8. Features
