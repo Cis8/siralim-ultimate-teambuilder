@@ -5,12 +5,17 @@ import { publishedDataset } from './support/dataset';
 import {
   announcedCount,
   chips,
+  closeFilters,
   countText,
   facet,
   filters,
+  filtersButton,
+  flag,
   format,
+  isCompact,
   mode,
   openExplore,
+  openFilters,
   publishedCount,
   results,
   rows,
@@ -23,7 +28,9 @@ test.describe('explore', () => {
     await openExplore(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Explore traits' })).toBeAttached();
-    await expect(page.getByRole('region', { name: 'Filters' })).toBeVisible();
+    // On a narrow screen the filters are a sheet, opened by a button.
+    if (isCompact(page)) await expect(filtersButton(page)).toBeVisible();
+    else await expect(page.getByRole('region', { name: 'Filters' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Results' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Party' })).toBeVisible();
   });
@@ -100,24 +107,21 @@ test.describe('explore', () => {
         if (message.type() === 'error') failures.push(message.text());
       });
       await openExplore(page);
-      const panel = page.getByRole('region', { name: 'Filters' });
-      const chips = page.getByRole('group', { name: 'Filters and query terms' });
+      await openFilters(page);
       // Each list that is shown has the traits of the one before it, and of the whole list, at other places: rows measured
       // for one list must not keep the places they had in it once the next one is shown (the virtualiser rebuilds what it
       // measured from the row that changed, and keeps the keys of the rows above it).
       const settle = () => page.waitForTimeout(300);
 
-      await panel.getByRole('button', { name: /^Life\s/ }).click();
+      await facet(page, 'Life').click();
       await settle();
-      await panel
-        .getByRole('group', { name: 'Vulnerable', exact: true })
-        .getByRole('button', { name: /^Applies/ })
-        .click();
+      await side(page, 'Vulnerable', 'Applies').click();
       await settle();
-      await panel.getByRole('checkbox', { name: /does not stack/ }).check();
+      await flag(page, 'Only “does not stack”').check();
       await settle();
+      await closeFilters(page);
       for (const name of ['Remove class:life', 'Remove applies:vulnerable', 'Remove stack:no']) {
-        await chips.getByRole('button', { name }).click();
+        await chips(page).getByRole('button', { name }).click();
         await settle();
       }
 
@@ -383,6 +387,7 @@ test.describe('explore', () => {
     }) => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
+      await openFilters(page);
 
       const perClass = new Map<string, number>();
       for (const { class: name } of traits) perClass.set(name, (perClass.get(name) ?? 0) + 1);
@@ -398,14 +403,15 @@ test.describe('explore', () => {
       await expect(side(page, 'Vulnerable', 'Relies on')).toHaveAccessibleName(
         `Relies on ${format(withRole(traits, 'vulnerable', 'uses').length)} traits`,
       );
-      await expect(filters(page).getByRole('checkbox', { name: 'Artifact-eligible (has material)' })).not.toBeChecked();
-      await expect(filters(page).getByRole('checkbox', { name: 'Only “does not stack”' })).not.toBeChecked();
+      await expect(flag(page, 'Artifact-eligible (has material)')).not.toBeChecked();
+      await expect(flag(page, 'Only “does not stack”')).not.toBeChecked();
     });
 
     test('chooses classes as an any-of, and counts the other classes as before', async ({ page, request }) => {
       const { traits } = await publishedDataset(request);
       const inClass = (name: string) => traits.filter((trait) => trait.class === name);
       await openExplore(page);
+      await openFilters(page);
 
       await facet(page, 'Life').click();
       await expect(facet(page, 'Life')).toHaveAttribute('aria-pressed', 'true');
@@ -430,6 +436,7 @@ test.describe('explore', () => {
       const bosses = traits.filter((trait) => trait.class === 'Boss');
       expect(bosses.length).toBeGreaterThan(0);
       await openExplore(page);
+      await openFilters(page);
 
       await facet(page, 'Boss').click();
 
@@ -450,6 +457,7 @@ test.describe('explore', () => {
       // The comparison below says nothing unless the two modes differ.
       expect(both.length).toBeLessThan(either.size);
       await openExplore(page);
+      await openFilters(page);
 
       await side(page, 'Vulnerable', 'Applies').click();
       await expect(side(page, 'Vulnerable', 'Applies')).toHaveAttribute('aria-pressed', 'true');
@@ -474,6 +482,7 @@ test.describe('explore', () => {
       const relying = withRole(traits, 'vulnerable', 'uses');
       const mentioning = traits.filter((trait) => trait.keywords.some((keyword) => keyword.key === 'start of battle'));
       await openExplore(page);
+      await openFilters(page);
 
       await side(page, 'Vulnerable', 'Relies on').click();
       await expect(announcedCount(page)).toHaveText(countText(relying.length, traits));
@@ -494,8 +503,9 @@ test.describe('explore', () => {
       const notStacking = traits.filter((trait) => !trait.stacks);
       const both = notStacking.filter((trait) => trait.material !== null);
       await openExplore(page);
-      const material = filters(page).getByRole('checkbox', { name: 'Artifact-eligible (has material)' });
-      const stacking = filters(page).getByRole('checkbox', { name: 'Only “does not stack”' });
+      await openFilters(page);
+      const material = flag(page, 'Artifact-eligible (has material)');
+      const stacking = flag(page, 'Only “does not stack”');
 
       await material.check();
       await expect(announcedCount(page)).toHaveText(countText(withMaterial.length, traits));
@@ -512,9 +522,11 @@ test.describe('explore', () => {
       await openExplore(page);
       await expect(chips(page)).toContainText('No filters yet');
 
+      await openFilters(page);
       await facet(page, 'Life').click();
       await side(page, 'Vulnerable', 'Applies').click();
-      await filters(page).getByRole('checkbox', { name: 'Only “does not stack”' }).check();
+      await flag(page, 'Only “does not stack”').check();
+      await closeFilters(page);
 
       await expect(chips(page).getByText('class:life')).toBeVisible();
       await expect(chips(page).getByText('applies:vulnerable')).toBeVisible();
@@ -569,7 +581,9 @@ test.describe('explore', () => {
       await expect(page.getByText('Effective query')).toBeHidden();
 
       await searchBox(page).fill('weak');
+      await openFilters(page);
       await facet(page, 'Life').click();
+      await closeFilters(page);
       await expect(page.getByRole('code')).toHaveText('class:life weak');
 
       await page.getByRole('button', { name: 'Copy query' }).click();
@@ -608,6 +622,8 @@ test.describe('explore', () => {
       });
       await expect(rows(page).first()).not.toHaveAttribute('aria-posinset', '1');
 
+      // On a narrow screen the button that opens the filters is at the foot of the window wherever the list is scrolled to.
+      await openFilters(page);
       // From the keyboard: Safari does not focus a button that is clicked.
       await facet(page, 'Life').focus();
       await page.keyboard.press('Enter');
@@ -619,13 +635,17 @@ test.describe('explore', () => {
 
     test('suggests matching any of the keywords when several are all asked for and none is found', async ({ page }) => {
       await openExplore(page);
+      await openFilters(page);
       await side(page, 'Vulnerable', 'Applies').click();
       await side(page, 'Weak', 'Applies').click();
+      await closeFilters(page);
       await searchBox(page).fill('zzzqxj');
       await expect(page.getByText('No trait matches.')).toBeVisible();
       await expect(page.getByText('Or switch the keywords to “Match any”.')).toBeVisible();
 
+      await openFilters(page);
       await mode(page, 'Match any').click();
+      await closeFilters(page);
       await expect(page.getByText('Or switch the keywords to “Match any”.')).toBeHidden();
       expect(await axeViolations(page)).toEqual([]);
     });
@@ -634,10 +654,12 @@ test.describe('explore', () => {
       page,
     }) => {
       await openExplore(page);
+      await openFilters(page);
       await facet(page, 'Life').click();
       await side(page, 'Vulnerable', 'Applies').click();
       await facet(page, 'Start of battle').click();
-      await filters(page).getByRole('checkbox', { name: 'Artifact-eligible (has material)' }).check();
+      await flag(page, 'Artifact-eligible (has material)').check();
+      await closeFilters(page);
       await searchBox(page).fill('weak OR snared');
       await chips(page).getByRole('button', { name: 'weak — exclude it' }).click();
       await expect(page.getByRole('button', { name: 'Copy query' })).toBeVisible();

@@ -272,7 +272,10 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   traits each would show; a buff, a debuff or an effect has two, *Applies* and *Relies on* (`applies:` and `uses:`), and a
   trigger or a mechanic one (`kw:`), counted by the traits that mention it. Unlike a click in a description, the panel does
   what it is told: both sides of a keyword can be on at once (traits that give it *and* rely on it with *Match all*, either
-  with *Match any*). *Match all / Match any* is a pair of toggle buttons; the two flags are checkboxes.
+  with *Match any*). *Match all / Match any* is a pair of toggle buttons; the two flags are checkboxes. Under 700 px the panel is
+  not on the page but in a modal bottom sheet that a "Filters" button (with the number of filters on) opens; Esc, its close
+  button ("Show N traits") or a tap outside close it and the focus goes back to the button (DESIGN § Facet panel and chips).
+  Whether the sheet is open is no part of the address, and opening it is no step of the history.
 - **The chip row** has a chip for every filter that is on (`filterChips`, `removeFilterChip`: `class:life`, `applies:vulnerable`,
   `stack:no`, in the order of the effective query, each with a remove button), then one per term of the query bar (QUERY_LANGUAGE
   §4: the term flips between included and excluded, or goes). The chips do not show the operators between the terms: the

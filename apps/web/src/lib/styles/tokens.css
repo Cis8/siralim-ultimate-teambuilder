@@ -40,6 +40,9 @@
 
   --chart-fill: #4a76b0;
 
+  /* What dims the page behind a modal sheet. */
+  --scrim: rgb(4 6 9 / 0.62);
+
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --text-base: 14px;

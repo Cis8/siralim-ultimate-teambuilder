@@ -4,10 +4,13 @@ import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
 import {
   announcedCount,
+  closeFilters,
   countText,
   facet,
+  flag,
   mode,
   openExplore,
+  openFilters,
   publishedCount,
   rows,
   searchBox,
@@ -63,6 +66,7 @@ test.describe('the address of Explore', () => {
     );
     expect(expected.length).toBeGreaterThan(0);
     await openExplore(page);
+    await openFilters(page);
 
     // Classes are an any-of, the keywords follow the all/any switch.
     await facet(page, 'Life').click();
@@ -94,7 +98,7 @@ test.describe('the address of Explore', () => {
 
     await isPressed(page, 'Nature', true);
     await expect(page.getByLabel('Sort')).toHaveValue('az');
-    await expect(page.getByRole('checkbox', { name: 'Only “does not stack”' })).toBeChecked();
+    await expect(flag(page, 'Only “does not stack”')).toBeChecked();
     await expect(announcedCount(page)).toHaveText(countText(expected.length, traits));
   });
 
@@ -115,6 +119,7 @@ test.describe('the address of Explore', () => {
     await expect(searchBox(page)).toHaveValue('weak');
     const path = new URL(page.url()).pathname;
 
+    await openFilters(page);
     await facet(page, 'Life').click();
 
     await expectAddressSearch(page, '?tab=abc&q=weak&class=life');
@@ -132,6 +137,9 @@ test.describe('the address of Explore', () => {
       await expectAddressSearch(page, '?q=weak+OR+snared');
       expect(await historyLength(page)).toBe(before);
 
+      // Opening the sheet of the filters on a narrow screen is no step of the history.
+      await openFilters(page);
+      expect(await historyLength(page)).toBe(before);
       await facet(page, 'Life').click();
       await expectAddressSearch(page, '?q=weak+OR+snared&class=life');
       expect(await historyLength(page)).toBe(before + 1);
@@ -141,6 +149,7 @@ test.describe('the address of Explore', () => {
       await openExplore(page);
       await searchBox(page).fill('weak');
       await expectAddressSearch(page, '?q=weak');
+      await openFilters(page);
       await facet(page, 'Life').click();
       await facet(page, 'Death').click();
       await expectAddressSearch(page, '?q=weak&class=life,death');
@@ -168,6 +177,7 @@ test.describe('the address of Explore', () => {
       const { traits } = await publishedDataset(request);
       const inClass = (name: string) => traits.filter((trait) => trait.class === name);
       await openExplore(page);
+      await openFilters(page);
       await facet(page, 'Life').click();
       await expect(announcedCount(page)).toHaveText(countText(inClass('Life').length, traits));
       await facet(page, 'Death').click();
@@ -206,8 +216,10 @@ test.describe('the address of Explore', () => {
 
     test('drops what was being typed when the browser goes back before the address caught up', async ({ page }) => {
       await openExplore(page);
+      await openFilters(page);
       await facet(page, 'Life').click();
       await expectAddressSearch(page, '?class=life');
+      await closeFilters(page);
 
       await searchBox(page).fill('weak');
       await page.goBack();

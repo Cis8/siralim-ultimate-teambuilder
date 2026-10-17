@@ -24,6 +24,7 @@ Define as CSS custom properties; never hard-code hex values in components.
 | `--status-good` | `#74dbb0` | covered, ok |
 | `--status-warn` | `#f3c969` | conditional, random, conflicts |
 | `--status-crit` | `#ff9b87` | missing, invalid |
+| `--scrim` | `rgb(4 6 9 / 0.62)` | the page behind a modal sheet |
 
 Keyword kinds: debuff `#ff9b87`, buff `#74dbb0`, mechanic `#a9c1ff`, trigger `#f3c969` (dotted underline), flag muted italic.
 Class identity dots: Chaos `#ef6b5b`, Death `#b49cf5`, Life `#e9c46a`, Nature `#63c98a`, Sorcery `#5fb0f5`,
@@ -63,8 +64,15 @@ the token colours are only guaranteed on the page background.
   after it. Kind headings (Debuffs, Buffs, Effects, Triggers, Mechanics) take the kind colour and always say it in words.
 - **The panel stays in view** beside the long list: sticky, with a scroll of its own, as tall as the window leaves it
   (`trackViewportOffset` keeps `--viewport-offset`, the distance from the top of the window to the columns, so that at the top of
-  the page it is not cut by the fold). Stacked above the list on a narrow screen it is part of the page, until the bottom sheet
-  (M7).
+  the page it is not cut by the fold). Under 700 px it is a **bottom sheet** instead (`FiltersRegion` swaps the two): a
+  `BottomSheet` is a native modal `<dialog>` as wide as the window and at most 720 px (88 % of its height) tall, on `--surface-1`
+  with 16 px round top corners over a `--scrim` backdrop; a title (`h2`), the panel in a scroll area of its own, and a primary
+  button in `--accent` that closes it and says what the filters now show ("Show 226 traits"). A button at the foot of the window,
+  in a fixed bar (`--bg-bar`), opens it ("Filters", with the number of filters on in `--accent`, read "Filters 2 active"), so
+  that it is at hand wherever the long list is scrolled to; the page leaves room for the bar. The sheet closes with Esc, with its
+  button, and by a tap on the dimmed page; the focus then returns to the "Filters" button (set by the page: Safari does not
+  focus a button that is clicked, so the dialog cannot be left to remember it). Opening it is no step of the history, and the
+  page behind does not scroll. A polite line inside the sheet says the result count, since the live region behind it is inert.
 - **Chips** are `Chip`: `field:` in `--text-muted` mono, then the value. A query term is a button named after what a press does
   ("weak — exclude it", "NOT weak — include it again": the name always holds the visible text, WCAG 2.5.3, so it is not an
   `aria-pressed` toggle), an excluded one says NOT in words and is tinted with `--status-crit` at 9 % (axe measured 4.38:1 for `--text-faint` over a
@@ -99,8 +107,8 @@ where a row stands in the whole). Rows are as tall as their text; the browser's 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
   wrap on narrow widths.
-- Mobile: header + search + chip row; results; bottom nav (Explore · Synergies · Party). Filters and fixes open as bottom
-  sheets. No fake status bars or keyboards in mockups; the syntax toolbar docks above the system keyboard.
+- Mobile (under 700 px): header + search + chip row; results; bottom nav (Explore · Synergies · Party, M7.2). Filters and fixes
+  open as bottom sheets (§ Facet panel and chips). No fake status bars or keyboards in mockups; the syntax toolbar docks above the system keyboard.
 
 ## Accessibility (WCAG 2.2 AA)
 - Real elements: `button`, `a[href]`, `input` + `label`. No click handlers on `div`/`span`.

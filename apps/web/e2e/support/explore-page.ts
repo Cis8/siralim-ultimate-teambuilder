@@ -24,8 +24,38 @@ export async function publishedCount(page: Page): Promise<number> {
 }
 
 export const searchBox = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
-export const filters = (page: Page) => page.getByRole('region', { name: 'Filters' });
 export const chips = (page: Page) => page.getByRole('group', { name: 'Filters and query terms' });
+
+/** Below this width (the `compact` query of the page) the filters are a sheet to open, not a column beside the list. */
+const COMPACT_BELOW = 700;
+export const isCompact = (page: Page): boolean => (page.viewportSize()?.width ?? COMPACT_BELOW) < COMPACT_BELOW;
+
+/** The button that opens the filters on a narrow screen. */
+export const filtersButton = (page: Page) => page.getByRole('button', { name: /^Filters/ });
+export const filtersSheet = (page: Page) => page.getByRole('dialog', { name: 'Filters', includeHidden: true });
+
+/**
+ * The filters, wherever the screen puts them. Their state can be read with the sheet shut (they are hidden, not gone, and
+ * `includeHidden` finds them); a press needs them in view, so a test opens the sheet first (`openFilters`).
+ */
+export const filters = (page: Page) =>
+  isCompact(page) ? filtersSheet(page) : page.getByRole('region', { name: 'Filters' });
+
+/** Shows the filters: on a narrow screen the sheet is opened, on a wide one they are there already. */
+export async function openFilters(page: Page): Promise<void> {
+  if (!isCompact(page)) return;
+  await filtersButton(page).click();
+  await expect(filtersSheet(page)).toBeVisible();
+}
+
+/** Puts the filters away, as a person does with the page behind the sheet: its close button says what they show. */
+export async function closeFilters(page: Page): Promise<void> {
+  if (!isCompact(page)) return;
+  await filtersSheet(page)
+    .getByRole('button', { name: /^Show / })
+    .click();
+  await expect(filtersSheet(page)).toBeHidden();
+}
 
 export const format = (count: number) => count.toLocaleString('en-US');
 export const countText = (shown: number, all: readonly unknown[]) => `${format(shown)} of ${format(all.length)} traits`;
@@ -34,13 +64,20 @@ export const countText = (shown: number, all: readonly unknown[]) => `${format(s
 export const facet = (page: Page, label: string, count?: number): Locator =>
   filters(page).getByRole('button', {
     name: new RegExp(`^${label}\\s*${count === undefined ? '[\\d,]+' : format(count)}\\s*traits$`),
+    includeHidden: true,
   });
 
 /** One of the two sides of a buff, a debuff or an effect in the panel. */
 export const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on'): Locator =>
   filters(page)
-    .getByRole('group', { name: keyword, exact: true })
-    .getByRole('button', { name: new RegExp(`^${which}\\s`) });
+    .getByRole('group', { name: keyword, exact: true, includeHidden: true })
+    .getByRole('button', { name: new RegExp(`^${which}\\s`), includeHidden: true });
 
 export const mode = (page: Page, label: 'Match all' | 'Match any'): Locator =>
-  filters(page).getByRole('group', { name: 'Keyword match mode' }).getByRole('button', { name: label });
+  filters(page)
+    .getByRole('group', { name: 'Keyword match mode', includeHidden: true })
+    .getByRole('button', { name: label, includeHidden: true });
+
+/** One of the two flags of the panel. */
+export const flag = (page: Page, label: string): Locator =>
+  filters(page).getByRole('checkbox', { name: label, includeHidden: true });

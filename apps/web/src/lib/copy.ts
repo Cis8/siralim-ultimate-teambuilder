@@ -68,6 +68,12 @@ export const copy = {
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',
 
+  /** The button that opens the filters as a sheet on a narrow screen; the count says how many are on. */
+  openFilters: 'Filters',
+  openFiltersActiveUnit: ' active',
+  /** The button that closes the sheet: it says what the filters now show. */
+  showTraits: (count: number) => `Show ${formatCount(count)} ${count === 1 ? 'trait' : 'traits'}`,
+  closeSheet: 'Close',
   loadingFilters: 'Loading the filters…',
   classHeading: 'Class',
   classHint: 'any of',

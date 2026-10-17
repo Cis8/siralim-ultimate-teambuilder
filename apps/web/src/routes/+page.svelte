@@ -12,6 +12,7 @@
     createPlanner,
     decodeExploreState,
     decodePartyState,
+    filterChips,
     initialExploreState,
     isClickOn,
     lostTraitSearch,
@@ -35,6 +36,7 @@
   import ChipRow from '../lib/components/chip-row.svelte';
   import EffectiveQuery from '../lib/components/effective-query.svelte';
   import FacetPanel from '../lib/components/facet-panel.svelte';
+  import FiltersRegion from '../lib/components/filters-region.svelte';
   import PartyPanel from '../lib/components/party-panel.svelte';
   import QueryInput from '../lib/components/query-input.svelte';
   import ResultCount from '../lib/components/result-count.svelte';
@@ -313,16 +315,17 @@
 </div>
 
 <div class="columns" {@attach trackViewportOffset}>
-  <section class="filters" aria-labelledby="filters-heading">
-    <div class="filters-body">
-      <h2 id="filters-heading">{copy.filtersHeading}</h2>
-      {#if loaded}
-        <FacetPanel facets={loaded.outcome.facets} {explore} onchange={exploreChanged} />
-      {:else if !failed}
-        <p class="soon">{copy.loadingFilters}</p>
-      {/if}
-    </div>
-  </section>
+  <FiltersRegion
+    activeCount={filterChips(explore).length}
+    closeLabel={loaded ? copy.showTraits(loaded.outcome.traits.length) : copy.closeSheet}
+    status={loaded ? copy.resultCount(loaded.outcome.traits.length, loaded.total) : ''}
+  >
+    {#if loaded}
+      <FacetPanel facets={loaded.outcome.facets} {explore} onchange={exploreChanged} />
+    {:else if !failed}
+      <p class="soon">{copy.loadingFilters}</p>
+    {/if}
+  </FiltersRegion>
 
   <section class="results" aria-labelledby="results-heading" bind:this={resultsSection}>
     <h2 id="results-heading" class="visually-hidden" tabindex="-1" bind:this={resultsHeading}>{copy.resultsHeading}</h2>
@@ -348,7 +351,7 @@
   </section>
 
   <section class="panel party" aria-labelledby="party-heading">
-    <h2 id="party-heading" tabindex="-1">{copy.partyHeading}</h2>
+    <h2 id="party-heading" class="panel-heading" tabindex="-1">{copy.partyHeading}</h2>
     <a class="stacked-link" href="#results-heading">{copy.backToResults}</a>
     {#if loaded}
       <PartyPanel
@@ -433,38 +436,9 @@
     padding: 16px;
   }
 
-  .filters {
-    border-right: 1px solid var(--border);
-  }
-
-  /*
-   * The list is long and the page scrolls, so the filters stay in view beside it, with a scroll of their own when they are
-   * taller than what the window shows of them (the part under the query section until the page is scrolled past it, see
-   * `trackViewportOffset`). The rule between the columns is on the column, which is as tall as the list.
-   */
-  .filters-body {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: calc(100dvh - var(--viewport-offset, 0px));
-    padding: 16px;
-    overflow-y: auto;
-  }
-
   .party {
     border-left: 1px solid var(--border);
     background: var(--bg-bar);
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--text-faint);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
   .soon {
@@ -501,21 +475,10 @@
     }
   }
 
+  /* From here down the filters are a sheet (`FiltersRegion` asks for the same width): the list and the party are the columns. */
   @media (max-width: 699px) {
     .columns {
       grid-template-columns: minmax(0, 1fr);
-    }
-
-    .filters {
-      border-right: 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* Stacked above the list, the filters are part of the page: a bottom sheet replaces them on a phone (M7). */
-    .filters-body {
-      position: static;
-      max-height: none;
-      overflow-y: visible;
     }
   }
 

@@ -12,13 +12,16 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M6 done, M7 (mobile) next.** Start with 7.1 (`web`): the filters become a bottom sheet on a modal `<dialog>`
-  (focus trapped, Esc closes, focus returns), then 7.2 the Explore / Party tabs (`tablist`, tab in the URL), which replace the
-  interim "Go to the party" / "Back to the results" links in `+page.svelte` (delete them, and `.stacked-link`, with the tabs),
-  then 7.3. The party panel and the result row are already usable on a phone (44 px targets under `pointer: coarse`); 7.3
-  checks every interactive element is at least 44 × 44. Read DESIGN.md (Layout, Accessibility) and
-  `docs/prototype/Mobile*.dc.html` first. The address already carries everything but the tab (`pageAddress` leaves other
-  parameters alone; add the tab to `PageState` and its own codec like `PARTY_PARAMS`).
+- **Phase 1 · M7 (mobile): 7.1 done (filters bottom sheet), 7.2 next.** 7.2 (`web`): the Explore / Party tabs (`tablist`, tab
+  in the URL), which replace the interim "Go to the party" / "Back to the results" links in `+page.svelte` (delete them, and
+  `.stacked-link`, with the tabs); then 7.3. Under 700 px the page is one column; `FiltersRegion` already puts a fixed
+  "Filters" bar at the foot of the window (`body:has(.filters-bar)` pads the page by `--filters-bar-height`): the bottom nav of
+  the tabs has to sit with it (nav at the very bottom, the Filters bar above it or in the Explore tab only), and the padding
+  rule has to count both. The party panel and the result row are already usable on a phone (44 px targets under
+  `pointer: coarse`); 7.3 checks every interactive element is at least 44 × 44 (the facet buttons in the sheet are 44 under
+  `pointer: coarse` already). Read DESIGN.md (Layout, Accessibility) and `docs/prototype/Mobile.dc.html`. The address already
+  carries everything but the tab (`pageAddress` leaves other parameters alone; add the tab to `PageState` and its own codec
+  like `PARTY_PARAMS`).
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -86,6 +89,13 @@ session (after `CLAUDE.md`), update it before ending one.
   that says `aria-disabled="true"`: `click({ force: true })` is the person pressing it. A poll that waits for an address
   parameter can be satisfied by an earlier write: wait for the value the step just wrote.
 - `rtk` is not on every machine: run `pnpm exec vitest …` directly; in PowerShell prefix `$env:PATH` with the Node 24 folder.
+- `.visually-hidden` is `position: absolute`: inside a scroll area that is not itself positioned it escapes the scroller and
+  makes the nearest positioned ancestor scrollable (the bottom sheet's title slid out of view); the area gets `position: relative`.
+- e2e, filters on a narrow screen: they are in the sheet, so `facet` / `side` / `mode` / `flag` read their state shut or open
+  (`includeHidden`), a press needs `openFilters`, and anything on the page behind needs `closeFilters` first (a modal dialog
+  blocks it). `explore-page.ts` is the one place that knows the 700 px breakpoint, as `FiltersRegion` and `+page.svelte` are
+  for the app.
+- Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
 ## Phase 1 — slices
@@ -132,7 +142,7 @@ highlights, facet panel (`aria-pressed`), effective query + copy, empty state, a
 (`page-address`, `page-url-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
 text is what is searched (`filterQuery`); a click on a token turns the other side of the keyword off, the panel does not;
 filter chips are remove-only; a pressed token is a ring, not a fill (contrast of a highlight); narrow screens stack the
-panel above the list until the bottom sheet (M7); back and forward bring back the state and start the list over.
+panel above the list until the bottom sheet (M7.1); back and forward bring back the state and start the list over.
 
 ### M6 Party planner — done
 `core`: immutable `Party` + `SLOT_POSITIONS`, slot-rule registry (R1, R6), `PartyCommand` + `PartyHistory`, the `Planner`
@@ -146,7 +156,9 @@ relies on the same keyword covers itself (as in the prototype); where the party 
 link joins the two until the tabs of M7; the last party is used only when the address names none.
 
 ### M7 Mobile
-- [ ] **7.1** Bottom sheet on a modal `<dialog>`. *e2e:* focus trapped, Esc closes, focus returns.
+- [x] **7.1** Bottom sheet on a modal `<dialog>` (`BottomSheet`, swapped for the column by `FiltersRegion` under 700 px, opened
+      by a fixed "Filters" bar). *e2e:* focus trapped, Esc closes, focus returns (`filters-sheet.test.ts`). The e2e helpers
+      `openFilters` / `closeFilters` open and close the sheet on a narrow screen and do nothing on a wide one.
 - [ ] **7.2** Explore/Party tabs (`tablist`), tab in the URL; no Synergies tab before Phase 2.
 - [ ] **7.3** Result card with add-to-target. *e2e:* every interactive element ≥ 44×44 px on mobile; axe.
 
