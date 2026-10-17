@@ -62,7 +62,14 @@ jobs:
       # The Chromium the e2e uses (lighthouserc.cjs asks Playwright where it is).
       - name: Install Chromium
         run: pnpm --filter @atlas/web exec playwright install --with-deps chromium
-      - run: pnpm lighthouse
+      - name: Lighthouse CI
+        shell: bash # with pipefail, so that a failure of lhci is not hidden by tee
+        run: pnpm lighthouse 2>&1 | tee lighthouse.log
+      # What went wrong, in the summary of the run: the log itself takes a sign-in to read.
+      - name: Say what Lighthouse reported
+        if: failure()
+        shell: bash
+        run: echo "::error title=Lighthouse CI::$(tail -n 40 lighthouse.log | sed ':a;N;$!ba;s/\n/%0A/g')"
       - name: Upload Lighthouse reports
         if: failure()
         uses: actions/upload-artifact@v7
