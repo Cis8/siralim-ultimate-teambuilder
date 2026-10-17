@@ -5,6 +5,8 @@ import { publishedDataset } from './support/dataset';
 import {
   announcedCount,
   chips,
+  classFacetNames,
+  clearFiltersButton,
   closeFilters,
   countText,
   facet,
@@ -408,6 +410,96 @@ test.describe('explore', () => {
       );
       await expect(flag(page, 'Artifact-eligible (has material)')).not.toBeChecked();
       await expect(flag(page, 'Only “does not stack”')).not.toBeChecked();
+    });
+
+    test('lists the five classes of a creature first, from A to Z, then the others, the largest class first', async ({
+      page,
+      request,
+    }) => {
+      const { traits } = await publishedDataset(request);
+      const perClass = new Map<string, number>();
+      for (const { class: name } of traits) perClass.set(name, (perClass.get(name) ?? 0) + 1);
+      const standard = ['Chaos', 'Death', 'Life', 'Nature', 'Sorcery'];
+      const others = [...perClass]
+        .filter(([name]) => !standard.includes(name))
+        .toSorted(([a, more], [b, fewer]) => fewer - more || a.localeCompare(b))
+        .map(([name]) => name);
+      // The check says nothing about the order of the others unless two of them differ in size.
+      expect(new Set(others.map((name) => perClass.get(name))).size).toBeGreaterThan(1);
+      await openExplore(page);
+      await openFilters(page);
+
+      await expect(classFacetNames(page)).toHaveText([...standard, ...others]);
+    });
+
+    test('takes every filter off with Clear filters and keeps the query, the sort and the match mode', async ({
+      page,
+      request,
+    }) => {
+      const { traits } = await publishedDataset(request);
+      await openExplore(page);
+      await searchBox(page).fill('weak OR snared');
+      await page.getByLabel('Sort').selectOption('az');
+      // The count is told once the typing pauses: it is the query's own when it is a count and not the whole dataset's.
+      await expect(announcedCount(page)).toHaveText(/^[\d,]+ of [\d,]+ traits$/);
+      await expect(announcedCount(page)).not.toHaveText(countText(traits.length, traits));
+      const withTheQuery = (await announcedCount(page).textContent()) ?? '';
+      await openFilters(page);
+      await expect(clearFiltersButton(page)).toHaveAccessibleName('Clear filters');
+      await expect(clearFiltersButton(page)).toHaveAttribute('aria-disabled', 'true');
+
+      await mode(page, 'Match any').click();
+      await facet(page, 'Life').click();
+      await side(page, 'Vulnerable', 'Applies').click();
+      await flag(page, 'Only “does not stack”').check();
+      await expect(clearFiltersButton(page)).toHaveAccessibleName('Clear filters (3)');
+      await expect(clearFiltersButton(page)).not.toHaveAttribute('aria-disabled');
+      await expect(announcedCount(page)).not.toHaveText(withTheQuery);
+
+      // From the keyboard: Safari does not focus a button that is clicked, and the focus is part of what is tested.
+      await clearFiltersButton(page).focus();
+      await page.keyboard.press('Enter');
+
+      await expect(announcedCount(page)).toHaveText(withTheQuery);
+      await expect(facet(page, 'Life')).toHaveAttribute('aria-pressed', 'false');
+      await expect(side(page, 'Vulnerable', 'Applies')).toHaveAttribute('aria-pressed', 'false');
+      await expect(flag(page, 'Only “does not stack”')).not.toBeChecked();
+      await expect(mode(page, 'Match any')).toHaveAttribute('aria-pressed', 'true');
+      await expect(clearFiltersButton(page)).toHaveAccessibleName('Clear filters');
+      await expect(clearFiltersButton(page)).toHaveAttribute('aria-disabled', 'true');
+      // Still the one with the focus, so that the keyboard is where it was; and the change is said aloud.
+      await expect(clearFiltersButton(page)).toBeFocused();
+      await expect(filters(page).getByText('Cleared 3 filters.')).toBeAttached();
+      expect(await axeViolations(page)).toEqual([]);
+
+      await closeFilters(page);
+      await expect(searchBox(page)).toHaveValue('weak OR snared');
+      await expect(page.getByLabel('Sort')).toHaveValue('az');
+      await expect(chips(page).getByText(/^(class|applies|stack):/)).toHaveCount(0);
+      const address = new URL(page.url()).searchParams;
+      expect(['class', 'kw', 'mat', 'stack'].filter((name) => address.has(name))).toEqual([]);
+      expect([address.get('q'), address.get('sort'), address.get('mode')]).toEqual(['weak OR snared', 'az', 'any']);
+    });
+
+    test('does nothing when no filter is on, and is one step of the history when some are', async ({ page }) => {
+      await openExplore(page);
+      await openFilters(page);
+      const before = await page.evaluate(() => window.history.length);
+
+      await clearFiltersButton(page).click({ force: true });
+      expect(await page.evaluate(() => window.history.length)).toBe(before);
+
+      await facet(page, 'Life').click();
+      await facet(page, 'Death').click();
+      await expect.poll(() => page.evaluate(() => window.history.length)).toBe(before + 2);
+      await clearFiltersButton(page).click();
+      await expect(clearFiltersButton(page)).toHaveAttribute('aria-disabled', 'true');
+      await expect(filters(page).getByText('Cleared 2 filters.')).toBeAttached();
+      await expect.poll(() => page.evaluate(() => window.history.length)).toBe(before + 3);
+
+      await page.goBack();
+      await expect(facet(page, 'Life')).toHaveAttribute('aria-pressed', 'true');
+      await expect(facet(page, 'Death')).toHaveAttribute('aria-pressed', 'true');
     });
 
     test('chooses classes as an any-of, and counts the other classes as before', async ({ page, request }) => {

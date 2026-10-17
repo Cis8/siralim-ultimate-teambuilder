@@ -83,6 +83,9 @@ export const copy = {
   showTraits: (count: number) => `Show ${formatCount(count)} ${count === 1 ? 'trait' : 'traits'}`,
   closeSheet: 'Close',
   loadingFilters: 'Loading the filters…',
+  /** Takes off every filter, and leaves the query bar, the sort and the match mode (SPEC §8.1); the count is of the filters on. */
+  clearFilters: (count: number) => (count === 0 ? 'Clear filters' : `Clear filters (${String(count)})`),
+  clearedFilters: (count: number) => `Cleared ${String(count)} ${count === 1 ? 'filter' : 'filters'}.`,
   classHeading: 'Class',
   classHint: 'any of',
   keywordsHeading: 'Keywords',

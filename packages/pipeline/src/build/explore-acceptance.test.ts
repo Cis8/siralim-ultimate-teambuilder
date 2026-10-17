@@ -61,19 +61,19 @@ describe('the Explore filters on the compendium v2.0', () => {
       expect(search({ classes: ['boss'] }).effectiveQuery).toBe('class:boss -class:"nether boss"');
     });
 
-    it('lists the 11 classes of the compendium from A to Z', () => {
+    it('lists the 11 classes of the compendium: the five of a creature from A to Z, then the others by size', () => {
       expect(search().facets.classes.map(({ name }) => name)).toEqual([
-        'Backer',
-        'Boss',
         'Chaos',
         'Death',
         'Life',
         'Nature',
-        'Nether Boss',
-        'Nether Room',
-        'Pandemonium',
-        'Rodian Master',
         'Sorcery',
+        'Rodian Master',
+        'Backer',
+        'Nether Boss',
+        'Boss',
+        'Pandemonium',
+        'Nether Room',
       ]);
     });
 

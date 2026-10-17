@@ -12,7 +12,7 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1 done; next is 8b.2, then 8b.3 → 8b.5 → 8b.4; one session each.**
+- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1–8b.2 done; next is 8b.3, then 8b.5 → 8b.4; one session each.**
   8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
   closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
@@ -224,12 +224,13 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       no case of its own; and the button is the last control of the page's content in the document, because forward the list
       is endless to the tab key and, wide, the party at the top of the page scrolls the button away: Shift+Tab from the foot
       finds it (Home is the quick way).
-- [ ] **8b.2** Filters: "Clear filters" and the order of the classes. `core` first: `clearFilters(state)` (next to
-      `filter-chips.ts`; keeps query, sort and mode; the same object when nothing is on) and the class order in
-      `explore/facets.ts` (`STANDARD_CLASSES`, GAME_RULES R7: Chaos, Death, Life, Nature, Sorcery from A to Z, then the others by
-      trait count, ties A to Z, each with `standard: boolean`). Web: "Clear filters (N)" at the top of `facet-panel.svelte`
-      (`aria-disabled` at 0 with the focus kept, as "Clear party"; announced), a separator between the two class groups.
-      e2e on desktop and in the sheet, `touch-targets`, `keyboard`, axe. Docs: SPEC §8.1 (it says "from A to Z"), DESIGN.
+- [x] **8b.2** Filters: "Clear filters (N)" at the top of the panel (`clearFilters` in `core`: keeps query, sort and mode, gives
+      back the same state when nothing is on; `aria-disabled` at 0 with the focus kept; a polite "Cleared N filters." inside the
+      panel, so it is heard in the sheet too) and the order of the classes (`facetVocabulary`: Chaos, Death, Life, Nature, Sorcery
+      first, then the others by size; `ClassFacet.standard`; a rule between the two groups). SPEC §8.1, DESIGN. Deviations: the
+      five classes are `CREATURE_CLASSES` (GAME_RULES R7), not a second list; "by trait count" is the whole dataset's, fixed at
+      load, so the list does not reshuffle as filters change (v2.0: Rodian Master, Backer, Nether Boss, Boss, Pandemonium,
+      Nether Room). The sheet now holds two `aria-live` lines: `filters-sheet.test.ts` picks the count by its text.
 - [ ] **8b.3** Filters: collapsible sections (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags; Match all/any stays
       visible). A heading button with `aria-expanded`/`aria-controls`; closed, it says how many filters are on inside ("Debuffs · 2
       on"), counted by a pure `core` function (`activeFilterCounts`). The state lives in `+page.svelte` and is passed down:

@@ -87,6 +87,17 @@ export const facet = (page: Page, label: string, count?: number): Locator =>
     includeHidden: true,
   });
 
+/** The names of the classes in the panel, in the order it lists them. */
+export const classFacetNames = (page: Page): Locator =>
+  filters(page)
+    .getByRole('group', { name: 'Class', exact: true, includeHidden: true })
+    .getByRole('button', { includeHidden: true })
+    .locator('.label');
+
+/** The button that takes every filter off; it says how many are on, and is `aria-disabled` when none is. */
+export const clearFiltersButton = (page: Page): Locator =>
+  filters(page).getByRole('button', { name: /^Clear filters/, includeHidden: true });
+
 /** One of the two sides of a buff, a debuff or an effect in the panel. */
 export const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on'): Locator =>
   filters(page)

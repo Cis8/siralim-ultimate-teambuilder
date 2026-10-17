@@ -47,7 +47,11 @@ const taxonomy = createTaxonomy([
 ]);
 
 describe('facetVocabulary', () => {
-  it('lists the classes of the dataset once each, as it spells them, from A to Z', () => {
+  const classesOf = (...names: string[]) =>
+    facetVocabulary(createTraitIndex(names.map((name, at) => trait(`t${String(at)}`, { class: name }))), taxonomy)
+      .classes;
+
+  it('lists the classes of the dataset once each, as it spells them', () => {
     const index = createTraitIndex([
       trait('a', { class: 'Sorcery' }),
       trait('b', { class: 'Death' }),
@@ -56,13 +60,64 @@ describe('facetVocabulary', () => {
       trait('e', { class: 'Boss' }),
     ]);
 
-    expect(facetVocabulary(index, taxonomy).classNames).toEqual(['Boss', 'Death', 'Nether Boss', 'Sorcery']);
+    expect(
+      facetVocabulary(index, taxonomy)
+        .classes.map(({ name }) => name)
+        .toSorted(),
+    ).toEqual(['Boss', 'Death', 'Nether Boss', 'Sorcery']);
+  });
+
+  it('puts the five classes of a creature first, from A to Z, whatever the order of the dataset', () => {
+    const names = classesOf('Sorcery', 'Nature', 'Life', 'Death', 'Chaos', 'Backer', 'Backer').map(({ name }) => name);
+
+    expect(names).toEqual(['Chaos', 'Death', 'Life', 'Nature', 'Sorcery', 'Backer']);
+  });
+
+  it('puts the others after them, the class with most traits first', () => {
+    const names = classesOf(
+      'Life',
+      ...Array<string>(3).fill('Nether Boss'),
+      ...Array<string>(5).fill('Rodian Master'),
+      'Boss',
+      ...Array<string>(2).fill('Backer'),
+    ).map(({ name }) => name);
+
+    expect(names).toEqual(['Life', 'Rodian Master', 'Nether Boss', 'Backer', 'Boss']);
+  });
+
+  it('puts classes with as many traits in the order A to Z', () => {
+    const names = classesOf('Pandemonium', 'Nether Room', 'Boss', 'Life').map(({ name }) => name);
+
+    expect(names).toEqual(['Life', 'Boss', 'Nether Room', 'Pandemonium']);
+  });
+
+  it('orders the others by the traits of the whole dataset, so that the list does not move as filters change', () => {
+    const index = createTraitIndex([
+      trait('a', { class: 'Boss' }),
+      trait('b', { class: 'Backer' }),
+      trait('c', { class: 'Backer' }),
+    ]);
+    const vocabulary = facetVocabulary(index, taxonomy);
+    const onlyTheBoss = index.entries.filter(({ trait: each }) => each.class === 'Boss');
+
+    const facets = countFacets(vocabulary, onlyTheBoss, onlyTheBoss);
+
+    expect(facets.classes.map(({ name, count }) => `${name}:${String(count)}`)).toEqual(['Backer:0', 'Boss:1']);
+  });
+
+  it('says which classes are the five of a creature', () => {
+    expect(classesOf('Backer', 'Chaos', 'Nether Boss', 'Sorcery')).toEqual([
+      { name: 'Chaos', standard: true },
+      { name: 'Sorcery', standard: true },
+      { name: 'Backer', standard: false },
+      { name: 'Nether Boss', standard: false },
+    ]);
   });
 
   it('counts classes that differ only in letter case as one, spelled as first met', () => {
     const index = createTraitIndex([trait('a', { class: 'Life' }), trait('b', { class: 'life' })]);
 
-    expect(facetVocabulary(index, taxonomy).classNames).toEqual(['Life']);
+    expect(facetVocabulary(index, taxonomy).classes).toEqual([{ name: 'Life', standard: true }]);
   });
 
   it('lists the keywords of the taxonomy by kind, then in the order of the taxonomy, without the flags', () => {
@@ -79,7 +134,7 @@ describe('facetVocabulary', () => {
   });
 
   it('lists no class for an empty dataset', () => {
-    expect(facetVocabulary(createTraitIndex([]), taxonomy).classNames).toEqual([]);
+    expect(facetVocabulary(createTraitIndex([]), taxonomy).classes).toEqual([]);
   });
 });
 
@@ -119,17 +174,17 @@ describe('countFacets', () => {
       const facets = facetsFor(['gives-weak'], everyone);
 
       expect(facets.classes).toEqual([
-        { name: 'Death', count: 2 },
-        { name: 'Life', count: 2 },
-        { name: 'Nature', count: 3 },
+        { name: 'Death', count: 2, standard: true },
+        { name: 'Life', count: 2, standard: true },
+        { name: 'Nature', count: 3, standard: true },
       ]);
     });
 
     it('lists a class with no trait there with a count of 0', () => {
       expect(facetsFor(['gives-weak'], ['gives-weak']).classes).toEqual([
-        { name: 'Death', count: 1 },
-        { name: 'Life', count: 0 },
-        { name: 'Nature', count: 0 },
+        { name: 'Death', count: 1, standard: true },
+        { name: 'Life', count: 0, standard: true },
+        { name: 'Nature', count: 0, standard: true },
       ]);
     });
 

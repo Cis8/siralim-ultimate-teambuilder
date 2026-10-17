@@ -185,6 +185,7 @@ test.describe('touch targets on a phone', () => {
     await openFilters(page);
 
     await expectTargetsLargeEnough(filtersSheet(page), [
+      /^Clear filters$/,
       /^Match all$/,
       /^Life/,
       /^Applies/,

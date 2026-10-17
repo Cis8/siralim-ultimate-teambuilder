@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
+    clearFilters,
     FACET_KEYWORD_KINDS,
+    filterChips,
     hasClass,
     hasKeywordFilter,
     hasRole,
@@ -18,8 +20,9 @@
 
   /**
    * The filters of the Explore view (SPEC §8.1): the classes (any of them), the keywords (what a trait applies or relies
-   * on, or mentions, all of them or any), and the two flags. Every button is a toggle with the number of traits it would
-   * show; what a press changes is worked out by `core`, and the owner of the state gets the new one.
+   * on, or mentions, all of them or any), and the two flags, under a button that takes them all off. Every other button
+   * is a toggle with the number of traits it would show; what a press changes is worked out by `core`, and the owner of
+   * the state gets the new one.
    */
   const {
     facets,
@@ -37,26 +40,53 @@
     FACET_KEYWORD_KINDS.map((kind) => ({ kind, keywords: facets.keywords.filter((facet) => facet.kind === kind) })),
   );
   const modes = KEYWORD_MODES.map((value) => ({ value, label: copy.keywordModes[value] }));
+
+  /** The five classes of a creature, then the others (`core` puts them in that order): two runs with a rule between. */
+  const classRuns = $derived(
+    [facets.classes.filter(({ standard }) => standard), facets.classes.filter(({ standard }) => !standard)].filter(
+      (run) => run.length > 0,
+    ),
+  );
+
+  const active = $derived(filterChips(explore).length);
+  /** What a screen reader is told after the button was pressed. It is only said while no filter is on again. */
+  let cleared = $state('');
+  const clearedAnnouncement = $derived(active === 0 ? cleared : '');
+
+  /** It stays in the tab order with nothing to clear (`aria-disabled`, not `disabled`): the focus is not lost with the last press. */
+  function clear(): void {
+    if (active === 0) return;
+    cleared = copy.clearedFilters(active);
+    onchange(clearFilters(explore));
+  }
 </script>
 
 <div class="facets">
+  <button type="button" class="clear" aria-disabled={active === 0 ? 'true' : undefined} onclick={clear}
+    >{copy.clearFilters(active)}</button
+  >
+  <p class="visually-hidden" aria-live="polite">{clearedAnnouncement}</p>
+
   <div class="group">
     <div class="heading">
       <h3>{copy.classHeading}</h3>
       <span id={classHint} class="hint">{copy.classHint}</span>
     </div>
     <div class="list" role="group" aria-label={copy.classHeading} aria-describedby={classHint}>
-      {#each facets.classes as facet (facet.name)}
-        <FacetButton
-          pressed={hasClass(explore, facet.name)}
-          count={facet.count}
-          onclick={() => {
-            onchange(toggleClass(explore, facet.name));
-          }}
-        >
-          <span class="dot" style:background={classColour(facet.name)} aria-hidden="true"></span>
-          {facet.name}
-        </FacetButton>
+      {#each classRuns as run, at (at)}
+        {#if at > 0}<div class="rule" aria-hidden="true"></div>{/if}
+        {#each run as facet (facet.name)}
+          <FacetButton
+            pressed={hasClass(explore, facet.name)}
+            count={facet.count}
+            onclick={() => {
+              onchange(toggleClass(explore, facet.name));
+            }}
+          >
+            <span class="dot" style:background={classColour(facet.name)} aria-hidden="true"></span>
+            {facet.name}
+          </FacetButton>
+        {/each}
       {/each}
     </div>
   </div>
@@ -144,6 +174,33 @@
     gap: 6px;
   }
 
+  .clear {
+    align-self: flex-start;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface-3);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .clear:hover {
+    background: var(--surface-2);
+  }
+
+  .clear[aria-disabled='true'] {
+    border-color: var(--border);
+    color: var(--text-faint);
+    cursor: default;
+  }
+
+  .clear[aria-disabled='true']:hover {
+    background: var(--surface-3);
+  }
+
   .heading {
     display: flex;
     flex-wrap: wrap;
@@ -191,6 +248,12 @@
     gap: 2px;
   }
 
+  /* Between the classes of a creature and the others. */
+  .rule {
+    margin: 4px 8px;
+    border-top: 1px solid var(--border);
+  }
+
   .dot {
     flex: none;
     width: 9px;
@@ -231,6 +294,7 @@
   }
 
   @media (pointer: coarse) {
+    .clear,
     .flag {
       min-height: var(--target-min);
     }

@@ -95,7 +95,9 @@ test.describe('the filters sheet', () => {
       await facet(page, 'Life').click();
       await expect(close).toHaveText(`Show ${format(life)} traits`);
       // Said aloud too: the live region of the page behind the sheet is out of reach.
-      await expect(filtersSheet(page).locator('[aria-live="polite"]')).toHaveText(countText(life, traits));
+      await expect(filtersSheet(page).locator('[aria-live="polite"]', { hasText: /traits$/ })).toHaveText(
+        countText(life, traits),
+      );
 
       await close.focus();
       await page.keyboard.press('Enter');

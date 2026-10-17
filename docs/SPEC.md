@@ -256,8 +256,16 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   those fields, which the taxonomy keeps exact (no key is the start of another).
 - **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
-  (`kw:`); a trigger or a mechanic has `mentions` only. The facets list the classes of the dataset from A to Z, and the
-  buffs, debuffs, effects, triggers and mechanics of the taxonomy, with the counts they have, 0 included.
+  (`kw:`); a trigger or a mechanic has `mentions` only. The facets list the classes of the dataset and the buffs, debuffs,
+  effects, triggers and mechanics of the taxonomy, with the counts they have, 0 included.
+- **The order of the classes** is fixed when the dataset is loaded (`facetVocabulary`), so the list does not move as the
+  filters change: the five classes of a creature first (Chaos, Death, Life, Nature, Sorcery, from A to Z; GAME_RULES R7),
+  then the others by the number of traits they have in the dataset, the largest first and from A to Z among equals. In
+  v2.0: Rodian Master, Backer, Nether Boss, Boss, Pandemonium, Nether Room. `ClassFacet.standard` says which group a class
+  is in, for the panel to draw a rule between the two.
+- **Clear filters** (`clearFilters`) takes off the classes, the keywords and the two flags, and leaves the query bar, the
+  sort and the match mode, which are settings of the search and not filters of it. It gives back the same state when no
+  filter is on. It is one step of the history, like any other change of the filters.
 - **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each

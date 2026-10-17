@@ -4,6 +4,7 @@ import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
 import {
   backToTopButton,
+  clearFiltersButton,
   facet,
   filtersButton,
   filtersSheet,
@@ -214,5 +215,29 @@ test.describe('the keyboard alone', () => {
       await expect(filtersSheet(page)).toBeHidden();
       await expect(filtersButton(page)).toBeFocused();
     }
+  });
+
+  test('takes the filters off with Clear filters, which keeps the focus when there is nothing left to clear', async ({
+    page,
+  }) => {
+    await openExplore(page);
+
+    if (isCompact(page)) {
+      await tabTo(page, filtersButton(page), { limit: 20 });
+      await page.keyboard.press('Enter');
+      await expect(filtersSheet(page)).toBeVisible();
+    }
+    await tabTo(page, facet(page, 'Life'), { limit: 40 });
+    await page.keyboard.press('Space');
+    await expect(facet(page, 'Life')).toHaveAttribute('aria-pressed', 'true');
+
+    // The button is the first stop of the panel, before the classes.
+    await tabTo(page, clearFiltersButton(page), { backwards: true, limit: 10 });
+    await expect(clearFiltersButton(page)).toHaveAccessibleName('Clear filters (1)');
+    await page.keyboard.press('Enter');
+
+    await expect(facet(page, 'Life')).toHaveAttribute('aria-pressed', 'false');
+    await expect(clearFiltersButton(page)).toHaveAttribute('aria-disabled', 'true');
+    await expect(clearFiltersButton(page)).toBeFocused();
   });
 });

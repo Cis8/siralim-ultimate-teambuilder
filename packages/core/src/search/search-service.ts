@@ -52,7 +52,10 @@ export async function createSearchService(
     trait: (id) => byId.get(id),
     search: (state) => {
       const query = parseQuery(state.query);
-      const filters = filterQuery(state, vocabulary.classNames);
+      const filters = filterQuery(
+        state,
+        vocabulary.classes.map(({ name }) => name),
+      );
       const matchesQuery = compileQuery(query.ast);
       const matchesFilters = compileText(filters.rest);
       const matchesClasses = compileText(filters.classes);

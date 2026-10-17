@@ -272,10 +272,10 @@ describe('createSearchService', () => {
   });
 
   describe('the facets', () => {
-    it('lists the classes of the dataset from A to Z and the keywords of the taxonomy', async () => {
+    it('lists the classes of the dataset, the five of a creature first, and the keywords of the taxonomy', async () => {
       const { facets } = await search({});
 
-      expect(facets.classes.map(({ name }) => name)).toEqual(['Boss', 'Death', 'Life', 'Nature', 'Nether Boss']);
+      expect(facets.classes.map(({ name }) => name)).toEqual(['Death', 'Life', 'Nature', 'Boss', 'Nether Boss']);
       expect(facets.keywords.map(({ key }) => key)).toEqual(['vulnerable', 'weak', 'start of battle']);
     });
 
@@ -283,7 +283,7 @@ describe('createSearchService', () => {
       const everything = (await search({})).facets.classes;
       const lifeOnly = (await search({ classes: ['life'] })).facets.classes;
 
-      expect(everything.map(({ count }) => count)).toEqual([1, 2, 2, 1, 1]);
+      expect(everything.map(({ count }) => count)).toEqual([2, 2, 1, 1, 1]);
       expect(lifeOnly).toEqual(everything);
     });
 
@@ -291,10 +291,10 @@ describe('createSearchService', () => {
       const counts = (overrides: Partial<ExploreState>) =>
         search(overrides).then(({ facets }) => facets.classes.map(({ count }) => count));
 
-      expect(await counts({ query: 'weak' })).toEqual([0, 2, 1, 0, 1]);
-      expect(await counts({ keywords: [{ field: 'applies', key: 'weak' }] })).toEqual([0, 2, 0, 0, 1]);
-      expect(await counts({ doesNotStack: true })).toEqual([0, 1, 0, 0, 0]);
-      expect(await counts({ classes: ['death'], artifactEligible: true })).toEqual([0, 1, 1, 0, 0]);
+      expect(await counts({ query: 'weak' })).toEqual([2, 1, 0, 0, 1]);
+      expect(await counts({ keywords: [{ field: 'applies', key: 'weak' }] })).toEqual([2, 0, 0, 0, 1]);
+      expect(await counts({ doesNotStack: true })).toEqual([1, 0, 0, 0, 0]);
+      expect(await counts({ classes: ['death'], artifactEligible: true })).toEqual([1, 1, 0, 0, 0]);
     });
 
     it('counts the keywords among the traits found, class filter included', async () => {

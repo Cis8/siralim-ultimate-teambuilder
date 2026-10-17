@@ -66,6 +66,12 @@ the token colours are only guaranteed on the page background.
   on, and the count in mono, `--text-faint`, carrying its unit ("12 traits") for a screen reader. The two sides of a keyword
   (*Applies*, *Relies on*) sit in fixed columns so that the buttons of every keyword line up; each keyword is a `group` named
   after it. Kind headings (Debuffs, Buffs, Effects, Triggers, Mechanics) take the kind colour and always say it in words.
+- **Clear filters** is the first control of the panel, a quiet button (as the party toolbar's) that says how many filters it takes
+  off ("Clear filters (3)"). With none on it is `aria-disabled`, not `disabled`, and says "Clear filters": the focus stays on it
+  when its own press clears the last filter, and a polite line says what was done ("Cleared 3 filters."). Under a coarse
+  pointer it is 44 px high.
+- **Classes**: the five classes of a creature, then a 1 px rule (`--border`, decoration only: no role, no name), then the
+  others, in the order SPEC §8.1 gives.
 - **The panel stays in view** beside the long list: sticky, with a scroll of its own, as tall as the window leaves it
   (`trackViewportOffset` keeps `--viewport-offset`, the distance from the top of the window to the columns, so that at the top of
   the page it is not cut by the fold). Under 700 px it is a **bottom sheet** instead (`FiltersRegion` swaps the two): a

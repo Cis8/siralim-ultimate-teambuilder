@@ -79,6 +79,7 @@ export { descriptionParts, type DescriptionPart, type TextPiece } from './explor
 export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal } from './explore/keyword-click';
 export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './explore/facet-toggles';
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
+export { clearFilters } from './explore/clear-filters';
 export {
   emptyParty,
   filledSlots,
