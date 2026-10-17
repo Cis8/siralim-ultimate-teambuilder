@@ -70,10 +70,29 @@ jobs:
         if: failure()
         shell: bash
         run: echo "::error title=Lighthouse CI::$(tail -n 40 lighthouse.log | sed ':a;N;$!ba;s/\n/%0A/g')"
+      - name: TEMPORARY layout shift culprits
+        if: failure()
+        shell: bash
+        run: |
+          node -e '
+          const fs = require("fs");
+          const dir = "apps/web/.lighthouseci";
+          const lines = [];
+          for (const name of fs.readdirSync(dir).filter((n) => /^lhr-.*\.json$/.test(n)).slice(0, 1)) {
+            const lhr = JSON.parse(fs.readFileSync(dir + "/" + name, "utf8"));
+            lines.push("emulation " + JSON.stringify(lhr.configSettings.screenEmulation) + " ua " + lhr.environment.hostUserAgent);
+            for (const item of lhr.audits["layout-shifts"].details.items) {
+              lines.push(item.score.toFixed(4) + " " + item.node.selector + " rect " + JSON.stringify(item.node.boundingRect) + " " + JSON.stringify(item.subItems ? item.subItems.items : []));
+            }
+            lines.push("fcp " + lhr.audits["first-contentful-paint"].numericValue + " lcp " + lhr.audits["largest-contentful-paint"].numericValue);
+          }
+          console.log("::error title=Layout shifts::" + lines.join("%0A"));
+          '
       - name: Upload Lighthouse reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: lighthouse-reports
           path: apps/web/.lighthouseci
+          include-hidden-files: true
           retention-days: 7
