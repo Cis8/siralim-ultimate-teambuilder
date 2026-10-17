@@ -101,6 +101,8 @@ export const copy = {
   /** The two sides of a buff, a debuff or an effect: what a trait does with it (GAME_RULES R9 has a third, not a filter). */
   keywordSides: { applies: 'Applies', uses: 'Relies on' } as const,
   flagsHeading: 'Flags',
+  /** On a shut section of the filter panel, beside its name: how many of the filters inside are on. */
+  sectionActive: (count: number) => `${String(count)} on`,
   flagArtifactEligible: 'Artifact-eligible (has material)',
   flagDoesNotStack: 'Only “does not stack”',
   /** What follows a count in a facet button for a screen reader: the number alone does not say what it counts. */

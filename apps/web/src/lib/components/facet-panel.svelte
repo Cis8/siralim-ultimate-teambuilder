@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    activeFilterCounts,
     clearFilters,
     FACET_KEYWORD_KINDS,
     filterChips,
@@ -11,24 +12,36 @@
     toggleKeywordFilter,
     type ExploreState,
     type Facets,
+    type FilterSection,
     type KeywordMode,
   } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
   import FacetButton from './facet-button.svelte';
+  import SectionToggle from './section-toggle.svelte';
   import Segmented from './segmented.svelte';
 
   /**
    * The filters of the Explore view (SPEC §8.1): the classes (any of them), the keywords (what a trait applies or relies
    * on, or mentions, all of them or any), and the two flags, under a button that takes them all off. Every other button
    * is a toggle with the number of traits it would show; what a press changes is worked out by `core`, and the owner of
-   * the state gets the new one.
+   * the state gets the new one. The classes, each kind of keyword and the flags are sections that open and close; which
+   * are shut (`shut`) is the owner's too, since this panel is built again whenever the window crosses the width where the
+   * filters change from a column to a sheet.
    */
   const {
     facets,
     explore,
+    shut,
     onchange,
-  }: { facets: Facets; explore: ExploreState; onchange: (state: ExploreState) => void } = $props();
+    ontoggle,
+  }: {
+    facets: Facets;
+    explore: ExploreState;
+    shut: readonly FilterSection[];
+    onchange: (state: ExploreState) => void;
+    ontoggle: (section: FilterSection) => void;
+  } = $props();
 
   /** The two sides of a buff, a debuff or an effect that have a filter, in the order the row shows them. */
   const SIDES = ['applies', 'uses'] as const;
@@ -49,6 +62,10 @@
   );
 
   const active = $derived(filterChips(explore).length);
+  const counts = $derived(activeFilterCounts(explore, facets.keywords));
+  const isOpen = (section: FilterSection): boolean => !shut.includes(section);
+  /** The content of a section: what its button controls. */
+  const bodyId = (section: FilterSection): string => `${uid}-${section}`;
   /** What a screen reader is told after the button was pressed. It is only said while no filter is on again. */
   let cleared = $state('');
   const clearedAnnouncement = $derived(active === 0 ? cleared : '');
@@ -69,25 +86,36 @@
 
   <div class="group">
     <div class="heading">
-      <h3>{copy.classHeading}</h3>
-      <span id={classHint} class="hint">{copy.classHint}</span>
+      <h3 class="grows">
+        <SectionToggle
+          controls={bodyId('class')}
+          open={isOpen('class')}
+          active={counts.class}
+          ontoggle={() => {
+            ontoggle('class');
+          }}>{copy.classHeading}</SectionToggle
+        >
+      </h3>
+      <span id={classHint} class="hint" hidden={!isOpen('class')}>{copy.classHint}</span>
     </div>
-    <div class="list" role="group" aria-label={copy.classHeading} aria-describedby={classHint}>
-      {#each classRuns as run, at (at)}
-        {#if at > 0}<div class="rule" aria-hidden="true"></div>{/if}
-        {#each run as facet (facet.name)}
-          <FacetButton
-            pressed={hasClass(explore, facet.name)}
-            count={facet.count}
-            onclick={() => {
-              onchange(toggleClass(explore, facet.name));
-            }}
-          >
-            <span class="dot" style:background={classColour(facet.name)} aria-hidden="true"></span>
-            {facet.name}
-          </FacetButton>
+    <div id={bodyId('class')} hidden={!isOpen('class')}>
+      <div class="list" role="group" aria-label={copy.classHeading} aria-describedby={classHint}>
+        {#each classRuns as run, at (at)}
+          {#if at > 0}<div class="rule" aria-hidden="true"></div>{/if}
+          {#each run as facet (facet.name)}
+            <FacetButton
+              pressed={hasClass(explore, facet.name)}
+              count={facet.count}
+              onclick={() => {
+                onchange(toggleClass(explore, facet.name));
+              }}
+            >
+              <span class="dot" style:background={classColour(facet.name)} aria-hidden="true"></span>
+              {facet.name}
+            </FacetButton>
+          {/each}
         {/each}
-      {/each}
+      </div>
     </div>
   </div>
 
@@ -104,60 +132,84 @@
       />
     </div>
     {#each groups as group (group.kind)}
-      <h4 data-kind={group.kind}>{copy.keywordKinds[group.kind]}</h4>
-      <div class="list">
-        {#each group.keywords as facet (facet.key)}
-          {#if hasRole(group.kind)}
-            <div class="keyword" role="group" aria-label={facet.label}>
-              <span class="name">{facet.label}</span>
-              {#each SIDES as side (side)}
-                {@const filter = { field: side, key: facet.key }}
-                <FacetButton
-                  size="compact"
-                  pressed={hasKeywordFilter(explore, filter)}
-                  count={facet[side]}
-                  onclick={() => {
-                    onchange(toggleKeywordFilter(explore, filter));
-                  }}>{copy.keywordSides[side]}</FacetButton
-                >
-              {/each}
-            </div>
-          {:else}
-            <FacetButton
-              pressed={hasKeywordFilter(explore, { field: 'kw', key: facet.key })}
-              count={facet.mentions}
-              onclick={() => {
-                onchange(toggleKeywordFilter(explore, { field: 'kw', key: facet.key }));
-              }}>{facet.label}</FacetButton
-            >
-          {/if}
-        {/each}
+      <h4 data-kind={group.kind}>
+        <SectionToggle
+          controls={bodyId(group.kind)}
+          open={isOpen(group.kind)}
+          active={counts[group.kind]}
+          ontoggle={() => {
+            ontoggle(group.kind);
+          }}>{copy.keywordKinds[group.kind]}</SectionToggle
+        >
+      </h4>
+      <div id={bodyId(group.kind)} hidden={!isOpen(group.kind)}>
+        <div class="list">
+          {#each group.keywords as facet (facet.key)}
+            {#if hasRole(group.kind)}
+              <div class="keyword" role="group" aria-label={facet.label}>
+                <span class="name">{facet.label}</span>
+                {#each SIDES as side (side)}
+                  {@const filter = { field: side, key: facet.key }}
+                  <FacetButton
+                    size="compact"
+                    pressed={hasKeywordFilter(explore, filter)}
+                    count={facet[side]}
+                    onclick={() => {
+                      onchange(toggleKeywordFilter(explore, filter));
+                    }}>{copy.keywordSides[side]}</FacetButton
+                  >
+                {/each}
+              </div>
+            {:else}
+              <FacetButton
+                pressed={hasKeywordFilter(explore, { field: 'kw', key: facet.key })}
+                count={facet.mentions}
+                onclick={() => {
+                  onchange(toggleKeywordFilter(explore, { field: 'kw', key: facet.key }));
+                }}>{facet.label}</FacetButton
+              >
+            {/if}
+          {/each}
+        </div>
       </div>
     {/each}
   </div>
 
   <div class="group">
-    <h3>{copy.flagsHeading}</h3>
-    <label class="flag">
-      <input
-        type="checkbox"
-        checked={explore.artifactEligible}
-        onchange={(event) => {
-          onchange({ ...explore, artifactEligible: event.currentTarget.checked });
-        }}
-      />
-      {copy.flagArtifactEligible}
-    </label>
-    <label class="flag">
-      <input
-        type="checkbox"
-        checked={explore.doesNotStack}
-        onchange={(event) => {
-          onchange({ ...explore, doesNotStack: event.currentTarget.checked });
-        }}
-      />
-      {copy.flagDoesNotStack}
-    </label>
+    <h3>
+      <SectionToggle
+        controls={bodyId('flags')}
+        open={isOpen('flags')}
+        active={counts.flags}
+        ontoggle={() => {
+          ontoggle('flags');
+        }}>{copy.flagsHeading}</SectionToggle
+      >
+    </h3>
+    <div id={bodyId('flags')} hidden={!isOpen('flags')}>
+      <div class="flags">
+        <label class="flag">
+          <input
+            type="checkbox"
+            checked={explore.artifactEligible}
+            onchange={(event) => {
+              onchange({ ...explore, artifactEligible: event.currentTarget.checked });
+            }}
+          />
+          {copy.flagArtifactEligible}
+        </label>
+        <label class="flag">
+          <input
+            type="checkbox"
+            checked={explore.doesNotStack}
+            onchange={(event) => {
+              onchange({ ...explore, doesNotStack: event.currentTarget.checked });
+            }}
+          />
+          {copy.flagDoesNotStack}
+        </label>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -207,6 +259,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 6px 8px;
+  }
+
+  /* The heading of the classes shares its row with the hint, and the button in it fills what the hint leaves. */
+  .grows {
+    flex: 1;
   }
 
   h3 {
@@ -274,6 +331,12 @@
     min-width: 0;
     font-size: 13px;
     overflow-wrap: anywhere;
+  }
+
+  .flags {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .flag {

@@ -12,7 +12,7 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1–8b.2 done; next is 8b.3, then 8b.5 → 8b.4; one session each.**
+- **Phase 1 · M8: 8.1–8.3 done. M8b (the owner's notes): 8b.1–8b.3 done; next is 8b.5, then 8b.4; one session each.**
   8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
   closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
@@ -120,6 +120,8 @@ session (after `CLAUDE.md`), update it before ending one.
   `css.include` (`vitest.config.ts`); web code may not import `node:fs` (boundary rule), so a test cannot read it that way.
 - `vitest bench` (Vitest 5): `bench` is a fixture of `test` in a `*.bench.ts` file (`test.each` does not hand it over: loop);
   `vitest` alone ignores those files; `pnpm bench` needs `--reporter=verbose` to print the table.
+- Svelte templates: `{@render localSnippet(args)}` trips `no-confusing-void-expression` (a rendered `children()` does not): use
+  a component. `hidden` loses to any `display` rule on the same element, so a section hides a plain wrapper around its flex box.
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
@@ -231,11 +233,13 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       five classes are `CREATURE_CLASSES` (GAME_RULES R7), not a second list; "by trait count" is the whole dataset's, fixed at
       load, so the list does not reshuffle as filters change (v2.0: Rodian Master, Backer, Nether Boss, Boss, Pandemonium,
       Nether Room). The sheet now holds two `aria-live` lines: `filters-sheet.test.ts` picks the count by its text.
-- [ ] **8b.3** Filters: collapsible sections (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags; Match all/any stays
-      visible). A heading button with `aria-expanded`/`aria-controls`; closed, it says how many filters are on inside ("Debuffs · 2
-      on"), counted by a pure `core` function (`activeFilterCounts`). The state lives in `+page.svelte` and is passed down:
-      `FacetPanel` is destroyed and rebuilt across 700 px, so component state would be lost. Open by default, so no layout shift
-      and the existing e2e stay true. New e2e: toggle, tab order, survives a resize and closing the sheet. Docs: SPEC §8.1, DESIGN.
+- [x] **8b.3** Filters: collapsible sections (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags; Match all/any stays
+      visible). `SectionToggle` is the button inside each heading (`aria-expanded`, `aria-controls` the body, which is `hidden`
+      while shut); shut, it adds "· 2 on", counted by `activeFilterCounts` in `core` (one per class, side of a keyword and flag,
+      as the chips do). The shut list lives in `+page.svelte` and is passed down, because `FacetPanel` is rebuilt across 700 px.
+      Open by default, so no layout shift. `e2e/filter-sections.test.ts`: toggle, counts, tab order, resize, closing the sheet,
+      axe; the walks and touch-target tests cover the new buttons by themselves. SPEC §8.1, DESIGN. Deviation: the hint "any of"
+      is hidden with the classes.
 - [ ] **8b.4** Party: the "…" for traits the target slot refuses (mastery, backer, boss on Innate or Fused; avatar on Fused or
       Artifact; a trait with no material on Artifact). Today the add is disabled and adding onto an occupied slot replaces it
       without saying so. `core` first: `allowedSlots(trait, rules)` (no such function exists; Phase 3 `pickSlot` will need it),

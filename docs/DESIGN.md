@@ -47,7 +47,7 @@ use the fallback `#8fa1b3`.
 
 ## Components (build once, reuse)
 `QueryInput` (combobox), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
-`FacetButton`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
+`FacetButton`, `SectionToggle`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
 `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`, `TimelinePhase`, `BottomSheet`,
 `TabBar`, `BackToTop`, `Toast`.
 
@@ -70,6 +70,13 @@ the token colours are only guaranteed on the page background.
   off ("Clear filters (3)"). With none on it is `aria-disabled`, not `disabled`, and says "Clear filters": the focus stays on it
   when its own press clears the last filter, and a polite line says what was done ("Cleared 3 filters."). Under a coarse
   pointer it is 44 px high.
+- **Sections** (`SectionToggle`): the heading of Class, of each kind of keyword (Debuffs … Mechanics) and of Flags holds a button
+  with a chevron (down open, right shut, drawn the same way with or without motion), the heading's own text style and colour,
+  and the inset of a facet button; the heading keeps its level (h3, h4 for the kinds) and the button is the disclosure
+  pattern: `aria-expanded` and `aria-controls` the part below, which is `hidden` while shut (out of the tab order and of the
+  reading order, still in the page). Shut, the button adds how many filters are on inside in mono, after a dot that a screen
+  reader skips ("Debuffs · 2 on", read "Debuffs 2 on"); open, nothing is added. The hint "any of" is shown only while the
+  classes are open. Under a coarse pointer the button is 44 px high.
 - **Classes**: the five classes of a creature, then a 1 px rule (`--border`, decoration only: no role, no name), then the
   others, in the order SPEC §8.1 gives.
 - **The panel stays in view** beside the long list: sticky, with a scroll of its own, as tall as the window leaves it

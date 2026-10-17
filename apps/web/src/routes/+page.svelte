@@ -27,6 +27,7 @@
     undoEdit,
     type ClickedKeyword,
     type ExploreState,
+    type FilterSection,
     type Planner,
     type SearchService,
     type SlotPosition,
@@ -74,6 +75,18 @@
   let resultsSection = $state<HTMLElement>();
   /** Whether the page is scrolled more than a screen from its top: the Back to top button is then on offer. */
   let scrolledAway = $state(false);
+  /**
+   * The sections of the filter panel the person shut. They are open to begin with, and this lasts as long as the page: it is no
+   * part of the address or of the local storage. It is kept here because the panel is built again whenever the window crosses
+   * the width where the filters change between a column and a sheet.
+   */
+  let shutSections = $state.raw<readonly FilterSection[]>([]);
+
+  function toggleSection(section: FilterSection): void {
+    shutSections = shutSections.includes(section)
+      ? shutSections.filter((shut) => shut !== section)
+      : [...shutSections, section];
+  }
 
   /**
    * Where the views stop sharing a row (the stylesheet of the page asks for the opposite, `width >= 1100px`, in its media
@@ -414,7 +427,13 @@
         onScreen={exploreOnScreen}
       >
         {#if loaded}
-          <FacetPanel facets={loaded.outcome.facets} {explore} onchange={exploreChanged} />
+          <FacetPanel
+            facets={loaded.outcome.facets}
+            {explore}
+            shut={shutSections}
+            onchange={exploreChanged}
+            ontoggle={toggleSection}
+          />
         {:else if !failed}
           <p class="soon">{copy.loadingFilters}</p>
         {/if}

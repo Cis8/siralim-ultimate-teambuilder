@@ -266,6 +266,13 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 - **Clear filters** (`clearFilters`) takes off the classes, the keywords and the two flags, and leaves the query bar, the
   sort and the match mode, which are settings of the search and not filters of it. It gives back the same state when no
   filter is on. It is one step of the history, like any other change of the filters.
+- **Sections.** The classes, each kind of keyword (debuffs, buffs, effects, triggers, mechanics) and the flags are sections of
+  the panel that open and close (`FILTER_SECTIONS`); *Match all / Match any* stays in view above the kinds. All are open to
+  begin with, so nothing moves on load. Which are shut is a state of the page (it outlives the panel, which is built again
+  whenever the window crosses 700 px, and the sheet being closed), and no part of the address or of the local storage: a
+  new visit finds them open. A shut section says how many filters are on inside (`activeFilterCounts`: one per class, per
+  side of a keyword and per flag, as the chips count; a keyword the panel does not list is in no section). Opening or
+  shutting one is no step of the history, and *Clear filters* takes the filters off in shut sections as in open ones.
 - **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each

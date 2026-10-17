@@ -98,6 +98,20 @@ export const classFacetNames = (page: Page): Locator =>
 export const clearFiltersButton = (page: Page): Locator =>
   filters(page).getByRole('button', { name: /^Clear filters/, includeHidden: true });
 
+/**
+ * The button that opens and closes a section of the panel (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags). It
+ * says how many filters are on inside while the section is shut ("Debuffs 2 on").
+ */
+export const section = (page: Page, name: string): Locator =>
+  filters(page).getByRole('button', { name: new RegExp(`^${name}(\\s|$)`), includeHidden: true });
+
+/** What a section's button opens and closes: the part of the panel that is hidden while the section is shut. */
+export async function sectionBody(page: Page, name: string): Promise<Locator> {
+  const id = await section(page, name).getAttribute('aria-controls');
+  if (id === null) throw new Error(`the section ${name} does not say what it controls`);
+  return filters(page).locator(`[id="${id}"]`);
+}
+
 /** One of the two sides of a buff, a debuff or an effect in the panel. */
 export const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on'): Locator =>
   filters(page)

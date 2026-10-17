@@ -80,6 +80,7 @@ export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal
 export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './explore/facet-toggles';
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
 export { clearFilters } from './explore/clear-filters';
+export { activeFilterCounts, FILTER_SECTIONS, type FilterSection } from './explore/active-filter-counts';
 export {
   emptyParty,
   filledSlots,
