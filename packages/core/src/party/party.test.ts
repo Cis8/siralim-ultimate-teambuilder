@@ -1,6 +1,15 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { emptyParty, MEMBER_INDEXES, SLOT_NAMES, traitAt, withTraitAt, type Party, type SlotPosition } from './party';
+import {
+  emptyParty,
+  MEMBER_INDEXES,
+  SLOT_NAMES,
+  SLOT_POSITIONS,
+  traitAt,
+  withTraitAt,
+  type Party,
+  type SlotPosition,
+} from './party';
 
 const position = fc.record({
   member: fc.constantFrom(...MEMBER_INDEXES),
@@ -26,6 +35,23 @@ describe('emptyParty', () => {
     for (const member of MEMBER_INDEXES) {
       for (const slot of SLOT_NAMES) expect(traitAt(emptyParty, { member, slot })).toBeNull();
     }
+  });
+});
+
+describe('SLOT_POSITIONS', () => {
+  it('lists the 18 slots, each once', () => {
+    expect(SLOT_POSITIONS).toHaveLength(18);
+    expect(new Set(SLOT_POSITIONS.map(({ member, slot }) => `${member}/${slot}`)).size).toBe(18);
+  });
+
+  it('reads creature by creature, Innate then Fused then Artifact', () => {
+    expect(SLOT_POSITIONS.slice(0, 4)).toEqual([
+      { member: 0, slot: 'innate' },
+      { member: 0, slot: 'fused' },
+      { member: 0, slot: 'artifact' },
+      { member: 1, slot: 'innate' },
+    ]);
+    expect(SLOT_POSITIONS.at(-1)).toEqual({ member: 5, slot: 'artifact' });
   });
 });
 

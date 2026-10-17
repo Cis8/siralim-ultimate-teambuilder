@@ -289,6 +289,11 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   command and one that changed nothing give the history back untouched (the same object, redo list included), `undo` / `redo`
   do the same when there is nothing to step over. A history starts on a given party (one from a link) with nothing to undo;
   `clear-party` is one edit, undone in one step.
+- **The target slot moves on by a strategy** (`TargetStrategy`: party and the slot just filled → the next target; it only
+  reads). The one there is, `nextEmptySlot`, takes the first empty slot after it in reading order (`SLOT_POSITIONS`: creature
+  by creature, Innate, Fused, Artifact), going round after the last one, and stays where it is when no other slot is empty.
+  It does not look at the rules or at the trait that comes next: a target the next trait cannot use is a disabled "add"
+  with its reason, not a skipped slot.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
   the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
   trait are reported (R4), not refused.

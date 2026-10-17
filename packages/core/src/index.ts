@@ -87,6 +87,7 @@ export {
   emptyParty,
   MEMBER_INDEXES,
   SLOT_NAMES,
+  SLOT_POSITIONS,
   traitAt,
   withTraitAt,
   type MemberIndex,
@@ -109,3 +110,4 @@ export {
 export type { Placement, SlotRule } from './party/slot-rule';
 export { createSlotRuleRegistry, SlotRuleRegistryError, type SlotRuleRegistry } from './party/slot-rule-registry';
 export { slotRules } from './party/slot-rules';
+export { nextEmptySlot, type TargetStrategy } from './party/target-strategy';

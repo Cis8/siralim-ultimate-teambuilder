@@ -27,6 +27,11 @@ export interface SlotPosition {
   readonly slot: SlotName;
 }
 
+/** The 18 slots in reading order, creature by creature, Innate then Fused then Artifact: the order a party is listed in. */
+export const SLOT_POSITIONS: readonly SlotPosition[] = MEMBER_INDEXES.flatMap((member) =>
+  SLOT_NAMES.map((slot) => ({ member, slot })),
+);
+
 const emptyMember: PartyMember = { innate: null, fused: null, artifact: null };
 
 export const emptyParty: Party = [emptyMember, emptyMember, emptyMember, emptyMember, emptyMember, emptyMember];
