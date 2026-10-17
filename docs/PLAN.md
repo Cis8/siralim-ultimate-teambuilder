@@ -12,9 +12,9 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8 (hardening): 8.1–8.3 are done, 8.4 is next and closes the phase:** final credits (ask the owner to confirm the
-  authors' names first), README, the table that maps each acceptance criterion to its test, ROADMAP ticks. When 8.4 is on
-  `main`, M8 and Phase 1 are done: ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. Next is M8b (the owner's notes), slice 8b.1, then 8b.2 → 8b.3 → 8b.5 → 8b.4; one session each.**
+  8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
+  closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong.
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
   A control that draws an outline of its own needs a `:focus-visible` rule, or `keyboard.test.ts` names it (no 2 px ring).
@@ -201,3 +201,57 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       ring (its role outline outranked the page's ring), the sheet opened with the focus on an unnamed scrolled `div` in Chrome
       (now its title), and the filters took 124 presses of Tab to pass (new "Skip filters" link, from 700 px).
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.
+      Starts only when M8b is done.
+
+### M8b The owner's notes (before 8.4)
+Phase 1 refinements from the owner's play-testing notes (2026-10-17). Decisions: the "…" shows only where the target slot refuses
+the trait, in place of the disabled add; the five standard classes come first in the filters; back-to-top sits top right.
+Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
+address, not in `localStorage`); "Clear filters" keeps the query, sort and Match all/any (settings, not filters); input font
+16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4).
+- [ ] **8b.1** Mobile, web only. (a) iOS zooms on focus below 16 px: the search field is 14 px (`query-input.svelte`) and the sort
+      select 12.5 px (`.meta` in `+page.svelte`); set 16 px under `pointer: coarse`, e2e on the two phone projects asserts the
+      computed size of every text input and select (the owner confirms the real zoom on an iPhone, Safari and Chrome). (b) A
+      fixed top-right "Back to top" (44 px, `copy.ts`) after about a screen of scroll, Explore view only, `smooth` unless
+      `prefers-reduced-motion`; focus goes to the page heading (`tabindex="-1"`), never the search field (it raises the keyboard
+      on iOS); one scroll listener shared with `viewport-offset.ts`; `scroll-padding-top` while it shows so it never covers a
+      focused control (WCAG 2.4.11). New `e2e/back-to-top.test.ts`, entries in `touch-targets` and `keyboard`, axe, size budget
+      and Lighthouse unchanged. Docs: DESIGN, SPEC §8.1.
+- [ ] **8b.2** Filters: "Clear filters" and the order of the classes. `core` first: `clearFilters(state)` (next to
+      `filter-chips.ts`; keeps query, sort and mode; the same object when nothing is on) and the class order in
+      `explore/facets.ts` (`STANDARD_CLASSES`, GAME_RULES R7: Chaos, Death, Life, Nature, Sorcery from A to Z, then the others by
+      trait count, ties A to Z, each with `standard: boolean`). Web: "Clear filters (N)" at the top of `facet-panel.svelte`
+      (`aria-disabled` at 0 with the focus kept, as "Clear party"; announced), a separator between the two class groups.
+      e2e on desktop and in the sheet, `touch-targets`, `keyboard`, axe. Docs: SPEC §8.1 (it says "from A to Z"), DESIGN.
+- [ ] **8b.3** Filters: collapsible sections (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags; Match all/any stays
+      visible). A heading button with `aria-expanded`/`aria-controls`; closed, it says how many filters are on inside ("Debuffs · 2
+      on"), counted by a pure `core` function (`activeFilterCounts`). The state lives in `+page.svelte` and is passed down:
+      `FacetPanel` is destroyed and rebuilt across 700 px, so component state would be lost. Open by default, so no layout shift
+      and the existing e2e stay true. New e2e: toggle, tab order, survives a resize and closing the sheet. Docs: SPEC §8.1, DESIGN.
+- [ ] **8b.4** Party: the "…" for traits the target slot refuses (mastery, backer, boss on Innate or Fused; avatar on Fused or
+      Artifact; a trait with no material on Artifact). Today the add is disabled and adding onto an occupied slot replaces it
+      without saying so. `core` first: `allowedSlots(trait, rules)` (no such function exists; Phase 3 `pickSlot` will need it),
+      `addTraitAt(planner, trait, position)` returning `replaced`, the target advancing only when the position is the target; the
+      announcement says "replacing Y" for every add. Web: the refused add becomes an active "Add to…" that opens a page-level
+      dialog (rows are virtualised) listing the allowed slots of the target's creature, one button each: "Add to Artifact (empty)"
+      or "Replace Y in Artifact" (icon and text); the rule's sentence stays under the card (acceptance criterion 5). With no
+      allowed slot the disabled add stays. Generalise `bottom-sheet.svelte`'s foot instead of copying it. Rewrite the criterion-5
+      e2e (it presses a disabled button today); `filters-sheet.test.ts:30,197` take the first `<dialog>` for the filters: bind them
+      by name. Docs: SPEC §8.2 ("a disabled add with its reason" changes), DESIGN. Out of scope: adding a plain trait to a slot
+      that is not the target without moving the target.
+- [ ] **8b.5** Keywords and events: research and a plan of its own, no product code. Covers provoke and defend, "attack" and its
+      subjects (your creatures / this creature / another / "are attacked"), dodge, heal, die, "are killed", casting spells,
+      `spells` (Culmination, Crystallization), a sweep of every trait for patterns nobody mapped, and how to group it all in the UI
+      without clutter. Output: a plan the owner approves, new slices 8b.6… here, an ADR if the model changes, SPEC §4.
+      Facts (v2.0, 1,780 traits): 11 triggers (whole phrases with a phase) and 8 mechanics; no notion of subject or event. Not
+      covered, by traits: attack 569, spell/spells 447, cast 290, resurrect 73, provoke 69, killed 65, heal 61, defend 56 (55 are
+      "After this creature defends or provokes"), dodge 46, die/dies 36. Crystallization is "After this creature casts a
+      spell…"; Culmination is about "your creatures' spells … manually cast in the current battle": `spells` is not a concept
+      and the trigger is the literal "manually cast a spell" (13 of 32 such traits miss it). Engine limits: no stemming, a
+      trigger is a literal phrase, no key may start another (`kw:` matches key prefixes), `TRIGGER_PHASES` is a closed tuple, the
+      report's *Taxonomy* section cannot see lowercase words, a new entry means a re-read snapshot, a regenerated dataset
+      (`chore(data)`) and pinned lists to update. **Keep the existing trigger keys valid**: shared links carry `kw:` (ADR-0005).
+      Method: a deterministic census of uncovered opening clauses; a sweep of all 1,780 traits by `haiku` agents (about 12 chunks
+      of 150 rows from an extract in the scratchpad, a rigid schema of subject, event or mechanic, qualifier and quote, only what
+      the taxonomy misses; roughly 110k input tokens), merged and counted deterministically, judged by the main model; ask the
+      owner which distinctions matter in play; then design what is factored out, the names and the UI grouping.
