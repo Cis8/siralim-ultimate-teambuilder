@@ -32,6 +32,8 @@ export const SLOT_POSITIONS: readonly SlotPosition[] = MEMBER_INDEXES.flatMap((m
   SLOT_NAMES.map((slot) => ({ member, slot })),
 );
 
+export const sameSlot = (a: SlotPosition, b: SlotPosition): boolean => a.member === b.member && a.slot === b.slot;
+
 const emptyMember: PartyMember = { innate: null, fused: null, artifact: null };
 
 export const emptyParty: Party = [emptyMember, emptyMember, emptyMember, emptyMember, emptyMember, emptyMember];

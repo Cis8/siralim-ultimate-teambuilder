@@ -1,4 +1,4 @@
-import { SLOT_POSITIONS, traitAt, type Party, type SlotPosition } from './party';
+import { sameSlot, SLOT_POSITIONS, traitAt, type Party, type SlotPosition } from './party';
 
 /**
  * Where the next trait goes, given the party and the slot that was the target until now (the one just filled, or just
@@ -16,7 +16,7 @@ export function firstEmptySlot(party: Party): SlotPosition {
  * from the top is then a matter of adding trait after trait. When no other slot is empty it stays on `from`.
  */
 export const nextEmptySlot: TargetStrategy = (party, from) => {
-  const start = SLOT_POSITIONS.findIndex(({ member, slot }) => member === from.member && slot === from.slot);
+  const start = SLOT_POSITIONS.findIndex((at) => sameSlot(at, from));
   for (let step = 1; step < SLOT_POSITIONS.length; step++) {
     const candidate = SLOT_POSITIONS[(start + step) % SLOT_POSITIONS.length];
     if (candidate !== undefined && traitAt(party, candidate) === null) return candidate;

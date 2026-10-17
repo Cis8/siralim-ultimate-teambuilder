@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   emptyParty,
   MEMBER_INDEXES,
+  sameSlot,
   SLOT_NAMES,
   SLOT_POSITIONS,
   traitAt,
@@ -35,6 +36,17 @@ describe('emptyParty', () => {
     for (const member of MEMBER_INDEXES) {
       for (const slot of SLOT_NAMES) expect(traitAt(emptyParty, { member, slot })).toBeNull();
     }
+  });
+});
+
+describe('sameSlot', () => {
+  it('is true for the same creature and slot, even when they are two objects', () => {
+    expect(sameSlot({ member: 2, slot: 'fused' }, { member: 2, slot: 'fused' })).toBe(true);
+  });
+
+  it('is false when the creature or the slot differs', () => {
+    expect(sameSlot({ member: 2, slot: 'fused' }, { member: 3, slot: 'fused' })).toBe(false);
+    expect(sameSlot({ member: 2, slot: 'fused' }, { member: 2, slot: 'innate' })).toBe(false);
   });
 });
 

@@ -2,14 +2,15 @@ import { readList, writeList, type ParamReader, type UrlParams } from '../url/ur
 import {
   emptyParty,
   MEMBER_INDEXES,
+  sameSlot,
   SLOT_NAMES,
   SLOT_POSITIONS,
   traitAt,
   withTraitAt,
-  type Party,
   type SlotName,
   type SlotPosition,
 } from './party';
+import type { PartyState } from './party-state';
 import { firstEmptySlot } from './target-strategy';
 
 /**
@@ -17,12 +18,6 @@ import { firstEmptySlot } from './target-strategy';
  * (the search) clears these and adds what `encodePartyState` returns.
  */
 export const PARTY_PARAMS = ['party', 'target'] as const;
-
-/** What the page keeps of the party between two visits: the slots, and the one the next trait goes to. */
-export interface PartyState {
-  readonly party: Party;
-  readonly target: SlotPosition;
-}
 
 /** What an address holds: a party, and the version of the dataset it was made on (`null` when it states none). */
 export interface SharedParty extends PartyState {
@@ -63,8 +58,6 @@ export function encodePartyState({ party, target }: PartyState, datasetVersion: 
   ];
   return params.flatMap(([name, value]) => (value === undefined ? [] : [[name, value] as const]));
 }
-
-const sameSlot = (a: SlotPosition, b: SlotPosition): boolean => a.member === b.member && a.slot === b.slot;
 
 /** The creatures are numbered from 1, as the page shows them: `3-fused` is the Fused slot of the third. */
 const writeTarget = ({ member, slot }: SlotPosition): string => `${String(member + 1)}-${slot}`;

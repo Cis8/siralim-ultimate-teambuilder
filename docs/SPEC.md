@@ -207,15 +207,21 @@ every id, known to the dataset or not. `SharedParty.datasetVersion` is the versi
 states none; the page compares it with the dataset it has (6.7). Eighteen of the longest ids of v2.0 stay below 1,000
 characters, commas escaped (`party-acceptance.test.ts`).
 
-**The page and its address** (`explore-address.ts`, `explore-url-writer.ts`). The page reads the address when it opens and
+**The page and its address** (`page-address.ts`, `page-url-writer.ts`). The page reads the address when it opens and
 when the browser goes to another one (back, forward, a link); an address it cannot read is the plain page and stays as it is
-until something changes. Every change of the state is written back, and the parameters that are not Explore's stay:
+until something changes. Every change of the state, the search and the party, is written back by one writer, and the
+parameters that are neither's stay:
 - typing *replaces* the current history entry once the text has stayed as it is for 400 ms, so a stretch of typing is one
   entry (and a browser's limit on how often the history may change is out of reach);
-- a facet, a chip, a click on a keyword and the sort each *push* an entry, after the text typed so far has been written to
-  the entry it was typed in, so that back returns to it. A state that is already the address writes nothing;
+- a facet, a chip, a click on a keyword, the sort and each edit of the party (an add, a clear, an undo, a redo) *push* an
+  entry, after the text typed so far has been written to the entry it was typed in, so that back returns to it. Choosing the
+  target slot *replaces* the entry at once: it is in the address but no step of its own. A state that is already the address
+  writes nothing;
 - the writes are made one after another, and an arrival by back or forward drops the text that was waiting;
-- a link is written to be read: the colon of `a:vulnerable` and the comma between two items are not escaped.
+- a link is written to be read: the colon of `a:vulnerable` and the comma between two items are not escaped;
+- a party is written under the version of the dataset in use, or while the data loads under the one the address stated, so
+  that a link opened before the data arrives is written back as it was; arriving at an address with the same party keeps
+  what can be undone, another party starts a new history.
 
 Back and forward bring back the state and start the list over; they do not restore the scroll position (the list is another
 one).
@@ -312,6 +318,26 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   source (D6), a `resists` mention is neither (R9), and an id the dataset does not know is passed over. `duplicates` lists
   each non-stacking trait found more than once, with the positions of its copies (R4, acceptance criterion 7); a stacking
   trait, or an unknown id (it is not known whether it stacks), is never listed.
+- **The planner** (`createPlanner`, `addTrait`, `clearSlot`, `clearParty`, `chooseTarget`, `undoEdit`, `redoEdit`;
+  `planner.ts`) is a `PartyHistory` and the target slot, immutable like the party, with the page holding only the current
+  one. `addTrait` puts the trait in the target and moves the target on with the strategy; a refusal is returned with its
+  reason, and a trait already in the target changes nothing. Clearing a slot makes it the target, clearing the party puts the
+  target on the first slot, and undo returns the target to the slot of the edit so that the next trait refills it; choosing a
+  target is no edit (it is not undone and keeps what can be redone). Every operation that changes nothing returns the very
+  same planner.
+- **The party panel** (web). Six creatures of three slots; the name of a creature is the creature of its Innate trait. A slot is
+  a toggle that makes it the target (`aria-pressed`, a ring and the word *Target*, named "Target slot: Creature 2 · Fused,
+  *name*"), with a button to clear it; a trait the dataset does not know is shown by its id and "Not in this dataset". Undo,
+  Redo and Clear party are `aria-disabled` when there is nothing to do, so that the focus stays on them; clearing a slot
+  moves the focus to the slot's button. Ctrl/Cmd+Z undoes and Ctrl/Cmd+Shift+Z (or Ctrl+Y) redoes anywhere but in a text
+  field. A polite live region says what changed ("Added X to Creature 1 · Innate.", "Undid: …") and, when a refused add is
+  pressed, why. The coverage (SPEC above) sits under the creatures: a missing dependency is a button that shows the traits
+  that apply it, a covered one says so; duplicates are a warning with the places of the copies.
+- **Add from the results.** Every result has "Add to *target*" (the creature and slot named). When the slot rules refuse the
+  trait for that slot the button is `aria-disabled`, stays in the tab order, and the reason is on the page under it and its
+  accessible description (acceptance criterion 5); a press then does nothing but announce the reason. A trait that is in the
+  party is marked "In party: …" with where. Until the tabs of the mobile layout (M7), where the party is stacked under the
+  list a "Go to the party" link (and "Back to the results") joins the two.
 - **Not enforced.** A slot may be filled whatever the others hold (a Fused trait with no Innate one, the same trait twice):
   the player plans in their own order (GAME_RULES R1, *Filling order*, confirmed by the owner). Duplicates of a non-stacking
   trait are reported (R4), not refused.

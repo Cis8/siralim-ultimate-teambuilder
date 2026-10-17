@@ -2,6 +2,7 @@
   import type { Highlighter, Trait } from '@atlas/core';
   import { copy } from '../copy';
   import type { KeywordActions } from '../keyword-actions';
+  import type { PartyActions } from '../party-actions';
   import ResultRow from './result-row.svelte';
   import VirtualList from './virtual-list.svelte';
 
@@ -12,11 +13,13 @@
     traits,
     highlight,
     actions,
+    party,
     suggestMatchAny,
   }: {
     traits: readonly Trait[];
     highlight: Highlighter;
     actions: KeywordActions;
+    party: PartyActions;
     /** Several keywords must all be found: with none to show, matching any of them is the way out the empty state offers. */
     suggestMatchAny: boolean;
   } = $props();
@@ -33,7 +36,7 @@
   <VirtualList {keys} estimatedHeight={ESTIMATED_ROW_HEIGHT}>
     {#snippet row(index: number)}
       {@const trait = traits[index]}
-      {#if trait !== undefined}<ResultRow {trait} {highlight} {actions} />{/if}
+      {#if trait !== undefined}<ResultRow {trait} {highlight} {actions} {party} />{/if}
     {/snippet}
   </VirtualList>
 {/if}

@@ -81,6 +81,7 @@ export { filterChips, removeFilterChip, type FilterChip } from './explore/filter
 export {
   emptyParty,
   MEMBER_INDEXES,
+  sameSlot,
   SLOT_NAMES,
   SLOT_POSITIONS,
   traitAt,
@@ -114,4 +115,15 @@ export type { Placement, SlotRule } from './party/slot-rule';
 export { createSlotRuleRegistry, SlotRuleRegistryError, type SlotRuleRegistry } from './party/slot-rule-registry';
 export { slotRules } from './party/slot-rules';
 export { firstEmptySlot, nextEmptySlot, type TargetStrategy } from './party/target-strategy';
-export { decodePartyState, encodePartyState, PARTY_PARAMS, type PartyState, type SharedParty } from './party/party-url';
+export { decodePartyState, encodePartyState, PARTY_PARAMS, type SharedParty } from './party/party-url';
+export { initialPartyState, samePartyState, type PartyState } from './party/party-state';
+export {
+  addTrait,
+  chooseTarget,
+  clearParty,
+  clearSlot,
+  createPlanner,
+  redoEdit,
+  undoEdit,
+  type Planner,
+} from './party/planner';

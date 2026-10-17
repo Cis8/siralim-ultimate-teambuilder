@@ -12,6 +12,7 @@ import {
   mode,
   openExplore,
   publishedCount,
+  results,
   rows,
   searchBox,
   side,
@@ -139,10 +140,11 @@ test.describe('explore', () => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
 
-      // The heights of the rows below are estimated until they are drawn: the bottom of the page moves as they are.
+      // The heights of the rows below are estimated until they are drawn: the bottom of the list moves as they are.
+      // Where the party is stacked under the list the bottom of the page is the party's, so it is the list that is scrolled to.
       await expect(async () => {
-        await page.evaluate(() => {
-          window.scrollTo(0, document.documentElement.scrollHeight);
+        await results(page).evaluate((list) => {
+          window.scrollTo(0, list.getBoundingClientRect().bottom + window.scrollY - window.innerHeight);
         });
         await expect(rows(page).last()).toHaveAttribute('aria-posinset', String(traits.length));
         await expect(rows(page).last()).toBeInViewport();
@@ -314,14 +316,19 @@ test.describe('explore', () => {
     test('shows the traits from the first, wherever in the list it was clicked, and moves the focus there', async ({
       page,
     }) => {
-      await openExplore(page);
+      // A list of traits that mention Weak or Vulnerable is long enough to be scrolled far down, and each side of those two
+      // keywords has traits, so that the list a click leads to is not empty.
+      await openExplore(page, './?q=weak+OR+vulnerable');
       await page.evaluate(() => {
         window.scrollTo(0, 20_000);
       });
       await expect(rows(page).first()).not.toHaveAttribute('aria-posinset', '1');
 
       // Playwright brings the token into view first, so the page is still far down the list when the click lands.
-      await rows(page).getByRole('button').first().click();
+      await rows(page)
+        .getByRole('button', { name: /^(Applies|Relies on) (Weak|Vulnerable) — / })
+        .first()
+        .click();
 
       await expect(page.getByRole('heading', { level: 2, name: 'Results' })).toBeFocused();
       expect(await page.evaluate(() => window.scrollY)).toBe(0);

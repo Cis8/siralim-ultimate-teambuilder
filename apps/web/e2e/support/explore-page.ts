@@ -3,7 +3,10 @@ import { expect, type Locator, type Page } from '@playwright/test';
 /** The count a screen reader is told; it follows the typing once it pauses. */
 export const announcedCount = (page: Page) => page.getByRole('status');
 
-export const rows = (page: Page) => page.getByRole('listitem');
+/** The results of the search; the party beside them has lists of its own. */
+export const results = (page: Page) => page.getByRole('region', { name: 'Results' });
+
+export const rows = (page: Page) => results(page).getByRole('listitem');
 
 /**
  * Opens Explore, at `address` when the test comes from a link, and waits for the first row. The traits are fetched once

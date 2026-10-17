@@ -12,15 +12,14 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M6 under way: the `core` of the planner is done (6.1-6.5), the UI is next (6.6, then 6.7).** `core/src/party/`
-  has `Party`, `slotRules`, `PartyCommand` / `PartyHistory` (`executeCommand` / `undo` / `redo`), `nextEmptySlot` and
-  `firstEmptySlot`, `partyCoverage(party, lookup)` and the address codec `decodePartyState` / `encodePartyState`
-  (`PARTY_PARAMS`; SPEC §7, §8.2, ADR-0008). `web` has no party state yet; the Party panel says "Coming soon." **Next: 6.6**
-  (`web`). The app has no way to get a `Trait` from an id yet, which `executeCommand` (it takes the trait) and
-  `partyCoverage` (a `TraitLookup`) both need: add it to what `composition-root` builds from the dataset, in `core`, not in
-  the page. The party goes in the same address as the search: generalise `explore-address` / `explore-url-writer` so that
-  one writer clears `EXPLORE_PARAMS` and `PARTY_PARAMS` and adds both codecs' output (a party edit is a `push`, as a facet
-  is), rather than a second writer. Read DESIGN.md and `docs/prototype/Main.dc.html` (party column) first.
+- **Phase 1 · M6 under way: 6.1-6.6 done, 6.7 next.** The planner works end to end: `core/src/party/` (`Planner`, history,
+  coverage, address codec; SPEC §7, §8.2, ADR-0008) and, in `web`, `party-panel` / `party-slot` / `party-coverage`, the "Add to"
+  button + "In party" marker on every result, Ctrl+Z, and one writer for the search and the party (`page-address`,
+  `page-url-writer`). **Next: 6.7** (`web`): a *Copy link* button (like `effective-query.svelte`: clipboard, "Copied", the
+  address stays on the page to select), the "not found in vX" slot (`SharedParty.datasetVersion` says what the link was made
+  on; 6.6 shows the id and "Not in this dataset") with a search for the name derived from the slug, the last party in
+  `localStorage` (try/catch every access; only when the address has no party), e2e for criterion 6 in a fresh browser context.
+  Then M7: until its tabs, the narrow layout joins the list and the party with "Go to the party" / "Back to the results" links.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
   when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). The nightly `data-refresh` works; read its report before merging.
@@ -84,6 +83,9 @@ session (after `CLAUDE.md`), update it before ending one.
   from `enter` / `popstate` / `link` (read). A navigation started while another is in flight drops the first one's history
   entry, hence the writer's queue. The lint rule `no-navigation-without-resolve` accepts `resolve()` only with `'/'` or
   `` `/?${string}` ``, and `page.url` is a read-only type: build a `URL` from its `href`.
+- e2e: `rows` is the list items of the *Results* region (the party panel has lists too). Playwright will not click a button
+  that says `aria-disabled="true"`: `click({ force: true })` is the person pressing it. A poll that waits for an address
+  parameter can be satisfied by an earlier write: wait for the value the step just wrote.
 - `rtk` is not on every machine: run `pnpm exec vitest …` directly; in PowerShell prefix `$env:PATH` with the Node 24 folder.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 
@@ -128,7 +130,7 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
 `clickKeyword`, `descriptionParts`. `web`: three columns (filters | results | party), query input, chip row, result count in
 `aria-live`, virtualised results against the window (`@tanstack/virtual-core`), keyword tokens by role shape, `<mark>`
 highlights, facet panel (`aria-pressed`), effective query + copy, empty state, and the URL kept in step with the state
-(`explore-address`, `explore-url-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
+(`page-address`, `page-url-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
 text is what is searched (`filterQuery`); a click on a token turns the other side of the keyword off, the panel does not;
 filter chips are remove-only; a pressed token is a ring, not a fill (contrast of a highlight); narrow screens stack the
 panel above the list until the bottom sheet (M7); back and forward bring back the state and start the list over.
@@ -140,10 +142,12 @@ panel above the list until the bottom sheet (M7); back and forward bring back th
 - [x] **6.4** Basic coverage (applies, relies on, missing) + party-wide non-stacking duplicates (R4). *T:* criterion 7.
 - [x] **6.5** Party codec: `[datasetVersion, 18 IDs]` as a comma list (ADR-0008, not base64url) + target; unknown IDs kept. *T:* property round-trip;
       a full party URL stays under 1,000 characters.
-- [ ] **6.6** Party panel, target selection, add from results (`aria-disabled` + visible reason), clear, undo/redo
-      (buttons, Ctrl+Z / Ctrl+Shift+Z outside text fields), "in party" marker.
-- [ ] **6.7** Share link; "not found in vX" slots with a search for the name derived from the slug; last party in
-      localStorage. *e2e:* criteria 5, 6 (fresh browser context), 7; undo/redo; axe.
+- [x] **6.6** Party panel, target selection, add from results (`aria-disabled` + visible reason), clear, undo/redo
+      (buttons, Ctrl+Z / Ctrl+Shift+Z outside text fields), "in party" marker. Also coverage + duplicates in the panel and the
+      party in the address (one writer for both, `page-address` / `page-url-writer`), the `Planner` in `core`.
+      *e2e:* `party.test.ts` (criteria 5 and 7, undo/redo, address, reload, axe).
+- [ ] **6.7** Share link (copy button); "not found in vX" slots with a search for the name derived from the slug (6.6 shows
+      the id and "Not in this dataset"); last party in localStorage. *e2e:* criterion 6 (fresh browser context).
 
 ### M7 Mobile
 - [ ] **7.1** Bottom sheet on a modal `<dialog>`. *e2e:* focus trapped, Esc closes, focus returns.

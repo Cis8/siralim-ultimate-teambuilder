@@ -111,13 +111,13 @@ test.describe('the address of Explore', () => {
   });
 
   test('keeps the parameters that are not Explore’s, and the path', async ({ page }) => {
-    await openExplore(page, './?party=abc&q=weak');
+    await openExplore(page, './?tab=abc&q=weak');
     await expect(searchBox(page)).toHaveValue('weak');
     const path = new URL(page.url()).pathname;
 
     await facet(page, 'Life').click();
 
-    await expectAddressSearch(page, '?party=abc&q=weak&class=life');
+    await expectAddressSearch(page, '?tab=abc&q=weak&class=life');
     expect(new URL(page.url()).pathname).toBe(path);
   });
 

@@ -1,7 +1,26 @@
-import type { ClickGoal, FacetKeywordKind, KeywordMode, KeywordRole, SortKey, TraitKind } from '@atlas/core';
+import type {
+  ClickGoal,
+  FacetKeywordKind,
+  KeywordMode,
+  KeywordRole,
+  MemberIndex,
+  PartyCommand,
+  SlotName,
+  SlotPosition,
+  SortKey,
+  TraitKind,
+} from '@atlas/core';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
+
+const creatureLabel = (member: MemberIndex): string => `Creature ${String(member + 1)}`;
+const slotNames = { innate: 'Innate', fused: 'Fused', artifact: 'Artifact' } as const satisfies Record<
+  SlotName,
+  string
+>;
+/** A slot as the page names it: the creature, then the slot ("Creature 2 · Fused"). */
+const slotLabel = ({ member, slot }: SlotPosition): string => `${creatureLabel(member)} · ${slotNames[slot]}`;
 
 /** What a trait does with a keyword, which the shape of its token says to the eye (DESIGN § Keyword tokens). */
 const keywordRole = {
@@ -41,7 +60,10 @@ export const copy = {
   filtersHeading: 'Filters',
   resultsHeading: 'Results',
   partyHeading: 'Party',
-  comingSoon: 'Coming soon.',
+  loadingParty: 'Loading the party…',
+  /** Where the party panel is stacked below a long list, until the tabs of the mobile layout: a way there and back. */
+  jumpToParty: 'Go to the party',
+  backToResults: 'Back to the results',
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',
@@ -91,6 +113,55 @@ export const copy = {
     backer: 'Backer trait',
     other: 'Special trait',
   } as const satisfies Record<TraitKind, string>,
+
+  creatureLabel,
+  slotNames,
+  slotLabel,
+  partyFilled: (filled: number) => `${String(filled)}/18 slots`,
+  partyToolbarLabel: 'Party actions',
+  undo: 'Undo',
+  redo: 'Redo',
+  clearParty: 'Clear party',
+  noCreatureYet: 'No creature yet',
+  emptySlot: 'Empty',
+  targetTag: 'Target',
+  unknownTrait: 'Not in this dataset',
+  /** A slot is a toggle that makes it the target; its name says which slot and what it holds. */
+  targetSlot: (at: SlotPosition, held: string | undefined) => `Target slot: ${slotLabel(at)}, ${held ?? 'empty'}`,
+  clearSlot: (at: SlotPosition, held: string) => `Clear ${slotLabel(at)} (${held})`,
+  /** The "add" button of a result: it puts the trait in the target slot. */
+  addTo: (at: SlotPosition) => `Add to ${slotLabel(at)}`,
+  inParty: (places: readonly string[]) => `In party: ${places.join(', ')}`,
+  partyAnnouncements: {
+    added: (name: string, at: SlotPosition) => `Added ${name} to ${slotLabel(at)}.`,
+    undid: (edit: string) => `Undid: ${edit}.`,
+    redid: (edit: string) => `Redid: ${edit}.`,
+  },
+  /** An edit of the party in the past tense, for the announcement of an undo or a redo. */
+  partyEdit: (command: PartyCommand) => {
+    switch (command.type) {
+      case 'place-trait':
+        return `added ${command.trait.name} to ${slotLabel(command.at)}`;
+      case 'clear-slot':
+        return `cleared ${slotLabel(command.at)}`;
+      case 'clear-party':
+        return 'cleared the party';
+    }
+  },
+  clearedSlot: (at: SlotPosition) => `Cleared ${slotLabel(at)}.`,
+  clearedParty: 'Cleared the party.',
+
+  coverageHeading: 'Coverage',
+  coverageApplies: 'Applies',
+  coverageRelies: 'Relies on',
+  coverageNothing: 'Nothing yet',
+  covered: 'covered',
+  missing: 'missing',
+  /** A dependency of the party: a button that shows the traits that could apply the keyword. */
+  dependency: (label: string, status: 'covered' | 'missing') => `${label} — ${status} — show traits that apply it`,
+  duplicatesHeading: 'Duplicate non-stacking traits',
+  duplicate: (name: string, places: readonly string[]) =>
+    `${name} (${places.join(', ')}) — only one copy has an effect`,
 
   unofficial: 'Unofficial fan project, not affiliated with Thylacine Studios.',
   dataCreditBefore: 'Trait data comes from the community ',

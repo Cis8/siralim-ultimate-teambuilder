@@ -107,6 +107,13 @@ describe('createSearchService', () => {
     expect(loaded.traitCount).toBe(7);
   });
 
+  it('gives the trait an id stands for, and nothing for an id the dataset does not know', async () => {
+    const loaded = await service();
+
+    expect(loaded.trait('b-bite')).toBe(traits[1]);
+    expect(loaded.trait('gone--from-the-sheet')).toBeUndefined();
+  });
+
   it('does not load again for a second search', async () => {
     let loads = 0;
     const repository: TraitRepository = {

@@ -2,7 +2,7 @@ import { effectiveQuery, filterQuery } from '../explore/effective-query';
 import type { ExploreState } from '../explore/explore-state';
 import { countFacets, facetVocabulary, type Facets } from '../explore/facets';
 import { sortTraits } from '../explore/sort-traits';
-import type { Trait } from '../model/trait';
+import type { Trait, TraitId } from '../model/trait';
 import { compileQuery } from '../query/evaluate';
 import { createHighlighter, type Highlighter } from '../query/highlight';
 import { parseQuery, type ParseResult } from '../query/parser';
@@ -28,6 +28,8 @@ export interface SearchOutcome {
 export interface SearchService {
   readonly datasetVersion: string;
   readonly traitCount: number;
+  /** The trait an id stands for, `undefined` when the dataset does not know it: a `TraitLookup` for the party. */
+  trait(id: TraitId): Trait | undefined;
   /** Any state is searchable: whatever the query bar holds that does not make a query is reported in `query.diagnostics`. */
   search(state: ExploreState): SearchOutcome;
 }
@@ -43,9 +45,11 @@ export async function createSearchService(
   const { datasetVersion, traits } = await repository.load();
   const index = createTraitIndex(traits);
   const vocabulary = facetVocabulary(index, taxonomy);
+  const byId = new Map(traits.map((trait) => [trait.id, trait]));
   return {
     datasetVersion,
     traitCount: traits.length,
+    trait: (id) => byId.get(id),
     search: (state) => {
       const query = parseQuery(state.query);
       const filters = filterQuery(state, vocabulary.classNames);

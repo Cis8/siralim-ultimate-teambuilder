@@ -72,6 +72,22 @@ the token colours are only guaranteed on the page background.
 - **Effective query**: `--text` mono, wrapping (no scroll area), a quiet *Copy query* button, and "Copied" in `--status-good`
   for 2.5 s in a polite live region (not `role="status"`: the result count owns that).
 
+### Party panel
+- **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
+  the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a
+  `--accent-border` outline, and the word *Target* in `--accent` (not colour alone). An empty slot says "Empty" in `--text-faint`;
+  a trait the dataset does not know shows its id in `--status-warn` and "Not in this dataset". The clear button is an icon with
+  an accessible name; the accessible name of the slot says which slot and what it holds ("Target slot: Creature 2 · Fused, …").
+- **Toolbar**: the count (`3/18 slots`, mono), *Undo*, *Redo*, *Clear party*. They are `aria-disabled`, not `disabled`, when there
+  is nothing to do, so that the focus is not lost when the last undo is done.
+- **Add button** on a result: `--accent-surface` with `--accent-border`, "Add to Creature 1 · Innate"; its accessible name ends
+  with the trait's name ("+" is decoration). Refused for the target slot, it is `--surface-2` with `--text-faint`, stays in the
+  tab order (`aria-disabled`), and the reason sits under it in `--status-crit` with an icon, tied to it with
+  `aria-describedby`. "In party: Creature 1 · Innate" below is `--status-good` with a check.
+- **Coverage**: chips in the colour of the keyword's kind; a dependency is a button with an icon and the word *covered*
+  (`--status-good`) or *missing* (`--status-crit`, outlined); duplicates are `--status-warn` with an icon, one line per trait
+  with the places of its copies.
+
 ### Result list
 The page scrolls, not the list: results sit among other panels and stack under the filters on narrow screens. The list
 is virtualised against the window (rows in the flow of the page between two spacers; `aria-setsize` / `aria-posinset` say

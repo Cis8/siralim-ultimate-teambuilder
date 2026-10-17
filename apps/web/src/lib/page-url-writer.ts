@@ -1,5 +1,5 @@
-import type { ExploreState } from '@atlas/core';
-import { exploreAddress } from './explore-address';
+import { pageAddress } from './page-address';
+import type { PageState } from './page-state';
 
 /** How long the query must stay as typed before the address follows it. */
 export const TYPING_PAUSE_MS = 400;
@@ -15,32 +15,37 @@ export interface AddressBar {
 }
 
 /**
- * Keeps the address in step with the Explore state (SPEC §7, ADR-0005). It only writes: the page reads an address when it
+ * Keeps the address in step with the state of the page, the search and the party (SPEC §7, ADR-0005). It only writes: the page reads an address when it
  * is opened and when the browser arrives at another one.
  */
-export interface ExploreUrlWriter {
+export interface PageUrlWriter {
   /**
    * The query bar changed. Typing is a stretch of one history entry: the address is replaced once the text has stayed as
    * it is for `TYPING_PAUSE_MS`, which also keeps a browser's limit on how often the history may be changed far away.
    */
-  typed(state: ExploreState): void;
-  /** A facet, a chip, a click on a keyword or the sort changed: a new history entry, so that back undoes just that. */
-  chosen(state: ExploreState): void;
+  typed(state: PageState): void;
+  /** A facet, a chip, a click on a keyword, the sort or an edit of the party: a new history entry, so that back undoes just that. */
+  chosen(state: PageState): void;
+  /**
+   * Something changed that is in the address but is no step of its own (the slot results go to): the entry is replaced,
+   * at once, after the text typed so far has been written to it.
+   */
+  refined(state: PageState): void;
   /** The browser went to `address` by itself (back, forward, a link): what was waiting to be written is out of date. */
   arrived(address: URL): void;
 }
 
-export function createExploreUrlWriter(bar: AddressBar, pauseMs: number = TYPING_PAUSE_MS): ExploreUrlWriter {
+export function createPageUrlWriter(bar: AddressBar, pauseMs: number = TYPING_PAUSE_MS): PageUrlWriter {
   // Where the history will be once what was asked has been done; read from the bar when first needed, as it is not there
   // when the page is prerendered.
   let address: URL | undefined;
-  let typing: { readonly state: ExploreState; readonly timer: ReturnType<typeof setTimeout> } | undefined;
+  let typing: { readonly state: PageState; readonly timer: ReturnType<typeof setTimeout> } | undefined;
   // One navigation at a time: a router drops the one in flight when another starts, and with it a history entry.
   let writes: Promise<void> = Promise.resolve();
 
-  function write(state: ExploreState, entry: HistoryEntry): void {
+  function write(state: PageState, entry: HistoryEntry): void {
     const from = (address ??= bar.current());
-    const next = exploreAddress(from, state);
+    const next = pageAddress(from, state);
     if (next.href === from.href) return;
     address = next;
     writes = writes
@@ -67,6 +72,10 @@ export function createExploreUrlWriter(bar: AddressBar, pauseMs: number = TYPING
     chosen(state) {
       settleTyping();
       write(state, 'push');
+    },
+    refined(state) {
+      settleTyping();
+      write(state, 'replace');
     },
     arrived(arrivedAt) {
       if (typing !== undefined) clearTimeout(typing.timer);
