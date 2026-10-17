@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { CONTROLS } from './support/controls';
 import { publishedDataset } from './support/dataset';
 import {
   chips,
@@ -18,8 +19,6 @@ import { addButton, addToParty, findRow, partyPanel, plainTraits, withUniqueName
 
 /** What a finger needs. */
 const MIN_TARGET = 44;
-
-const CONTROLS = 'button, a[href], input, select, textarea, summary, [role="button"], [role="link"], [role="tab"]';
 
 /**
  * A control inside a sentence has the height of its line and needs no more (WCAG 2.5.8, the Inline exception): the keywords

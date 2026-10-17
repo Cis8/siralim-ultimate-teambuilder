@@ -57,6 +57,12 @@
     box-shadow: 0 0 0 2px var(--accent-border);
   }
 
+  /* The outline of a role (below) is more specific than the page's focus ring and would stand in for it: the ring is put back. */
+  .keyword:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
   [data-kind='debuff'] {
     color: var(--kw-debuff);
   }

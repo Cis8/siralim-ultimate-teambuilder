@@ -43,6 +43,8 @@ export const copy = {
   appTagline: 'Siralim Ultimate trait search and party planner',
   pageTitle: 'Trait Atlas — Siralim Ultimate trait search and party planner',
   skipToContent: 'Skip to content',
+  /** After the query, before the filters: a keyboard passes the filters button by button, a hundred and more of them. */
+  skipFilters: 'Skip filters',
   exploreHeading: 'Explore traits',
   loadingTraits: 'Loading the traits…',
   traitsFailed: 'The trait data could not be loaded. Check your connection and reload the page.',

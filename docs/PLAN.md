@@ -12,10 +12,12 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8 (hardening): 8.1 and 8.2 are done, 8.3 is next.** 8.3: keyboard-only e2e walkthrough (criterion 8), contrast
-  test of the DESIGN tokens on every surface they are used on, screen-reader checklist for the owner. Then 8.4 (credits,
-  README, criteria-to-tests table).
+- **Phase 1 · M8 (hardening): 8.1–8.3 are done, 8.4 is next and closes the phase:** final credits (ask the owner to confirm the
+  authors' names first), README, the table that maps each acceptance criterion to its test, ROADMAP ticks. When 8.4 is on
+  `main`, M8 and Phase 1 are done: ask the owner before starting Phase 2.
+  Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong.
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
+  A control that draws an outline of its own needs a `:focus-visible` rule, or `keyboard.test.ts` names it (no 2 px ring).
   Anything that changes the layout between the prerendered page and the loaded one (a line that appears, a layout JS decides)
   counts as a layout shift: Lighthouse CI fails above 0.1. Decide it in CSS, or hold the room.
 - Open for the owner, none blocking: GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a trigger;
@@ -105,6 +107,11 @@ session (after `CLAUDE.md`), update it before ending one.
   the LCP (3.0 s, score 0.77) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and 0.035 of
   layout shift is the meta line, 32 px before the traits and 71 px after on a phone (the sort wraps). To see what moves, record
   `layout-shift` entries (`sources` has the rects before and after) under a throttled Playwright page.
+- Keyboard e2e (`support/keyboard.ts`): Safari's tab key skips links (a setting), so WebKit does not count a link as missed;
+  WebKit scrolls a focused control into view after the key press, so the walk waits two frames before it measures; start
+  a walk on a page that was only opened (a field filled earlier is where the tab key starts from).
+- Vitest does not process CSS: an import of a stylesheet, `?raw` too, is an empty string. The web project lists `tokens.css` in
+  `css.include` (`vitest.config.ts`); web code may not import `node:fs` (boundary rule), so a test cannot read it that way.
 - `vitest bench` (Vitest 5): `bench` is a fixture of `test` in a `*.bench.ts` file (`test.each` does not hand it over: loop);
   `vitest` alone ignores those files; `pnpm bench` needs `--reporter=verbose` to print the table.
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
@@ -187,6 +194,10 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       the traits load, the filters column is dropped by CSS under 700 px, and the fonts are `font-display: optional`
       (`styles/fonts.css`; DESIGN § Typography). Now 0.93 and 0.035. The runner (Linux) measured 0.139 where Windows said 0.036:
       the fallback font there is wider than Plex and the swap moved the page three times, so judge a layout shift on CI.
-- [ ] **8.3** Keyboard-only e2e walkthrough (criterion 8); contrast test of the DESIGN tokens on every surface they use;
-      screen-reader checklist for the owner.
+- [x] **8.3** `keyboard.test.ts` (criterion 8): Tab walks of Explore, the Party tab and the open sheet (every control reached,
+      a 2 px ring, nothing under a fixed bar) and two flows with no pointer. `contrast.test.ts`: every text token on every
+      surface, under the match highlight, and the 3:1 lines. `docs/SCREEN_READER_CHECKLIST.md` for the owner. Deviations: the
+      walks found three faults and the slice fixed them: a keyword that relies on or guards against something lost its focus
+      ring (its role outline outranked the page's ring), the sheet opened with the focus on an unnamed scrolled `div` in Chrome
+      (now its title), and the filters took 124 presses of Tab to pass (new "Skip filters" link, from 700 px).
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.

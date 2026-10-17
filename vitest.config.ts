@@ -15,7 +15,15 @@ export default defineConfig({
           benchmark: { suppressExportGetterWarnings: true },
         },
       },
-      { test: { name: 'web', root: 'apps/web', include: ['src/**/*.test.ts'] } },
+      {
+        test: {
+          name: 'web',
+          root: 'apps/web',
+          include: ['src/**/*.test.ts'],
+          // Vitest hands every stylesheet over empty, `?raw` ones too: the contrast test reads the tokens as text.
+          css: { include: [/tokens\.css/] },
+        },
+      },
       { test: { name: 'tools', root: 'tools', include: ['**/*.test.ts'] } },
     ],
   },

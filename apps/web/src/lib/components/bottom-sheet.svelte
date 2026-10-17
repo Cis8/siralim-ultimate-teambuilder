@@ -28,11 +28,16 @@
   const uid = $props.id();
   const titleId = `${uid}-title`;
   let dialog = $state<HTMLDialogElement>();
+  let heading = $state<HTMLHeadingElement>();
 
   $effect(() => {
     if (dialog === undefined) return;
-    if (open && !dialog.open) dialog.showModal();
-    else if (!open && dialog.open) dialog.close();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // Left to the browser, the focus goes to the first thing it can scroll or press: the scrolled panel itself in Chrome,
+      // the first facet in Safari. The title is the same stop everywhere, and says where the person is.
+      heading?.focus({ preventScroll: true });
+    } else if (!open && dialog.open) dialog.close();
   });
 </script>
 
@@ -48,7 +53,7 @@
     if (event.target === event.currentTarget) event.currentTarget.close();
   }}
 >
-  <h2 id={titleId}>{title}</h2>
+  <h2 id={titleId} tabindex="-1" bind:this={heading}>{title}</h2>
   <div class="body">{@render children()}</div>
   <div class="foot">
     <p class="visually-hidden" aria-live="polite">{status}</p>
@@ -94,6 +99,11 @@
     color: var(--text-strong);
     font-size: 17px;
     font-weight: 600;
+  }
+
+  /* It has the focus when the sheet opens, and is as wide as the sheet: the ring goes inside, where the sheet does not clip it. */
+  h2:focus-visible {
+    outline-offset: -2px;
   }
 
   /*

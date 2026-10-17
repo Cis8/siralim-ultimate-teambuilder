@@ -105,6 +105,12 @@
     resultsHeading?.focus({ preventScroll: true });
   }
 
+  /** The skip link: the focus goes to the head of the results, the next stop of the tab key is the first trait. */
+  function skipFilters(event: MouseEvent): void {
+    event.preventDefault();
+    resultsHeading?.focus();
+  }
+
   /**
    * A filter or a chip changed beside a list that the page is scrolled into: the new list starts over, so the page goes
    * back to where it begins. The focus stays on the control that was pressed, and a page that is not past the list (the
@@ -371,6 +377,10 @@
         {/if}
       </div>
       {#if loaded}<EffectiveQuery query={loaded.outcome.effectiveQuery} />{/if}
+      <!-- Last of the query section, so that the tab key meets it before the filters (from 700 px: below it they are a sheet). -->
+      {#if loaded}
+        <a class="skip-filters" href="#results-heading" onclick={skipFilters}>{copy.skipFilters}</a>
+      {/if}
     </div>
 
     <div class="columns" {@attach trackViewportOffset}>
@@ -453,11 +463,28 @@
 
 <style>
   .query-section {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
     padding: 16px 16px 12px;
     border-bottom: 1px solid var(--border);
+  }
+
+  /* Out of sight until the tab key reaches it, then over the head of the filters, as the skip link of the page is over the header. */
+  .skip-filters {
+    position: absolute;
+    top: -100px;
+    left: 16px;
+    z-index: 10;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    background: var(--surface-3);
+    color: var(--text-strong);
+  }
+
+  .skip-filters:focus {
+    top: calc(100% + 4px);
   }
 
   .meta {
@@ -605,6 +632,10 @@
   @media (max-width: 699px) {
     .columns {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .skip-filters {
+      display: none;
     }
   }
 

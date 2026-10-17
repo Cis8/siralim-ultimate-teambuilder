@@ -42,6 +42,7 @@ use the fallback `#8fa1b3`.
 - `font-display: optional`: a face that has not arrived as the page is first drawn waits for the next visit (the system font
   is shown meanwhile). Swapping it in re-flows the text and moves the page, much on Linux and Android (layout shift 0.4 in a
   test with a wide fallback); a first visit on a slow link may therefore not show Plex. A page must not depend on Plex metrics.
+  The owner accepted this (2026-10-17): the system font on a first visit is fine, a page that jumps is not.
 - Base 14 px desktop, 14–15 px mobile; trait names 15 px semibold; descriptions 13.5–14.5 px, line-height 1.6.
 
 ## Components (build once, reuse)
@@ -128,7 +129,15 @@ at the top right beside the name (as in `Mobile.dc.html`; its words are not draw
 ## Accessibility (WCAG 2.2 AA)
 - Real elements: `button`, `a[href]`, `input` + `label`. No click handlers on `div`/`span`.
 - Visible focus ring (`--accent`, 2 px). Bars fixed to the foot of the window must not hide a focused control: the root's
-  `scroll-padding-bottom` is their height (`--bars-height`, base.css).
+  `scroll-padding-bottom` is their height (`--bars-height`, base.css). A component that draws an outline of its own (the role of
+  a keyword token) must put the ring back for `:focus-visible`, or its outline stands in for it.
+- **Keyboard** (criterion 8). `keyboard.test.ts` presses Tab through Explore, the Party tab and the open filters sheet, and fails
+  for a control the tab key never reaches (arrow keys reach the unselected tabs), one that shows no 2 px ring, or one under a
+  fixed bar; and it does a search, an add, Undo / Redo / Clear and a filter without a pointer. The filters are over a hundred
+  buttons, so a link after the query, "Skip filters" (visible on focus, from 700 px), moves to the head of the results. A sheet
+  puts the focus on its title when it opens. Safari's tab key skips links unless its settings say otherwise: the test does not
+  count a link as missed there.
+- **Screen reader**: a person's check, `SCREEN_READER_CHECKLIST.md`.
 - **Touch targets** (`pointer: coarse`, which the Pixel 7 and iPhone 14 e2e projects match): every `button`, `a`, `input`,
   `select` and tab is at least 44 × 44 px (WCAG 2.5.8 asks 24), a checkbox counting with its label. `touch-targets.test.ts`
   measures them on Explore (with a query and a filter on), in the open filters sheet and on the Party tab, and names the
@@ -136,7 +145,12 @@ at the top right beside the name (as in `Mobile.dc.html`; its words are not draw
   target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
   the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the
   line beside it.
-- Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). Check `--text-faint` on every surface it is used on.
+- Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). `contrast.test.ts` reads `tokens.css` and checks every text colour on every surface
+  (`--bg`, `--bg-bar`, `--surface-1…3`, `--accent-surface`), the text of a description under the match highlight (on `--bg`, where
+  the descriptions are: a text colour that passes there can fail on a lighter surface, as `--text-muted` does on `--surface-2`),
+  and the lines that show a state or frame the search field (`--accent`, `--accent-border`) at 3:1 (WCAG 1.4.11). `--border` and
+  `--border-strong` are dividers and the frame of buttons that name themselves in words: they carry no information and are not
+  held to 3:1. A new token or a new surface goes in that test's lists.
 - Combobox per ARIA APG; result count in an `aria-live="polite"` region; bottom sheets are dialogs with focus trap and
   return focus on close; tabs use `tablist`/`tab`/`tabpanel`; the coverage matrix is a real table (or ARIA table roles).
 - `aria-pressed` on toggles, `aria-current` on nav and breadcrumbs.
