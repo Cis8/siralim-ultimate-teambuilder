@@ -3,7 +3,7 @@
 Three phases, each shippable on its own. A phase is done only when its exit criteria pass; then the next starts.
 Milestones ship as small commits on `main` (ADR-0007), sliced in `docs/PLAN.md`. Tick them off here when complete.
 
-**Current phase: 1**
+**Current phase: 1 closing (only slice 8.4 is open, deferred by the owner) and 2 started on the owner's go-ahead (2026-10-18)**
 
 ---
 
@@ -35,8 +35,8 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
       that shows the event forms no keyword covers, the patterns for the buff and debuff forms it found (8b.10), and *Who acts*
       with several choices at once (8b.11).
 - [ ] **M8 Hardening.** Performance budget check on the full dataset, Lighthouse CI budgets, a11y pass (keyboard-only
-      walkthrough, screen-reader smoke test), footer credits + "unofficial" label, README. Slice 8.4 (credits, README) waits
-      for M8b.
+      walkthrough, screen-reader smoke test), footer credits + "unofficial" label, README. Slices 8.1–8.3 are done; 8.4 (credits, README,
+      the criteria-to-tests table) is the only open one, deferred by the owner while Phase 2 starts.
 
 ### Acceptance criteria
 1. `(vulnerable OR weak) -stack:no` returns exactly the traits mentioning Vulnerable or Weak that stack.
@@ -59,23 +59,44 @@ All milestones merged, acceptance criteria covered by automated tests where poss
 ## Phase 2 — Smart search + Synergy explorer
 
 Prototypes: `SearchBar.dc.html`, `MobileSearch.dc.html`, `Synergy.dc.html`, `MobileSynergy.dc.html`.
+Detailed slices: `docs/PLAN.md` (*Phase 2 — slices*); architecture: ADR-0010 (query assist), ADR-0011 (Synergy routes).
+Opened before Phase 1 closed, on the owner's go-ahead (PLAN D25). Autocomplete, diagnostics and the editor live in the existing
+Explore search bar (PLAN D14); only Synergy is a new page.
 
 ### Milestones
-- [ ] **M9 Diagnostics.** Lint-rule registry with all rules in QUERY_LANGUAGE §5, fixes as text edits, closest-match helper.
-- [ ] **M10 Autocomplete.** Context detection, providers per field, result-count preview, ghost text, keyboard + ARIA combobox.
-- [ ] **M11 Editor.** Syntax-coloured input with error underlines, caret preserved after edits, explain line,
-      recent + saved searches (local storage, export/import as JSON), mobile syntax toolbar.
+Build order (PLAN D15): **M9 → M10 → M12 → M13 → M11**. The numbers do not change; the editor goes last because it is the
+riskiest and needs the owner's iPhone.
+- [ ] **M9 Diagnostics.** Lint-rule registry with all rules in QUERY_LANGUAGE §5 (errors and warnings), fixes as text edits,
+      closest-match helper, field value domains, issues shown inside the search field with a one-click fix and the caret kept.
+- [ ] **M10 Autocomplete.** Context detection, providers per field, result-count preview, ghost text, keyboard + ARIA combobox
+      (Tab never captured on a plain focus), the assist layer lazy-loaded over the same `<input>`.
 - [ ] **M12 Relations engine (core).** `enabledBy`, `enables`, link scores, alternatives, shared triggers, same family,
-      random-debuff sources (GAME_RULES R5), keyword view stats + verdicts. Unit-tested on fixtures.
+      random-debuff sources (GAME_RULES R5), conditional sources (R10), keyword view stats + verdicts. Buffs, debuffs and effects
+      only: no event is a dependency (R12; PLAN D16). Unit-tested on the real sheet.
 - [ ] **M13 Synergy UI.** By trait (lanes, trail, re-centre, add to party, artifact-eligible filter), by keyword
-      (appliers/users, verdict, co-applied), deep links (`/synergy/<traitId>`, `/synergy/kw/<key>`), mobile tabs.
+      (appliers/users, verdict, co-applied), deep links (`/synergy/<traitId>`, `/synergy/kw/<slug>`), mobile tabs; routes with a
+      shared party session (ADR-0011).
+- [ ] **M11 Editor.** Syntax-coloured input with error underlines, caret preserved after edits, explain line ("Reads as"),
+      recent + saved searches (local storage, export/import as JSON), mobile search sheet with a syntax toolbar.
 
 ### Acceptance criteria
 1. `clas:life (weak OR snared` shows two errors with working one-click fixes; after both fixes the query parses cleanly.
 2. Typing `applies:vul` suggests `applies:vulnerable` with its result count; Tab accepts it; caret ends after it.
 3. Screen readers announce the active suggestion and the result count.
-4. For a trait that uses Weak and Vulnerable, a trait applying both appears once with “×2 links”.
+4. For a trait that uses Weak and Vulnerable, a trait applying both appears once with “×2 links” (once per side, in a lane of its own).
 5. Random-debuff traits appear in debuff lanes labelled “random” and ranked last.
+6. Keyboard and axe: the field is no trap (Tab leaves it after a plain focus; type, ArrowDown, Tab accepts); issues and suggestions
+   work without a pointer; axe reports nothing on Explore with the popup and the issues open and on every Synergy view.
+7. Assist latency: lint, suggestions and counts, timed as `atlas:assist`, stay under 16 ms at p95 with the CPU slowed down 4× on the
+   production build, beside the search budget (SPEC §9).
+8. Size: initial JS stays at or under 150 kB gzipped; the assist chunk and the Synergy route are measured (`lazyJs`, `totalJs`).
+9. Deep links: `/synergy/<traitId>` and `/synergy/kw/<slug>` open directly, Back and Forward work, an unknown id is a state, not an error.
+10. History: recent and saved searches survive a reload; export, clear, import restores them; a corrupt file changes nothing.
+11. Consistency: a keyword's appliers and users in Synergy equal the counts in the Explore facet panel.
+
+### Exit criteria
+All milestones merged, acceptance criteria covered by automated tests where possible, deployed on GitHub Pages; the owner's device
+checks (mobile search sheet, screen-reader rows for the combobox, issues, lanes and trail) done or accepted. Ask the owner before Phase 3.
 
 ---
 
