@@ -78,6 +78,9 @@ export {
 } from './suggest/suggestion-registry';
 export { suggestionRegistry } from './suggest/suggestion-providers';
 export { suggestQuery } from './suggest/suggest-query';
+export { acceptSuggestion } from './suggest/accept-suggestion';
+export { ghostText } from './suggest/ghost-text';
+export { withCounts, type CountedSuggestion } from './suggest/with-counts';
 export type {
   BuffEntry,
   DebuffEntry,

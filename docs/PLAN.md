@@ -13,11 +13,11 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1 and 10.2 are done and the next slice is 10.3**
-  (`acceptSuggestion`, `ghostText`, `withCounts` over `suggestQuery`, whose `Suggestion` is `{ kind, insert, detail, complete,
-  replace }`: accepting is an edit of `replace`; the count is `countMatches(state, <the text after accepting>)` for the `complete` ones
-  only, D18), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's first part (issues, `applyFieldEdit`,
-  `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it lazy and adds `lazyJs` / `totalJs` to the size budget.
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1–10.3 are done and the next slice is 10.4** (the
+  `Combobox` over a pure `combobox-state.ts`, and `search-shortcut.ts`; it renders `CountedSuggestion`s from `suggestQuery` → `withCounts`,
+  and Tab / Enter apply `acceptSuggestion`'s `TextEdit` through `applyFieldEdit`), in the order M10 → M12 → M13 → M11 (D15). The field
+  already has the assist's first part (issues, `applyFieldEdit`, `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it
+  lazy and adds `lazyJs` / `totalJs` to the size budget.
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -315,11 +315,15 @@ the offers per term first, then defer the counts (ADR-0010).
       on `free` (an operator typed whole offers nothing: Tab on `weak OR` must not turn it into a trait); the choices offer their
       canonical value (`none` is accepted, not offered). A generic `SuggestionProvider<K>` was not assignable to a
       list of them (the variance of `K` is unmeasurable through `Extract`), hence the constructor that narrows with a type guard.
-- [ ] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → {text, caret}`: replaces `context.replace` (the word under the
-      caret whole), adds one space unless a bare field, `)` or a blank follows, caret after it (an insert that touches a word on its
-      left, as after `|` or a closing quote, needs a blank before it too: decide and test it here); `ghostText` only when the top item starts with what
-      was typed and the caret is at the end; `withCounts` asks `countMatches` for complete items only (D18). *T:* accepts mid-string,
-      `-` kept, quoting, criterion 2's core half (`applies:vul` → `applies:vulnerable`, caret after).
+- [x] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → TextEdit` over `suggestion.replace`; `ghostText(source, caret,
+      suggestion?) → string` (empty = none); `withCounts(source, suggestions, count) → CountedSuggestion[]` (`count` only on the `complete`
+      ones, over the text after accepting; D18). Rules in QUERY_LANGUAGE §6. *T:* a table of (text, caret) → (text, caret) cases through
+      the real `suggestQuery`, mutation-checked; on the real sheet, every accepted suggestion finds traits and lints clean, the ghost is
+      what Tab writes, and each count equals `search(...)` within filters (`assist-acceptance`).
+      Deviations: the result is a `TextEdit`, not `{text, caret}`, so a fix and an accept reach the field the same way (`applyFieldEdit`
+      already takes one; the caret is `caretAfterEdit`'s). A blank that follows is not skipped over: the caret stays where the word ended
+      (the cost: an operator accepted before an existing blank has the caret before it). An operator before `)` gets its blank, a finished
+      term does not. A bare field takes the word that follows it as its value.
 - [ ] **10.4** Combobox. A reusable `Combobox` (APG editable combobox with list: `role=combobox`, `aria-expanded` / `aria-controls` /
       `aria-activedescendant`, options with ids, a pointer pick does not take the focus) over a pure `combobox-state.ts`: it opens on
       input or ArrowDown; **no option is active until the person types or uses the arrows, so Tab is never captured on a plain focus**

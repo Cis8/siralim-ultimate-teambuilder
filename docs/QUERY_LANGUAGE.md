@@ -349,9 +349,28 @@ are what was typed, and the rest is what was probably meant. Writing a candidate
 more than finding it, so a provider asks `bestFits` of a long list (1,780 trait names) and writes out only the first nine of each place.
 On v2.0 the worst case (`a`, `e`) takes about 0.2 ms.
 
-Each complete suggestion shows the **result count** it would produce. Max 9 items. Accepting replaces the token
-(adds a trailing space unless it is a bare field). Top suggestion is shown as ghost text after the caret; Tab accepts.
-Keyboard: ↑/↓ move, Tab/Enter accept, Esc closes; `/` focuses search from anywhere (not while typing in another input).
+**Accepting** (`acceptSuggestion(source, suggestion)`, PLAN 10.3) gives the `TextEdit` that takes the place of `suggestion.replace` with
+`insert`: the page applies it with `applyEdit` (in the field, `applyFieldEdit`) and `caretAfterEdit` puts the caret after what was written,
+the blank included. Text outside the span stays as typed. The blanks:
+- *After.* One is added, to start the next term from, **unless** a blank follows already (the caret then stays before it, where the word
+  ended: the person was editing that word); the suggestion is a **bare field** (`kind` `field`, also the fix that mends the name of a
+  field and leaves its value: `clas:life` → `class:life`; the value is typed there, and a word that follows becomes it); or a **finished
+  term** stands before the `)` that closes its group (`(a:vul|)`). An operator is not finished, so it gets its blank before a `)` too.
+- *Before.* One is added when the character before the span is anything but a blank, `(` or `-`: after a `)` or a closing quote a new word
+  would run into it (`(weak) OR`, not `(weak)OR`). A negation stays in front of the word and gets no blank.
+
+**Ghost text** (`ghostText(source, caret, suggestion)`): the rest of the suggestion Tab would accept, in grey after the caret. Only when
+the caret is at the end of the text, something was typed, and the suggestion begins with it, letter case aside (`a:VUL` goes on with
+`nerable`, and Tab writes `a:vulnerable`). `we` shows none (the top suggestion, `applies:weak`, is another word), nor does a name typed
+without the quote the suggestion needs, nor the fix of a misspelt field.
+
+**Counts** (`withCounts(source, suggestions, count)`): each *complete* suggestion (an operator and a bare field are not searched for) is
+told how many traits it finds, as `count`. The question is the whole query the bar would hold once it is accepted, so the number is what
+Enter would show, **within the active filters** (D18): the page passes `(query) => service.countMatches(state, query)`. Order and every other
+field of a suggestion stay as they were. Each count is one search, so at most nine per list: if they ever hold up `atlas:assist`, the page
+draws the list first and counts after (ADR-0010).
+
+Max 9 items. Keyboard: ↑/↓ move, Tab/Enter accept, Esc closes; `/` focuses search from anywhere (not while typing in another input).
 ARIA: combobox pattern (`role=combobox` input, `listbox`/`option`, `aria-activedescendant`).
 
 ## 7. Explain (Phase 2)

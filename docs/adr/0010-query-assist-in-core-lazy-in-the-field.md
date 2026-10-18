@@ -29,7 +29,7 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
   - **Value domains** on `FieldDefinition` (`choices` | `vocabulary` | `keyword`, with a matching mode) and `describe(value)`:
     evaluation, lint, suggestions and the explanation read **one table** per field, so they cannot disagree.
   - **Suggestions**: a context detector over `(source, caret)`, a registry of providers per context, ranking, `acceptSuggestion`
-    (the new text and the caret), `ghostText`, and counts from `SearchService.countMatches` (PLAN D18).
+    (a `TextEdit`, like a fix: the page applies both the same way), `ghostText`, and `withCounts` over `SearchService.countMatches` (PLAN D18).
   - `explainQuery` (a visitor shaped like `serialise`) and `syntaxSegments` (contiguous coloured segments whose concatenation is the
     source), `SearchHistory` with a JSON export and import that never throws.
 - **`web` has one assist layer, loaded lazily and attached to the same `<input>`.** `query-input.svelte` keeps the plain input; the

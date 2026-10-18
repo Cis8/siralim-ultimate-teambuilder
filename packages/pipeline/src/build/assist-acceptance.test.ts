@@ -1,11 +1,14 @@
 import {
+  acceptSuggestion,
   applyEdit,
   canHaveActor,
+  caretAfterEdit,
   createLintContext,
   createMemoryTraitRepository,
   createSearchService,
   DATASET_SCHEMA_VERSION,
   fieldRegistry,
+  ghostText,
   hasActor,
   hasRole,
   initialExploreState,
@@ -18,6 +21,7 @@ import {
   suggestQuery,
   taxonomy,
   tokenize,
+  withCounts,
   type ExploreState,
   type KeywordFilter,
   type LintContext,
@@ -293,19 +297,26 @@ describe('the query assist on the compendium v2.0', () => {
   describe('the suggestions (QUERY_LANGUAGE §6)', () => {
     const suggest = (source: string) => suggestQuery(source, source.length, context);
     const found = (source: string): number => service.countMatches(initialExploreState, source);
-    const accept = (source: string, { replace, insert }: Suggestion): string =>
-      applyEdit(source, { span: replace, text: insert });
+    const accept = (source: string, suggestion: Suggestion): string =>
+      applyEdit(source, acceptSuggestion(source, suggestion));
     /** What the dataset itself gives to type: a term of these finds a trait, which a keyword may not (no trait applies it). */
     const FINDS_TRAITS: readonly SuggestionKind[] = ['class', 'family', 'creature', 'trait', 'text'];
     const vocabularyFields = fieldRegistry.fields.flatMap((field) =>
       field.values?.kind === 'vocabulary' ? [{ name: field.name, column: field.values.column }] : [],
     );
 
-    it('suggests applies:vulnerable for applies:vul, which finds traits (criterion 2)', () => {
+    it('suggests applies:vulnerable for applies:vul, which finds traits, and Tab writes it with the caret after it (criterion 2)', () => {
       const [first] = suggest('applies:vul');
 
       expect(first).toMatchObject({ kind: 'debuff', insert: 'applies:vulnerable', complete: true, replace: [0, 11] });
       expect(found('applies:vulnerable')).toBeGreaterThan(0);
+      if (first === undefined) return;
+
+      const edit = acceptSuggestion('applies:vul', first);
+      const text = applyEdit('applies:vul', edit);
+      expect(text).toBe('applies:vulnerable ');
+      expect(caretAfterEdit('applies:vul'.length, edit)).toBe(text.length);
+      expect(ghostText('applies:vul', 'applies:vul'.length, first)).toBe('nerable');
     });
 
     it('offers every entry of the dataset, once its start is typed, under the field that looks in its column', () => {
@@ -321,26 +332,77 @@ describe('the query assist on the compendium v2.0', () => {
       }
     });
 
-    it('offers only terms that find a trait and lint clean for the start of an entry, under its field and with none', () => {
+    it('offers only terms that find a trait and lint clean for the start of an entry, and shows the rest of the top one as grey text', () => {
       let accepted = 0;
+      let shown = 0;
       for (const { name, column } of vocabularyFields) {
         for (const entry of service.vocabulary[column].filter((_, at) => at % 15 === 0)) {
           for (const head of ['', `${name}:`]) {
             for (const length of [2, 4]) {
               // The start of a word is a word that some trait has, but a start that ends in a blank is not typed that way.
               const typed = `${head}${/\s/.test(entry.slice(0, length)) ? '"' : ''}${entry.slice(0, length)}`;
-              for (const suggestion of suggest(typed).filter(({ kind }) => FINDS_TRAITS.includes(kind))) {
+              const offered = suggest(typed);
+              for (const suggestion of offered.filter(({ kind }) => FINDS_TRAITS.includes(kind))) {
                 const applied = accept(typed, suggestion);
 
                 expect(found(applied), `${typed} → ${applied}`).toBeGreaterThan(0);
                 expect(lintQuery(applied, context), `${typed} → ${applied}`).toEqual([]);
                 accepted += 1;
               }
+              // What the grey text shows is what Tab writes, as far as the person has typed it.
+              const [top] = offered;
+              const ghost = top === undefined ? '' : ghostText(typed, typed.length, top);
+              if (top !== undefined && ghost !== '') {
+                expect(
+                  accept(typed, top)
+                    .toLowerCase()
+                    .startsWith((typed + ghost).toLowerCase()),
+                  typed,
+                ).toBe(true);
+                shown += 1;
+              }
             }
           }
         }
       }
       expect(accepted).toBeGreaterThan(3000);
+      expect(shown).toBeGreaterThan(100);
+    });
+
+    it('counts each finished suggestion as the traits that Enter would show once it is accepted, within the filters (D18)', () => {
+      const unfiltered = initialExploreState;
+      const filtered: ExploreState = { ...initialExploreState, classes: ['death'], doesNotStack: true };
+      const counts = new Set<number>();
+      let counted = 0;
+      for (const state of [unfiltered, filtered]) {
+        for (const typed of [
+          'applies:vul',
+          'uses:att',
+          'wea',
+          'dire',
+          'class:li',
+          'kw:ch',
+          'trait:"Wolf',
+          'weak OR a:s',
+        ]) {
+          for (const suggestion of withCounts(typed, suggest(typed), (query) => service.countMatches(state, query))) {
+            if (!suggestion.complete) {
+              expect(suggestion, typed).not.toHaveProperty('count');
+              continue;
+            }
+            const applied = accept(typed, suggestion);
+
+            expect(suggestion.count, `${typed} → ${applied}`).toBe(
+              service.search({ ...state, query: applied }).traits.length,
+            );
+            counts.add(suggestion.count ?? -1);
+            counted += 1;
+          }
+        }
+      }
+      expect(counted).toBeGreaterThan(40);
+      // The filters change the numbers, and the suggestions of one list differ from each other.
+      expect(counts.size).toBeGreaterThan(10);
     });
 
     it('offers every key of the taxonomy under the fields that take it, a role field the ones with a role only', () => {
