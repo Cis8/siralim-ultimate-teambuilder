@@ -84,7 +84,8 @@ describe('the query assist on the compendium v2.0', () => {
             ]
           : [],
       );
-    const sampled = { creature: 7, trait: 7 };
+    // Offering the closest of 1,780 names costs about 2.6 ms, and the runner of CI is slower than a laptop: keep this under the 5 s of a test.
+    const sampled = { creature: 25, trait: 25 };
 
     it('finds nothing wrong with any entry of the vocabulary written as a value of its field', () => {
       for (const { field, entries } of entriesOfFields({})) {
@@ -119,8 +120,8 @@ describe('the query assist on the compendium v2.0', () => {
         }
       }
       // The sample must ask both questions, and the fixes must be tried.
-      expect(unknown).toBeGreaterThan(200);
-      expect(known).toBeGreaterThan(20);
+      expect(unknown).toBeGreaterThan(150);
+      expect(known).toBeGreaterThan(50);
       expect(fixes).toBeGreaterThan(100);
     });
 

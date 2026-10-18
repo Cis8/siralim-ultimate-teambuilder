@@ -304,6 +304,10 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       **For 9.5:** no rule reads `hits` yet, it is for the free-term rule, which must skip a term with an unknown field (it has its
       finding already) and one with no value; a rule's span is only the part at fault, its fix one edit of that span, so the new
       rules use `changeTo` / `writtenValue` of `field-rules.ts` (move them to a module of their own when the second file needs them).
+      **Cost to watch (9.5 bench, 9.6 `atlas:assist`):** `closestMatch` over the 1,780 trait names or 1,399 creatures takes ~2.6 ms native
+      (~10 ms at 4×, against the 16 ms budget); it runs for each unknown value of `trait:` / `creature:`, so the bench must lint such a
+      query. If it is too dear: stop `editDistance` once a whole row is over the limit, or give the offer only when the caret leaves the term.
+      The acceptance test samples one name in 25 for the same reason (a first try took 2.5 s here and timed out at 5 s on the runner).
 - [ ] **9.5** Keyword rules, free text, `lintQuery`. A role on a mechanic or flag (warning, fix `kw:`), unknown keyword (accepts every key
       prefix, the 11 old phrases and `key/actor`: reuse the split `parseKeywordReference` does), unknown actor (error), an actor on a
       keyword that has none (warning: buffs, debuffs, effects, mechanics, the start of battle), a free term in no trait (warning, "did you
