@@ -294,7 +294,25 @@ and after). Its `label` says what the button does: *Remove “)”*, *Add the mi
   grows with the square of its size (8,000 stray `)` took twenty seconds), and such a text is junk.
 
 ## 6. Autocomplete (Phase 2)
-Context = token at the caret (prefix up to caret) and the previous token.
+**Context.** `suggestionContext(source, caret, fields?)` (`suggest/context.ts`, PLAN 10.1) reads the tokens of the lexer and says
+what the caret asks for, as one of six kinds, each with `replace`, the span that an accepted suggestion takes the place of. It never
+throws; the caret is kept inside the text and counts UTF-16 units, like every span.
+- **The word being typed** is the term the caret is in or at the end of (`start < caret ≤ end`), and so is an operator, written as a
+  word or a symbol (`or` may be on its way to `order`, and `|a` is one word). At the start of a word, or between two, none is: `replace`
+  is empty, at the caret. A `(`, a `)` and a `-` are tokens of their own and never continue a word, so a negation in front of the
+  word is outside `replace` and stays (`-we|` replaces `we`).
+- **No word.** `operator-or-field` when the token before the caret is a term or `)`; otherwise `field` (the start of the text, after `(`,
+  after an operator, after a negation).
+- **A word with no field**, and one whose caret is in the letters of a field's name (`cla|ss:life`, where the colon is still to come):
+  `free`, with the `prefix` typed up to the caret. A phrase is typed without its quotes (`"two wo` has the prefix `two wo`) and keeps the
+  blanks inside them (`"two ` has `two `); a leading blank does not count. A quote left open runs to the end of the text, and so does
+  `replace` (the lexer's reading).
+- **After the colon**, the field decides. A field of the registry is `field-value`, with the `field`, its name as `written` (`a`,
+  `Class`) and the `prefix` typed of the value. For a keyword field, once the value up to the caret holds a slash, it is `actor`: the
+  `key` before the last slash and the `prefix` of the actor after it (`uses:"start of turn/e|`); the caret before the slash is still in
+  the key. A slash means nothing to another field (`class:a/b`). An unknown field is `unknown-field` with its name `written`; its
+  `replace` is the name and the colon only, so the value stays when the field is mended.
+- Whether the key before a slash is an event, and which fields, values and operators to offer, are for the providers (PLAN 10.2).
 
 | Context | Suggestions |
 |---|---|

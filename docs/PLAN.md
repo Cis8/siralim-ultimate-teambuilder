@@ -13,8 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done and the next slice is 10.1** (`suggest/context.ts`: the
-  context of the caret, the first of M10 autocomplete), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1 is done and the next slice is 10.2** (the
+  `SuggestionProvider` registry over `suggestionContext`, which already says `kind`, `replace`, `prefix`, and for a field its
+  definition and the name as written), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's
   first part (issues, `applyFieldEdit`, `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it lazy and adds
   `lazyJs` / `totalJs` to the size budget. Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors'
   names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
@@ -293,9 +294,13 @@ unchanged); `aria-invalid` for errors only; the list shows five issues, errors f
 the offers per term first, then defer the counts (ADR-0010).
 
 ### M10 Autocomplete — Tab accepts, the count is shown, screen readers hear it
-- [ ] **10.1** Context. `suggest/context.ts`: from `(source, caret)` the token at the caret (else an empty virtual one), the typed prefix,
+- [x] **10.1** Context. `suggest/context.ts`: from `(source, caret)` the token at the caret (else an empty virtual one), the typed prefix,
       the leading `-` (kept on every insert) and the previous token → `operator-or-field | field | field-value | actor | unknown-field |
       free`. *T:* a table of (text, caret) cases: caret mid-token, quotes, `field:"two wo|`, `uses:attack/|`, after `(` or an operator.
+      Deviations: the lexer makes `-` a token of its own, so the context needs no field for it: `replace` leaves it out and every
+      insert keeps it. Each kind carries `replace`, the span an accept takes the place of: the word whole, or an empty span at the
+      caret; for `unknown-field` only the name and its colon, so the value survives the fix. A word operator (`or`, `|`) at the caret is
+      `free`, a word not finished. 10.3 replaces `context.replace`, not "the token".
 - [ ] **10.2** Providers. A `SuggestionProvider` registry (a new context = a new provider; the engine stays): operators only after a term
       or `)`; fields with their help; values from the field's domain (role fields offer buffs, debuffs, effects and events by key;
       `kw:` every kind); the four actors after `/` for an event only; the closest field for an unknown one; free partial (fields,
@@ -303,8 +308,9 @@ the offers per term first, then defer the counts (ADR-0010).
       word start > substring (a substring hit on a keyword comes after the prefix ones: evaluation is by prefix), stable, at most 9,
       deduplicated; `insert` is written by `serialiseTerm`. *T:* every row of QUERY_LANGUAGE §6; **soundness**: each accepted
       suggestion parses to one term of the intended field and lints clean; `weak/` offers no actor, `attack/` offers four.
-- [ ] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → {text, caret}`: replaces the token under the caret whole,
-      adds one space unless a bare field, `)` or a blank follows, caret after it; `ghostText` only when the top item starts with what
+- [ ] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → {text, caret}`: replaces `context.replace` (the word under the
+      caret whole), adds one space unless a bare field, `)` or a blank follows, caret after it (an insert that touches a word on its
+      left, as after `|` or a closing quote, needs a blank before it too: decide and test it here); `ghostText` only when the top item starts with what
       was typed and the caret is at the end; `withCounts` asks `countMatches` for complete items only (D18). *T:* accepts mid-string,
       `-` kept, quoting, criterion 2's core half (`applies:vul` → `applies:vulnerable`, caret after).
 - [ ] **10.4** Combobox. A reusable `Combobox` (APG editable combobox with list: `role=combobox`, `aria-expanded` / `aria-controls` /

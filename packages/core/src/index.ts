@@ -63,6 +63,7 @@ export { visitQuery, type QueryVisitor } from './query/visitor';
 export { createHighlighter, type Highlighter } from './query/highlight';
 export { serialise, serialiseTerm } from './query/serialise';
 export { queryChips, removeChip, toggleChipNot, type QueryChip } from './query/chips';
+export { suggestionContext, type SuggestionContext } from './suggest/context';
 export type {
   BuffEntry,
   DebuffEntry,
