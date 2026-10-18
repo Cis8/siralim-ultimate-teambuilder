@@ -90,3 +90,11 @@ export interface EventEntry extends EntryBase<'event'> {
 }
 
 export type TaxonomyEntry = DebuffEntry | BuffEntry | EffectEntry | MechanicEntry | EventEntry | FlagEntry;
+
+/**
+ * Whether a mention of the keyword can say who does it (`KeywordActor`): an event, unless it is a moment of the battle,
+ * which nobody makes. A buff, a debuff, an effect, a mechanic and a flag are done by no one.
+ */
+export function canHaveActor(entry: TaxonomyEntry): boolean {
+  return entry.kind === 'event' && entry.moment !== true;
+}

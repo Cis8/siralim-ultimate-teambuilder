@@ -1,5 +1,6 @@
 import {
   applyEdit,
+  canHaveActor,
   createLintContext,
   createMemoryTraitRepository,
   createSearchService,
@@ -10,7 +11,9 @@ import {
   initialExploreState,
   KEYWORD_ACTORS,
   KEYWORD_MODES,
+  lintQuery,
   lintRegistry,
+  parseQuery,
   serialiseTerm,
   taxonomy,
   tokenize,
@@ -134,6 +137,153 @@ describe('the query assist on the compendium v2.0', () => {
         message: 'No class “lfe”. Did you mean Life?',
         fix: { edit: { span: [6, 9], text: 'Life' } },
       });
+    });
+  });
+
+  describe('the lint rules of keywords and free text, and lintQuery', () => {
+    const lint = (source: string): QueryDiagnostic[] => lintQuery(source, context);
+    const codesOf = (source: string): string[] => lint(source).map(({ code }) => code);
+    const found = (source: string): number => service.countMatches(initialExploreState, source);
+    const keywordFields = ['applies', 'uses', 'kw'];
+    const keysOf = (field: string) => {
+      const domain = fieldRegistry.resolve(field)?.values;
+      if (domain?.kind !== 'keyword') throw new Error(`${field} is no keyword field`);
+      return taxonomy.entries.filter(({ kind }) => domain.accepts(kind));
+    };
+    const KEYWORD_CODES = ['unknown-keyword', 'keyword-without-role', 'unknown-actor', 'keyword-without-actor'];
+
+    it('finds nothing wrong with any key, old phrase or actor of the taxonomy that the search takes, a class, or a name', () => {
+      for (const field of keywordFields) {
+        for (const entry of keysOf(field)) {
+          expect(lint(serialiseTerm(field, entry.key)), `${field}:${entry.key}`).toEqual([]);
+          for (const actor of KEYWORD_ACTORS) {
+            const source = serialiseTerm(field, `${entry.key}/${actor}`);
+            expect(codesOf(source), source).toEqual(canHaveActor(entry) ? [] : ['keyword-without-actor']);
+          }
+        }
+      }
+      for (const { key, aliases = [] } of taxonomy.ofKind('event')) {
+        for (const { key: alias } of aliases) {
+          for (const field of keywordFields) {
+            expect(lint(serialiseTerm(field, alias)), `${field}:${alias} (${key})`).toEqual([]);
+          }
+        }
+      }
+      for (const name of service.vocabulary.class) expect(lint(serialiseTerm('class', name)), name).toEqual([]);
+      for (const name of service.vocabulary.name.filter((_, at) => at % 25 === 0)) {
+        expect(lint(serialiseTerm('trait', name)), name).toEqual([]);
+        expect(lint(serialiseTerm(undefined, name)), name).toEqual([]);
+      }
+    });
+
+    it('finds a fault in a keyword only when the search finds nothing, and the fix it offers lints clean', () => {
+      let faults = 0;
+      let fixes = 0;
+      for (const field of keywordFields) {
+        for (const { key, kind } of keysOf(field)) {
+          // A letter added, an actor nobody is, the start of a key with an actor, and a field that does not take the kind.
+          for (const value of [`${key}z`, `${key}/nobody`, `${key}/selff`, `${key.slice(0, 4)}/enemy`]) {
+            const source = serialiseTerm(field, value);
+            const asked = lint(source).filter(({ code }) => KEYWORD_CODES.includes(code));
+            if (asked.length === 0) continue;
+            faults += 1;
+            // Every code of these rules says that the search finds nothing.
+            expect(found(source), source).toBe(0);
+            const fix = asked[0]?.fix;
+            if (fix === undefined) continue;
+            fixes += 1;
+            expect(
+              lint(applyEdit(source, fix.edit)).filter(({ code }) => asked[0]?.code === code),
+              `${source} (${kind})`,
+            ).toEqual([]);
+          }
+        }
+      }
+      for (const field of ['applies', 'uses']) {
+        for (const { key } of taxonomy.entries.filter(({ kind }) => kind === 'mechanic' || kind === 'flag')) {
+          const source = serialiseTerm(field, key);
+          expect(codesOf(source), source).toEqual(['keyword-without-role']);
+          expect(found(source), source).toBe(0);
+          faults += 1;
+        }
+      }
+      expect(faults).toBeGreaterThan(300);
+      expect(fixes).toBeGreaterThan(100);
+    });
+
+    it('offers the keyword a misspelling of it stands for (QUERY_LANGUAGE §5)', () => {
+      expect(lint('applies:vulnrable')).toMatchObject([
+        {
+          code: 'unknown-keyword',
+          severity: 'error',
+          message: 'No keyword “vulnrable”. Did you mean Vulnerable?',
+          fix: { edit: { span: [8, 17], text: 'vulnerable' } },
+        },
+      ]);
+      expect(found('applies:vulnerable')).toBeGreaterThan(0);
+    });
+
+    it('calls a word in no trait unknown, and offers the closest word of the compendium that is in some', () => {
+      expect(lint('vulnrable')).toMatchObject([
+        {
+          code: 'text-in-no-trait',
+          severity: 'warning',
+          message: '“vulnrable” appears in no trait. Did you mean “vulnerable”?',
+          fix: { edit: { span: [0, 9], text: 'vulnerable' } },
+        },
+      ]);
+      expect(found('vulnerable')).toBeGreaterThan(0);
+    });
+
+    it('calls free text unknown exactly when the search finds no trait, and the fix it offers finds some', () => {
+      let unknown = 0;
+      let known = 0;
+      let fixes = 0;
+      for (const column of ['class', 'family', 'creature', 'name'] as const) {
+        for (const entry of service.vocabulary[column].filter((_, at) => at % (column === 'class' ? 1 : 25) === 0)) {
+          const lower = entry.toLowerCase();
+          // A letter added at the end, a letter missing near the start, and the first half of the entry (part of an entry is no fault).
+          for (const text of [
+            `${lower}z`,
+            lower.slice(0, 1) + lower.slice(2),
+            lower.slice(0, Math.ceil(lower.length / 2)),
+          ]) {
+            const source = serialiseTerm(undefined, text);
+            const asked = lint(source).filter(({ code }) => code === 'text-in-no-trait');
+
+            expect(asked.length > 0, source).toBe(found(source) === 0);
+            if (asked.length > 0) unknown += 1;
+            else known += 1;
+            const fix = asked[0]?.fix;
+            if (fix === undefined) continue;
+            fixes += 1;
+            const mended = applyEdit(source, fix.edit);
+            expect(found(mended), mended).toBeGreaterThan(0);
+            expect(lint(mended), mended).toEqual([]);
+          }
+        }
+      }
+      expect(unknown).toBeGreaterThan(80);
+      expect(known).toBeGreaterThan(20);
+      expect(fixes).toBeGreaterThan(50);
+    });
+
+    it('shows two errors in `clas:life (weak OR snared`, and after both fixes the query is read without a repair (criterion 1)', () => {
+      const source = 'clas:life (weak OR snared';
+      const errors = lint(source);
+
+      expect(errors.map(({ code, severity }) => [code, severity])).toEqual([
+        ['unknown-field', 'error'],
+        ['unclosed-open', 'error'],
+      ]);
+      const mended = errors.reduceRight(
+        (text, { fix }) => (fix === undefined ? text : applyEdit(text, fix.edit)),
+        source,
+      );
+
+      expect(mended).toBe('class:life (weak OR snared)');
+      expect(lint(mended)).toEqual([]);
+      expect(parseQuery(mended).diagnostics).toEqual([]);
     });
   });
 

@@ -51,6 +51,7 @@ export { closestMatch } from './query/closest-match';
 export type { LintContext, LintFinding, LintRule } from './query/lint-rule';
 export { createLintRegistry, LintRegistryError, type LintRegistry } from './query/lint-registry';
 export { lintRegistry } from './query/lint-rules';
+export { lintQuery, MAX_LINTED_LENGTH, type LintOptions } from './query/lint-query';
 export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
 export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
@@ -74,7 +75,7 @@ export type {
   TaxonomyEntry,
   TriggerPhase,
 } from './taxonomy/entry';
-export { EVENT_GROUPS, TRIGGER_PHASES } from './taxonomy/entry';
+export { canHaveActor, EVENT_GROUPS, TRIGGER_PHASES } from './taxonomy/entry';
 export { createTaxonomy, TaxonomyError, type Taxonomy } from './taxonomy/registry';
 export { taxonomy } from './taxonomy/taxonomy';
 export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';

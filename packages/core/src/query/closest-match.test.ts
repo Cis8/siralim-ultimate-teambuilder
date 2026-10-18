@@ -21,6 +21,33 @@ describe('editDistance', () => {
     expect(editDistance('Life', 'life')).toBe(1);
   });
 
+  describe('with a limit', () => {
+    it('gives the distance when it is within the limit, and something above the limit when it is not', () => {
+      expect(editDistance('kitten', 'sitting', 3)).toBe(3);
+      expect(editDistance('kitten', 'sitting', 2)).toBeGreaterThan(2);
+      expect(editDistance('abc', 'xyz', 0)).toBeGreaterThan(0);
+      expect(editDistance('abc', 'abc', 0)).toBe(0);
+    });
+
+    it('gives something above the limit for texts whose lengths are further apart than the limit', () => {
+      expect(editDistance('a', 'abcdef', 2)).toBeGreaterThan(2);
+      expect(editDistance('abcdef', '', 2)).toBeGreaterThan(2);
+    });
+
+    it('agrees with the distance without a limit, on whether it is within it and on what it is when it is', () => {
+      const text = fc.string({ unit: fc.constantFrom('a', 'b', 'c'), maxLength: 10 });
+      fc.assert(
+        fc.property(text, text, fc.nat(6), (a, b, limit) => {
+          const exact = editDistance(a, b);
+          const bounded = editDistance(a, b, limit);
+
+          expect(bounded <= limit).toBe(exact <= limit);
+          if (exact <= limit) expect(bounded).toBe(exact);
+        }),
+      );
+    });
+  });
+
   const word = fc.string({ maxLength: 12 });
 
   it('is a distance: nothing from itself, the same both ways, never past the longer text, and a detour never saves an edit', () => {

@@ -1,26 +1,10 @@
 import { closestMatch } from './closest-match';
-import type { DiagnosticFix, DiagnosticSeverity } from './diagnostic';
+import type { DiagnosticSeverity } from './diagnostic';
 import { fitsValue, type ValueDomain, type VocabularyColumn } from './field';
 import type { FieldRegistry } from './field-registry';
+import { changeTo, listOf, quoted, writtenValue } from './finding-text';
 import type { LintRule } from './lint-rule';
-import { serialiseTerm } from './serialise';
-import type { Span } from './span';
 import type { FieldName, TermToken } from './token';
-
-const quoted = (text: string): string => `“${text}”`;
-
-/** `a`, `a or b`, `a, b or c`. */
-const listOf = (words: readonly string[]): string =>
-  words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} or ${words.at(-1) ?? ''}`;
-
-/** The button that puts `text` in place of `span`; `shown` is what it says the text is. */
-const changeTo = (span: Span, text: string, shown: string): DiagnosticFix => ({
-  label: `Change to ${quoted(shown)}`,
-  edit: { span, text },
-});
-
-/** `value` as the lexer needs it after `field:`: in quotes only where it must be (`Rodian Master`). */
-const writtenValue = (field: string, value: string): string => serialiseTerm(field, value).slice(field.length + 1);
 
 /**
  * The field a term names as written, when the registry knows it, and where its values come from (`desc:` has no list).
@@ -39,6 +23,7 @@ function valuedField(
 /** `clas:life`: a field nobody knows is looked for as text, so the person gets no filter they meant to have. */
 const unknownField: LintRule = {
   id: 'unknown-field',
+  reportsWhileTyping: true,
   check({ field }, { fields }) {
     if (field === undefined || fields.resolve(field.name) !== undefined) return undefined;
     const message = `Unknown field ${quoted(`${field.name}:`)}`;

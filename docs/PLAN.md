@@ -13,11 +13,10 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.4 are done, the next slice is 9.5** (the keyword and free-text rules and
-  `lintQuery`; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.5 reads the same `LintContext` (`fields`, `taxonomy`,
-  `vocabulary`, `hits`) and adds its rules to `lint-rules.ts`; see *For 9.5* under 9.4. Phase 1 stays open for slice 8.4 only: credits
-  (ask the owner to confirm the authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on
-  2026-10-18; it is not dropped (D25).
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.5 are done, the next slice is 9.6** (issues in the field, the first
+  web slice of Phase 2: `QueryIssues`, `applyFieldEdit`, the `atlas:assist` timing and its e2e; see *For 9.6* under 9.5), in the order
+  M9 → M10 → M12 → M13 → M11 (D15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first),
+  README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
@@ -301,21 +300,26 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       `field.ts`, and "unknown value" means no entry of the vocabulary fits, which the real sheet proves equal to "the search finds
       nothing" (`assist-acceptance.test.ts`, 3 mutations of every entry, and each fix finds traits and lints clean); a bare `""` warns
       too (§2 promised it); "did you mean" compares with whole entries, so a mistyped part of one (`creature:bruser`) gets no offer.
-      **For 9.5:** no rule reads `hits` yet, it is for the free-term rule, which must skip a term with an unknown field (it has its
-      finding already) and one with no value; a rule's span is only the part at fault, its fix one edit of that span, so the new
-      rules use `changeTo` / `writtenValue` of `field-rules.ts` (move them to a module of their own when the second file needs them).
-      **Cost to watch (9.5 bench, 9.6 `atlas:assist`):** `closestMatch` over the 1,780 trait names or 1,399 creatures takes ~2.6 ms native
-      (~10 ms at 4×, against the 16 ms budget); it runs for each unknown value of `trait:` / `creature:`, so the bench must lint such a
-      query. If it is too dear: stop `editDistance` once a whole row is over the limit, or give the offer only when the caret leaves the term.
-      The acceptance test samples one name in 25 for the same reason (a first try took 2.5 s here and timed out at 5 s on the runner).
-- [ ] **9.5** Keyword rules, free text, `lintQuery`. A role on a mechanic or flag (warning, fix `kw:`), unknown keyword (accepts every key
-      prefix, the 11 old phrases and `key/actor`: reuse the split `parseKeywordReference` does), unknown actor (error), an actor on a
-      keyword that has none (warning: buffs, debuffs, effects, mechanics, the start of battle), a free term in no trait (warning, "did you
-      mean" over the vocabulary). `lintQuery(source, context, {caret?})` = the parser's diagnostics with fixes plus the rules, sorted;
-      `settledDiagnostics` hides, for the term still being typed, warnings and unknown-value errors (D20). *T:* **soundness on the real
-      sheet**: every taxonomy key, alias and actor combination, every class and a sample of names lint clean; every error of an
-      unknown-value rule finds 0 traits; criterion 1 in core (`clas:life (weak OR snared` → two errors, both fixes → clean); a bench:
-      a 6-term query lints in < 1 ms native.
+      The acceptance test samples one name in 25 (a first try took 2.5 s and timed out at 5 s on the runner).
+- [x] **9.5** Keyword rules, free text, `lintQuery`. `readKeywordValue` (the split `parseKeywordReference` now derives from, parts as
+      written); `keyword-rules.ts`: four rules over one diagnosis, so a value has one fault (`unknown-keyword` error, `keyword-without-role`
+      warning on the field name with fix `kw:`, `unknown-actor` error, `keyword-without-actor` warning; `canHaveActor(entry)` in
+      `taxonomy/entry.ts`); `text-rules.ts`: `text-in-no-trait`, which offers only a candidate that itself finds a trait (`nostack` is a
+      key, in no description); `lintQuery(source, context, {caret?})` + `MAX_LINTED_LENGTH` (2,000: past it the parser's diagnostics with no
+      fixes and no rule); `finding-text.ts` (`changeTo` and `writtenValue` moved out of `field-rules.ts`). Deviations (QUERY_LANGUAGE §5, ADR-0010
+      amended): no `settledDiagnostics`: `LintRule.reportsWhileTyping` (only `unknown-field`) and `registry.check(term, ctx, {typing})` leave
+      the other rules unasked for the term being typed, so their offers are not even paid for; the message says "No keyword", not "No buff or
+      debuff" (the fields take four kinds); an actor finding spans the whole value and its fix rewrites it (no offsets into quotes); a keyword
+      is offered only among the keys its field takes. `closestMatch` is 6× cheaper (`editDistance(from, to, limit)` gives up once a row is
+      out of reach and reuses its rows): 6 terms with 5 faults and their offers lint in 0.6 ms native (3.6 before), a clean one in 0.035 ms
+      (`lint.bench.ts`). *T:* soundness on v2.0 (`assist-acceptance.test.ts`): every key, old phrase and actor of the taxonomy lints clean or
+      with the one finding it should, every finding of the new rules is a query that finds 0 traits, the fixes lint clean, free text is
+      flagged exactly when the search finds nothing, and criterion 1 on the real context.
+      **For 9.6:** call `lintQuery(source, lintContext, {caret})` once per dataset context (`createLintContext(service)` remembers the
+      counts), with the caret from the field (decide in the slice what a selection counts as). The span says which term an issue is
+      about and `QueryDiagnostic.code` is the rule `id`. Spans: `unknown-actor` and
+      `keyword-without-actor` cover the whole value, `keyword-without-role` the field name. Hold the 16 ms at 4× with margin: the worst
+      typical query costs 0.6 ms native.
 - [ ] **9.6** Issues in the field (web). `lintQuery` runs after the search, timed as `atlas:assist`. `QueryIssues`: a count badge **inside**
       the field (icon + "2 issues": no layout change when `?q=` loads), a panel under it (icon + the word Error / Warning, message, Fix
       button), `aria-invalid` for errors only, `aria-describedby`, a debounced polite line ("2 issues", "Fixed"). A fix is one

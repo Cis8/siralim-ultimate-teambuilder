@@ -91,6 +91,29 @@ describe('createLintRegistry', () => {
     });
   });
 
+  describe('check, for a term the person is still typing (D20)', () => {
+    const asked = vi.fn<LintRule['check']>(() => finding('Unfinished.'));
+    const alwaysSaid = vi.fn<LintRule['check']>(() => otherFinding('Always.'));
+    const registry = createLintRegistry([
+      { id: 'waits', check: asked },
+      { id: 'speaks', reportsWhileTyping: true, check: alwaysSaid },
+    ]);
+
+    it('asks only the rules whose findings are worth showing before the term is finished', () => {
+      asked.mockClear();
+      alwaysSaid.mockClear();
+
+      expect(registry.check(term, context, { typing: true }).map(({ code }) => code)).toEqual(['speaks']);
+      expect(asked).not.toHaveBeenCalled();
+      expect(alwaysSaid).toHaveBeenCalledOnce();
+    });
+
+    it('asks every rule when the term is finished, or when nothing is said about it', () => {
+      expect(registry.check(term, context, { typing: false }).map(({ code }) => code)).toEqual(['waits', 'speaks']);
+      expect(registry.check(term, context).map(({ code }) => code)).toEqual(['waits', 'speaks']);
+    });
+  });
+
   describe('the rules it accepts', () => {
     it('keeps them in the order given', () => {
       const rules = [quiet('b'), quiet('a')];

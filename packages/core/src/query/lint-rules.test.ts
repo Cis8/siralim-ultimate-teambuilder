@@ -11,6 +11,17 @@ describe('the lint rules of the app', () => {
       'unknown-family',
       'unknown-creature',
       'unknown-trait',
+      'unknown-keyword',
+      'keyword-without-role',
+      'unknown-actor',
+      'keyword-without-actor',
+      'text-in-no-trait',
     ]);
+  });
+
+  it('wait for the term to be finished, but for the one that a field nobody knows needs no value to be wrong (D20)', () => {
+    const speaking = lintRegistry.rules.filter(({ reportsWhileTyping }) => reportsWhileTyping === true);
+
+    expect(speaking.map(({ id }) => id)).toEqual(['unknown-field']);
   });
 });

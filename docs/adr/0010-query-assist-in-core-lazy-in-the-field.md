@@ -23,8 +23,9 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
     (the fixes of those reports are added by `withSyntaxFixes`, and a fix is given only if the query means the same after it);
     semantic checks need the vocabulary and so live in the lint layer, not in the parser.
   - A **lint-rule registry** (`LintRule {id, check}` over a `LintContext` with the fields, the taxonomy, the vocabulary and a memoised
-    `hits(term)`), and `lintQuery(source, context)`. `settledDiagnostics` hides warnings and unknown-value errors for the term still
-    being typed (PLAN D20).
+    `hits(term)`), and `lintQuery(source, context, {caret})`. For the term still being typed (PLAN D20) the rules that do not
+    `reportsWhileTyping` are not asked at all, so their findings are neither shown nor paid for. This replaces the separate
+    `settledDiagnostics` filter the first plan had, which would have worked out the offers only to throw them away.
   - **Value domains** on `FieldDefinition` (`choices` | `vocabulary` | `keyword`, with a matching mode) and `describe(value)`:
     evaluation, lint, suggestions and the explanation read **one table** per field, so they cannot disagree.
   - **Suggestions**: a context detector over `(source, caret)`, a registry of providers per context, ranking, `acceptSuggestion`

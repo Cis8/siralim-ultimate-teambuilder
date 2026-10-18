@@ -86,7 +86,8 @@ and unique across the registry; the field name in a query is matched whatever it
   `uses:provoke` finds the traits that rely on a provoke, whoever provokes; `uses:provoke/self` only those where this creature
   does. The actors are `self` (this creature), `ally` (your creatures, an ally), `enemy` and `any` (any creature), in any
   letter case. The key prefix still applies before the slash (`u:prov/self`), and a key of several words is quoted whole
-  (`u:"start of turn/enemy"`). The lexer does not know the slash: the value is split afterwards, by `parseKeywordReference`.
+  (`u:"start of turn/enemy"`). The lexer does not know the slash: the value is split afterwards, by `readKeywordValue` (which
+  keeps the parts as written, for the diagnostics of §5) and read as a reference by `parseKeywordReference`.
   - The actor is exact: `/self` does not find a mention that says `any`. A mention that names nobody (the start of a battle:
     nobody makes it start) is found by no actor, and a buff, debuff or effect has none, so `weak/self` finds nothing.
   - A word after the slash that is no actor stays in the key and finds nothing (`provoke/nobody`). A slash with nothing after
@@ -166,10 +167,10 @@ The parser already returns the syntax diagnostics (the first seven rows), as `{ 
 message }` with the `message` of the table, the operator as written in it. `severity` is `'error' | 'warning'` and a
 diagnostic may carry `fix?: { label, edit: TextEdit }` (`TextEdit` is `{ span, text }`, `applyEdit(source, edit)` makes it).
 The parser gives no fix: `withSyntaxFixes(source, parseQuery(source))` adds the ones of the first seven rows, and the
-other rows are lint rules (below; the keyword and free-text ones come with 9.5). One diagnostic per unclosed `(`, where it
-was opened. `QueryDiagnostic<Code>` is generic in its code: the parser's are `SyntaxDiagnosticCode`, a rule's is its `id`.
+other rows are lint rules (below); `lintQuery` puts the two together. One diagnostic per unclosed `(`, where it was
+opened. `QueryDiagnostic<Code>` is generic in its code: the parser's are `SyntaxDiagnosticCode`, a rule's is its `id`.
 
-| Rule | Severity | Message | Fix |
+| Rule (`id`) | Severity | Message | Fix |
 |---|---|---|---|
 | Unmatched `)` | error | Unmatched “)” | remove it |
 | Unclosed `(` | error | Unclosed “(” | append `)` (a `(` with nothing in it: remove it) |
@@ -178,16 +179,16 @@ was opened. `QueryDiagnostic<Code>` is generic in its code: the parser's are `Sy
 | Unclosed quote | error | Unclosed quote | close it (append `"`) |
 | Empty `()` | error | Nothing between “(” and “)” | remove it |
 | Nesting past the limit | error | Nested too deeply: “(” is ignored | remove it |
-| Unknown field | error | Unknown field “clas:”. Did you mean “class:”? | replace (Levenshtein ≤ max(2, ⌊len/3⌋)) |
-| Empty value | warning | “applies:” has no value yet | — |
-| Role on a non-role keyword | warning | Timeline has no applies/uses role | use `kw:timeline` |
-| Unknown buff/debuff | error | No buff or debuff called “vulnrable”. Did you mean Vulnerable? | replace |
-| Unknown actor | error | No actor called “nobody”. Use self, ally, enemy or any | replace |
-| Actor on a keyword that has none | warning | Weak is not done by anyone, so “/self” finds nothing | remove the actor |
-| Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
-| Unknown class | error | No class “lfe”. Did you mean Life? | replace |
-| Unknown family, creature or trait name (D21) | warning | No family “clutchr”. Did you mean Clutcher? | replace |
-| Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
+| Unknown field (`unknown-field`) | error | Unknown field “clas:”. Did you mean “class:”? | replace (Levenshtein ≤ max(2, ⌊len/3⌋)) |
+| Empty value (`empty-value`) | warning | “applies:” has no value yet | — |
+| Role on a non-role keyword (`keyword-without-role`) | warning | “timeline” has no applies/uses role, so “applies:” finds nothing | use `kw:` |
+| Unknown keyword (`unknown-keyword`) | error | No keyword “vulnrable”. Did you mean Vulnerable? | replace |
+| Unknown actor (`unknown-actor`) | error | No actor called “nobody”. Use self, ally, enemy or any | replace |
+| Actor on a keyword that has none (`keyword-without-actor`) | warning | “weak” is not done by anyone, so “/self” finds nothing | remove the actor |
+| Bad `mat:`/`stack:` value (`invalid-choice`) | error | “mat:” takes yes or no | replace |
+| Unknown class (`unknown-class`) | error | No class “lfe”. Did you mean Life? | replace |
+| Unknown family, creature or trait name (`unknown-family`, `unknown-creature`, `unknown-trait`; D21) | warning | No family “clutchr”. Did you mean Clutcher? | replace |
+| Free term with zero hits (`text-in-no-trait`) | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
 
 **The vocabulary.** What the dataset gives a person to type is listed once, when it is loaded (`createQueryVocabulary(index)`,
 on the service as `vocabulary`): for each column a `vocabulary` domain names (§2: class, family, creature, trait name) its
@@ -223,6 +224,35 @@ field and value however it is written (`createLintContext(service)`: one for eac
   part of one (`creature:bruser` for Clutcher Bruiser) is reported without an offer.
 - **One finding for one fault.** A term whose field is unknown gets that finding alone (`clas:zzz` is not also an unknown value);
   a term with no value gets `empty-value` alone (not also an unknown class).
+- **Keyword rules** (`keyword-rules.ts`) read the value of a keyword field as its matcher does (`readKeywordValue`: the start of a
+  key, then `/actor`, or an old trigger phrase whole) and ask the taxonomy what the start finds. A value has at most one fault, the
+  first of these, so that mending one never leaves another that was waiting behind it for the wrong reason:
+  1. `unknown-keyword` (error): no key of the taxonomy starts with it, so the search finds nothing. The value is the span. The
+     offer is the closest key *the field takes* (`applies:timlin` is not sent to a mechanic), shown by its label (*Did you mean
+     Vulnerable?*) and written as a key; what followed the slash is kept as written (`vulnrable/self` → `vulnerable/self`).
+  2. `keyword-without-role` (warning): the keys it starts are all of kinds the field does not take (a mechanic or the flag given to
+     `applies:` / `uses:`), which no trait applies or relies on. The fault is the field, so the span is the field name, and the fix
+     changes the field to the first one that takes them (`kw:`).
+  3. `unknown-actor` (error): someone could do the keyword, but the word after the slash is none of `self`, `ally`, `enemy`, `any`
+     (the search then takes the whole text as a key that nobody has). The offer is the closest actor, with the key kept as written.
+  4. `keyword-without-actor` (warning): nobody does the keyword (a buff, debuff, effect, mechanic or flag, or the start of a battle,
+     a moment nobody makes: `canHaveActor`), so a word after the slash, an actor or not, finds nothing. The fix takes it away
+     (*Remove “/self”*). A start that some keys of an actor-taking event share (`start/self`) is no fault.
+  A slash with nothing after it, an empty key and an old trigger phrase (also with its slash typed) are no fault. The span of 1, 3
+  and 4 is the whole value: the fix is one edit of it, rewritten as the lexer needs it (quotes only where they must be).
+- **Free text** (`text-rules.ts`): `text-in-no-trait` is a term with no field and some text that the dataset finds in no trait
+  (`hits`). A term with a field belongs to its field's rules, known or not. The offer is the closest of the vocabulary (classes,
+  families, creatures, trait names) and the keys of the taxonomy, and only one that finds some trait itself, so that the fix does
+  not lead to the same warning (`nostack` is a key, and not a word of any description).
+- **While a term is being typed (D20).** A rule says whether its finding is worth showing before the term is finished
+  (`reportsWhileTyping`; absent: it waits). Only `unknown-field` speaks: `clas:` is wrong once the colon is typed. The others
+  wait, and are not even worked out, so a caret in a long query does not cost the offers of the term being edited.
+- **`lintQuery(source, context, { caret? })`** is the diagnostics of the parser with their fixes (`withSyntaxFixes`) and the
+  findings of every term, in the order of the text (findings that start together keep the order they were found in, the parser's
+  first). The term **still being typed** is the one the caret is in or at either end of, with no blank right after it: the
+  findings of the rules about it wait (those of the parser never do). Without a caret every term is settled. A text of more than
+  `MAX_LINTED_LENGTH` (2,000) characters gets the parser's diagnostics without fixes and no rule: a pasted text, and the work of
+  the fixes grows with its square. Fixing the first diagnostic that has a fix, again and again, ends with none left (property test).
 
 **The fixes of the syntax rows.** A fix is one `TextEdit`; the text outside it stays as typed, and after it the query means
 what it meant, since it puts into the text the repair the parser had made (the property tests compare `serialise` before
