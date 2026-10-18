@@ -15,6 +15,7 @@ import {
   lintRegistry,
   parseQuery,
   serialiseTerm,
+  suggestQuery,
   taxonomy,
   tokenize,
   type ExploreState,
@@ -23,6 +24,8 @@ import {
   type QueryDiagnostic,
   type QueryVocabulary,
   type SearchService,
+  type Suggestion,
+  type SuggestionKind,
 } from '@atlas/core';
 import fc from 'fast-check';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -284,6 +287,96 @@ describe('the query assist on the compendium v2.0', () => {
       expect(mended).toBe('class:life (weak OR snared)');
       expect(lint(mended)).toEqual([]);
       expect(parseQuery(mended).diagnostics).toEqual([]);
+    });
+  });
+
+  describe('the suggestions (QUERY_LANGUAGE §6)', () => {
+    const suggest = (source: string) => suggestQuery(source, source.length, context);
+    const found = (source: string): number => service.countMatches(initialExploreState, source);
+    const accept = (source: string, { replace, insert }: Suggestion): string =>
+      applyEdit(source, { span: replace, text: insert });
+    /** What the dataset itself gives to type: a term of these finds a trait, which a keyword may not (no trait applies it). */
+    const FINDS_TRAITS: readonly SuggestionKind[] = ['class', 'family', 'creature', 'trait', 'text'];
+    const vocabularyFields = fieldRegistry.fields.flatMap((field) =>
+      field.values?.kind === 'vocabulary' ? [{ name: field.name, column: field.values.column }] : [],
+    );
+
+    it('suggests applies:vulnerable for applies:vul, which finds traits (criterion 2)', () => {
+      const [first] = suggest('applies:vul');
+
+      expect(first).toMatchObject({ kind: 'debuff', insert: 'applies:vulnerable', complete: true, replace: [0, 11] });
+      expect(found('applies:vulnerable')).toBeGreaterThan(0);
+    });
+
+    it('offers every entry of the dataset, once its start is typed, under the field that looks in its column', () => {
+      for (const { name, column } of vocabularyFields) {
+        for (const entry of service.vocabulary[column]) {
+          const typed = `${name}:"${entry}`;
+
+          expect(
+            suggest(typed).map(({ insert }) => insert),
+            typed,
+          ).toContain(serialiseTerm(name, entry));
+        }
+      }
+    });
+
+    it('offers only terms that find a trait and lint clean for the start of an entry, under its field and with none', () => {
+      let accepted = 0;
+      for (const { name, column } of vocabularyFields) {
+        for (const entry of service.vocabulary[column].filter((_, at) => at % 15 === 0)) {
+          for (const head of ['', `${name}:`]) {
+            for (const length of [2, 4]) {
+              // The start of a word is a word that some trait has, but a start that ends in a blank is not typed that way.
+              const typed = `${head}${/\s/.test(entry.slice(0, length)) ? '"' : ''}${entry.slice(0, length)}`;
+              for (const suggestion of suggest(typed).filter(({ kind }) => FINDS_TRAITS.includes(kind))) {
+                const applied = accept(typed, suggestion);
+
+                expect(found(applied), `${typed} → ${applied}`).toBeGreaterThan(0);
+                expect(lintQuery(applied, context), `${typed} → ${applied}`).toEqual([]);
+                accepted += 1;
+              }
+            }
+          }
+        }
+      }
+      expect(accepted).toBeGreaterThan(3000);
+    });
+
+    it('offers every key of the taxonomy under the fields that take it, a role field the ones with a role only', () => {
+      for (const field of fieldRegistry.fields) {
+        const domain = field.values;
+        if (domain?.kind !== 'keyword') continue;
+        for (const { key, kind } of taxonomy.entries) {
+          const typed = `${field.name}:"${key}`;
+
+          expect(
+            suggest(typed).some(({ insert }) => insert === serialiseTerm(field.name, key)),
+            typed,
+          ).toBe(domain.accepts(kind));
+        }
+      }
+    });
+
+    it('offers the four actors after an event a field takes and none after the rest, and what it offers lints clean', () => {
+      for (const field of fieldRegistry.fields) {
+        const domain = field.values;
+        if (domain?.kind !== 'keyword') continue;
+        for (const entry of taxonomy.entries) {
+          const typed = `${field.name}:"${entry.key}/`;
+          const offered = suggest(typed);
+
+          if (!domain.accepts(entry.kind) || !canHaveActor(entry)) {
+            expect(offered, typed).toEqual([]);
+            continue;
+          }
+          expect(
+            offered.map(({ insert }) => insert.split('/')[1]?.replace('"', '')),
+            typed,
+          ).toEqual([...KEYWORD_ACTORS]);
+          for (const suggestion of offered) expect(lintQuery(accept(typed, suggestion), context), typed).toEqual([]);
+        }
+      }
     });
   });
 

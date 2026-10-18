@@ -33,7 +33,11 @@ export type SuggestionContext =
   /** Where a term starts and no operator may stand: at the start, after `(`, after an operator or a negation. */
   | (Place & { readonly kind: 'field' })
   /** A word with no field, which may become one: `we`, `"two wo`, `cla` in `class:life`, or an operator as far as typed. */
-  | (Typed & { readonly kind: 'free' })
+  | (Typed & {
+      readonly kind: 'free';
+      /** The word is an operator (`or`, `AND`, `|`), whole, though the caret may be inside it: it is not to be replaced by a term. */
+      readonly operator: boolean;
+    })
   /** After the colon of a field the registry knows: `class:li`. */
   | (OfField & { readonly kind: 'field-value' })
   /** After the slash in the value of a keyword field, who acts: `uses:attack/se`. */
@@ -43,7 +47,12 @@ export type SuggestionContext =
       readonly key: string;
     })
   /** After the colon of a field the registry does not know. Only its name and colon are replaced, so the value stays. */
-  | (Place & { readonly kind: 'unknown-field'; readonly written: string });
+  | (Place & {
+      readonly kind: 'unknown-field';
+      readonly written: string;
+      /** Whether a value follows the colon: mending the field then leaves a term that asks for something. */
+      readonly valued: boolean;
+    });
 
 /**
  * Parentheses and the dash are tokens of their own wherever they stand, so a word is never their continuation. Anything
@@ -78,19 +87,30 @@ export function suggestionContext(
     const previous = tokens.findLast((token) => token.span[1] <= at);
     return { kind: endsAnOperand(previous) ? 'operator-or-field' : 'field', replace: [at, at] };
   }
-  if (word.kind !== 'term') return { kind: 'free', replace: word.span, prefix: source.slice(word.span[0], at) };
+  if (word.kind !== 'term') {
+    return { kind: 'free', replace: word.span, prefix: source.slice(word.span[0], at), operator: true };
+  }
   return inTerm(word, source, at, fields);
 }
 
 function inTerm(term: TermToken, source: string, at: number, fields: FieldRegistry): SuggestionContext {
   const { field: written } = term;
-  if (written === undefined) return { kind: 'free', replace: term.span, prefix: typedValue(source, term, at) };
+  if (written === undefined) {
+    return { kind: 'free', replace: term.span, prefix: typedValue(source, term, at), operator: false };
+  }
   // `written.span` is the letters; the colon follows them.
-  if (at <= written.span[1]) return { kind: 'free', replace: term.span, prefix: source.slice(term.span[0], at) };
+  if (at <= written.span[1]) {
+    return { kind: 'free', replace: term.span, prefix: source.slice(term.span[0], at), operator: false };
+  }
 
   const field = fields.resolve(written.name);
   if (field === undefined) {
-    return { kind: 'unknown-field', replace: [term.span[0], written.span[1] + 1], written: written.name };
+    return {
+      kind: 'unknown-field',
+      replace: [term.span[0], written.span[1] + 1],
+      written: written.name,
+      valued: term.value !== '',
+    };
   }
   const typed = typedValue(source, term, at);
   const of = { replace: term.span, field, written: written.name };

@@ -64,6 +64,20 @@ export { createHighlighter, type Highlighter } from './query/highlight';
 export { serialise, serialiseTerm } from './query/serialise';
 export { queryChips, removeChip, toggleChipNot, type QueryChip } from './query/chips';
 export { suggestionContext, type SuggestionContext } from './suggest/context';
+export type { Candidate, Suggestion, SuggestionKind } from './suggest/suggestion';
+export { MAX_SUGGESTIONS } from './suggest/rank-candidates';
+export {
+  createSuggestionRegistry,
+  SuggestionRegistryError,
+  suggestionProvider,
+  type ContextKind,
+  type ContextOf,
+  type SuggestionEnvironment,
+  type SuggestionProvider,
+  type SuggestionRegistry,
+} from './suggest/suggestion-registry';
+export { suggestionRegistry } from './suggest/suggestion-providers';
+export { suggestQuery } from './suggest/suggest-query';
 export type {
   BuffEntry,
   DebuffEntry,

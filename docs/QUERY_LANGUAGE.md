@@ -304,24 +304,50 @@ throws; the caret is kept inside the text and counts UTF-16 units, like every sp
 - **No word.** `operator-or-field` when the token before the caret is a term or `)`; otherwise `field` (the start of the text, after `(`,
   after an operator, after a negation).
 - **A word with no field**, and one whose caret is in the letters of a field's name (`cla|ss:life`, where the colon is still to come):
-  `free`, with the `prefix` typed up to the caret. A phrase is typed without its quotes (`"two wo` has the prefix `two wo`) and keeps the
+  `free`, with the `prefix` typed up to the caret, and `operator`: the word is an operator whole (`or`, `AND`, `|`, the caret
+  anywhere in it), which is not to be replaced by a term. A phrase is typed without its quotes (`"two wo` has the prefix `two wo`) and keeps the
   blanks inside them (`"two ` has `two `); a leading blank does not count. A quote left open runs to the end of the text, and so does
   `replace` (the lexer's reading).
 - **After the colon**, the field decides. A field of the registry is `field-value`, with the `field`, its name as `written` (`a`,
   `Class`) and the `prefix` typed of the value. For a keyword field, once the value up to the caret holds a slash, it is `actor`: the
   `key` before the last slash and the `prefix` of the actor after it (`uses:"start of turn/e|`); the caret before the slash is still in
-  the key. A slash means nothing to another field (`class:a/b`). An unknown field is `unknown-field` with its name `written`; its
-  `replace` is the name and the colon only, so the value stays when the field is mended.
-- Whether the key before a slash is an event, and which fields, values and operators to offer, are for the providers (PLAN 10.2).
+  the key. A slash means nothing to another field (`class:a/b`). An unknown field is `unknown-field` with its name `written` and `valued`, whether a value
+  follows the colon; its `replace` is the name and the colon only, so the value stays when the field is mended.
+**Providers** (`suggest/`, PLAN 10.2). A `SuggestionProvider` answers one kind of context: `suggestionProvider(kind, handler)` makes
+one, and gives the handler the context of its kind and no other. `createSuggestionRegistry(providers)` refuses two providers for
+one kind (`SuggestionRegistryError`, like the other registries), and a kind nobody answers offers nothing; `suggestionRegistry` is
+the one of the app. A new context is a new kind in `SuggestionContext` and a provider for it: the ranking and `suggestQuery` do not
+change. `suggestQuery(source, caret, environment)` is the whole path, context → provider → ranking, and gives at most nine
+`Suggestion`s `{ kind, insert, detail, complete, replace }`; `environment` is `{ fields, taxonomy, vocabulary }`, which a
+`LintContext` is too, so the page hands over the one it made for the lint. It never throws.
+- `insert` is what takes the place of `replace` (the word whole, or nothing at the caret; a negation stays in front): a finished term
+  written by `serialiseTerm` (the field as the person wrote it, `a:vulnerable` after `a:vul`; quotes only where the lexer needs
+  them, `uses:"start of turn"`), a bare `field:`, an operator. `kind` is the badge: the kind of the keyword, `class`, `family`,
+  `creature`, `trait`, `value` (a choice of `mat:` or `stack:`), `field`, `operator`, `actor`, `text`.
+- `detail` is one line. For a value it is the meaning of the term, `FieldDefinition.describe` (`applies “vulnerable”`, `has a
+  material`, `relies on “attack” by an enemy`), so the list says what Enter would search for in the words of §7.
+- `complete` says that accepting leaves a finished term, which finds traits and so can be counted (10.3). A bare field and an
+  operator are not. The fix of an unknown field is complete only when a value follows the colon (`valued` in its context).
 
 | Context | Suggestions |
 |---|---|
-| Empty token after a term or `)` | `OR`, `AND`, `NOT`, then fields |
-| Empty token otherwise | fields with one-line help |
-| `field:` + partial value | values for that field: keywords (role fields offer buffs, debuffs, effects and events), classes, families, trait/creature names, yes/no |
-| Keyword value + `/` | the four actors (`self`, `ally`, `enemy`, `any`), for an event |
-| Unknown `fiel:` | closest field |
-| Free partial | matching fields, `applies:`/`uses:` per matching keyword, events by their keys, `kw:` mechanics, `trait:` names, `family:` names, the raw text |
+| Empty token after a term or `)` | `OR`, `AND`, `NOT`, then the fields |
+| Empty token otherwise | the fields, each as `name:` with its line of help, in the order of the registry |
+| `field:` + partial value | what the field takes, read from its `values` (§2): the choices of `mat:` and `stack:` by their canonical value (`none` is accepted, not offered); the entries of the column of `class:`, `family:`, `creature:` and `trait:`, as the dataset spells them; the keys of the keywords of the kinds a keyword field takes (`applies:` and `uses:` buffs, debuffs, effects and events; `kw:` every kind). Nothing for `desc:` |
+| Keyword value + `/` | the four actors (`self`, `ally`, `enemy`, `any`) when the key typed starts the key of an event that has an actor and the field takes it: `attack/` and `start/` offer them (`start of turn` has one), `weak/`, `start of battle/` and `timeline/` offer none. The key stays as typed (`u:att/self`) |
+| Unknown `fiel:` | the closest field, by the candidates and the distance of the lint rule `unknown-field` (§5), so that the fix of the issue and the suggestion are one. It replaces the name and the colon, and says `Instead of “clas:”` |
+| Free partial | the fields the letters begin (by name or alias); each buff, debuff, effect and event as `applies:key` and `uses:key`, side by side, since the word does not say which; each mechanic and flag as `kw:key` (nothing else finds it); `trait:` and `family:` names; the text itself, last, written as the lexer needs it (`"and"`). A quote with nothing in it yet offers nothing, and neither does an operator typed whole (Tab on `weak OR` must not turn the `OR` into a trait). There is no `class:` or `creature:` here (the text itself finds a class), and no operator: those are offered between terms |
+
+**Ranking.** A provider says how well the typed text fits each candidate, and the ranking lists them by that, then by the order the
+provider gave them (the fields as the registry has them, the keywords as the taxonomy has them, the names from A to Z):
+1. *prefix*, the text begins it; 2. *word start*, it begins a word of it (after anything that is not a letter or a digit:
+`being attacked`, `wolf-pack`, `Mother's Love`); 3. *substring*; 4. *fallback*, the text itself, which fits whatever was typed.
+Letter case does not count. A text is listed once (case folded, the best place kept) and the cut at nine (`MAX_SUGGESTIONS`) is made
+after the ranking, so a good fit that came late is not lost to a poor one that came early. A substring hit on a keyword
+(`uses:ulner` for `vulnerable`) is offered but comes after the prefix ones: the search finds a keyword by its start, so only those
+are what was typed, and the rest is what was probably meant. Writing a candidate (`serialiseTerm` reads the text back) costs far
+more than finding it, so a provider asks `bestFits` of a long list (1,780 trait names) and writes out only the first nine of each place.
+On v2.0 the worst case (`a`, `e`) takes about 0.2 ms.
 
 Each complete suggestion shows the **result count** it would produce. Max 9 items. Accepting replaces the token
 (adds a trailing space unless it is a bare field). Top suggestion is shown as ghost text after the caret; Tab accepts.

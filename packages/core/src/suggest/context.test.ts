@@ -113,8 +113,15 @@ describe('suggestionContext', () => {
       (marked, replaced, prefix) => {
         const { context } = contextAt(marked);
 
-        expect(context).toMatchObject({ kind: 'free', prefix });
+        expect(context).toMatchObject({ kind: 'free', prefix, operator: true });
         expect(replacedIn(marked)).toBe(replaced);
+      },
+    );
+
+    it.each([['weak ord‸'], ['weak "or‸'], ['weak a|b‸'], ['weak |a‸'], ['weak class‸'], ['weak cla‸ss:life']])(
+      'takes a word that is not an operator on its own for text (%j), also when it begins like one',
+      (marked) => {
+        expect(contextAt(marked).context).toMatchObject({ kind: 'free', operator: false });
       },
     );
 
@@ -225,6 +232,22 @@ describe('suggestionContext', () => {
 
         expect(context).toMatchObject({ kind: 'unknown-field', written });
         expect(replacedIn(marked)).toBe(replaced);
+      },
+    );
+
+    it.each([
+      ['clas:‸', false],
+      ['clas:""‸', false],
+      ['clas:"‸', false],
+      ['clas:li‸fe', true],
+      ['clas:"two wo‸', true],
+      ['-clas:life‸', true],
+    ])(
+      'says whether a value follows the colon (%j), since a fixed field with none is not a term to count',
+      (marked, valued) => {
+        const { context } = contextAt(marked);
+
+        expect(context).toMatchObject({ kind: 'unknown-field', valued });
       },
     );
 

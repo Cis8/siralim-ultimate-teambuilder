@@ -13,12 +13,13 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1 is done and the next slice is 10.2** (the
-  `SuggestionProvider` registry over `suggestionContext`, which already says `kind`, `replace`, `prefix`, and for a field its
-  definition and the name as written), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's
-  first part (issues, `applyFieldEdit`, `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it lazy and adds
-  `lazyJs` / `totalJs` to the size budget. Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors'
-  names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1 and 10.2 are done and the next slice is 10.3**
+  (`acceptSuggestion`, `ghostText`, `withCounts` over `suggestQuery`, whose `Suggestion` is `{ kind, insert, detail, complete,
+  replace }`: accepting is an edit of `replace`; the count is `countMatches(state, <the text after accepting>)` for the `complete` ones
+  only, D18), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's first part (issues, `applyFieldEdit`,
+  `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it lazy and adds `lazyJs` / `totalJs` to the size budget.
+  Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
+  criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
@@ -301,13 +302,19 @@ the offers per term first, then defer the counts (ADR-0010).
       insert keeps it. Each kind carries `replace`, the span an accept takes the place of: the word whole, or an empty span at the
       caret; for `unknown-field` only the name and its colon, so the value survives the fix. A word operator (`or`, `|`) at the caret is
       `free`, a word not finished. 10.3 replaces `context.replace`, not "the token".
-- [ ] **10.2** Providers. A `SuggestionProvider` registry (a new context = a new provider; the engine stays): operators only after a term
-      or `)`; fields with their help; values from the field's domain (role fields offer buffs, debuffs, effects and events by key;
-      `kw:` every kind); the four actors after `/` for an event only; the closest field for an unknown one; free partial (fields,
-      `applies:` / `uses:` per keyword, `kw:` for mechanics, events by key, `trait:` / `family:` names, the raw text). Ranking prefix >
-      word start > substring (a substring hit on a keyword comes after the prefix ones: evaluation is by prefix), stable, at most 9,
-      deduplicated; `insert` is written by `serialiseTerm`. *T:* every row of QUERY_LANGUAGE §6; **soundness**: each accepted
-      suggestion parses to one term of the intended field and lints clean; `weak/` offers no actor, `attack/` offers four.
+- [x] **10.2** Providers. `suggest/`: `suggestQuery(source, caret, environment)` → at most nine `Suggestion`s; one provider per kind of
+      context (`suggestionProvider(kind, handler)`, `createSuggestionRegistry`, `suggestionRegistry`), a candidate carries its `tier`
+      (prefix, word start, substring, fallback), `rankCandidates` lists by tier, stably, once per text, cut at nine; `bestFits` keeps
+      the first nine of a long list before anything is written out. *T:* every row of QUERY_LANGUAGE §6; soundness (each accepted
+      suggestion is one token, of a field that takes its kind, and lints clean) in core on a fixture and in `assist-acceptance` on the
+      real sheet (every entry of the dataset is offered once its start is typed; every key and actor; 5,400 suggestions find a trait and
+      lint clean); `weak/` offers no actor, `attack/` four. Worst case on v2.0 (`a`, `e`): 0.2 ms.
+      Deviations: an event is offered as `applies:` and `uses:` like a buff (it has a role), not as a form of its own; the free partial
+      has no `class:` or `creature:` (the text itself finds a class); `detail` is `describe(value)`, so there is no separate label;
+      `suggestionContext` gains `valued` on `unknown-field` (the fix is `complete` only with a value after the colon) and `operator`
+      on `free` (an operator typed whole offers nothing: Tab on `weak OR` must not turn it into a trait); the choices offer their
+      canonical value (`none` is accepted, not offered). A generic `SuggestionProvider<K>` was not assignable to a
+      list of them (the variance of `K` is unmeasurable through `Extract`), hence the constructor that narrows with a type guard.
 - [ ] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → {text, caret}`: replaces `context.replace` (the word under the
       caret whole), adds one space unless a bare field, `)` or a blank follows, caret after it (an insert that touches a word on its
       left, as after `|` or a closing quote, needs a blank before it too: decide and test it here); `ghostText` only when the top item starts with what
