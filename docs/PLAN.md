@@ -12,11 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.8 done; next is 8b.9 (the Events section of the pipeline report), one session.**
-  8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
-  closes Phase 1: ask the owner before starting Phase 2.
-  For 8b.9: `packages/pipeline/.cache/research/events-v2.0/scripts/census.mjs` (this machine only, see the Note on 8b.5) holds the
-  census of event words and opening clauses to turn into a finder; the report's *Taxonomy* section (`build-report`) is the model.
+- **Phase 1 · M8: 8.1–8.3 done. M8b done (8b.9 closed it). Next is 8.4** (credits: ask the owner to confirm the authors' names
+  first; README; the criteria-to-tests table; ROADMAP ticks), which closes Phase 1: ask the owner before starting Phase 2.
+  Ask the owner first, before 8.4: the Events finder (8b.9) found 14 forms of the events R12 names (any buff, any debuff) that
+  the patterns do not read: "after an enemy afflicts a debuff", "your creatures apply / receive a debuff", "buffs an enemy",
+  "gains 5 random buffs", "afflicted with 3 random debuffs". They are the last group of `report/reviewed-event-forms.ts`.
+  Fixing them is a slice like 8b.6 (patterns, the role and actor `readEvent` gives, `pipeline:fetch` + `build`, snapshots):
+  a 8b.10 before 8.4, or left for later. Each form comes out of the list when the taxonomy reads it.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -220,95 +222,32 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       ring (its role outline outranked the page's ring), the sheet opened with the focus on an unnamed scrolled `div` in Chrome
       (now its title), and the filters took 124 presses of Tab to pass (new "Skip filters" link, from 700 px).
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.
-      Starts only when M8b is done.
+      M8b is done: it can start once the owner has answered the question in *Resume here*.
 
-### M8b The owner's notes (before 8.4)
+### M8b The owner's notes — done
 Phase 1 refinements from the owner's play-testing notes (2026-10-17). Decisions: the "…" shows only where the target slot refuses
 the trait, in place of the disabled add; the five standard classes come first in the filters; back-to-top sits top right.
 Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
 address, not in `localStorage`); "Clear filters" keeps the query, sort and Match all/any (settings, not filters); input font
-16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4). Events (8b.5): GAME_RULES R12, ADR-0009.
-- [x] **8b.1** Mobile, web only. The search field and the sort are 16 px under `pointer: coarse` (iOS zooms on focus below that;
-      `touch-targets.test.ts` reads the computed size of every text field and select; the viewport meta is unchanged). A fixed
-      top-right "Back to top" (`back-to-top.svelte`, 44 px) after a screen of scroll, Explore only, the focus to the page heading;
-      the window's scroll is watched once for it and for `trackViewportOffset` (`page-scroll.ts`); `scroll-padding-top` while it
-      shows (WCAG 2.4.11). `e2e/back-to-top.test.ts`, entries in `touch-targets` and `keyboard`, axe. Deviations: the page
-      jumps instead of scrolling smoothly (see Notes: the virtual list stops a native smooth scroll), so reduced motion needs
-      no case of its own; and the button is the last control of the page's content in the document, because forward the list
-      is endless to the tab key and, wide, the party at the top of the page scrolls the button away: Shift+Tab from the foot
-      finds it (Home is the quick way).
-- [x] **8b.2** Filters: "Clear filters (N)" at the top of the panel (`clearFilters` in `core`: keeps query, sort and mode, gives
-      back the same state when nothing is on; `aria-disabled` at 0 with the focus kept; a polite "Cleared N filters." inside the
-      panel, so it is heard in the sheet too) and the order of the classes (`facetVocabulary`: Chaos, Death, Life, Nature, Sorcery
-      first, then the others by size; `ClassFacet.standard`; a rule between the two groups). SPEC §8.1, DESIGN. Deviations: the
-      five classes are `CREATURE_CLASSES` (GAME_RULES R7), not a second list; "by trait count" is the whole dataset's, fixed at
-      load, so the list does not reshuffle as filters change (v2.0: Rodian Master, Backer, Nether Boss, Boss, Pandemonium,
-      Nether Room). The sheet now holds two `aria-live` lines: `filters-sheet.test.ts` picks the count by its text.
-- [x] **8b.3** Filters: collapsible sections (Class, Debuffs, Buffs, Effects, Triggers, Mechanics, Flags; Match all/any stays
-      visible). `SectionToggle` is the button inside each heading (`aria-expanded`, `aria-controls` the body, which is `hidden`
-      while shut); shut, it adds "· 2 on", counted by `activeFilterCounts` in `core` (one per class, side of a keyword and flag,
-      as the chips do). The shut list lives in `+page.svelte` and is passed down, because `FacetPanel` is rebuilt across 700 px.
-      Open by default, so no layout shift. `e2e/filter-sections.test.ts`: toggle, counts, tab order, resize, closing the sheet,
-      axe; the walks and touch-target tests cover the new buttons by themselves. SPEC §8.1, DESIGN. Deviation: the hint "any of"
-      is hidden with the classes.
-- [x] **8b.4** Party: the "Add to…" slot sheet. `core`: `allowedSlots(trait, rules)`, `addTraitAt(planner, trait, at)` and `AddResult`
-      with `replaced` (`addTrait` delegates to it; the target moves on only when the slot is the target). Web: a trait the target
-      slot refuses but another slot of the creature takes gets an active "Add to…" (`aria-haspopup`, dots on a phone) that opens
-      `SlotChooser` on the page (the `choice` variant of `BottomSheet`: `status` optional, fits its content, centred from 700 px, a
-      quiet Cancel): "Add to Artifact (empty)" / "Replace Y in Artifact" / "Already in Artifact" (`slotChoices`). The rule's sentence
-      stays under the card (criterion 5); a trait no slot takes keeps the disabled add (none in v2.0: core-tested only). Every add
-      announces "…, replacing Y"; the announcement waits for the sheet to close (the live region behind it is inert). e2e: criterion 5
-      rewritten with the replace, Esc/Cancel and focus cases, the sheet in the keyboard walk, touch targets and axe. SPEC §8.2,
-      DESIGN. Deviations: `axeViolations` now waits for animations to finish (a rising sheet read as a contrast failure); the e2e
-      `addButton` matches "Add to " and "Add to…" (a refused trait changes the name of its button, and a selector on one broke two tests).
-- [x] **8b.5** Keywords and events: research and plan, no product code. A census of the 774 opening clauses no trigger covers
-      (452 forms) and a sweep of all 1,780 traits by 24 Haiku agents (100% of quotes verbatim but 2 of 4,400; every known trigger
-      and census clause found; 92% agreement on a second reading of 373 traits), then a prototype on the snapshot. Outcome:
-      triggers become **events** with a role and an actor (ADR-0009), 18 of them after the game's own effect categories, plus
-      the mechanics Spells and Stats; the owner's decisions are GAME_RULES R12 (who acts is a filter, never required; no event is a
-      dependency; dies = is killed; manual cast apart; events grouped in the filters with one "Who" control). Deviation: the
-      sweep cost about 3.3M Haiku tokens, not the 0.4M estimated (each agent re-reads its context every turn).
-- [x] **8b.6** Events in `core`, the snapshot and the data (ADR-0009, GAME_RULES R12). `trigger` became `event` (`EventEntry`:
-      inflections as patterns, a `phase` or none, `aliases`, `turnEdge`, `statPatterns`, `moment`); the 18 events, Spells and
-      Stats; `KeywordHit.actor`; `readEvent` (role and actor by wording), `findTurns` (the turns by a grammar), `isStatSense`;
-      `partyCoverage` ignores events; `overrides.yaml` takes an `actor` and holds 22 corrections. Data: 4,453 mentions (2,149
-      of events), 139 kB gzip; the snapshot has the actor column; the web compiles with the new kind (colour, "Events"). SPEC §4,
-      DESIGN. Deviations: the extractor alone agrees with the sweep on role in 91–100% of the mentions both found (dodge 58%,
-      critical hit 53%: the sweep calls "has a 50% chance to dodge" a modifier, the rules call it causing) and on actor in
-      93–100%; recall is 84–100% per event, but 53% and 45% for the two buff events (the sweep counts every gain of a named
-      buff; "immune to debuffs" and "their debuffs last 1 turn" are not mentions). Reading every disagreement and 60 other lines
-      taught the heuristics nouns, names ("Death creatures"), "attacked", pronouns, lists and the start of battle as a moment;
-      what is left is the 22 overrides. `triggers-before-events-v2.0.txt` pins the 564 traits of the old phrases (the aliases
-      find at least those, tested).
-- [x] **8b.7** Query and address. The keyword fields take an actor after a slash (`uses:provoke/self`, the key prefix still applies
-      before it; `self`, `ally`, `enemy`, `any`, exact) and read an old trigger phrase whole as the event and actor it stands for
-      (`parseKeywordReference`, `Taxonomy.alias`); `IndexedTrait.acted` lists the events that name an actor per role. A
-      `KeywordFilter` has an optional `actor`: `filterQuery`, the chips and the address write `uses:attack/self`, and
-      `decodeExploreState` reads `kw=k:after this creature attacks` as `k:attack/self` and writes it back so. SPEC §4, §7, §8.1,
-      QUERY_LANGUAGE §2, §3, §5, §6. *T:* a unit test beside each change, the lexer and serialiser with a slash, and on the real
-      sheet every event × actor × field against the actor column of the mention snapshot, and each of the 11 old phrases
-      through the query and the address finding at least the traits pinned in `triggers-before-events-v2.0.txt`. Deviations:
-      the key lists of `IndexedTrait` stay plain keys and the actor is a list of its own (the facets count the lists by key, and
-      `attack/self` is a key no facet has); a slash with nothing after it is no actor yet (`provoke/` is `provoke`, so the list
-      does not empty while `/self` is typed); an alias stands alone (`strike/enemy` is the start of a key nobody has).
-- [x] **8b.8** Web: the Events section and the event token. The section lists the 18 events in five groups under small headings
-      (`EventEntry.group`, `EVENT_GROUPS`: Battle and turns, Actions, Hits, Life and death, Buffs and debuffs), each with
-      *Causes* / *Reacts* buttons (`applies:` / `uses:`); one *Who* control (Any, This creature, Your creatures, Enemies) follows
-      the event filters (`eventActors`) and narrows them all with a press (`narrowEventFilters`: one step of the history, none if
-      nothing changes; two filters that become one are one). With none on it keeps the last choice in the page (`eventChoice`,
-      not in the address), which is what the next filter gets; several actors on show nothing pressed. A press on a side is
-      `toggleKeywordSide`: pressed for the event by anyone and by an actor alike, off takes away every filter of the side. The
-      token keeps its role shapes and says in its name "Reacts to attacks (this creature) — show traits that cause it"; its click
-      leads to the counterpart of the role with no actor (`clickGoal`), pressed as the panel's button is (`hasKeywordSide`).
-      SPEC §4, §8.1, DESIGN (tokens, facet panel), SCREEN_READER_CHECKLIST 17–18. *T:* unit tests beside each function of
-      `core`, `event-who` and `copy` in the web, on the real sheet the counts by actor against the hits and the groups
-      (`explore-acceptance`), and `e2e/events.test.ts` (groups, toggles, Who narrowing and back, chosen first, several actors,
-      resize across 700 px, section count, the token's name and click, axe). Deviations: the buttons' counts follow the Who
-      (`KeywordFacet.byActor`, `facetCount`), which the plan did not ask for: "Reacts 244" next to a result of 37 would have
-      been wrong; the start of a battle is the exception to the counterpart (nobody causes it, so a click shows the traits that
-      mention it); the group is data of the taxonomy and not of the panel, so an event cannot be added without one; `KeywordRow`
-      is the row of every keyword with two sides, and `Segmented` takes `columns` and a value that may be none.
-- [ ] **8b.9** Report: an *Events* section in the pipeline report, as the *Taxonomy* one is for capitalised words: the event
-      words of the 8b.5 census and the opening clauses no keyword covers, with counts and an example, and a reviewed list for
-      those looked at, so a new version of the sheet shows its new forms. *T:* the finder's unit tests, `build-report` test.
-      Docs: SPEC §6.
+16 px only under `pointer: coarse`, the viewport meta stays as it is (WCAG 1.4.4).
+- *Mobile (8b.1).* The search field and the sort are 16 px under `pointer: coarse`; a fixed top-right "Back to top" after a
+  screen of scroll. The page jumps instead of scrolling (the virtual list stops a smooth scroll: see Notes), and the button is the
+  last control in the document (forward, the list is endless to the tab key).
+- *Filters (8b.2, 8b.3).* "Clear filters (N)" (`clearFilters`); the five classes first (`CREATURE_CLASSES`; "by trait count" is the
+  whole dataset's, fixed at load); collapsible sections with "· N on" (`activeFilterCounts`; the shut list lives in `+page.svelte`).
+- *Party (8b.4).* "Add to…" opens `SlotChooser` for a trait the target refuses but another slot of the creature takes
+  (`allowedSlots`, `addTraitAt`); the rule's sentence stays under the card (criterion 5).
+- *Events (8b.5–8b.8; GAME_RULES R12, ADR-0009).* A census and a sweep of all 1,780 traits by 24 Haiku agents (about 3.3M tokens, not
+  the 0.4M estimated) turned the triggers into 18 events plus the mechanics Spells and Stats, each mention with a role and an
+  actor (`readEvent`, `findTurns`, `isStatSense`; 22 overrides). The extractor agrees with the sweep on role in 91–100% of the
+  mentions both found and recalls 84–100% per event, but 53% and 45% for the two buff events. The keyword fields take an actor
+  after a slash (`uses:attack/self`); the 11 old trigger phrases are aliases, so old links keep finding at least what they found
+  (`triggers-before-events-v2.0.txt`). The filters have an Events section (five groups, *Causes* / *Reacts*, one *Who* control
+  that narrows every event filter, `narrowEventFilters`); the event token leads to the counterpart of its role (the start of
+  battle is the exception: nobody causes it).
+- *Report (8b.9).* An *Events* section (`findEventCandidates`): the sentences that open with After, When, If, While … and the
+  phrases around an event word that no keyword covers, as forms (numbers `#`, families `<family>`), one trait is enough;
+  `REVIEWED_EVENT_FORMS` holds those looked at, and `real-sheet.test.ts` fails on any form neither covered nor reviewed. v2.0 had
+  63 conditions and 13 phrases: 14 are events R12 names that the patterns do not read (the last group of the list), the rest
+  are states, party conditions, damage as an amount, and dealing damage, gaining stats and a status ending, which R12 leaves
+  out of its 18 events. `isStatSense` is exported from `core` for it.

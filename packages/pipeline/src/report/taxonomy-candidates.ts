@@ -1,4 +1,5 @@
 import { compareText, familyWrittenForms, type KeywordHit, type Trait } from '@atlas/core';
+import { SENTENCE_START } from './sentence-start';
 
 export interface TaxonomyCandidate {
   /** As written: `Fireball`, `Mega Magic`. */
@@ -20,8 +21,6 @@ export interface CandidateOptions {
 
 const DEFAULT_MIN_TRAITS = 3;
 const CAPITALISED_WORD = /(?<![A-Za-z])[A-Z][a-z]+(?![A-Za-z])/g;
-/** Text that ends where a sentence or a clause begins: the capital there is grammar, not a name. */
-const SENTENCE_START = /(?:^|[.!?:]\s+|\s[-–—]\s*)$/;
 /** Words that introduce a status: what follows may be a buff or debuff. */
 const STATUS_CUE =
   /(?:\bafflicted with|\bafflicts?\b[^,.;]*?\bwith|\bgains?|\bgrants?|\balways (?:has|have)|\bbattles? with)\s+(?:an?\s+|the\s+)?$/i;

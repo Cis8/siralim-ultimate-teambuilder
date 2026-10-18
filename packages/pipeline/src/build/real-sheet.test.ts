@@ -3,6 +3,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
 import { buildReport } from '../report/build-report';
 import { compareWithCanonicalLists } from '../report/compare-canonical';
+import { findEventCandidates } from '../report/event-candidates';
+import { REVIEWED_EVENT_FORMS } from '../report/reviewed-event-forms';
 import { REVIEWED_NON_KEYWORDS } from '../report/reviewed-non-keywords';
 import { findTaxonomyCandidates } from '../report/taxonomy-candidates';
 import { buildRealSheet, readOldTriggers } from '../testing/real-build';
@@ -157,6 +159,11 @@ describe('the compendium v2.0 snapshot', () => {
     expect(
       findTaxonomyCandidates(traits, { ignore: REVIEWED_NON_KEYWORDS }).map((candidate) => candidate.term),
     ).toEqual([]);
+  });
+
+  it('leaves no event candidate open: every condition and phrase is covered by a keyword or reviewed', () => {
+    // If the data or the taxonomy changes, look at the new candidates (reviewed-event-forms.ts says how).
+    expect(findEventCandidates(traits, { ignore: REVIEWED_EVENT_FORMS })).toEqual({ clauses: [], words: [] });
   });
 
   it('is compared with the canonical lists: only Stone is written another way', () => {

@@ -224,9 +224,16 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
    and field); counts per kind, class, mastery requirement, keyword role and random debuff; a *Taxonomy* section with
    the candidates (capitalised terms in at least 3 traits that no keyword covers, that are no name of a trait,
    creature, family or material, and that `REVIEWED_NON_KEYWORDS` does not rule out; flagged when they follow "gains" or
-   "afflicted with", as a new buff or debuff would) and the differences with the canonical buff and debuff lists; and
-   *Needs attention* (classes outside GAME_RULES R7, masteries whose requirement names no known family, override
-   warnings).
+   "afflicted with", as a new buff or debuff would) and the differences with the canonical buff and debuff lists; an
+   *Events* section with what the descriptions say about events that no keyword covers (`findEventCandidates`):
+   *Conditions*, the sentences that open with After, When, Whenever, If, While, At, Each time, Once, Before, Upon, As long
+   as, Every time, For each or Until, up to the comma or the full stop, and *Phrases*, the stretch between two marks of
+   punctuation around a word an event goes by (attacks, heals, dies, gains a buff: the verbs of the census of 8b.5, with
+   "attack" where it is a stat and a capitalised word in mid-sentence, a name, left out) outside the conditions. Each is a
+   form (lower case, numbers as `#`, a family as `<family>`, so that one way of saying it is one form) with the number of
+   traits and the first; one trait is enough, since a new event may start in a single description; the forms in
+   `REVIEWED_EVENT_FORMS` are looked at and left out; and *Needs attention* (classes outside GAME_RULES R7, masteries whose
+   requirement names no known family, override warnings).
 
 GitHub Actions: nightly + manual run. If the output changed, open a PR with the report as description; the workflow
 runs the full check suite itself (PRs opened with `GITHUB_TOKEN` do not trigger CI). Claude reviews and merges these

@@ -11,6 +11,8 @@ import {
 import type { BuiltTraits } from '../build/build-traits';
 import { compareWithCanonicalLists } from './compare-canonical';
 import { diffTraits, type TraitRecord } from './diff-traits';
+import { findEventCandidates, type EventCandidate } from './event-candidates';
+import { REVIEWED_EVENT_FORMS } from './reviewed-event-forms';
 import { REVIEWED_NON_KEYWORDS } from './reviewed-non-keywords';
 import { findTaxonomyCandidates } from './taxonomy-candidates';
 
@@ -28,6 +30,8 @@ export interface ReportOptions {
   readonly taxonomy?: Taxonomy;
   /** Capitalised terms already looked at and found to be no keyword. Defaults to `REVIEWED_NON_KEYWORDS`. */
   readonly ignoredTerms?: ReadonlySet<string>;
+  /** Conditions and phrases already looked at (see `REVIEWED_EVENT_FORMS`). Defaults to that list. */
+  readonly ignoredEventForms?: ReadonlySet<string>;
 }
 
 /**
@@ -40,6 +44,7 @@ export function buildReport(current: BuiltTraits, previous: PreviousBuild | null
     changesSection(current.traits, previous),
     countsSection(current.traits),
     taxonomySection(current.traits, options),
+    eventsSection(current.traits, options),
     attentionSection(current.traits, current.warnings),
   ];
   return `${sections.filter((section) => section !== null).join('\n\n')}\n`;
@@ -182,13 +187,10 @@ function taxonomySection(traits: readonly Trait[], options: ReportOptions): stri
 
   const subsections: string[] = [];
   if (candidates.length > 0) {
-    const rows = candidates
-      .slice(0, MAX_CANDIDATES)
-      .map(
-        ({ term, traits: count, example, afterStatusCue }) =>
-          `| ${term} | ${count} | \`${example}\` | ${afterStatusCue ? 'maybe' : '-'} |`,
-      );
-    if (candidates.length > MAX_CANDIDATES) rows.push(`- …and ${candidates.length - MAX_CANDIDATES} more`);
+    const rows = candidates.map(
+      ({ term, traits: count, example, afterStatusCue }) =>
+        `| ${term} | ${count} | \`${example}\` | ${afterStatusCue ? 'maybe' : '-'} |`,
+    );
     subsections.push(
       [
         '### Candidates',
@@ -197,7 +199,7 @@ function taxonomySection(traits: readonly Trait[], options: ReportOptions): stri
         '',
         '| Term | Traits | Example | Buff or debuff? |',
         '|---|---|---|---|',
-        ...rows,
+        ...firstRows(rows),
       ].join('\n'),
     );
   }
@@ -207,6 +209,49 @@ function taxonomySection(traits: readonly Trait[], options: ReportOptions): stri
     );
   }
   return subsections.length === 0 ? null : ['## Taxonomy', ...subsections].join('\n\n');
+}
+
+/** What the descriptions say about events that no keyword covers: material for patterns and events, not a defect. */
+function eventsSection(traits: readonly Trait[], options: ReportOptions): string | null {
+  const { clauses, words } = findEventCandidates(traits, { ignore: options.ignoredEventForms ?? REVIEWED_EVENT_FORMS });
+
+  const subsections: string[] = [];
+  if (clauses.length > 0) {
+    subsections.push(
+      formTable(
+        'Conditions',
+        'Sentences that open with After, When, If, While and the like, up to the comma, and that no keyword covers. ' +
+          'Numbers are #, families <family>.',
+        'Condition',
+        clauses,
+      ),
+    );
+  }
+  if (words.length > 0) {
+    subsections.push(
+      formTable(
+        'Phrases',
+        'Phrases around a word an event goes by (attacks, heals, gains a buff …) that no keyword covers, outside the ' +
+          'conditions above.',
+        'Phrase',
+        words,
+      ),
+    );
+  }
+  return subsections.length === 0 ? null : ['## Events', ...subsections].join('\n\n');
+}
+
+function formTable(title: string, intro: string, heading: string, candidates: readonly EventCandidate[]): string {
+  const rows = candidates.map(({ form, traits, example }) => `| \`${form}\` | ${traits} | \`${example}\` |`);
+  return [`### ${title}`, '', intro, '', `| ${heading} | Traits | Example |`, '|---|---|---|', ...firstRows(rows)].join(
+    '\n',
+  );
+}
+
+/** The rows that fit in a table of the report, and a line that counts the rest. */
+function firstRows(rows: readonly string[]): string[] {
+  if (rows.length <= MAX_CANDIDATES) return [...rows];
+  return [...rows.slice(0, MAX_CANDIDATES), `- …and ${rows.length - MAX_CANDIDATES} more`];
 }
 
 function attentionSection(traits: readonly Trait[], warnings: readonly string[]): string {

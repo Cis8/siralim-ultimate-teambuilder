@@ -1,6 +1,7 @@
 export { createKeywordExtractor, extractKeywords, type KeywordExtractor } from './extraction/extract-keywords';
 export { createKeywordMatcher, type KeywordMatch, type KeywordMatcher } from './extraction/keyword-matcher';
 export { assignRoles, type RoleOptions } from './extraction/role-heuristic';
+export { isStatSense } from './extraction/stat-sense';
 export { enrichTraits } from './enrichment/enrich-traits';
 export { detectConditionalSources } from './enrichment/conditional-sources';
 export { writtenForms as familyWrittenForms } from './enrichment/family-matcher';

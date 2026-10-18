@@ -355,4 +355,68 @@ describe('buildReport', () => {
       expect(buildReport(build('2.0', [trait('a')]), null, { taxonomy })).not.toContain('## Taxonomy');
     });
   });
+
+  describe('events', () => {
+    const traits = [
+      trait('a', { description: 'If the moon rises, it sleeps.' }),
+      trait('b', { description: 'If the moon rises, it sleeps. It heals twice.' }),
+      trait('c', { description: 'While the sun is up, it heals twice.' }),
+    ];
+
+    it('lists the conditions and the phrases no keyword covers, most frequent first, with the first trait', () => {
+      expect(buildReport(build('2.0', traits), null)).toContain(
+        [
+          '## Events',
+          '',
+          '### Conditions',
+          '',
+          'Sentences that open with After, When, If, While and the like, up to the comma, and that no keyword covers. Numbers are #, families <family>.',
+          '',
+          '| Condition | Traits | Example |',
+          '|---|---|---|',
+          '| `if the moon rises` | 2 | `a` |',
+          '| `while the sun is up` | 1 | `c` |',
+          '',
+          '### Phrases',
+          '',
+          'Phrases around a word an event goes by (attacks, heals, gains a buff …) that no keyword covers, outside the conditions above.',
+          '',
+          '| Phrase | Traits | Example |',
+          '|---|---|---|',
+          '| `it heals twice` | 2 | `b` |',
+        ].join('\n'),
+      );
+    });
+
+    it('comes between the taxonomy and what needs attention', () => {
+      const moonbeams = ['d', 'e', 'f'].map((id) => trait(id, { description: 'Casts Moonbeam.' }));
+      const report = buildReport(build('2.0', [...traits, ...moonbeams]), null);
+      expect(report.indexOf('## Taxonomy')).toBeLessThan(report.indexOf('## Events'));
+      expect(report.indexOf('## Events')).toBeLessThan(report.indexOf('## Needs attention'));
+    });
+
+    it('leaves out the forms that were looked at', () => {
+      const report = buildReport(build('2.0', traits), null, {
+        ignoredEventForms: new Set(['if the moon rises', 'it heals twice']),
+      });
+      expect(report).not.toContain('`if the moon rises`');
+      expect(report).not.toContain('### Phrases');
+      expect(report).toContain('`while the sun is up`');
+    });
+
+    it('leaves out a table with nothing in it, and the section when both are empty', () => {
+      const ignoredEventForms = new Set(['if the moon rises', 'while the sun is up']);
+      expect(buildReport(build('2.0', traits), null, { ignoredEventForms })).not.toContain('### Conditions');
+      expect(buildReport(build('2.0', [trait('a')]), null)).not.toContain('## Events');
+    });
+
+    it('lists at most 25 forms of a kind and counts the rest', () => {
+      const many = Array.from({ length: 30 }, (_, i) =>
+        trait(`t-${i}`, { description: `If ${'a'.repeat(i + 1)}, x.` }),
+      );
+      const report = buildReport(build('2.0', many), null);
+      expect(report).toContain('- …and 5 more');
+      expect(report.match(/^\| `if /gm)).toHaveLength(25);
+    });
+  });
 });
