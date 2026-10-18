@@ -351,7 +351,8 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   which is what the next filter turned on gets; that choice is a state of the page like the shut sections (not in the address,
   not in the local storage), and *Clear filters* leaves it, as it leaves the match mode. The counts of the buttons are those of
   the actor shown (`facetCount`), so a button says how many traits it would show. A filter turned on by a click on a keyword
-  names no actor.
+  names no actor. *Decided 2026-10-18, not built yet (PLAN 8b.11):* the control takes several actors at once, each button a
+  toggle that goes on and off on repeated taps, instead of one choice; the paragraph above describes what is on the page today.
 - **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each

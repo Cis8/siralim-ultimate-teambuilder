@@ -12,13 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b done (8b.9 closed it). Next is 8.4** (credits: ask the owner to confirm the authors' names
-  first; README; the criteria-to-tests table; ROADMAP ticks), which closes Phase 1: ask the owner before starting Phase 2.
-  Ask the owner first, before 8.4: the Events finder (8b.9) found 14 forms of the events R12 names (any buff, any debuff) that
-  the patterns do not read: "after an enemy afflicts a debuff", "your creatures apply / receive a debuff", "buffs an enemy",
-  "gains 5 random buffs", "afflicted with 3 random debuffs". They are the last group of `report/reviewed-event-forms.ts`.
-  Fixing them is a slice like 8b.6 (patterns, the role and actor `readEvent` gives, `pipeline:fetch` + `build`, snapshots):
-  a 8b.10 before 8.4, or left for later. Each form comes out of the list when the taxonomy reads it.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.9 done; two slices added on 2026-10-18, 8b.10 and 8b.11, before 8.4.** Both are
+  only listed so far (see M8b below): the detailed technical plan of 8b.10 is a slice of its own, to be done first, as 8b.5 was
+  for events; 8b.11 is a smaller change and its open questions are in its entry. Ask the owner which goes first if it matters.
+  8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) comes
+  after both and closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -222,9 +220,9 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       ring (its role outline outranked the page's ring), the sheet opened with the focus on an unnamed scrolled `div` in Chrome
       (now its title), and the filters took 124 presses of Tab to pass (new "Skip filters" link, from 700 px).
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.
-      M8b is done: it can start once the owner has answered the question in *Resume here*.
+      Starts only when M8b is done (8b.10 and 8b.11 are open).
 
-### M8b The owner's notes — done
+### M8b The owner's notes (before 8.4)
 Phase 1 refinements from the owner's play-testing notes (2026-10-17). Decisions: the "…" shows only where the target slot refuses
 the trait, in place of the disabled add; the five standard classes come first in the filters; back-to-top sits top right.
 Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
@@ -251,3 +249,24 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
   63 conditions and 13 phrases: 14 are events R12 names that the patterns do not read (the last group of the list), the rest
   are states, party conditions, damage as an amount, and dealing damage, gaining stats and a status ending, which R12 leaves
   out of its 18 events. `isStatSense` is exported from `core` for it.
+
+Open slices (added 2026-10-18 after 8b.9):
+- [ ] **8b.10** Events: the patterns read the 14 forms of *any buff* / *any debuff* that 8b.9 found and the list still holds as
+      "events the patterns do not read" (the last group of `report/reviewed-event-forms.ts`): "after an enemy afflicts a debuff",
+      "afflicts your creatures / an enemy with a debuff", "your creatures apply / receive a debuff", "would afflict … with a
+      debuff", "buffs an enemy", "debuffs an ally", "gains 5 random buffs", "afflicted with 3 random debuffs". The ground is
+      that of 8b.6: patterns, the role and the actor `readEvent` gives each new mention (read every new line of the snapshot),
+      `pnpm pipeline:fetch && pipeline:build`, snapshots, and each form out of the reviewed list when the taxonomy reads it.
+      The recall of the two buff events was 53% and 45% (8b.6), so the finder may find more once these are read. **The detailed
+      technical plan is a slice of its own, done first** (research on the snapshot as in 8b.5, then the plan written here);
+      nothing is decided yet beyond the goal.
+- [ ] **8b.11** Filters: *Who acts* takes several choices at once. The owner's note (2026-10-18): today the control is a
+      `Segmented` of one choice (Any, This creature, Your creatures, Enemies); it should let the player turn several on, each
+      button a toggle that goes on and off on repeated taps. Recorded in SPEC §8.1. Questions for the slice to settle before it
+      codes: what a selection of several means for the filters (the same event by two actors is already two items in the
+      address; Match all would have them both, which is surely not meant, so they must be one *or*); how *Any* sits beside the
+      others (a choice of its own, or "none pressed"); what `eventActors` and `narrowEventFilters` (one actor today) become;
+      the counts of the buttons (`facetCount`, `KeywordFacet.byActor`) with several actors; the address and the chips; `Segmented`
+      (it has one value) or a group of toggle buttons. Touches `core` (`event-actors`, `toggleKeywordSide`, `filterQuery`, the
+      query if it needs an actor list), the web (`event-who`, `EventFacets`), SPEC §8.1, QUERY_LANGUAGE §2 if the language
+      changes, DESIGN, SCREEN_READER_CHECKLIST 17, `e2e/events.test.ts`. A plan with tests first for `core`, then the web.

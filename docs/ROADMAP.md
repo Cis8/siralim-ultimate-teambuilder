@@ -29,10 +29,11 @@ Prototypes: `Main.dc.html` (desktop), `Mobile.dc.html` (mobile).
       basic coverage (applies, relies on, missing sources, non-stacking duplicates per GAME_RULES R4), share URL with
       stable IDs + dataset version, unknown-ID handling.
 - [x] **M7 Mobile.** Filters bottom sheet (focus trapped, Esc/close), Explore/Party tabs, 44 px targets, add-to-target button.
-- [x] **M8b Owner's notes.** Refinements from play-testing, done before M8 closes: no zoom on focus and a back-to-top button on
+- [ ] **M8b Owner's notes.** Refinements from play-testing, done before M8 closes: no zoom on focus and a back-to-top button on
       mobile, "Clear filters" and the class order, collapsible filter sections, a slot dialog for traits the target slot refuses,
       and event keywords (provoke, defend, attack and who does it, spells; planned in 8b.5, ADR-0009) with a report section
-      that shows the event forms no keyword covers.
+      that shows the event forms no keyword covers. Still open (added 2026-10-18): the patterns for the buff and debuff forms that
+      section found (8b.10), and *Who acts* with several choices at once (8b.11).
 - [ ] **M8 Hardening.** Performance budget check on the full dataset, Lighthouse CI budgets, a11y pass (keyboard-only
       walkthrough, screen-reader smoke test), footer credits + "unofficial" label, README. Slice 8.4 (credits, README) waits
       for M8b.
