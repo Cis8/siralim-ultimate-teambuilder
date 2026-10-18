@@ -2,14 +2,16 @@ import {
   createHighlighter,
   createTraitIndex,
   evaluate,
+  KEYWORD_ACTORS,
   parseQuery,
   serialise,
+  taxonomy,
   type Trait,
   type TraitIndex,
 } from '@atlas/core';
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { buildRealSheet } from '../testing/real-build';
+import { buildRealSheet, readOldTriggers } from '../testing/real-build';
 
 // Acceptance criteria 1 and 2 (docs/ROADMAP.md) on the pinned snapshot of the compendium, v2.0. Each answer is compared
 // with one worked out another way: a plain filter on the columns of the trait for criterion 1, the committed list of
@@ -140,6 +142,75 @@ describe('the query language on the compendium v2.0', () => {
       expect(new Set([...gives, ...relies]).size).toBe(13);
     });
 
+    // QUERY_LANGUAGE §2: `uses:attack/self` is the event by one actor. Each answer is worked out from the actor column of the
+    // committed mentions, and the union over the actors is checked against the event alone.
+    describe('who acts: an actor after a slash', () => {
+      const events = taxonomy.ofKind('event').map(({ key }) => key);
+      const idsActing = (field: string, key: string, actor?: string): string[] => {
+        const ids = new Set(
+          mentionsRead
+            .filter((m) => m.key === key && (actor === undefined || m.actor === actor))
+            .filter((m) => field === 'kw' || m.role === field)
+            .map((m) => m.id),
+        );
+        return traits.map((trait) => trait.id).filter((id) => ids.has(id));
+      };
+
+      it.each(events)('finds for %s the traits whose mention names that actor, in the role asked', (key) => {
+        for (const field of ['applies', 'uses', 'kw']) {
+          for (const actor of KEYWORD_ACTORS) {
+            expect(find(`${field}:"${key}/${actor}"`), `${field}:${key}/${actor}`).toEqual(
+              idsActing(field, key, actor),
+            );
+          }
+          expect(find(`${field}:"${key}"`), `${field}:${key}`).toEqual(idsActing(field, key));
+        }
+      });
+
+      it('finds an event by one actor in no more traits than by anyone, and has an actor for every event but the start of a battle', () => {
+        for (const key of events) {
+          const byAnyone = find(`kw:"${key}"`);
+          const byAnActor = new Set(KEYWORD_ACTORS.flatMap((actor) => find(`kw:"${key}/${actor}"`)));
+          expect(byAnActor.size, key).toBeLessThanOrEqual(byAnyone.length);
+          if (key !== 'start of battle') expect(byAnActor.size, key).toBeGreaterThan(0);
+        }
+        expect(find('kw:"start of battle/self"')).toEqual([]);
+      });
+
+      it('reads the traits one by one, as the rules do (GAME_RULES R12)', () => {
+        expect(find('uses:attack/self')).toContain('abomination--quell');
+        expect(find('uses:attack/enemy')).not.toContain('abomination--quell');
+        expect(find('applies:death/enemy')).toContain('abomination--quell');
+        expect(find('uses:death/enemy')).not.toContain('abomination--quell');
+        expect(find('uses:dodge/enemy')).toContain('clutcher--lash');
+      });
+
+      it('finds the same traits with the canonical text of the query as it was typed', () => {
+        for (const query of ['uses:attack/self', 'KW:"Start of Turn/Enemy" -applies:death/any', 'u:/ally']) {
+          const written = serialise(parseQuery(query).ast);
+          expect(find(written), query).toEqual(find(query));
+        }
+      });
+    });
+
+    // The first version of the app had eleven trigger phrases, pinned with the traits that had them (SPEC §4). A query that
+    // names one finds the event, and who did it where the phrase says, and so at least those traits (ADR-0009).
+    describe('the trigger phrases of the first version', () => {
+      const pinned = readOldTriggers();
+
+      it.each([...new Set(pinned.map(([phrase]) => phrase))])('%s finds at least the traits it found', (phrase) => {
+        const found = new Set(find(`kw:"${phrase}"`));
+        const lost = pinned.filter(([each]) => each === phrase).filter(([, id]) => !found.has(id));
+        expect(lost).toEqual([]);
+        expect(found.size).toBeGreaterThanOrEqual(pinned.filter(([each]) => each === phrase).length);
+      });
+
+      it('are whole phrases: the start of one finds nothing', () => {
+        expect(find('kw:"after this creature"')).toEqual([]);
+        expect(find('kw:after')).toEqual([]);
+      });
+    });
+
     it('leaves a mention that only guards against a keyword to kw:', () => {
       const givesOrReliesOn = new Set([
         ...idsWithMention('applies', 'silenced'),
@@ -161,15 +232,17 @@ interface Mention {
   readonly key: string;
   /** `-` for a keyword with no role. */
   readonly role: string;
+  /** `-` for a mention that names nobody. */
+  readonly actor: string;
 }
 
-/** The mentions as the committed file lists them, one `trait | key | role` line each. */
+/** The mentions as the committed file lists them, one `trait | key | role | actor` line each. */
 function readMentions(): Mention[] {
   return readFileSync(KEYWORD_MENTIONS, 'utf8')
     .split('\n')
     .filter((line) => line !== '')
     .map((line) => {
-      const [id = '', key = '', role = ''] = line.split(' | ');
-      return { id, key, role };
+      const [id = '', key = '', role = '', actor = ''] = line.split(' | ');
+      return { id, key, role, actor };
     });
 }

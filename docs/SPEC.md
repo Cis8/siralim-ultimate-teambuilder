@@ -241,8 +241,13 @@ The search codec (`ExploreState`, `decodeExploreState` / `encodeExploreState`) w
 state, so that state has no parameter at all, and reads any address: what is missing or says nothing usable is the initial
 value. `q` is the query bar exactly as typed. `class` and `kw` are comma-separated lists in the order chosen, lower case,
 trimmed and without repeats; a comma inside an item is written `%2C` and a percent sign `%25`. A `kw` item is a letter and a
-key: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
-nothing. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
+keyword: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
+nothing. The keyword is a key and, for an event, who acts after a slash: `u:attack/self` (`parseKeywordReference`,
+`writeKeywordReference`; QUERY_LANGUAGE §2). The same event by two actors, or by one and by anyone, are separate items. An
+old trigger phrase is read as the event and the actor it stands for and written back so: `kw=k:after this creature attacks` is
+`kw=k:attack/self`, so a link of the first version finds what it found, and possibly more (ADR-0009). A slash with nobody after
+it is dropped (`u:attack/` is `u:attack`), a word after it that is no actor stays in the key, and an actor with no key is no
+item. `mode` is `all` (default) or `any`; `mat=yes` and `stack=no` are the two flags; `sort` is `book` (the order of the
 dataset: by family, then trait name; default), `class` (class, then family) or `az` (trait name). The party and the tab live in other parameters that the search codec leaves alone.
 
 **The tab codec** (`decodeTab` / `encodeTab`, `page-tab.ts` in `web`: the tabs are a layout, not a domain concept) follows
@@ -301,7 +306,10 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   `class:boss` would find Nether Boss too: a chosen class is written with the classes whose name contains it left out,
   `class:boss -class:"nether boss"`.
 - **Keywords** are `applies:`, `uses:` or `kw:` terms, joined by AND (match all) or OR (match any). They use the key prefix of
-  those fields, which the taxonomy keeps exact (no key is the start of another).
+  those fields, which the taxonomy keeps exact (no key is the start of another). A `KeywordFilter` is a field, a key and, for
+  an event, an optional `actor`: `{ field: 'uses', key: 'attack', actor: 'self' }` is `uses:attack/self`, in the effective
+  query, the chip and the address. The event by one actor and by anyone are two filters (`hasKeywordFilter` tells them apart),
+  and both can be on. The panel has no control for the actor until M8b.8; the address and the query bar carry it already.
 - **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
   (`kw:`); a mechanic has `mentions` only. The facets list the classes of the dataset and the buffs, debuffs, effects,

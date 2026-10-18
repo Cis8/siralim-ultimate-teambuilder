@@ -3,7 +3,8 @@ import type { ExploreState, KeywordFilter } from './explore-state';
 
 const lowerCase = (name: ClassName): ClassName => name.toLowerCase();
 
-const isSameKeywordFilter = (a: KeywordFilter, b: KeywordFilter): boolean => a.field === b.field && a.key === b.key;
+const isSameKeywordFilter = (a: KeywordFilter, b: KeywordFilter): boolean =>
+  a.field === b.field && a.key === b.key && a.actor === b.actor;
 
 /** Whether the class is chosen, however the dataset spells its name (the state keeps it in lower case). */
 export function hasClass(state: ExploreState, name: ClassName): boolean {

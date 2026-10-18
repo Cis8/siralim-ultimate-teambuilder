@@ -12,12 +12,13 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.6 done (8b.4: the "Add to…" slot sheet; 8b.5: the event plan; 8b.6: events in core and the
-  data); next is 8b.7, then 8b.8 and 8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README;
-  the criteria-to-tests table; ROADMAP ticks) then closes Phase 1: ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.7 done; next is 8b.8 (the Events section, the "Who" control, the event token), then
+  8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests
+  table; ROADMAP ticks) then closes Phase 1: ask the owner before starting Phase 2.
   Until 8b.8 the panel lists the 18 events flat with Applies / Relies on sides, and a click on an event token shows the traits
-  that mention it (`clickGoal`: an event has no counterpart yet, nobody causes the start of a battle); 8b.7 gives the actor a
-  place in the query and 8b.8 the section, the "Who" control and the token.
+  that mention it (`clickGoal`). For 8b.8: a `KeywordFilter` has an optional `actor` and `hasKeywordFilter` compares it, so a
+  Causes / Reacts toggle that is "on whoever acts" must look for the field and key itself; `parseKeywordReference` and
+  `writeKeywordReference` are exported for the web.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -281,12 +282,17 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       taught the heuristics nouns, names ("Death creatures"), "attacked", pronouns, lists and the start of battle as a moment;
       what is left is the 22 overrides. `triggers-before-events-v2.0.txt` pins the 564 traits of the old phrases (the aliases
       find at least those, tested).
-- [ ] **8b.7** Query and address. Keyword fields take an actor after a slash (`uses:provoke/self`; the key prefix still
-      applies before it; values `self`, `ally`, `enemy`, `any`); `IndexedTrait` lists event keys with and without their actor;
-      an alias is read by the keyword fields and by `decodeExploreState` (`kw=k:after this creature attacks` reads as
-      `k:attack/self` and is written back so); `filterQuery` and the chips write the suffix. *T:* lexer and serialiser round trip
-      with a slash, field tests, the URL codec, and on the real sheet each of the 11 old keys finds a superset of what it found
-      before (the 11 sets pinned). Docs: QUERY_LANGUAGE §2, SPEC §7.
+- [x] **8b.7** Query and address. The keyword fields take an actor after a slash (`uses:provoke/self`, the key prefix still applies
+      before it; `self`, `ally`, `enemy`, `any`, exact) and read an old trigger phrase whole as the event and actor it stands for
+      (`parseKeywordReference`, `Taxonomy.alias`); `IndexedTrait.acted` lists the events that name an actor per role. A
+      `KeywordFilter` has an optional `actor`: `filterQuery`, the chips and the address write `uses:attack/self`, and
+      `decodeExploreState` reads `kw=k:after this creature attacks` as `k:attack/self` and writes it back so. SPEC §4, §7, §8.1,
+      QUERY_LANGUAGE §2, §3, §5, §6. *T:* a unit test beside each change, the lexer and serialiser with a slash, and on the real
+      sheet every event × actor × field against the actor column of the mention snapshot, and each of the 11 old phrases
+      through the query and the address finding at least the traits pinned in `triggers-before-events-v2.0.txt`. Deviations:
+      the key lists of `IndexedTrait` stay plain keys and the actor is a list of its own (the facets count the lists by key, and
+      `attack/self` is a key no facet has); a slash with nothing after it is no actor yet (`provoke/` is `provoke`, so the list
+      does not empty while `/self` is typed); an alias stands alone (`strike/enemy` is the start of a key nobody has).
 - [ ] **8b.8** Web: the Events section and the event token. The section in place of Triggers, with five groups under small
       headings (Battle and turns, Actions, Hits, Life and death, Buffs and debuffs), each event with Causes / Reacts toggles
       counted as a buff's Applies / Relies on; one "Who" segmented control at the top of the section (Any, This creature, Your

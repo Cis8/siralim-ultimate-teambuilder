@@ -6,6 +6,7 @@ import {
   type KeywordFilter,
   type KeywordFilterField,
 } from './explore-state';
+import { parseKeywordReference, writeKeywordReference } from '../query/keyword-reference';
 import { readList, writeList, type ParamReader, type UrlParams } from '../url/url-params';
 
 /**
@@ -48,7 +49,11 @@ export function encodeExploreState(state: ExploreState): UrlParams {
     ['class', classes.length === 0 ? undefined : writeList(classes)],
     [
       'kw',
-      keywords.length === 0 ? undefined : writeList(keywords.map(({ field, key }) => `${KEYWORD_CODES[field]}:${key}`)),
+      keywords.length === 0
+        ? undefined
+        : writeList(
+            keywords.map(({ field, ...reference }) => `${KEYWORD_CODES[field]}:${writeKeywordReference(reference)}`),
+          ),
     ],
     ['mode', state.keywordMode === initialExploreState.keywordMode ? undefined : state.keywordMode],
     ['mat', state.artifactEligible ? 'yes' : undefined],
@@ -69,21 +74,26 @@ function canonicalNames(names: readonly string[]): string[] {
   return [...new Set(names.map((name) => name.trim().toLowerCase()).filter((name) => name !== ''))];
 }
 
-/** The same for the key of each filter; a field and a key make a filter once. */
+/** The same for the key of each filter; a field, a key and an actor make a filter once. */
 function canonicalKeywords(filters: readonly KeywordFilter[]): KeywordFilter[] {
   const byId = new Map<string, KeywordFilter>();
-  for (const { field, key } of filters) {
+  for (const { field, key, actor } of filters) {
     const canonicalKey = key.trim().toLowerCase();
-    const id = `${field}:${canonicalKey}`;
-    if (canonicalKey !== '' && !byId.has(id)) byId.set(id, { field, key: canonicalKey });
+    const filter: KeywordFilter =
+      actor === undefined ? { field, key: canonicalKey } : { field, key: canonicalKey, actor };
+    const id = `${field}:${writeKeywordReference(filter)}`;
+    if (canonicalKey !== '' && !byId.has(id)) byId.set(id, filter);
   }
   return [...byId.values()];
 }
 
-/** The filter an item like `a:vulnerable` stands for; nothing when its letter is not one of a field. */
+/**
+ * The filter an item like `a:vulnerable` or `u:attack/self` stands for, an old trigger phrase read as the event it names
+ * (`k:after this creature attacks` is `k:attack/self`); nothing when its letter is not one of a field.
+ */
 function keywordOf(item: string): KeywordFilter | undefined {
   const colon = item.indexOf(':');
   if (colon < 0) return undefined;
   const field = KEYWORD_FIELDS.get(item.slice(0, colon).trim().toLowerCase());
-  return field === undefined ? undefined : { field, key: item.slice(colon + 1) };
+  return field === undefined ? undefined : { field, ...parseKeywordReference(item.slice(colon + 1)) };
 }

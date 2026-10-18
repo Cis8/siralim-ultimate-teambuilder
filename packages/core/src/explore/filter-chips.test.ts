@@ -1,5 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { KEYWORD_ACTORS } from '../model/trait';
 import { queryChips } from '../query/chips';
 import { filterQuery } from './effective-query';
 import { initialExploreState, type ExploreState } from './explore-state';
@@ -36,6 +37,22 @@ describe('filterChips', () => {
     ]);
   });
 
+  it('writes the actor of an event after a slash, as the query does', () => {
+    const state = stateWith({
+      keywords: [
+        { field: 'uses', key: 'attack', actor: 'self' },
+        { field: 'kw', key: 'start of turn', actor: 'enemy' },
+        { field: 'uses', key: 'attack' },
+      ],
+    });
+
+    expect(filterChips(state)).toEqual([
+      { field: 'uses', value: 'attack/self' },
+      { field: 'kw', value: 'start of turn/enemy' },
+      { field: 'uses', value: 'attack' },
+    ]);
+  });
+
   it('has the flags only for those that are on', () => {
     expect(filterChips(stateWith({ doesNotStack: true }))).toEqual([{ field: 'stack', value: 'no' }]);
     expect(filterChips(stateWith({ artifactEligible: true }))).toEqual([{ field: 'mat', value: 'yes' }]);
@@ -67,6 +84,25 @@ describe('removeFilterChip', () => {
     expect(removeFilterChip(state, index)).toEqual({ ...state, ...patch });
   });
 
+  it('takes away the filter of one actor and leaves the same event by another', () => {
+    const acting = stateWith({
+      keywords: [
+        { field: 'uses', key: 'attack', actor: 'self' },
+        { field: 'uses', key: 'attack', actor: 'enemy' },
+        { field: 'uses', key: 'attack' },
+      ],
+    });
+
+    expect(removeFilterChip(acting, 1).keywords).toEqual([
+      { field: 'uses', key: 'attack', actor: 'self' },
+      { field: 'uses', key: 'attack' },
+    ]);
+    expect(removeFilterChip(acting, 2).keywords).toEqual([
+      { field: 'uses', key: 'attack', actor: 'self' },
+      { field: 'uses', key: 'attack', actor: 'enemy' },
+    ]);
+  });
+
   it('leaves the state as it is for a chip it does not have', () => {
     expect(removeFilterChip(state, 6)).toEqual(state);
     expect(removeFilterChip(state, -1)).toEqual(state);
@@ -90,11 +126,15 @@ describe('the chips of any state', () => {
     query: fc.string(),
     classes: fc.uniqueArray(fc.constantFrom(...classNames)),
     keywords: fc.uniqueArray(
-      fc.record({
-        field: fc.constantFrom('applies', 'uses', 'kw'),
-        key: fc.constantFrom('vulnerable', 'weak', 'start of battle'),
-      }),
-      { selector: ({ field, key }) => `${field}:${key}` },
+      fc.record(
+        {
+          field: fc.constantFrom('applies', 'uses', 'kw'),
+          key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'attack'),
+          actor: fc.constantFrom(...KEYWORD_ACTORS),
+        },
+        { requiredKeys: ['field', 'key'] },
+      ),
+      { selector: ({ field, key, actor }) => `${field}:${key}/${actor ?? ''}` },
     ),
     keywordMode: fc.constantFrom('all', 'any'),
     artifactEligible: fc.boolean(),

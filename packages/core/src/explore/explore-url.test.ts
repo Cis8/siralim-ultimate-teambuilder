@@ -7,6 +7,8 @@ import {
   SORT_KEYS,
   type ExploreState,
 } from './explore-state';
+import { KEYWORD_ACTORS } from '../model/trait';
+import { parseKeywordReference } from '../query/keyword-reference';
 import type { ParamReader } from '../url/url-params';
 import { decodeExploreState, encodeExploreState, EXPLORE_PARAMS } from './explore-url';
 
@@ -123,6 +125,57 @@ describe('decodeExploreState', () => {
       });
     });
 
+    // SPEC §7: a `kw` item is a field and a keyword reference, the key and, after a slash, who acts (QUERY_LANGUAGE §2).
+    describe('who acts in a keyword item', () => {
+      it('reads the actor after a slash', () => {
+        expect(decodeSearch('kw=a:attack/self,u:start+of+turn/enemy,k:dodge/ally').keywords).toEqual([
+          { field: 'applies', key: 'attack', actor: 'self' },
+          { field: 'uses', key: 'start of turn', actor: 'enemy' },
+          { field: 'kw', key: 'dodge', actor: 'ally' },
+        ]);
+      });
+
+      it('reads the letter case of the actor and the blanks around the slash as it does for the key', () => {
+        expect(decodeSearch('kw=A:Attack+/+SELF').keywords).toEqual([
+          { field: 'applies', key: 'attack', actor: 'self' },
+        ]);
+      });
+
+      it('reads an old trigger phrase as the event and the actor it stands for (ADR-0009)', () => {
+        expect(
+          decodeSearch('kw=k:after+this+creature+attacks,k:is+killed,u:After+an+enemy+dodges,k:start+of+battle')
+            .keywords,
+        ).toEqual([
+          { field: 'kw', key: 'attack', actor: 'self' },
+          { field: 'kw', key: 'death' },
+          { field: 'uses', key: 'dodge', actor: 'enemy' },
+          { field: 'kw', key: 'start of battle' },
+        ]);
+      });
+
+      it('keeps the event by anyone and by one actor apart, and each once', () => {
+        expect(
+          decodeSearch('kw=u:attack,u:attack/self,u:Attack/SELF,k:after+this+creature+attacks,u:attack').keywords,
+        ).toEqual([
+          { field: 'uses', key: 'attack' },
+          { field: 'uses', key: 'attack', actor: 'self' },
+          { field: 'kw', key: 'attack', actor: 'self' },
+        ]);
+      });
+
+      it('takes a slash with nobody after it for no actor yet', () => {
+        expect(decodeSearch('kw=u:attack/,u:attack//').keywords).toEqual([{ field: 'uses', key: 'attack' }]);
+      });
+
+      it('keeps what follows a slash and names nobody in the key, which matches nothing', () => {
+        expect(decodeSearch('kw=u:attack/nobody').keywords).toEqual([{ field: 'uses', key: 'attack/nobody' }]);
+      });
+
+      it('leaves out an actor with no key to go with it', () => {
+        expect(decodeSearch('kw=u:/self,u:+/enemy').keywords).toEqual([]);
+      });
+    });
+
     it('reads a comma or a percent sign escaped inside an item', () => {
       expect(decodeSearch('class=a%252Cb,100%2525').classes).toEqual(['a,b', '100%']);
     });
@@ -191,6 +244,32 @@ describe('encodeExploreState', () => {
     ]);
   });
 
+  it('writes the actor of an event after a slash', () => {
+    const written = encodeExploreState({
+      ...initialExploreState,
+      keywords: [
+        { field: 'uses', key: 'attack', actor: 'self' },
+        { field: 'kw', key: 'Start of Turn', actor: 'enemy' },
+        { field: 'uses', key: 'attack' },
+      ],
+    });
+
+    expect(written).toEqual([['kw', 'u:attack/self,k:start of turn/enemy,u:attack']]);
+  });
+
+  it('writes the same event once per actor, and the same actor once', () => {
+    const written = encodeExploreState({
+      ...initialExploreState,
+      keywords: [
+        { field: 'uses', key: 'attack', actor: 'self' },
+        { field: 'uses', key: 'Attack ', actor: 'self' },
+        { field: 'uses', key: 'attack', actor: 'enemy' },
+      ],
+    });
+
+    expect(written).toEqual([['kw', 'u:attack/self,u:attack/enemy']]);
+  });
+
   it('writes only the parameters it names', () => {
     const everything: ExploreState = {
       query: 'a',
@@ -219,14 +298,22 @@ describe('the address of a state', () => {
   const name = text
     .map((value) => value.trim().toLowerCase())
     .filter((value) => value !== '' && value.trim().toLowerCase() === value);
+  /** A key that reads as itself: with no actor, no trailing slash and not an old phrase (`parseKeywordReference`). */
+  const keyword = name.filter((value) => {
+    const { key, actor } = parseKeywordReference(value);
+    return key === value && actor === undefined;
+  });
 
   const state = fc.record({
     query: text,
     classes: fc.uniqueArray(name, { maxLength: 5 }),
-    keywords: fc.uniqueArray(fc.record({ field: fc.constantFrom(...KEYWORD_FILTER_FIELDS), key: name }), {
-      maxLength: 5,
-      selector: ({ field, key }) => `${field}:${key}`,
-    }),
+    keywords: fc.uniqueArray(
+      fc.record(
+        { field: fc.constantFrom(...KEYWORD_FILTER_FIELDS), key: keyword, actor: fc.constantFrom(...KEYWORD_ACTORS) },
+        { requiredKeys: ['field', 'key'] },
+      ),
+      { maxLength: 5, selector: ({ field, key, actor }) => `${field}:${key}/${actor ?? ''}` },
+    ),
     keywordMode: fc.constantFrom(...KEYWORD_MODES),
     artifactEligible: fc.boolean(),
     doesNotStack: fc.boolean(),

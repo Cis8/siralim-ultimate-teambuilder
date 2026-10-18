@@ -1,4 +1,4 @@
-import type { KeywordKey, KeywordKind } from '../model/trait';
+import type { KeywordKey, KeywordKind, KeywordReference } from '../model/trait';
 import type { TaxonomyEntry } from './entry';
 
 /** The entries break a rule that would make keyword matching ambiguous or impossible. */
@@ -14,6 +14,11 @@ export interface Taxonomy {
   readonly entries: readonly TaxonomyEntry[];
   get(key: KeywordKey): TaxonomyEntry | undefined;
   ofKind<K extends KeywordKind>(kind: K): readonly Extract<TaxonomyEntry, { kind: K }>[];
+  /**
+   * The event, and the actor if the phrase names one, that an old trigger phrase (an alias, ADR-0009) stands for. `phrase`
+   * is lower case and whole: the start of an alias is nothing.
+   */
+  alias(phrase: string): KeywordReference | undefined;
 }
 
 /**
@@ -36,11 +41,22 @@ export function createTaxonomy(entries: readonly TaxonomyEntry[]): Taxonomy {
   }
 
   const byKey = new Map(entries.map((entry) => [entry.key, entry]));
+  const byAlias = new Map<string, KeywordReference>(
+    entries.flatMap((entry) =>
+      entry.kind === 'event'
+        ? (entry.aliases ?? []).map(({ key, actor }): [string, KeywordReference] => [
+            key,
+            actor === undefined ? { key: entry.key } : { key: entry.key, actor },
+          ])
+        : [],
+    ),
+  );
   return {
     entries,
     get: (key) => byKey.get(key),
     ofKind: <K extends KeywordKind>(kind: K) =>
       entries.filter((entry): entry is Extract<TaxonomyEntry, { kind: K }> => entry.kind === kind),
+    alias: (phrase) => byAlias.get(phrase),
   };
 }
 

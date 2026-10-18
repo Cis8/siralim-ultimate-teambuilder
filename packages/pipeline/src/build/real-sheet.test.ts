@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { hasActor, hasRole, KNOWN_CLASSES, slotRules, taxonomy, type SlotName, type Trait } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { BuiltTraits } from './build-traits';
@@ -6,7 +5,7 @@ import { buildReport } from '../report/build-report';
 import { compareWithCanonicalLists } from '../report/compare-canonical';
 import { REVIEWED_NON_KEYWORDS } from '../report/reviewed-non-keywords';
 import { findTaxonomyCandidates } from '../report/taxonomy-candidates';
-import { buildRealSheet } from '../testing/real-build';
+import { buildRealSheet, readOldTriggers } from '../testing/real-build';
 
 // The pinned snapshot of the compendium, v2.0, built with the committed overrides. The counts below are the ones in
 // docs/GAME_RULES.md.
@@ -302,10 +301,7 @@ describe('the compendium v2.0 snapshot', () => {
     // The first version of the app had eleven trigger phrases. A shared link or a saved query that names one finds the
     // traits it found, and possibly more (ADR-0009): the event the phrase stands for, by the actor it names if it names one.
     describe('the trigger phrases of the first version', () => {
-      const pinned = readFileSync(new URL('../../snapshots/triggers-before-events-v2.0.txt', import.meta.url), 'utf8')
-        .trim()
-        .split('\n')
-        .map((line) => line.split(' | ') as [phrase: string, trait: string]);
+      const pinned = readOldTriggers();
       const meaningOf = (phrase: string) => {
         const event = taxonomy.ofKind('event').find((entry) => entry.key === phrase);
         if (event !== undefined) return { key: event.key, actor: undefined };

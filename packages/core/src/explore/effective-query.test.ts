@@ -91,6 +91,20 @@ describe('filterQuery', () => {
     it('does not put the keywords in the classes', () => {
       expect(filters({ keywords: [vulnerable] }).classes).toBe('');
     });
+
+    it('writes the actor of an event after a slash, inside the quotes of a key of several words', () => {
+      expect(filters({ keywords: [{ field: 'uses', key: 'attack', actor: 'self' }] }).rest).toBe('uses:attack/self');
+      expect(filters({ keywords: [{ field: 'kw', key: 'start of turn', actor: 'enemy' }] }).rest).toBe(
+        'kw:"start of turn/enemy"',
+      );
+    });
+
+    it('writes the same event by two actors as two terms', () => {
+      const attack = { field: 'uses', key: 'attack' } as const;
+      expect(filters({ keywords: [{ ...attack, actor: 'self' }, attack], keywordMode: 'any' }).rest).toBe(
+        '(uses:attack/self OR uses:attack)',
+      );
+    });
   });
 
   describe('flags', () => {
@@ -117,6 +131,7 @@ describe('filterQuery', () => {
       keywords: [
         { field: 'applies', key: 'weak' },
         { field: 'kw', key: "start of this creature's turn" },
+        { field: 'uses', key: 'start of turn', actor: 'enemy' },
       ],
       keywordMode: 'any',
       artifactEligible: true,

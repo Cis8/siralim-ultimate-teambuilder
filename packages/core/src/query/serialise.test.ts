@@ -35,6 +35,9 @@ describe('serialise', () => {
       ['Applies:Weak', 'Applies:Weak'],
       ['kw:"start of battle"', 'kw:"start of battle"'],
       ['"rodian master"', '"rodian master"'],
+      ['uses:provoke/self', 'uses:provoke/self'],
+      ['u:"start of turn/enemy"', 'u:"start of turn/enemy"'],
+      ['kw:/self', 'kw:/self'],
     ])('keeps %j as %j', (source, expected) => {
       expect(canonical(source)).toBe(expected);
     });
@@ -47,6 +50,7 @@ describe('serialise', () => {
       ['class:"or"', 'class:or'],
       ['class:"-x"', 'class:-x'],
       ['class:"a:b"', 'class:a:b'],
+      ['uses:"provoke/self"', 'uses:provoke/self'],
     ])('drops the quotes of %j where the lexer reads the same without them: %j', (source, expected) => {
       expect(canonical(source)).toBe(expected);
     });
@@ -271,8 +275,15 @@ describe('serialiseTerm', () => {
     expect(serialiseTerm(undefined, '-weak')).toBe('"-weak"');
   });
 
+  it('writes the actor after a slash as part of the value (QUERY_LANGUAGE §2)', () => {
+    expect(serialiseTerm('uses', 'provoke/self')).toBe('uses:provoke/self');
+    expect(serialiseTerm('kw', 'start of turn/enemy')).toBe('kw:"start of turn/enemy"');
+  });
+
   it('writes what serialise writes for the same term', () => {
     for (const [field, value] of [
+      ['uses', 'provoke/self'],
+      ['kw', 'start of turn/enemy'],
       ['applies', 'vulnerable'],
       ['class', 'rodian master'],
       [undefined, 'or'],

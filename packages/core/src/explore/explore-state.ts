@@ -1,4 +1,4 @@
-import type { ClassName, KeywordKey } from '../model/trait';
+import type { ClassName, KeywordReference } from '../model/trait';
 
 /**
  * The query fields a keyword facet stands for (QUERY_LANGUAGE §2): `applies` and `uses` for the role of a buff, debuff,
@@ -7,9 +7,9 @@ import type { ClassName, KeywordKey } from '../model/trait';
 export const KEYWORD_FILTER_FIELDS = ['applies', 'uses', 'kw'] as const;
 export type KeywordFilterField = (typeof KEYWORD_FILTER_FIELDS)[number];
 
-export interface KeywordFilter {
+/** A keyword filter is one field and a keyword: for an event, by anyone or, with an `actor`, by that one (QUERY_LANGUAGE §2). */
+export interface KeywordFilter extends KeywordReference {
   readonly field: KeywordFilterField;
-  readonly key: KeywordKey;
 }
 
 /** Whether a trait must have all the keyword filters or any of them. */

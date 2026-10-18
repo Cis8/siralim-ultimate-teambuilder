@@ -49,9 +49,9 @@ field    = letter , { letter } ;
 | `creature:` (`cr:`) | creature name | substring |
 | `trait:` (`t:`) | trait name | substring |
 | `desc:` (`d:`) | description only | substring |
-| `applies:` (`a:`) | buff, debuff or effect the trait applies (`a:sealed`, `a:zombies`) | keyword key prefix |
-| `uses:` (`u:`) | buff, debuff or effect the trait relies on | keyword key prefix |
-| `kw:` (`k:`) | any keyword (any kind, any role, including a mention that only guards against it: `kw:silenced` finds "immune to Silenced", `applies:` and `uses:` do not; GAME_RULES R9) | keyword key prefix |
+| `applies:` (`a:`) | buff, debuff, effect or event the trait applies (`a:sealed`, `a:zombies`, `a:death/enemy`) | keyword key prefix, then `/actor` |
+| `uses:` (`u:`) | buff, debuff, effect or event the trait relies on (`u:attack/self`) | keyword key prefix, then `/actor` |
+| `kw:` (`k:`) | any keyword (any kind, any role, including a mention that only guards against it: `kw:silenced` finds "immune to Silenced", `applies:` and `uses:` do not; GAME_RULES R9) | keyword key prefix, then `/actor` |
 | `mat:` | `yes` = has material (artifact-eligible), `no`/`none` = no material | exact |
 | `stack:` | `yes` = stacks, `no` = "does not stack" | exact |
 
@@ -71,12 +71,26 @@ and unique across the registry; the field name in a query is matched whatever it
   `applies:` and `uses:` read only the mentions of that role: a mention that `resists` is in neither (R9), and a
   conditional source (R10) is `uses`, not `applies`, so the two roles stay apart. A trait can be in both when it gives
   *and* relies on the same keyword (Cloudy Constitution: "always has Vulnerable … creatures with Vulnerable gain").
+- **Who acts** (GAME_RULES R12, ADR-0009). An event is done by someone, and a keyword field takes that after a slash:
+  `uses:provoke` finds the traits that rely on a provoke, whoever provokes; `uses:provoke/self` only those where this creature
+  does. The actors are `self` (this creature), `ally` (your creatures, an ally), `enemy` and `any` (any creature), in any
+  letter case. The key prefix still applies before the slash (`u:prov/self`), and a key of several words is quoted whole
+  (`u:"start of turn/enemy"`). The lexer does not know the slash: the value is split afterwards, by `parseKeywordReference`.
+  - The actor is exact: `/self` does not find a mention that says `any`. A mention that names nobody (the start of a battle:
+    nobody makes it start) is found by no actor, and a buff, debuff or effect has none, so `weak/self` finds nothing.
+  - A word after the slash that is no actor stays in the key and finds nothing (`provoke/nobody`). A slash with nothing after
+    it asks for no actor yet, as the query is typed: `provoke/` is `provoke`, `/` is an empty value, and `/self` is every event
+    that creature takes part in.
+- **Old trigger phrases** (the eleven of the first version, ADR-0009) are the whole value of a keyword field: `kw:"is killed"` is
+  `kw:death` and `kw:"after this creature attacks"` is `kw:attack/self`. They are aliases of the taxonomy, read whole and alone:
+  `kw:after` finds nothing, and an actor after one (`strike/enemy`) makes it the start of a key nobody has. A link or a saved
+  query that carried one finds what it found, and possibly more: the event, not the phrase.
 - A mastery has no creature and a trait may have no material: those columns are empty for it, and nothing matches them.
 
 ## 3. Evaluation
 `createTraitIndex(traits)` indexes the dataset once, at load time (`IndexedTrait` per trait: columns lower-cased, keyword keys
-listed by role). `evaluate(ast, index)` returns the matching `Trait`s in the order of the index; an `ast` of `undefined` (a
-query with no term) returns them all. It is a visitor (`visitQuery`, bottom-up; the same dispatch serves highlighting and
+listed by role, and `acted`: the same lists for the events that name an actor, as key and actor). `evaluate(ast, index)`
+returns the matching `Trait`s in the order of the index; an `ast` of `undefined` (a query with no term) returns them all. It is a visitor (`visitQuery`, bottom-up; the same dispatch serves highlighting and
 serialising) that turns the tree into one `TraitMatcher`: each term asks the field registry for its matcher once, NOT / AND / OR
 combine them (`every`, `some`, short-circuiting), and the index is filtered with the result. Fields are read from the registry
 passed in, the one of the app by default. `compileQuery(ast)` is that test on its own, for a caller that asks it of more than
@@ -147,6 +161,8 @@ message }` with the `message` of the table, the operator as written in it. Phase
 | Empty value | warning | “applies:” has no value yet | — |
 | Role on a non-role keyword | warning | Timeline has no applies/uses role | use `kw:timeline` |
 | Unknown buff/debuff | error | No buff or debuff called “vulnrable”. Did you mean Vulnerable? | replace |
+| Unknown actor | error | No actor called “nobody”. Use self, ally, enemy or any | replace |
+| Actor on a keyword that has none | warning | Weak is not done by anyone, so “/self” finds nothing | remove the actor |
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
 | Unknown class | error | No class “lif”. Did you mean Life? | replace |
 | Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
@@ -158,7 +174,8 @@ Context = token at the caret (prefix up to caret) and the previous token.
 |---|---|
 | Empty token after a term or `)` | `OR`, `AND`, `NOT`, then fields |
 | Empty token otherwise | fields with one-line help |
-| `field:` + partial value | values for that field: keywords (role fields only offer buffs/debuffs), classes, families, trait/creature names, yes/no |
+| `field:` + partial value | values for that field: keywords (role fields offer buffs, debuffs, effects and events), classes, families, trait/creature names, yes/no |
+| Keyword value + `/` | the four actors (`self`, `ally`, `enemy`, `any`), for an event |
 | Unknown `fiel:` | closest field |
 | Free partial | matching fields, `applies:`/`uses:` per matching keyword, events by their keys, `kw:` mechanics, `trait:` names, `family:` names, the raw text |
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
+import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
 import { indexTrait } from './indexed-trait';
 
 function trait(overrides: Partial<Trait> = {}): Trait {
@@ -113,6 +113,60 @@ describe('indexTrait', () => {
     it('has no keys for a trait that mentions none', () => {
       const none = indexTrait(trait());
       expect([none.applies, none.uses, none.keywords]).toEqual([[], [], []]);
+    });
+  });
+
+  // An event is also listed with the actor the text names (GAME_RULES R12), beside the key alone, so that a query can ask for
+  // an event by anyone or by one actor.
+  describe('events with an actor', () => {
+    const event = (key: string, role: KeywordRole, actor?: KeywordActor): KeywordHit => ({
+      ...hit(key, 'event', role),
+      ...(actor === undefined ? {} : { actor }),
+    });
+    const indexed = indexTrait(
+      trait({
+        keywords: [
+          event('attack', 'uses', 'self'),
+          event('death', 'applies', 'enemy'),
+          event('start of battle', 'uses'),
+          event('dodge', 'resists', 'self'),
+          hit('weak', 'debuff', 'uses'),
+          event('attack', 'uses', 'ally'),
+        ],
+      }),
+    );
+
+    it('keeps the key alone in the lists of keys, whoever acts, so that the facets count it once', () => {
+      expect(indexed.uses).toEqual(['attack', 'start of battle', 'weak']);
+      expect(indexed.applies).toEqual(['death']);
+      expect(indexed.keywords).toEqual(['attack', 'death', 'start of battle', 'dodge', 'weak']);
+    });
+
+    it('lists the key with its actor under the role of the mention', () => {
+      expect(indexed.acted.uses).toEqual([
+        { key: 'attack', actor: 'self' },
+        { key: 'attack', actor: 'ally' },
+      ]);
+      expect(indexed.acted.applies).toEqual([{ key: 'death', actor: 'enemy' }]);
+    });
+
+    it('lists every mention that names an actor in `keywords`, whatever its role', () => {
+      expect(indexed.acted.keywords).toEqual([
+        { key: 'attack', actor: 'self' },
+        { key: 'death', actor: 'enemy' },
+        { key: 'dodge', actor: 'self' },
+        { key: 'attack', actor: 'ally' },
+      ]);
+    });
+
+    it('leaves out a mention that names nobody', () => {
+      const nobody = indexTrait(trait({ keywords: [event('start of battle', 'uses'), hit('weak', 'debuff', 'uses')] }));
+      expect(nobody.acted).toEqual({ applies: [], uses: [], keywords: [] });
+    });
+
+    it('lists a key and an actor once however many times it is mentioned', () => {
+      const twice = indexTrait(trait({ keywords: [event('attack', 'uses', 'self'), event('attack', 'uses', 'self')] }));
+      expect(twice.acted.uses).toEqual([{ key: 'attack', actor: 'self' }]);
     });
   });
 });

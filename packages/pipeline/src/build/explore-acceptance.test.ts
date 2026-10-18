@@ -2,16 +2,21 @@ import {
   createMemoryTraitRepository,
   createSearchService,
   DATASET_SCHEMA_VERSION,
+  decodeExploreState,
+  encodeExploreState,
   FACET_KEYWORD_KINDS,
   initialExploreState,
+  KEYWORD_ACTORS,
+  KEYWORD_FILTER_FIELDS,
   taxonomy,
   type ExploreState,
+  type KeywordActor,
   type KeywordFilter,
   type SearchService,
   type Trait,
 } from '@atlas/core';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { buildRealSheet } from '../testing/real-build';
+import { buildRealSheet, readOldTriggers } from '../testing/real-build';
 
 // Acceptance criterion 4 (docs/ROADMAP.md) on the pinned snapshot of the compendium, v2.0: "Class facet is any-of;
 // keyword facets follow the all/any switch; counts update as filters change". Each answer is compared with one worked
@@ -37,8 +42,11 @@ describe('the Explore filters on the compendium v2.0', () => {
   const idsFound = (overrides: Partial<ExploreState> = {}): string[] => search(overrides).traits.map(({ id }) => id);
   const inDatasetOrder = (wanted: (trait: Trait) => boolean): string[] => traits.filter(wanted).map(({ id }) => id);
 
-  const hasHit = (trait: Trait, field: KeywordFilter['field'], key: string): boolean =>
-    trait.keywords.some((hit) => hit.key === key && (field === 'kw' || hit.role === field));
+  const hasHit = (trait: Trait, field: KeywordFilter['field'], key: string, actor?: KeywordActor): boolean =>
+    trait.keywords.some(
+      (hit) =>
+        hit.key === key && (field === 'kw' || hit.role === field) && (actor === undefined || hit.actor === actor),
+    );
   const applies = (key: string) => ({ field: 'applies', key }) as const;
 
   describe('the class facet', () => {
@@ -147,6 +155,52 @@ describe('the Explore filters on the compendium v2.0', () => {
       }
     });
 
+    describe('who acts in an event (ADR-0009)', () => {
+      const events = taxonomy.ofKind('event').map(({ key }) => key);
+
+      it('keep the traits of the actor chosen, for every event, actor and field', () => {
+        for (const key of events) {
+          for (const actor of KEYWORD_ACTORS) {
+            for (const field of KEYWORD_FILTER_FIELDS) {
+              expect(idsFound({ keywords: [{ field, key, actor }] }), `${field}:${key}/${actor}`).toEqual(
+                inDatasetOrder((trait) => hasHit(trait, field, key, actor)),
+              );
+            }
+          }
+        }
+      });
+
+      it('tell the event by one actor from the event by anyone: both can be on', () => {
+        const attack = { field: 'uses', key: 'attack' } as const;
+        const bySelf = { ...attack, actor: 'self' } as const;
+        const byAnyone = idsFound({ keywords: [attack] });
+        const both = idsFound({ keywords: [attack, bySelf] });
+
+        expect(idsFound({ keywords: [bySelf] }).length).toBeLessThan(byAnyone.length);
+        expect(both).toEqual(idsFound({ keywords: [bySelf] }));
+      });
+    });
+
+    // The eleven trigger phrases of the first version: an address that carries one (`kw=k:after this creature attacks`) reads
+    // as the event and the actor it stands for, and finds at least the traits it found (SPEC §4, §7).
+    describe('an address with an old trigger phrase', () => {
+      const pinned = readOldTriggers();
+      const addressWith = (phrase: string) => decodeExploreState(new URLSearchParams({ kw: `k:${phrase}` }));
+
+      it.each([...new Set(pinned.map(([phrase]) => phrase))])('%s finds at least the traits it found', (phrase) => {
+        const found = new Set(idsFound(addressWith(phrase)));
+        const wanted = pinned.filter(([each]) => each === phrase).map(([, id]) => id);
+
+        expect(wanted.filter((id) => !found.has(id))).toEqual([]);
+      });
+
+      it('is written back as the event and the actor it stands for', () => {
+        expect(encodeExploreState(addressWith('after this creature attacks'))).toEqual([['kw', 'k:attack/self']]);
+        expect(encodeExploreState(addressWith('is killed'))).toEqual([['kw', 'k:death']]);
+        expect(encodeExploreState(addressWith('start of battle'))).toEqual([['kw', 'k:start of battle']]);
+      });
+    });
+
     it('list every buff, debuff, effect, event and mechanic of the taxonomy', () => {
       const listed = search().facets.keywords.map(({ key }) => key);
 
@@ -217,6 +271,13 @@ describe('the Explore filters on the compendium v2.0', () => {
         ...taxonomy.entries.flatMap(({ key }) =>
           (['applies', 'uses', 'kw'] as const).map((field) => ({ keywords: [{ field, key }] })),
         ),
+        ...taxonomy
+          .ofKind('event')
+          .flatMap(({ key }) =>
+            KEYWORD_ACTORS.flatMap((actor) =>
+              KEYWORD_FILTER_FIELDS.map((field) => ({ keywords: [{ field, key, actor }] })),
+            ),
+          ),
         { artifactEligible: true },
         { doesNotStack: true },
       ];

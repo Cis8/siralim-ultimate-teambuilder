@@ -68,6 +68,15 @@ describe('tokenize', () => {
       expect(token).toMatchObject({ field: { name: 'desc' }, value: 'at:start' });
     });
 
+    it('keeps a slash in the value: the actor of an event (uses:provoke/self) is not the lexer’s to read', () => {
+      const [token] = tokenize('uses:provoke/self');
+      expect(token).toMatchObject({ field: { name: 'uses' }, value: 'provoke/self', quote: 'none' });
+      expect(tokenize('u:"start of turn/enemy" kw:/self')).toMatchObject([
+        { value: 'start of turn/enemy', quote: 'closed' },
+        { value: '/self' },
+      ]);
+    });
+
     it('reads a field with no value yet, whose empty value span sits right after the colon', () => {
       expect(tokenize('(applies:)')).toEqual([
         { kind: 'open', text: '(', span: [0, 1] },

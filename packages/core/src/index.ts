@@ -16,6 +16,7 @@ export type {
   KeywordHit,
   KeywordKey,
   KeywordKind,
+  KeywordReference,
   KeywordRole,
   PartyRequirement,
   RandomDebuffSource,
@@ -24,6 +25,7 @@ export type {
   TraitKind,
   TraitRow,
 } from './model/trait';
+export { KEYWORD_ACTORS } from './model/trait';
 export { canBeDependency, hasActor, hasRole } from './model/keyword-kind';
 export { DATASET_SCHEMA_VERSION, MANIFEST_FILE_NAME, datasetFileName } from './model/dataset';
 export type { DatasetManifest, TraitDataset } from './model/dataset';
@@ -38,6 +40,7 @@ export type { FieldDefinition, TraitMatcher } from './query/field';
 export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
 export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
+export { parseKeywordReference, writeKeywordReference } from './query/keyword-reference';
 export { createTraitIndex, type TraitIndex } from './query/trait-index';
 export { evaluate } from './query/evaluate';
 export { visitQuery, type QueryVisitor } from './query/visitor';

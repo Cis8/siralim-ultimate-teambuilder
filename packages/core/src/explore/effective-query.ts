@@ -1,5 +1,6 @@
 import type { ClassName } from '../model/trait';
 import type { QueryNode } from '../query/ast';
+import { writeKeywordReference } from '../query/keyword-reference';
 import { serialise, serialiseTerm } from '../query/serialise';
 import type { ExploreState } from './explore-state';
 
@@ -64,7 +65,7 @@ function classesNamedInside(chosen: readonly ClassName[], known: readonly ClassN
 }
 
 function keywordsQuery({ keywords, keywordMode }: ExploreState): string {
-  const terms = keywords.map(({ field, key }) => serialiseTerm(field, key));
+  const terms = keywords.map(({ field, ...reference }) => serialiseTerm(field, writeKeywordReference(reference)));
   return keywordMode === 'any' && terms.length > 1 ? `(${terms.join(' OR ')})` : joined(terms);
 }
 

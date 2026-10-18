@@ -1,5 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { KEYWORD_ACTORS } from '../model/trait';
 import { initialExploreState, type ExploreState, type KeywordFilter } from './explore-state';
 import { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './facet-toggles';
 
@@ -7,8 +8,8 @@ const stateWith = (patch: Partial<ExploreState>): ExploreState => ({ ...initialE
 
 const applies = (key: string): KeywordFilter => ({ field: 'applies', key });
 const uses = (key: string): KeywordFilter => ({ field: 'uses', key });
-const byFilter = (a: KeywordFilter, b: KeywordFilter): number =>
-  `${a.field}:${a.key}`.localeCompare(`${b.field}:${b.key}`);
+const idOf = ({ field, key, actor }: KeywordFilter): string => `${field}:${key}/${actor ?? ''}`;
+const byFilter = (a: KeywordFilter, b: KeywordFilter): number => idOf(a).localeCompare(idOf(b));
 
 describe('toggleClass', () => {
   it('chooses a class, and takes it off with a second toggle', () => {
@@ -58,6 +59,17 @@ describe('toggleKeywordFilter', () => {
     expect(toggleKeywordFilter(both, applies('vulnerable')).keywords).toEqual([uses('vulnerable')]);
   });
 
+  it('tells the actors of an event apart: the event by anyone and by one actor are different filters', () => {
+    const anyone = uses('attack');
+    const self: KeywordFilter = { field: 'uses', key: 'attack', actor: 'self' };
+    const both = toggleKeywordFilter(stateWith({ keywords: [anyone] }), self);
+
+    expect(both.keywords).toEqual([anyone, self]);
+    expect(hasKeywordFilter(both, { field: 'uses', key: 'attack', actor: 'enemy' })).toBe(false);
+    expect(toggleKeywordFilter(both, self).keywords).toEqual([anyone]);
+    expect(toggleKeywordFilter(both, anyone).keywords).toEqual([self]);
+  });
+
   it('tells a keyword from another and a field from another', () => {
     const state = stateWith({ keywords: [{ field: 'kw', key: 'vulnerable' }] });
 
@@ -68,25 +80,23 @@ describe('toggleKeywordFilter', () => {
 });
 
 describe('a toggle, on any state', () => {
+  const filter = fc.record(
+    {
+      field: fc.constantFrom('applies', 'uses', 'kw'),
+      key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'attack'),
+      actor: fc.constantFrom(...KEYWORD_ACTORS),
+    },
+    { requiredKeys: ['field', 'key'] },
+  ) satisfies fc.Arbitrary<KeywordFilter>;
   const state = fc.record({
     query: fc.string(),
     classes: fc.uniqueArray(fc.constantFrom('life', 'death', 'nether boss')),
-    keywords: fc.uniqueArray(
-      fc.record({
-        field: fc.constantFrom('applies', 'uses', 'kw'),
-        key: fc.constantFrom('vulnerable', 'weak', 'start of battle'),
-      }),
-      { selector: ({ field, key }) => `${field}:${key}` },
-    ),
+    keywords: fc.uniqueArray(filter, { selector: idOf }),
     keywordMode: fc.constantFrom('all', 'any'),
     artifactEligible: fc.boolean(),
     doesNotStack: fc.boolean(),
     sort: fc.constantFrom('book', 'class', 'az'),
   }) satisfies fc.Arbitrary<ExploreState>;
-  const filter = fc.record({
-    field: fc.constantFrom('applies', 'uses', 'kw'),
-    key: fc.constantFrom('vulnerable', 'weak', 'start of battle'),
-  }) satisfies fc.Arbitrary<KeywordFilter>;
   const className = fc.constantFrom('Life', 'Death', 'Nether Boss');
 
   it('flips whether the class is chosen, and the other classes stay as they were', () => {
@@ -107,8 +117,7 @@ describe('a toggle, on any state', () => {
       fc.property(state, filter, (before, chosen) => {
         const after = toggleKeywordFilter(before, chosen);
         expect(hasKeywordFilter(after, chosen)).toBe(!hasKeywordFilter(before, chosen));
-        const others = (kept: ExploreState) =>
-          kept.keywords.filter(({ field, key }) => field !== chosen.field || key !== chosen.key);
+        const others = (kept: ExploreState) => kept.keywords.filter((each) => idOf(each) !== idOf(chosen));
         expect(others(after)).toEqual(others(before));
         expect({ ...after, keywords: [] }).toEqual({ ...before, keywords: [] });
       }),

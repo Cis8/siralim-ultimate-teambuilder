@@ -177,6 +177,34 @@ describe('createTaxonomy', () => {
       ).toHaveLength(2);
     });
 
+    describe('looking an alias up', () => {
+      const taxonomy = createTaxonomy([
+        aliased({ key: 'after this creature attacks', actor: 'self' }, { key: 'strike' }),
+        event('dodge', { aliases: [{ key: 'after an enemy dodges', actor: 'enemy' }] }),
+        buff('shelled'),
+      ]);
+
+      it('names the event, and the actor when the alias gives one', () => {
+        expect(taxonomy.alias('after this creature attacks')).toEqual({ key: 'attack', actor: 'self' });
+        expect(taxonomy.alias('after an enemy dodges')).toEqual({ key: 'dodge', actor: 'enemy' });
+      });
+
+      it('names the event of any creature when the alias gives no actor', () => {
+        expect(taxonomy.alias('strike')).toEqual({ key: 'attack' });
+      });
+
+      it('knows nothing of a key, of the start of an alias or of a text it was not given', () => {
+        expect(taxonomy.alias('attack')).toBeUndefined();
+        expect(taxonomy.alias('shelled')).toBeUndefined();
+        expect(taxonomy.alias('after this creature')).toBeUndefined();
+        expect(taxonomy.alias('constructor')).toBeUndefined();
+      });
+
+      it('has none in a taxonomy whose events have no alias', () => {
+        expect(createTaxonomy([event('dodge'), debuff('weak')]).alias('dodge')).toBeUndefined();
+      });
+    });
+
     it('refuses an alias given twice, in one entry or in two', () => {
       expect(violations([aliased({ key: 'strike' }, { key: 'strike' })])).toMatch(/alias "strike" is given twice/);
       expect(

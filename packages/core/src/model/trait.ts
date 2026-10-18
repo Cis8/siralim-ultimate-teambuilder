@@ -67,7 +67,15 @@ export type KeywordRole = 'applies' | 'uses' | 'resists';
  * Who an event happens to or is done by (GAME_RULES R12): this creature (`self`), your creatures or an ally (`ally`), an
  * enemy (`enemy`) or any creature (`any`). It is what the text says, and a text may say nothing ("at the start of battle").
  */
-export type KeywordActor = 'self' | 'ally' | 'enemy' | 'any';
+export const KEYWORD_ACTORS = ['self', 'ally', 'enemy', 'any'] as const;
+export type KeywordActor = (typeof KEYWORD_ACTORS)[number];
+
+/** A keyword by its key and, for an event, by who does it: what a query or an address names (`attack` by `self`). */
+export interface KeywordReference {
+  readonly key: KeywordKey;
+  /** Absent: whoever the text says, or nobody. */
+  readonly actor?: KeywordActor;
+}
 
 export interface KeywordHit {
   readonly key: KeywordKey;

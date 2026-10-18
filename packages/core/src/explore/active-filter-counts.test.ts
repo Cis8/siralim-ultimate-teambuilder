@@ -64,6 +64,18 @@ describe('activeFilterCounts', () => {
     expect(activeFilterCounts(state, vocabulary).debuff).toBe(2);
   });
 
+  it('counts an event by an actor in the section of the event, and by each actor as a filter of its own', () => {
+    const state = stateWith({
+      keywords: [
+        { field: 'uses', key: 'start of battle' },
+        { field: 'uses', key: 'start of battle', actor: 'self' },
+        { field: 'uses', key: 'start of battle', actor: 'enemy' },
+      ],
+    });
+
+    expect(activeFilterCounts(state, vocabulary)).toEqual({ ...none, event: 3 });
+  });
+
   it('counts each flag that is on in the flags section', () => {
     expect(activeFilterCounts(stateWith({ artifactEligible: true }), vocabulary)).toEqual({ ...none, flags: 1 });
     expect(activeFilterCounts(stateWith({ artifactEligible: true, doesNotStack: true }), vocabulary)).toEqual({

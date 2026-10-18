@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
+import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
 import { fieldRegistry } from './fields';
 import { indexTrait } from './indexed-trait';
 import { tokenize } from './lexer';
@@ -232,6 +232,122 @@ describe('the fields of the query language', () => {
       });
     });
 
+    // QUERY_LANGUAGE §2: `uses:provoke/self` is the event by one actor; the key prefix still applies before the slash.
+    describe('an actor after a slash', () => {
+      const event = (key: string, role: KeywordRole, actor?: KeywordActor): KeywordHit => ({
+        ...hit(key, 'event', role),
+        ...(actor === undefined ? {} : { actor }),
+      });
+      const acting = trait({
+        keywords: [
+          event('provoke', 'uses', 'self'),
+          event('attack', 'applies', 'enemy'),
+          event('attack', 'uses', 'ally'),
+          event('dodge', 'resists', 'self'),
+          event('start of battle', 'uses'),
+          hit('weak', 'debuff', 'uses'),
+        ],
+      });
+
+      it('finds the event only when that actor does it', () => {
+        expect(matches('uses:provoke/self', acting)).toBe(true);
+        expect(matches('uses:provoke/ally', acting)).toBe(false);
+        expect(matches('uses:provoke/enemy', acting)).toBe(false);
+        expect(matches('uses:provoke/any', acting)).toBe(false);
+      });
+
+      it.each(['uses:provoke', 'uses:provoke/', 'uses:provoke/self/'])(
+        'finds it with no actor asked for, or none yet: %s',
+        (source) => {
+          expect(matches(source, acting)).toBe(true);
+        },
+      );
+
+      it('applies the key prefix before the slash', () => {
+        expect(matches('u:prov/self', acting)).toBe(true);
+        expect(matches('u:p/self', acting)).toBe(true);
+        expect(matches('u:rovoke/self', acting)).toBe(false);
+      });
+
+      it('reads the role of the mention: the actor of a mention that applies is not the one of a mention that relies', () => {
+        expect(matches('applies:attack/enemy', acting)).toBe(true);
+        expect(matches('uses:attack/enemy', acting)).toBe(false);
+        expect(matches('uses:attack/ally', acting)).toBe(true);
+        expect(matches('applies:attack/ally', acting)).toBe(false);
+      });
+
+      it('finds a key with several words, in quotes', () => {
+        const turn = trait({ keywords: [event('start of turn', 'uses', 'enemy')] });
+        expect(matches('u:"start of turn/enemy"', turn)).toBe(true);
+        expect(matches('u:"start of/enemy"', turn)).toBe(true);
+        expect(matches('u:"start of turn/self"', turn)).toBe(false);
+      });
+
+      it('lets kw: find the actor in any role, a mention that prevents it included', () => {
+        expect(matches('kw:dodge/self', acting)).toBe(true);
+        expect(matches('uses:dodge/self', acting)).toBe(false);
+        expect(matches('k:attack/enemy', acting)).toBe(true);
+        expect(matches('k:attack/self', acting)).toBe(false);
+      });
+
+      it('never finds a mention that names nobody: the start of a battle has no actor', () => {
+        for (const actor of ['self', 'ally', 'enemy', 'any']) {
+          expect(matches(`u:"start of battle/${actor}"`, acting)).toBe(false);
+        }
+        expect(matches('u:"start of battle"', acting)).toBe(true);
+      });
+
+      it('finds nothing for a word after the slash that is no actor, or for a keyword that has none', () => {
+        expect(matches('uses:provoke/nobody', acting)).toBe(false);
+        expect(matches('uses:provoke/sel', acting)).toBe(false);
+        expect(matches('uses:weak/self', acting)).toBe(false);
+      });
+
+      it('finds an event by anyone when only the actor is given', () => {
+        expect(matches('uses:/self', acting)).toBe(true);
+        expect(matches('uses:/enemy', acting)).toBe(false);
+        expect(matches('applies:/enemy', acting)).toBe(true);
+      });
+
+      it('reads the actor whatever its letter case', () => {
+        expect(matches('USES:Provoke/SELF', acting)).toBe(true);
+      });
+    });
+
+    // The eleven trigger phrases of the first version are aliases (ADR-0009): a phrase names the event and, where it says,
+    // the actor. They are whole phrases, never the start of one.
+    describe('an old trigger phrase', () => {
+      const event = (key: string, actor?: KeywordActor): Trait =>
+        trait({ keywords: [{ ...hit(key, 'event', 'uses'), ...(actor === undefined ? {} : { actor }) }] });
+
+      it('finds the event by the actor the phrase names', () => {
+        expect(matches('kw:"after this creature attacks"', event('attack', 'self'))).toBe(true);
+        expect(matches('kw:"after this creature attacks"', event('attack', 'enemy'))).toBe(false);
+        expect(matches('kw:"after this creature attacks"', event('attack'))).toBe(false);
+      });
+
+      it('finds the event by anyone when the phrase names no actor', () => {
+        expect(matches('kw:"deals critical damage"', event('critical hit', 'enemy'))).toBe(true);
+        expect(matches('kw:"is killed"', event('death'))).toBe(true);
+      });
+
+      it('is read by the three keyword fields, with its role', () => {
+        const relies = event('dodge', 'enemy');
+        expect(matches('uses:"after an enemy dodges"', relies)).toBe(true);
+        expect(matches('applies:"after an enemy dodges"', relies)).toBe(false);
+        expect(matches('k:"after an enemy dodges"', relies)).toBe(true);
+      });
+
+      it('is not the start of a phrase: `kw:after` finds nothing', () => {
+        expect(matches('kw:after', event('attack', 'self'))).toBe(false);
+        expect(matches('kw:"after this creature"', event('attack', 'self'))).toBe(false);
+      });
+
+      it('leaves a key that is still a key as it is', () => {
+        expect(matches('kw:"start of battle"', event('start of battle'))).toBe(true);
+      });
+    });
+
     it('does not look in the description: a word that is no keyword is no keyword', () => {
       const plain = trait({ description: 'Applies Vulnerable.' });
       expect(matches('kw:vulnerable', plain)).toBe(false);
@@ -303,9 +419,12 @@ describe('the fields of the query language', () => {
   });
 
   describe('a field with no value yet', () => {
-    it.each(['class:', 'applies:', 'mat:', 'stack:', 'kw:""', '""'])('%s narrows nothing', (source) => {
-      expect(matches(source, trait())).toBe(true);
-    });
+    it.each(['class:', 'applies:', 'mat:', 'stack:', 'kw:""', '""', 'uses:/', 'kw:" / "'])(
+      '%s narrows nothing',
+      (source) => {
+        expect(matches(source, trait())).toBe(true);
+      },
+    );
   });
 
   describe('the registry of the app', () => {
