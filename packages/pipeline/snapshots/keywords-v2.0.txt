@@ -104,6 +104,7 @@ amphisbaena--unbidden-miracle | nostack | - | -
 amphisbaena--careful-what-you-wish-for | any buff | uses | ally
 amphisbaena--careful-what-you-wish-for | any buff | applies | ally
 amphisbaena--careful-what-you-wish-for | nostack | - | -
+amphisbaena--grim-ailment | any debuff | uses | ally
 amphisbaena--grim-ailment | any debuff | applies | ally
 amphisbaena--grim-ailment | nostack | - | -
 amphisbaena--master-of-amphisbaenas | nostack | - | -
@@ -159,6 +160,7 @@ apis--vigilance | attack | uses | enemy
 apis--long-live | attack | uses | self
 apis--grit | start of battle | uses | -
 apis--necessitarianism | start of battle | uses | -
+apis--righteous-concession | any debuff | resists | ally
 apis--crunch | attack | uses | self
 apis--crunch | vulnerable | applies | -
 apis--master-of-apises | start of battle | uses | -
@@ -169,6 +171,7 @@ apocalypse--culmination | spells | - | -
 apocalypse--culmination | spells | - | -
 apocalypse--culmination | manual cast | uses | ally
 apocalypse--culmination | nostack | - | -
+apocalypse--quahn-harbinger | any debuff | resists | ally
 apocalypse--quahn-harbinger | nostack | - | -
 apocalypse--naxor-harbinger | nostack | - | -
 apocalypse--mungus-harbinger | nostack | - | -
@@ -292,6 +295,7 @@ automaton--pandemic | any debuff | applies | enemy
 automaton--battle-from-within | start of turn | uses | self
 automaton--downturn | start of turn | uses | self
 automaton--master-of-automatons | nostack | - | -
+avatar--robotic-armor | any debuff | resists | ally
 avatar--robotic-armor | any debuff | uses | ally
 avatar--robotic-armor | nostack | - | -
 avatar--periphery | dodge | applies | ally
@@ -412,6 +416,7 @@ backer--alchemists-buffer | spells | - | -
 backer--alchemists-buffer | attack | uses | self
 backer--anatidaephobia | attack | uses | any
 backer--anointed | attack | uses | self
+backer--anti-magic-field | any debuff | resists | ally
 backer--anti-magic-field | nostack | - | -
 backer--arcane-echo | manual cast | uses | ally
 backer--arcane-echo | spells | - | -
@@ -451,6 +456,7 @@ backer--conspiracy-theory | nostack | - | -
 backer--cowards-embrace | dodge | applies | ally
 backer--cowards-embrace | critical hit | resists | ally
 backer--cowards-embrace | nostack | - | -
+backer--dead-of-winter | any debuff | uses | enemy
 backer--dead-of-winter | frozen | applies | -
 backer--dead-of-winter | poisoned | applies | -
 backer--deep-roots | damage taken | uses | self
@@ -830,6 +836,8 @@ bat--blood-sucker | heal | applies | self
 bat--master-of-bats | attack | applies | ally
 bat--master-of-bats | nostack | - | -
 beacon--pendulums-return | agile | applies | -
+beacon--pendulums-return | any debuff | uses | ally
+beacon--pendulums-return | any buff | applies | ally
 beacon--due-recompense | leeching | applies | -
 beacon--due-recompense | stats | - | -
 beacon--due-recompense | stats | - | -
@@ -890,6 +898,7 @@ carbuncle--paramount | spells | - | -
 carbuncle--paramount | cast spell | uses | any
 carbuncle--magic-barrier | cast spell | uses | ally
 carbuncle--magic-barrier | spells | - | -
+carbuncle--magic-barrier | any debuff | resists | ally
 carbuncle--annex | spells | - | -
 carbuncle--annex | cast spell | uses | any
 carbuncle--nirvana | cast spell | uses | ally
@@ -914,6 +923,7 @@ carnage--demoralize | kill | uses | self
 carnage--rend-and-tear | kill | uses | self
 carnage--rend-and-tear | attack | applies | self
 carnage--rapid-digestion | kill | uses | self
+carnage--rapid-digestion | any buff | applies | self
 carnage--deadly-instincts | kill | uses | self
 carnage--midnight-feast | kill | uses | self
 carnage--midnight-feast | heal | applies | self
@@ -1458,6 +1468,7 @@ dumpling--glucose | start of battle | uses | -
 dumpling--glucose | timeline | - | -
 dumpling--glucose | nostack | - | -
 dumpling--greed-is-good | nostack | - | -
+dumpling--high-protein | any debuff | resists | ally
 dumpling--high-protein | nostack | - | -
 dumpling--proof-is-in-the-pudding | spell gems | - | -
 dumpling--proof-is-in-the-pudding | nostack | - | -
@@ -1625,6 +1636,7 @@ elementasaur--sandstorm | blind | uses | -
 elementasaur--sandstorm | cast spell | uses | ally
 elementasaur--sandstorm | spells | - | -
 elementasaur--sandstorm | nostack | - | -
+elementasaur--master-of-elementasaurs | any debuff | resists | ally
 elementasaur--master-of-elementasaurs | start of battle | uses | -
 elf--hate-and-other-triumphs | death | uses | any
 elf--brawl | attack | uses | self
@@ -1709,6 +1721,7 @@ exotic--conductivity | splashing | uses | -
 exotic--conductivity | nostack | - | -
 exotic--marrow-metabolism | damage taken | uses | self
 exotic--marrow-metabolism | minion | - | -
+exotic--black-fog | any debuff | uses | enemy
 exotic--black-fog | stats | - | -
 exotic--black-fog | any debuff | uses | enemy
 exotic--redemption | death | uses | self
@@ -1736,6 +1749,7 @@ exotic--greybeards-blessing | heal | uses | ally
 exotic--greybeards-blessing | blighted | uses | -
 exotic--greybeards-blessing | nostack | - | -
 exotic--forests-curse | attack | uses | enemy
+exotic--forests-curse | any debuff | applies | enemy
 exotic--forests-curse | nostack | - | -
 exotic--grubby-strength | death | uses | self
 exotic--grubby-strength | stats | - | -
@@ -1989,6 +2003,7 @@ exotic--buzz-breathing | start of turn | uses | ally
 exotic--buzz-breathing | heal | applies | ally
 exotic--buzz-breathing | any buff | uses | ally
 exotic--buzz-breathing | nostack | - | -
+exotic--surprise-treat | any debuff | uses | ally
 exotic--surprise-treat | any buff | uses | ally
 exotic--surprise-treat | nostack | - | -
 exotic--mega-spider-blast | start of battle | uses | -
@@ -2099,6 +2114,7 @@ exotic--condiments | cast spell | uses | enemy
 exotic--condiments | spells | - | -
 exotic--condiments | any debuff | applies | enemy
 exotic--condiments | attack | uses | self
+exotic--condiments | any debuff | applies | enemy
 exotic--what-are-you-buying | start of turn | uses | self
 exotic--thunder-buddy | start of battle | uses | -
 exotic--thunder-buddy | death | uses | self
@@ -2179,6 +2195,8 @@ forsaken--curse-of-the-silent | spells | - | -
 forsaken--curse-of-the-silent | start of battle | uses | -
 forsaken--curse-of-the-silent | silenced | applies | -
 forsaken--transmogrification | start of battle | uses | -
+forsaken--transmogrification | any buff | applies | self
+forsaken--transmogrification | any buff | resists | self
 forsaken--contradiction | start of battle | uses | -
 forsaken--contradiction | start of battle | uses | -
 forsaken--contradiction | timeline | - | -
@@ -2641,6 +2659,8 @@ inquisitor--mass-summoning | start of battle | uses | -
 inquisitor--mass-summoning | minion | - | -
 inquisitor--mass-summoning | nostack | - | -
 inquisitor--pleasant-disease | minion | - | -
+inquisitor--pleasant-disease | any debuff | uses | ally
+inquisitor--pleasant-disease | any buff | applies | ally
 inquisitor--pleasant-disease | start of battle | uses | -
 inquisitor--the-walking-dead | zombies | uses | -
 inquisitor--the-walking-dead | minion | - | -
@@ -2726,6 +2746,8 @@ leper--stank | any debuff | uses | enemy
 leper--stank | nostack | - | -
 leper--wrong-side | any debuff | uses | ally
 leper--wrong-side | nostack | - | -
+leper--master-of-lepers | any debuff | applies | enemy
+leper--master-of-lepers | any debuff | uses | enemy
 leper--master-of-lepers | nostack | - | -
 lich--heretic-blood | spells | - | -
 lich--heretic-blood | charges | - | -
@@ -2806,6 +2828,7 @@ maniac--loids-laugh | silenced | applies | -
 maniac--loids-laugh | nostack | - | -
 maniac--loids-pustulant-pimples | defend | uses | enemy
 maniac--loids-pustulant-pimples | provoke | uses | enemy
+maniac--loids-pustulant-pimples | any debuff | applies | enemy
 maniac--loids-pustulant-pimples | nostack | - | -
 maniac--loids-visage | attack | uses | enemy
 maniac--loids-visage | scorned | applies | -
@@ -2881,6 +2904,7 @@ masochist--lust-for-punishment | nostack | - | -
 masochist--purge | start of turn | uses | ally
 masochist--purge | nostack | - | -
 masochist--boon-to-bane | any buff | uses | enemy
+masochist--boon-to-bane | any debuff | applies | enemy
 masochist--boon-to-bane | nostack | - | -
 masochist--under-stress | dodge | applies | ally
 masochist--under-stress | attack | uses | ally
@@ -2904,6 +2928,7 @@ masochist--butterfly-touch | timeline | - | -
 masochist--phoboss-grip | proficient | uses | -
 masochist--phoboss-grip | attack | uses | ally
 masochist--phoboss-grip | snared | applies | -
+masochist--master-of-masochists | any debuff | resists | ally
 masochist--master-of-masochists | nostack | - | -
 mimic--nothing-but-coal | death | uses | self
 mimic--hydration | start of battle | uses | -
@@ -2923,6 +2948,7 @@ mimic--ultimate-trickery | timeline | - | -
 mimic--master-of-mimics | start of battle | uses | -
 mimic--master-of-mimics | timeline | - | -
 mimic--master-of-mimics | nostack | - | -
+minotaur--resolve | any debuff | resists | self
 minotaur--seeing-red | berserk | applies | -
 minotaur--seeing-red | nostack | - | -
 minotaur--fracture | being attacked | uses | self
@@ -3010,6 +3036,7 @@ modron--protect-the-glass-cannon | manual cast | uses | ally
 modron--protect-the-glass-cannon | spells | - | -
 modron--protect-the-glass-cannon | defend | applies | ally
 modron--protect-the-glass-cannon | nostack | - | -
+modron--master-of-modrons | any debuff | resists | ally
 modron--master-of-modrons | nostack | - | -
 mogwai--no-sanctuary | attack | uses | self
 mogwai--no-sanctuary | spells | - | -
@@ -3069,7 +3096,9 @@ nephilim--balanced-swordplay | attack | uses | ally
 nephilim--balanced-swordplay | stats | - | -
 nephilim--balanced-spellcasting | spells | - | -
 nephilim--balanced-spellcasting | stats | - | -
+nephilim--master-of-nephilim | any debuff | resists | ally
 nephilim--master-of-nephilim | start of battle | uses | -
+nephilim--master-of-nephilim | any buff | applies | ally
 nephilim--master-of-nephilim | nostack | - | -
 nihilist--nihilism | attack | uses | self
 nihilist--nihilism | attack | uses | self
@@ -3087,6 +3116,7 @@ nihilist--intuition | attack | uses | ally
 nihilist--intuition | spells | - | -
 nihilist--intuition | attack | uses | ally
 nihilist--intuition | nostack | - | -
+nihilist--master-of-nihilists | any debuff | resists | ally
 nihilist--master-of-nihilists | scorned | resists | -
 nix--ambush | start of turn | uses | self
 nix--ambush | attack | applies | self
@@ -3301,6 +3331,7 @@ pit-worm--haunted-carapace | start of turn | uses | ally
 pit-worm--rock-candy | start of turn | uses | enemy
 pit-worm--rock-candy | sealed | applies | -
 pit-worm--rock-candy | spell gems | - | -
+pit-worm--elusiveness | any debuff | resists | ally
 pit-worm--insatiable | end of turn | uses | ally
 pit-worm--hindrance | start of turn | uses | enemy
 pit-worm--live-to-labor | start of turn | uses | enemy
@@ -3324,12 +3355,15 @@ pit-wraith--unmending | nostack | - | -
 pit-wraith--soul-squelch | attack | uses | self
 pit-wraith--soul-squelch | maximum health | - | -
 pit-wraith--stricken | start of battle | uses | -
+pit-wraith--stricken | any debuff | applies | enemy
 pit-wraith--stricken | nostack | - | -
 pit-wraith--haunting-memories | end of turn | uses | enemy
 pit-wraith--haunting-memories | attack | applies | self
 pit-wraith--haunting-memories | death | uses | self
+pit-wraith--master-of-pit-wraiths | any debuff | resists | ally
 plague-doctor--drained | stats | - | -
 plague-doctor--drained | stats | - | -
+plague-doctor--kismet | any debuff | uses | ally
 plague-doctor--maximize | attack | uses | self
 plague-doctor--blood-and-power | attack | uses | ally
 plague-doctor--blood-and-power | heal | uses | ally
@@ -3360,6 +3394,7 @@ priest--radiant-eclipse | start of turn | uses | self
 priest--radiant-eclipse | barrier | applies | -
 priest--radiant-eclipse | maximum health | - | -
 priest--fanaticism | start of turn | uses | self
+priest--fanaticism | any buff | applies | ally
 priest--disciple-of-war | start of turn | uses | self
 priest--apostle-of-water | start of turn | uses | self
 priest--master-of-priests | nostack | - | -
@@ -3414,6 +3449,8 @@ revenant--fireworks | spells | - | -
 revenant--pain-redefined | defend | uses | self
 revenant--pain-redefined | damage taken | applies | self
 revenant--pain-redefined | maximum health | - | -
+revenant--pain-redefined | any buff | applies | ally
+revenant--lunacy | any debuff | resists | enemy
 revenant--lunacy | nostack | - | -
 revenant--delirium | damage taken | uses | self
 revenant--pact-of-the-deep | start of battle | uses | -
@@ -3510,6 +3547,7 @@ satyr--languid-limbs | attack | resists | enemy
 satyr--rough-recovery | heal | resists | enemy
 satyr--scant-stamina | resurrection | resists | enemy
 satyr--meaningless-mind | stats | - | -
+satyr--faulty-fortune | any buff | resists | enemy
 satyr--somber-spirits | cast spell | resists | enemy
 satyr--somber-spirits | spells | - | -
 satyr--master-of-satyrs | start of battle | uses | -
@@ -3608,6 +3646,8 @@ shadow--father-shadow | spells | - | -
 shadow--master-of-shadows | feared | uses | -
 shadow--master-of-shadows | feared | resists | -
 shadow--master-of-shadows | nostack | - | -
+shapeshifter--chaos-transformation | any buff | uses | enemy
+shapeshifter--chaos-transformation | any debuff | uses | ally
 shapeshifter--chaos-transformation | nostack | - | -
 shapeshifter--death-transformation | stats | - | -
 shapeshifter--death-transformation | nostack | - | -
@@ -3660,6 +3700,7 @@ siren--katarinas-asylum | damage taken | uses | ally
 siren--katarinas-asylum | invisible | applies | -
 siren--katarinas-guidance | start of battle | uses | -
 siren--katarinas-guidance | timeline | - | -
+siren--katarinas-guidance | any buff | applies | ally
 siren--katarinas-guidance | nostack | - | -
 siren--katarinas-return | damage taken | uses | ally
 siren--katarinas-return | heal | applies | ally
@@ -3706,6 +3747,7 @@ slime--flubriss-entrapment | nostack | - | -
 slime--flubriss-toxicity | damage taken | uses | enemy
 slime--flubriss-toxicity | poisoned | uses | -
 slime--flubriss-toxicity | nostack | - | -
+slime--master-of-slimes | any debuff | resists | ally
 smith--unbreakable | nostack | - | -
 smith--dissection | attack | uses | ally
 smith--dissection | nostack | - | -
@@ -3951,6 +3993,7 @@ spirit--abnegation | heal | uses | ally
 spirit--abnegation | damage taken | applies | enemy
 spirit--abnegation | heal | uses | enemy
 spirit--abnegation | nostack | - | -
+spirit--doom-and-gloom | any debuff | uses | self
 spirit--benefic | heal | uses | ally
 spirit--benefic | barrier | applies | -
 spirit--benefic | heal | uses | ally
@@ -4096,6 +4139,7 @@ unguided--bloodline | nostack | - | -
 unguided--details-matter | damage taken | applies | ally
 unguided--details-matter | nostack | - | -
 unicorn--chrysaors-ambition | attack | uses | self
+unicorn--chrysaors-ambition | any buff | applies | ally
 unicorn--circle-of-life | attack | uses | self
 unicorn--circle-of-life | heal | applies | self
 unicorn--eruption | attack | uses | self
@@ -4110,6 +4154,7 @@ unicorn--reinvigoration | resurrection | applies | self
 unicorn--qilas-assurance | barrier | uses | -
 unicorn--qilas-assurance | invisible | applies | -
 unicorn--qilas-defiance | barrier | uses | -
+unicorn--qilas-defiance | any debuff | resists | ally
 unicorn--qilas-safeguard | barrier | uses | -
 unicorn--qilas-safeguard | nostack | - | -
 unicorn--master-of-unicorns | attack | applies | ally
@@ -4170,6 +4215,7 @@ voidlord--contortion | attack | uses | ally
 voidlord--contortion | spells | - | -
 voidlord--contortion | nostack | - | -
 voidlord--return-to-source | repelling | uses | -
+voidlord--return-to-source | any debuff | resists | ally
 voidlord--return-to-source | nostack | - | -
 voidlord--mind-fortress | damage taken | uses | ally
 voidlord--mind-fortress | spells | - | -
@@ -4241,6 +4287,7 @@ warhog--spirit-eater | attack | uses | self
 warhog--spirit-eater | cursed | applies | -
 warhog--blade-eater | attack | uses | self
 warhog--blade-eater | disarmed | applies | -
+warhog--hog-wild | any debuff | uses | enemy
 warhog--hog-wild | any buff | applies | ally
 warhog--hog-wild | nostack | - | -
 warhog--magic-eater | attack | uses | self
@@ -4312,6 +4359,7 @@ wisp--lyra | damage taken | uses | self
 wisp--lyra | timeline | - | -
 wisp--overpowered | damage taken | uses | self
 wisp--overpowered | timeline | - | -
+wisp--ethereal | any debuff | resists | self
 wisp--ethereal | damage taken | uses | self
 wisp--ethereal | timeline | - | -
 wisp--poof | critical hit | applies | self
@@ -4320,6 +4368,7 @@ wisp--poof | attack | uses | self
 wisp--poof | damage taken | uses | self
 wisp--poof | timeline | - | -
 wisp--the-virtue-of-patience | start of turn | uses | self
+wisp--the-virtue-of-patience | any buff | applies | ally
 wisp--the-virtue-of-patience | damage taken | uses | self
 wisp--the-virtue-of-patience | timeline | - | -
 wisp--spasm | start of turn | uses | self
@@ -4358,6 +4407,7 @@ wolpertinger--fraud | sealed | resists | -
 wolpertinger--echoing-incantation | spells | - | -
 wolpertinger--echoing-incantation | cast spell | applies | enemy
 wolpertinger--bottom-feeder | spells | - | -
+wolpertinger--bottom-feeder | any debuff | applies | enemy
 wolpertinger--bottom-feeder | spells | - | -
 wolpertinger--bottom-feeder | cast spell | uses | any
 wolpertinger--bottom-feeder | nostack | - | -
@@ -4418,6 +4468,7 @@ yeti--master-of-yetis | frozen | applies | -
 zantai--zantais-boon | start of battle | uses | -
 zantai--zantais-boon | mega magic | applies | -
 zantai--zantais-boon | mega magic | uses | -
+zantai--zantais-boon | any buff | applies | ally
 zantai--zantais-call | start of battle | uses | -
 zantai--zantais-call | mega magic | applies | -
 zantai--zantais-call | mega magic | uses | -
@@ -4432,6 +4483,7 @@ zantai--zantais-embrace | heal | applies | ally
 zantai--zantais-envy | start of battle | uses | -
 zantai--zantais-envy | mega magic | applies | -
 zantai--zantais-envy | mega magic | uses | -
+zantai--zantais-envy | any debuff | applies | enemy
 zantai--zantais-havoc | start of battle | uses | -
 zantai--zantais-havoc | mega magic | applies | -
 zantai--zantais-havoc | mega magic | uses | -

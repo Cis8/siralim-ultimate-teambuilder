@@ -108,6 +108,10 @@ function entryViolations(entries: readonly TaxonomyEntry[]): string[] {
           `pattern ${JSON.stringify(pattern)} of "${entry.key}" must be plain text: not empty, no padding, double spaces, line breaks or curly quotes`,
         );
       }
+      // The matcher reads every number of a text as `#` before it looks a phrase up, so a digit would never be found.
+      if (/\d/.test(pattern)) {
+        problems.push(`pattern "${pattern}" of "${entry.key}" has a digit: write # for a number`);
+      }
     }
     return problems;
   });

@@ -176,7 +176,12 @@ describe('the compendium v2.0 snapshot', () => {
     it('are cut out of the description by their span, and spell one of the patterns of their key', () => {
       for (const trait of traits) {
         for (const hit of trait.keywords) {
-          const written = trait.description.slice(hit.span[0], hit.span[1]).replace(/\s+/g, ' ').toLowerCase();
+          // A number in the text is `#` in the pattern.
+          const written = trait.description
+            .slice(hit.span[0], hit.span[1])
+            .replace(/\s+/g, ' ')
+            .toLowerCase()
+            .replace(/\d+/g, '#');
           const entry = taxonomy.get(hit.key);
           if (entry?.kind === 'event' && entry.turnEdge !== undefined && TURN_WORDS.test(written)) continue;
           const patterns = entry?.patterns.map((pattern) => pattern.toLowerCase());
@@ -250,10 +255,10 @@ describe('the compendium v2.0 snapshot', () => {
         .filter((hit) => hit.kind === 'event')
         .map((hit) => `${hit.key}:${hit.role}${hit.actor === undefined ? '' : `/${hit.actor}`}`);
 
-    it('are mentioned 2,149 times in 1,332 traits, out of 4,453 mentions', () => {
-      expect(events()).toHaveLength(2149);
-      expect(traits.filter((trait) => trait.keywords.some((hit) => hit.kind === 'event'))).toHaveLength(1332);
-      expect(traits.flatMap((trait) => trait.keywords)).toHaveLength(4453);
+    it('are mentioned 2,201 times in 1,353 traits, out of 4,505 mentions', () => {
+      expect(events()).toHaveLength(2201);
+      expect(traits.filter((trait) => trait.keywords.some((hit) => hit.kind === 'event'))).toHaveLength(1353);
+      expect(traits.flatMap((trait) => trait.keywords)).toHaveLength(4505);
     });
 
     it('have the mentions of the table in the rules', () => {
@@ -274,20 +279,20 @@ describe('the compendium v2.0 snapshot', () => {
         kill: 19,
         death: 135,
         resurrection: 77,
-        'any buff': 50,
-        'any debuff': 52,
+        'any buff': 64,
+        'any debuff': 90,
       });
     });
 
     it('are waited for far more than they are caused or prevented', () => {
-      expect(countBy(events(), (hit) => hit.role ?? '')).toEqual({ uses: 1519, applies: 594, resists: 36 });
+      expect(countBy(events(), (hit) => hit.role ?? '')).toEqual({ uses: 1531, applies: 613, resists: 57 });
     });
 
     it('say who in most mentions: only the start of battle names nobody (and nine others)', () => {
       expect(countBy(events(), (hit) => hit.actor ?? 'nobody')).toEqual({
-        self: 978,
-        ally: 585,
-        enemy: 285,
+        self: 984,
+        ally: 616,
+        enemy: 300,
         any: 78,
         nobody: 223,
       });
@@ -301,6 +306,11 @@ describe('the compendium v2.0 snapshot', () => {
       ['alemental--slosh', ['manual cast:uses/ally', 'any debuff:applies/enemy']],
       ['backer--abyss-orbs', ['any debuff:applies/enemy', 'start of turn:uses/enemy', 'end of turn:uses/enemy']],
       ['clutcher--lash', ['dodge:uses/enemy', 'attack:uses/enemy', 'damage taken:applies/enemy']],
+      ['backer--dead-of-winter', ['any debuff:uses/enemy']],
+      ['leper--master-of-lepers', ['any debuff:applies/enemy', 'any debuff:uses/enemy']],
+      ['nephilim--master-of-nephilim', ['any debuff:resists/ally', 'start of battle:uses', 'any buff:applies/ally']],
+      ['siren--katarinas-guidance', ['start of battle:uses', 'any buff:applies/ally']],
+      ['wisp--ethereal', ['any debuff:resists/self', 'damage taken:uses/self']],
     ])('read %s as the rules do', (id, expected) => {
       expect(eventsOf(id)).toEqual(expected);
     });

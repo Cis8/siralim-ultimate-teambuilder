@@ -121,8 +121,9 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
     "while", "if", "that die", "at the end of", "until"), and for a noun: the creature's own ("this creature's attacks deal
     75% more damage"), the object of a preposition or a verb ("damage from attacks", "dodge attacks", "after death"), or a
     quantity ("100% more healing", "the amount healed"). `resists` after "cannot", "can't", "immune to", "never" or
-    "can only" (not "can only activate"), up to the clause's end, "but", or an "and" that starts something else. Otherwise
-    `applies`: a verb of the main clause ("attacks 1 additional time", "casts a random spell", "is resurrected", "has a 50%
+    "can only" (not "can only activate"), up to the clause's end, "but", or an "and" that starts something else, and for a
+    phrase that opens with its own cue ("resistant to debuffs", "avoid debuffs": after the condition a sentence opens with,
+    before the noun test). Otherwise `applies`: a verb of the main clause ("attacks 1 additional time", "casts a random spell", "is resurrected", "has a 50%
     chance to dodge"). A keyword that follows another of its kind in a list ("attack, cast, defend, or provoke") takes its
     role and actor, but not from a noun ("dodge attacks and deal critical damage" are two readings).
   - **Actor.** The nearest subject before the event in its clause (this creature, it → `self`; your creatures, a family of
@@ -145,16 +146,25 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
     creatures" (a class), "Major Healing" and "Kill Streak" (spells) are not, nor "Death - Enemies are afflicted …" (the
     label of a list).
   - **No event is a dependency** (R12): `partyCoverage` lists the buffs, debuffs and effects only (`canBeDependency`).
-  The two buff events are the counts and the random ones ("for each debuff", "afflicted with a random debuff", "gains a random
-  buff"): "immune to debuffs" and "their debuffs last 1 turn" are not mentions.
-  On v2.0: 2,149 mentions of events in 1,332 traits (1,519 `uses`, 594 `applies`, 36 `resists`; 223 with no actor, 214 of them
+  **The two buff events are a buff or debuff that no name gives**, and the actor is who gets it: the counts ("for each
+  debuff the enemy has"), the random ones ("gains 5 random buffs", "afflicted with a random debuff"), being given or afflicted
+  with one ("afflicts an enemy with a debuff", "would afflict this creature with a debuff", "apply / receive a debuff"), the
+  verbs ("buff an enemy": a phrase that ends with who gets it names them), and protection from all of them ("resistant to
+  debuffs", "immune to debuffs", "avoid debuffs", "cannot gain additional buffs": `resists`, since the trait prevents the event,
+  R12 and R9; 8b.10 reversed 8b.6, which left these out without saying why). Not mentions: a buff or debuff the text names or
+  has just named ("Burning debuffs", "this debuff", "whichever of these debuffs"), how long they last ("their debuffs last 1
+  turn"), copying, sharing, stealing or removing them, and counting them as a state ("has at least 3 buffs"). A phrase starts at
+  the verb or the preposition that makes the role ("with a debuff" in "afflicts an enemy with a debuff"); a protection opens
+  with its cue and so says nothing of the events listed after it.
+  On v2.0: 2,201 mentions of events in 1,353 traits (1,531 `uses`, 613 `applies`, 57 `resists`; 223 with no actor, 214 of them
   the start of battle). An event that makes something happen by chance ("has a 50% chance to dodge") is `applies`: the
   trait makes the event happen, which is what a later phase can match with what pays off on it.
 - **Matching**: whole words, longest match wins. Phrases, mechanics and events ignore letter case; buffs and debuffs
   are names and count only when written as the taxonomy writes them ("gain Immune" is the buff, "immune to damage" and
   "weak against" are not: case-insensitive matching gave 25 such false positives on v2.0). A status followed by a
   capitalised word is the start of a longer name ("Savage Spores" is not Savage). A run of blanks matches the
-  space of a pattern and a curly apostrophe a straight one, without moving spans.
+  space of a pattern, a `#` in a pattern a whole number (a pattern never holds a digit) and a curly apostrophe a straight
+  one, without moving spans.
 - **Role detection** for buffs, debuffs and effects (`assignRoles`; heuristic, then overrides), per sentence:
   - a status in the condition the sentence opens with (After / When / If / While / … up to the first comma) is one the
     trait waits for → `uses` ("After an enemy is afflicted with Weak, …");
@@ -180,9 +190,10 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   `reason` citing the trait; unknown fields are refused. An entry naming a trait, a keyword the trait does not mention, an
   occurrence it does not have, a role on a keyword without one or an actor on a keyword that is not an event fails the build;
   two entries for one mention conflict; an entry that changes nothing is a warning. The events were read on 2026-10-17 beside
-  the sweep of 8b.5 (every mention where role or actor differs from the sweep's, and a sample of the rest): 22 entries.
+  the sweep of 8b.5 (every mention where role or actor differs from the sweep's, and a sample of the rest): 22 entries, and 5
+  more for the buffs and debuffs that no name gives (8b.10: every new mention was read).
 - **Snapshot tests** over the pinned v2.0 sheet, as committed files in `packages/pipeline/snapshots/`: one line per
-  mention, `trait | key | role | actor` (`keywords-v2.0.txt`, 4,453 lines; `-` where there is none), and one per
+  mention, `trait | key | role | actor` (`keywords-v2.0.txt`, 4,505 lines; `-` where there is none), and one per
   random-debuff trait, `trait | target | activation | note`. `triggers-before-events-v2.0.txt` pins the traits that had each
   of the eleven trigger phrases of the first version (564), so that an alias finds at least those (tested on the real
   sheet). Any change to the taxonomy, the heuristics or `overrides.yaml` shows in the diff and must be read

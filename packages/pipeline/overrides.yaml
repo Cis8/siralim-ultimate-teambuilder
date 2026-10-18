@@ -175,4 +175,28 @@ roles:
     actor: self
     reason: 'Glaive of Prayer: "it … has a 20% chance to resurrect a random ally": this creature resurrects.'
 
+  # Buffs and debuffs that no name gives (8b.10). Who gets them is after the verb, or a pronoun stands for the enemies.
+  - trait: revenant--pain-redefined
+    keyword: any buff
+    actor: ally
+    reason: 'Pain Redefined: "grants 1 random buff to all your creatures": the creatures that get it come after the buff.'
+  - trait: siren--katarinas-guidance
+    keyword: any buff
+    role: applies
+    reason: 'Katarina''s Guidance: "your creature that is highest on the Timeline gains 5 random buffs": the relative clause ends before the verb.'
+  - trait: leper--master-of-lepers
+    keyword: any debuff
+    occurrence: 1
+    actor: enemy
+    reason: 'Master of Lepers: "they afflict an additional debuff on enemies": the enemies get it.'
+  - trait: leper--master-of-lepers
+    keyword: any debuff
+    occurrence: 2
+    actor: enemy
+    reason: 'Master of Lepers: "when they afflict them with a debuff": "them" are the enemies, "they" the Lepers.'
+  - trait: apis--righteous-concession
+    keyword: any debuff
+    actor: ally
+    reason: 'Righteous Concession: "This creature and the creatures adjacent to it are resistant to debuffs": it and its neighbours on your side.'
+
 randomDebuff: []

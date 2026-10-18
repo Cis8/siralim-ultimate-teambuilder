@@ -334,6 +334,196 @@ describe('the actor of an event mention', () => {
   });
 });
 
+// A buff or debuff that no name gives is an event too (R12): who gets it is the actor, and the trait causes it, waits for it
+// or protects from it. The texts are traits of v2.0.
+describe('a buff or debuff that is not named', () => {
+  describe('is waited for or caused, by the creature that gets it', () => {
+    it.each([
+      [
+        'an enemy afflicts a debuff',
+        'After an enemy afflicts a debuff, it is afflicted with Frozen and Poisoned.',
+        ['any debuff:uses/enemy'],
+      ],
+      [
+        'afflicts your creatures with one',
+        'After an enemy afflicts your creatures with a debuff, this creature afflicts the enemy with that debuff as well.',
+        ['any debuff:uses/ally'],
+      ],
+      [
+        'this creature afflicts an enemy with one',
+        'After this creature afflicts an enemy with a debuff, it deals damage to the enemy equal to 15% of its lowest stat for each debuff the enemy has.',
+        ['any debuff:uses/enemy', 'any debuff:uses/enemy'],
+      ],
+      [
+        'a family afflicts an enemy with one',
+        'After your Warhog creatures afflict an enemy with a debuff, they gain a random buff.',
+        ['any debuff:uses/enemy', 'any buff:applies/ally'],
+      ],
+      [
+        'would afflict this creature with one',
+        'When an enemy would afflict this creature with a debuff, this creature has a 50% chance to afflict that enemy with the debuff instead.',
+        ['any debuff:uses/self'],
+      ],
+      [
+        'would afflict your creatures with one',
+        'When an enemy Death creature would afflict your creatures with a debuff, they afflict them with a buff instead.',
+        ['any debuff:uses/ally', 'any buff:applies/ally'],
+      ],
+      [
+        'apply and receive',
+        'After your creatures apply a debuff, they apply an additional random debuff, but their debuffs only last for 1 turn.',
+        ['any debuff:uses/ally', 'any debuff:applies/ally'],
+      ],
+      [
+        'receive',
+        'After your creatures receive a debuff, their on-buff effects activate.',
+        ['any debuff:uses/ally', 'any buff:uses/ally'],
+      ],
+      [
+        'would gain one, and a debuff instead',
+        'When an enemy creature would gain a buff, they have a 50% chance to gain a debuff instead.',
+        ['any buff:uses/enemy', 'any debuff:applies/enemy'],
+      ],
+    ])('reads %s', (_label, text, expected) => {
+      expect(eventsIn(text)).toEqual(expected);
+    });
+
+    it('reads a trait that gives some at random as the one that causes it', () => {
+      expect(eventsIn('After this creature kills a creature, it gains 5 random buffs.')).toEqual([
+        'kill:uses/self',
+        'any buff:applies/self',
+      ]);
+      expect(eventsIn('After an enemy defends or provokes, it is afflicted with 3 random debuffs.')).toEqual([
+        'defend:uses/enemy',
+        'provoke:uses/enemy',
+        'any debuff:applies/enemy',
+      ]);
+      expect(eventsIn('At the start of battle, this creature afflicts each enemy with 2 random debuffs.')).toEqual([
+        'start of battle:uses',
+        'any debuff:applies/enemy',
+      ]);
+      expect(eventsIn('It afflicts the target with 2 random debuffs.')).toEqual(['any debuff:applies/enemy']);
+    });
+
+    it('reads who is given them: after the verb of giving, or the ones whose battle it is', () => {
+      expect(eventsIn("At the start of this creature's turn, it grants your creatures 1 random buff.")).toEqual([
+        'start of turn:uses/self',
+        'any buff:applies/ally',
+      ]);
+      expect(eventsIn('After this creature attacks, it gives a random ally 2 random buffs.')).toEqual([
+        'attack:uses/self',
+        'any buff:applies/ally',
+      ]);
+      expect(eventsIn('This creature starts battles with 5 random buffs.')).toEqual([
+        'start of battle:uses',
+        'any buff:applies/self',
+      ]);
+      expect(eventsIn('At the start of this creature’s turn, your creatures gain 3 random buffs.')).toEqual([
+        'start of turn:uses/self',
+        'any buff:applies/ally',
+      ]);
+    });
+
+    it('reads a random one given to somebody the sentence names before it', () => {
+      expect(
+        eventsIn(
+          'When your creatures’ Writhelings minions afflict a debuff, they also grant one of your creatures a random buff.',
+        ),
+      ).toEqual(['any debuff:uses/ally', 'any buff:applies/ally']);
+    });
+
+    it('reads the verbs buff and debuff by what they do to the one after them', () => {
+      expect(eventsIn('When your creatures buff an enemy, they gain Berserk.')).toEqual(['any buff:uses/enemy']);
+      expect(eventsIn('When your creatures debuff an ally, they gain Berserk.')).toEqual(['any debuff:uses/ally']);
+    });
+  });
+
+  describe('is protected from', () => {
+    it.each([
+      ['"resistant to"', 'Your creatures are resistant to debuffs.', ['any debuff:resists/ally']],
+      ['"immune to"', 'This creature is immune to debuffs and takes 50% less damage.', ['any debuff:resists/self']],
+      [
+        '"immune to" for the enemy',
+        'Enemies take 40% more damage, but are immune to debuffs.',
+        ['any debuff:resists/enemy'],
+      ],
+      ['"avoid"', 'Your creatures have a 35% chance to avoid debuffs.', ['any debuff:resists/ally']],
+      [
+        '"prevent"',
+        "Your creatures have a 25% chance to prevent debuffs for each turn they've taken in the current battle.",
+        ['any debuff:resists/ally'],
+      ],
+      [
+        '"avoid being afflicted by"',
+        "Your creatures' Repelling buffs now give them a 50% chance to avoid being afflicted by debuffs.",
+        ['any debuff:resists/ally'],
+      ],
+      [
+        'a family that is "resistant to" them',
+        'Your Dumplings have a 10% chance to avoid debuffs for each Dumpling fighting on your side.',
+        ['any debuff:resists/ally'],
+      ],
+      [
+        'the creatures of the party, by "they"',
+        'If all the creatures in your party are Slimes, they are resistant to debuffs and deal 30% more damage.',
+        ['any debuff:resists/ally'],
+      ],
+      [
+        '"cannot gain"',
+        'This creature starts battles with 5 random buffs, but cannot gain additional buffs.',
+        ['start of battle:uses', 'any buff:applies/self', 'any buff:resists/self'],
+      ],
+      ['"can only gain"', 'Enemies can only gain 1 buff per turn.', ['any buff:resists/enemy']],
+    ])('reads %s as resists', (_label, text, expected) => {
+      expect(eventsIn(text)).toEqual(expected);
+    });
+
+    it('does not carry a protection over to what the sentence goes on to say', () => {
+      expect(
+        eventsIn(
+          'If all the creatures in your party are Nephilims, they are resistant to debuffs and start battles with 2 random buffs.',
+        ),
+      ).toEqual(['any debuff:resists/ally', 'start of battle:uses', 'any buff:applies/ally']);
+    });
+
+    it('still reads a protection inside the condition of a sentence as the condition it is', () => {
+      expect(eventsIn('While your creatures have Barrier, they are resistant to debuffs.')).toEqual([
+        'any debuff:resists/ally',
+      ]);
+      expect(eventsIn('If this creature is immune to debuffs, it gains 10% attack.')).toEqual(['any debuff:uses/self']);
+    });
+
+    it('leaves a debuff that is waited for after a protection a debuff that is waited for', () => {
+      expect(
+        eventsIn(
+          'Your creatures are resistant to debuffs. After your creatures are afflicted with a debuff, they have a 50% chance to gain Immunity.',
+        ),
+      ).toEqual(['any debuff:resists/ally', 'any debuff:uses/ally']);
+    });
+  });
+
+  describe('is no event where the text means one in particular or something else about them', () => {
+    it.each([
+      ['a debuff by name', "Enemies' Burning debuffs last forever.", []],
+      ['the one just named', 'If enemies already have this debuff, its potency is increased by 30% instead.', []],
+      [
+        'one of a pair',
+        "When an enemy is afflicted with Weak, this creature afflicts them with whichever of these debuffs the target doesn't already have.",
+        [],
+      ],
+      ['how long they last', "Your creatures' debuffs last for 1 turn.", []],
+      ['taking them away', 'This creature removes 2 debuffs from your creatures.', []],
+      [
+        'sharing a copy of the one just named',
+        'After your Griffons receive a buff, they share a copy of that buff with all the Griffons fighting on your side.',
+        ['any buff:uses/ally'],
+      ],
+    ])('reads %s', (_label, text, expected) => {
+      expect(eventsIn(text)).toEqual(expected);
+    });
+  });
+});
+
 describe('what is no event', () => {
   it('is the stat called attack', () => {
     expect(eventsIn('This creature has 15% more attack and intelligence.')).toEqual([]);

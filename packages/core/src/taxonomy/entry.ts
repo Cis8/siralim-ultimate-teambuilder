@@ -26,7 +26,7 @@ interface EntryBase<K extends KeywordKind> {
   readonly key: KeywordKey;
   /** What the app shows. */
   readonly label: string;
-  /** Phrases that name it in trait text, matched case-insensitively and as whole words. */
+  /** Phrases that name it in trait text, matched case-insensitively and as whole words; `#` stands for a number. */
   readonly patterns: readonly string[];
 }
 

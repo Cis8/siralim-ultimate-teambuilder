@@ -26,7 +26,8 @@ export interface KeywordMatcher {
  * Phrases, mechanics and events ignore letter case. Buffs and debuffs are names: they count only when written as
  * the taxonomy writes them, so "gain Immune" is a buff and "immune to damage" is not, and not when a capitalised
  * word follows, which makes them part of a name ("Savage Spores"). Any run of blanks in the text
- * matches the single space of a pattern, and curly apostrophes read as straight ones; neither moves a span.
+ * matches the single space of a pattern, a `#` in a pattern matches a whole number, and curly apostrophes read as
+ * straight ones; none of them moves a span.
  *
  * The edges of a turn are not patterns but a grammar (`findTurns`), since whose turn it is can be a family. A word an
  * event shares with a stat ("50% more attack") is the event only where the words around it do not say stat (`isStatSense`).
@@ -51,7 +52,7 @@ export function createKeywordMatcher(taxonomy: Taxonomy): KeywordMatcher {
   // Longest first: at one position the regex takes the first alternative that fits.
   const alternatives = [...byPattern.keys()]
     .sort((a, b) => b.length - a.length)
-    .map((pattern) => escapeForRegExp(pattern).replaceAll(' ', '\\s+'));
+    .map((pattern) => escapeForRegExp(pattern).replaceAll(' ', '\\s+').replaceAll('#', '\\d+'));
   const phrase =
     alternatives.length === 0
       ? undefined
@@ -63,7 +64,7 @@ export function createKeywordMatcher(taxonomy: Taxonomy): KeywordMatcher {
       const straight = text.replace(/[‘’]/g, "'");
       const phrases = [...(phrase === undefined ? [] : straight.matchAll(phrase))].flatMap((found) => {
         const written = found[0].replace(/\s+/g, ' ');
-        const known = byPattern.get(written.toLowerCase());
+        const known = byPattern.get(written.toLowerCase().replace(/\d+/g, '#'));
         if (known === undefined) return [];
         if (
           isStatusName(known.entry) &&

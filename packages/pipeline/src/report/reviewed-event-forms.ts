@@ -1,9 +1,8 @@
 /**
  * Conditions and phrases in trait descriptions that were looked at, so that the event candidates in the report keep to what
- * is new. Reviewed on 2026-10-18 over compendium v2.0. All but the last group are no event the taxonomy lacks: add a form
- * when a candidate turns out to be that. The last group are events that the patterns do not read yet; to make a candidate
- * one, teach the taxonomy its words and take the form out. The forms are as the report writes them: lower case, numbers as
- * `#`, a family as `<family>`.
+ * is new. Reviewed on 2026-10-18 over compendium v2.0: none is an event the taxonomy lacks. Add a form when a candidate turns
+ * out to be that no event; when it turns out to be one, teach the taxonomy its words instead. The forms are as the report
+ * writes them: lower case, numbers as `#`, a family as `<family>`.
  */
 export const REVIEWED_EVENT_FORMS: ReadonlySet<string> = new Set([
   // A state that holds while it is true, not something that happens: health
@@ -56,7 +55,6 @@ export const REVIEWED_EVENT_FORMS: ReadonlySet<string> = new Set([
   'they have a # chance to take # damage for each debuff they have',
   'this creature takes all damage from attacks and spells in place of your <family>',
   'your creatures no longer take additional damage from critical damage',
-  'enemies can only gain # buff per turn',
   // Things that happen, and that GAME_RULES R12 leaves out of its 18 events: dealing damage, gaining stats, a status ending,
   // and the odd ones (an innate trait activating, an action of a Marionette, a gem or a weapon gained)
   'after this creature damages an enemy',
@@ -75,20 +73,4 @@ export const REVIEWED_EVENT_FORMS: ReadonlySet<string> = new Set([
   'when your <family> perform an action',
   'when this creature would take fatal damage',
   "whenever it is an enemy's turn",
-  // Events of R12 (any buff, any debuff) that the patterns do not read in these forms yet: the PLAN has the follow-up, and
-  // each form comes out of this list when the taxonomy learns it
-  'after an enemy afflicts a debuff',
-  'after an enemy afflicts your creatures with a debuff',
-  'after this creature afflicts an enemy with a debuff',
-  'after your <family> creatures afflict an enemy with a debuff',
-  'after your creatures apply a debuff',
-  'after your creatures receive a debuff',
-  'when an enemy death creature would afflict your creatures with a debuff',
-  'when an enemy would afflict this creature with a debuff',
-  'when your creatures buff an enemy',
-  'when your creatures debuff an ally',
-  'it gains # random buffs',
-  'it is afflicted with # random debuffs',
-  'your creature that is highest on the timeline gains # random buffs',
-  'your creatures gain # random buffs',
 ]);

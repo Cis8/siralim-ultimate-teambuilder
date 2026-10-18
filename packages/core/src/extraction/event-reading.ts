@@ -20,17 +20,24 @@ export interface EventReading {
  *   end of", "enemies that die"), or a noun: the creature's own ("this creature's attacks deal 75% more damage"), the object
  *   of a preposition ("damage from attacks") or a quantity ("100% more healing"). It prevents the event (`resists`) after
  *   "cannot", "immune to", "never" or "can only". Otherwise the trait makes it happen (`applies`): a verb of the main
- *   clause ("attacks 1 additional time", "casts a random spell", "is resurrected").
+ *   clause ("attacks 1 additional time", "casts a random spell", "is resurrected"). A phrase that opens with the cue of a
+ *   protection ("resistant to debuffs", "avoid debuffs") is `resists` outside a condition.
  * - **Lists.** The reading says whether it can be carried over to the events listed after it (`listable`): a prevention or a
  *   condition can ("cannot attack, cast or defend"), a noun cannot ("dodge attacks and deal critical damage").
  * - **Actor.** The nearest subject before the event in its clause, or in its sentence when the clause has none; for a spell
  *   that was cast (not by a subject of the clause) the one after "by", or any creature. For the turns the words name an
- *   owner themselves (`match.actor`), which wins. None when the text names nobody.
+ *   owner themselves (`match.actor`), which wins, and so does the one a phrase ends with ("buff an enemy": the enemy gets it).
+ *   None when the text names nobody.
  */
 export function readEvent(text: string, match: KeywordMatch): EventReading & { readonly listable: boolean } {
   const start = match.span[0];
-  const actor = match.actor ?? passiveActor(text, match) ?? possessorAfter(text, match) ?? actorBefore(text, start);
-  const { role, nominal } = roleOf(text, start);
+  const actor =
+    match.actor ??
+    objectOf(text, match) ??
+    passiveActor(text, match) ??
+    possessorAfter(text, match) ??
+    actorBefore(text, start);
+  const { role, nominal } = roleOf(text, match.span);
   return { role, listable: !nominal, ...(actor === undefined ? {} : { actor }) };
 }
 
@@ -65,13 +72,22 @@ const QUANTITY_BEFORE = /(?:\d%|\b(?:more|less|fewer|greater)|\bamount(?: of \w+
 const NOUN_BEFORE =
   /\b(?:with|from|by|against|of|through|after|upon|an?|the|each|every|these|those|this|first|extra|additional|consecutive|original|subsequent|dodges?|dodged|dodging|intercepts?|avoids?|redirects?|negates?|prevents?|ignores?)\s+$/i;
 
+/** A phrase that opens with the cue of a protection: "resistant to debuffs", "avoid being afflicted by debuffs". */
+const PROTECTION = /^(?:immune to|resistant to|avoids?|prevents?)\b/i;
+
 /** `nominal`: the mention is a noun that something is said about, which says nothing of the events listed after it. */
-function roleOf(text: string, start: number): { readonly role: KeywordRole; readonly nominal: boolean } {
+function roleOf(
+  text: string,
+  [start, end]: readonly [number, number],
+): { readonly role: KeywordRole; readonly nominal: boolean } {
   const from = sentenceStart(text, start);
   const sentence = text.slice(from);
   if (CONDITION_OPENER.test(sentence) && start - from < openingConditionEnd(sentence)) {
     return { role: 'uses', nominal: false };
   }
+  // The cue is in the phrase, so the words before it say nothing of it: "avoid debuffs" is no noun of the verb "avoid". It
+  // says nothing of what follows either: "resistant to debuffs and start battles with …".
+  if (PROTECTION.test(text.slice(start, end))) return { role: 'resists', nominal: true };
 
   const before = text.slice(from, start);
   if (POINT_OR_COUNT_BEFORE.test(before)) return { role: 'uses', nominal: false };
@@ -118,7 +134,7 @@ const SUBJECTS: readonly Subject[] = [
   {
     actor: 'ally',
     number: 'singular',
-    pattern: /\b(?:an? (?:adjacent )?ally|another creature in your party|your creature)\b/gi,
+    pattern: /\b(?:an? (?:adjacent |random )?ally|another creature in your party|your creature)\b/gi,
   },
   { actor: 'ally', number: 'plural', pronoun: true, pattern: /\b(?:they|them|their)\b/gi },
   // "your Efts", "Your Griffons creatures": a family, the only thing capitalised after "your".
@@ -194,6 +210,13 @@ function subjectsIn(words: string): Named[] {
 /** The subject that ends last. */
 function nearestSubject(words: string): Named | undefined {
   return subjectsIn(words).toSorted((a, b) => b.end - a.end || a.start - b.start)[0];
+}
+
+/** "buff an enemy": a phrase that ends with who gets it names them, and the creatures before it are who does it. */
+function objectOf(text: string, match: KeywordMatch): KeywordActor | undefined {
+  const [start, end] = match.span;
+  const last = subjectsIn(text.slice(start, end)).at(-1);
+  return last?.end === end - start ? last.actor : undefined;
 }
 
 /** "for each buff the enemy has": what is counted belongs to who is named right after. */

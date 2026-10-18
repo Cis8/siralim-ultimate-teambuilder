@@ -12,10 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.9 done; two slices added on 2026-10-18, 8b.10 and 8b.11, before 8.4.** 8b.10 has
-  its plan (see M8b below); 8b.11 is only listed, and its open questions are in its entry. 8.4 (credits: ask the owner to
-  confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) comes after both and closes Phase 1:
-  ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.10 done; 8b.11 (*Who acts* takes several choices) is next, before 8.4.** 8b.11 is
+  only listed and its open questions are in its entry: its plan comes first (core tests, then the web). 8b.10 reversed a
+  decision of 8b.6, so that "immune to debuffs" is now a mention (SPEC §4): tell the owner, who may veto it. 8.4 (credits: ask
+  the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) comes after 8b.11 and
+  closes Phase 1: ask the owner before starting Phase 2.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -237,7 +238,7 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
 - *Events (8b.5–8b.8; GAME_RULES R12, ADR-0009).* A census and a sweep of all 1,780 traits by 24 Haiku agents (about 3.3M tokens, not
   the 0.4M estimated) turned the triggers into 18 events plus the mechanics Spells and Stats, each mention with a role and an
   actor (`readEvent`, `findTurns`, `isStatSense`; 22 overrides). The extractor agrees with the sweep on role in 91–100% of the
-  mentions both found and recalls 84–100% per event, but 53% and 45% for the two buff events. The keyword fields take an actor
+  mentions both found and recalls 84–100% per event, but 53% and 45% for the two buff events (69% and 73% after 8b.10). The keyword fields take an actor
   after a slash (`uses:attack/self`); the 11 old trigger phrases are aliases, so old links keep finding at least what they found
   (`triggers-before-events-v2.0.txt`). The filters have an Events section (five groups, *Causes* / *Reacts*, one *Who* control
   that narrows every event filter, `narrowEventFilters`); the event token leads to the counterpart of its role (the start of
@@ -245,39 +246,26 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
 - *Report (8b.9).* An *Events* section (`findEventCandidates`): the sentences that open with After, When, If, While … and the
   phrases around an event word that no keyword covers, as forms (numbers `#`, families `<family>`), one trait is enough;
   `REVIEWED_EVENT_FORMS` holds those looked at, and `real-sheet.test.ts` fails on any form neither covered nor reviewed. v2.0 had
-  63 conditions and 13 phrases: 14 are events R12 names that the patterns do not read (the last group of the list), the rest
+  63 conditions and 13 phrases: 14 are events R12 names that the patterns did not read (8b.10 reads them), the rest
   are states, party conditions, damage as an amount, and dealing damage, gaining stats and a status ending, which R12 leaves
   out of its 18 events. `isStatSense` is exported from `core` for it.
 
-Open slices (added 2026-10-18 after 8b.9):
-- [ ] **8b.10** Events: the patterns read the forms of *any buff* / *any debuff* that 8b.9 found and the list still holds as
-      "events the patterns do not read" (the last group of `report/reviewed-event-forms.ts`), and the ones the sweep of 8b.5 found
-      beside them. Plan (researched 2026-10-18: all 282 uses of the words buff / debuff in the dataset, 103 read, against the sweep):
-      - *What is an event here.* A creature gets a buff or debuff that is not named, or something stops it: "afflicts X with a
-        debuff", "apply / receive / gain a debuff", "gains 5 random buffs", "grants X 1 random buff", "buff an enemy", "debuff an
-        ally", and the protection from all of them ("resistant / immune to debuffs", "avoid debuffs", "cannot gain additional
-        buffs", "can only gain 1 buff per turn": role `resists`; the sweep calls them events too, 19 traits, and they are what a
-        player looks for as debuff immunity). Not events, and left alone: a buff or debuff the text names ("Burning debuffs", "this
-        / that / these debuff(s)", "whichever of these debuffs": R10), how long they last or that they persist, copying, sharing,
-        removing or stealing them, counting them as a state ("has at least 3 buffs"). The actor is who gets it, as in 8b.6
-        ("afflicts an enemy with a debuff": the enemy); where the text names nobody who gets it, whoever it names.
-      - *8b.10a, `core`, tests first (`event-reading.test.ts`, `keyword-matcher.test.ts`).* (1) A pattern may hold `#` for a
-        number (the notation of the report's forms): the matcher reads it as `\d+` and looks the phrase up with its numbers
-        written `#`; `every 2 debuffs` becomes `every # debuffs`. (2) New patterns, each with the verb or preposition that makes the
-        role (the span starts there, the words before it decide): `with a debuff`, `with # random debuffs`, `afflicted with #
-        random debuffs`, `afflict(s) a debuff`, `afflict(s) an additional debuff`, `apply / applies / receive(s) / gain(s) a
-        debuff`, `gain(s) # random buffs`, `with # random buffs`, `# random buff(s)` after "grants X", `gain additional buffs`,
-        `gain # buff`, `buff / debuff` followed by "an enemy / an ally / enemies / allies"; the protective ones start with their
-        cue (`resistant to debuffs`, `immune to debuffs`, `avoid(s) debuffs`, `prevent(s) debuffs`, `avoid being afflicted by
-        debuffs`). (3) `readEvent`: a mention that opens with a protective cue is `resists` (after the opening-condition test,
-        before the noun test, or "avoid debuffs" would be read as a noun); a transitive verb carries its object's actor; "to
-        <creatures>" after the mention names the one who gets it ("grants 1 random buff to all your creatures"); "a random
-        ally" is an ally. The ground is that of 8b.6: read every new line of the snapshot; a mention the wording cannot tell goes
-        to `overrides.yaml` with its reason.
-      - *8b.10b, data.* `pnpm pipeline:fetch && pipeline:build`, `keywords-v2.0.txt` (the new lines only, all read), the counts in
-        `real-sheet.test.ts` (any buff 50, any debuff 52 today), each form that is read out of `REVIEWED_EVENT_FORMS` (the test
-        that fails on a form neither covered nor reviewed also keeps the list honest), R12 (the protection sentence), the recall
-        figures in the M8b summary, ROADMAP. Measure with `measure.ts` before and after: the recall of the two events was 53% and 45%.
+Slices added on 2026-10-18 after 8b.9:
+- [x] **8b.10** Events: the patterns read the buff and debuff forms that 8b.9 listed as "events the patterns do not read", and
+      the ones the sweep of 8b.5 found beside them. Planned on 2026-10-18 from all 282 uses of the words buff / debuff in the
+      dataset (103 read before), done the same day. *What is an event here* (SPEC §4): a creature gets a buff or debuff that no
+      name gives ("afflicts X with a debuff", "apply / receive a debuff", "gains 5 random buffs", "grants X 1 random buff", "buff
+      an enemy") and the protection from all of them ("resistant / immune to debuffs", "avoid debuffs", "cannot gain additional
+      buffs": `resists`); the actor is who gets it. Not events: a buff or debuff the text names or has just named, how long they
+      last, copying, sharing, stealing or removing them, a count as a state. Shipped: a `#` in a pattern for a number (the
+      registry refuses a digit); 44 patterns; in `readEvent` a phrase that opens with a protective cue is `resists` (and says
+      nothing of what follows) and a phrase that ends with who gets it names them; 5 overrides (Pain Redefined, Katarina's
+      Guidance, Master of Lepers ×2, Righteous Concession); +54 mentions on v2.0 (any buff 50 → 64, any debuff 52 → 90), all
+      read; the 14 forms and "enemies can only gain # buff per turn" are out of `REVIEWED_EVENT_FORMS`. Recall against the sweep
+      53% → 69% (any buff), 45% → 73% (any debuff). **Reverses a decision of 8b.6** ("immune to debuffs" is not a mention, no
+      reason written; 8b.5 had left it to decide): the owner may veto it, and then the 7 protective patterns and the cue rule go.
+      Left unread on purpose: transfers ("gives them its debuffs", "a copy of their debuffs", "up to 3 of its debuffs"),
+      "gain a buff or debuff" as a debuff, "they debuff them instead" (a pronoun for the object).
 - [ ] **8b.11** Filters: *Who acts* takes several choices at once. The owner's note (2026-10-18): today the control is a
       `Segmented` of one choice (Any, This creature, Your creatures, Enemies); it should let the player turn several on, each
       button a toggle that goes on and off on repeated taps. Recorded in SPEC §8.1. Questions for the slice to settle before it

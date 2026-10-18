@@ -99,6 +99,14 @@ describe('createTaxonomy', () => {
       expect(violations([debuff('x', [pattern])])).toMatch(/pattern .* must be plain text/);
     });
 
+    // The matcher reads every number of a text as `#` before it looks the phrase up, so a digit would never be found.
+    it('refuses a pattern with a digit: a number is written #', () => {
+      expect(violations([event('loot', { patterns: ['every 2 gems'] })])).toMatch(
+        /pattern "every 2 gems" of "loot" has a digit: write # for a number/,
+      );
+      expect(createTaxonomy([event('loot', { patterns: ['every # gems'] })]).entries).toHaveLength(1);
+    });
+
     it.each([
       ['empty', ''],
       ['not lower case', 'Weak'],

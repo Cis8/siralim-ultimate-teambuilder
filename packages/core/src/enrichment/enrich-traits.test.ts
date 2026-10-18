@@ -9,7 +9,7 @@ function row(overrides: Partial<IdentifiedTraitRow> = {}): IdentifiedTraitRow {
     family: 'Abomination',
     creature: 'Abomination Brute',
     name: 'Flesh Rot',
-    description: 'Afflicts a debuff.',
+    description: 'Does something.',
     material: 'Brute Stitches',
     ...overrides,
   };
@@ -40,7 +40,7 @@ describe('enrichTraits', () => {
         family: 'Abomination',
         class: 'Death',
         kind: 'creature',
-        description: 'Afflicts a debuff.',
+        description: 'Does something.',
         material: 'Brute Stitches',
         stacks: true,
         randomDebuff: null,

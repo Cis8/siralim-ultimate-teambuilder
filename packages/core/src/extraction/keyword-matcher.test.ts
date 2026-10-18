@@ -387,4 +387,74 @@ describe('createKeywordMatcher', () => {
       expect(custom.match('See A+B (C) here; aab c').map((match) => match.span)).toEqual([[4, 11]]);
     });
   });
+
+  describe('a number in a pattern', () => {
+    const custom = createKeywordMatcher(
+      createTaxonomy([
+        { kind: 'mechanic', key: 'loot', label: 'Loot', patterns: ['finds # gems', '# gems and #'] },
+        { kind: 'buff', key: 'glowing', label: 'Glowing', patterns: ['Glowing'] },
+      ]),
+    );
+
+    it('stands for any number, whole: "#" in a pattern is how the report writes one', () => {
+      expect(custom.match('It finds 5 gems.').map((match) => match.span)).toEqual([[3, 15]]);
+      expect(custom.match('It finds 120 gems.').map((match) => match.span)).toEqual([[3, 17]]);
+      expect(custom.match('It finds 5 gems and 12 gems.').map((match) => match.key)).toEqual(['loot']);
+    });
+
+    it('does not stand for anything else', () => {
+      expect(custom.match('It finds many gems, 5% gems, 5gems or gems.')).toEqual([]);
+    });
+
+    it('can be more than one in a phrase', () => {
+      expect(custom.match('Take 3 gems and 4 now.').map((match) => match.span)).toEqual([[5, 17]]);
+    });
+
+    it('leaves the phrases without one alone, whatever numbers the text has', () => {
+      expect(custom.match('Glowing for 3 turns.').map((match) => match.key)).toEqual(['glowing']);
+    });
+  });
+
+  describe('buffs and debuffs that no name gives (GAME_RULES R12)', () => {
+    it.each([
+      ['it gains 5 random buffs', 'any buff', 'gains 5 random buffs'],
+      ['your creatures gain 3 random buffs', 'any buff', 'gain 3 random buffs'],
+      ['it grants your creatures 1 random buff', 'any buff', '1 random buff'],
+      ['Your creatures begin with 5 random buffs', 'any buff', 'with 5 random buffs'],
+      ['but cannot gain additional buffs', 'any buff', 'gain additional buffs'],
+      ['Enemies can only gain 1 buff per turn', 'any buff', 'gain 1 buff'],
+      ['they afflict them with a buff instead', 'any buff', 'with a buff'],
+      ['when creatures are afflicted with a buff or debuff are ignored', 'any buff', 'with a buff or debuff'],
+      ['they also grant one of your creatures a random buff', 'any buff', 'a random buff'],
+      ['When your creatures buff an enemy', 'any buff', 'buff an enemy'],
+      ['After an enemy afflicts a debuff', 'any debuff', 'afflicts a debuff'],
+      ['After this creature afflicts an enemy with a debuff', 'any debuff', 'with a debuff'],
+      ['it afflicts the target with 2 random debuffs', 'any debuff', 'with 2 random debuffs'],
+      ['it is afflicted with 3 random debuffs', 'any debuff', 'afflicted with 3 random debuffs'],
+      ['After your creatures apply a debuff', 'any debuff', 'apply a debuff'],
+      ['After your creatures receive a debuff', 'any debuff', 'receive a debuff'],
+      ['they afflict an additional debuff on enemies', 'any debuff', 'afflict an additional debuff'],
+      ['they have a 50% chance to gain a debuff instead', 'any debuff', 'gain a debuff'],
+      ['When your creatures debuff an ally', 'any debuff', 'debuff an ally'],
+      ['Your creatures are resistant to debuffs', 'any debuff', 'resistant to debuffs'],
+      ['This creature is immune to debuffs', 'any debuff', 'immune to debuffs'],
+      ['Your creatures have a 35% chance to avoid debuffs', 'any debuff', 'avoid debuffs'],
+      ['a 25% chance to prevent debuffs', 'any debuff', 'prevent debuffs'],
+      ['a 50% chance to avoid being afflicted by debuffs', 'any debuff', 'avoid being afflicted by debuffs'],
+    ])('finds the event in "%s"', (text, key, phrase) => {
+      const events = matcher.match(text).filter((match) => match.kind === 'event');
+      expect(events.map((match) => match.key)).toEqual([key]);
+      expect(events.map((match) => text.slice(match.span[0], match.span[1]))).toEqual([phrase]);
+    });
+
+    it.each([
+      ['a name, not a buff or debuff in general', "Enemies' Burning debuffs last forever."],
+      ['one that was just named', 'If enemies already have this debuff, its potency is increased by 30% instead.'],
+      ['one of a pair', "this creature afflicts them with whichever of these debuffs the target doesn't already have."],
+      ['how long they last', "Your creatures' debuffs last for 1 turn."],
+      ['removing them', 'This creature removes 2 debuffs from your creatures.'],
+    ])('finds none in %s', (_label, text) => {
+      expect(matcher.match(text).filter((match) => match.kind === 'event')).toEqual([]);
+    });
+  });
 });
