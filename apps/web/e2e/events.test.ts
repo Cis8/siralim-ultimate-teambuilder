@@ -21,14 +21,19 @@ import {
 } from './support/explore-page';
 
 // The Events section (SPEC §8.1, GAME_RULES R12): five groups, each event with a button for the traits that cause it and one
-// for those that react to it, and one "Who" control that narrows the filters to who acts.
+// for those that react to it, and one "Who" control, a toggle for each actor, that sets who acts in the filters.
 
 const GROUPS = ['Battle and turns', 'Actions', 'Hits', 'Life and death', 'Buffs and debuffs'] as const;
 
-/** What a filter on a side of an event, by anyone or by one actor, finds in the dataset. */
-const having = (traits: readonly Trait[], role: 'applies' | 'uses', key: string, actor?: KeywordActor): Trait[] =>
+/** What a filter on a side of an event, by anyone or by any of the actors, finds in the dataset. */
+const having = (traits: readonly Trait[], role: 'applies' | 'uses', key: string, ...actors: KeywordActor[]): Trait[] =>
   traits.filter((trait) =>
-    trait.keywords.some((hit) => hit.key === key && hit.role === role && (actor === undefined || hit.actor === actor)),
+    trait.keywords.some(
+      (hit) =>
+        hit.key === key &&
+        hit.role === role &&
+        (actors.length === 0 || (hit.actor !== undefined && actors.includes(hit.actor))),
+    ),
   );
 
 const addressKeywords = (page: Page): string | null => new URL(page.url()).searchParams.get('kw');
@@ -177,6 +182,136 @@ test.describe('the Events section', () => {
       await expect(who(page, 'Your creatures')).toHaveAttribute('aria-pressed', 'true');
     });
 
+    test.describe('with several actors', () => {
+      test('turns each button on and off on its own, and puts "Any" back when the last actor goes', async ({
+        page,
+        request,
+      }) => {
+        const { traits } = await publishedDataset(request);
+        const bySelf = having(traits, 'uses', 'attack', 'self');
+        const byEither = having(traits, 'uses', 'attack', 'self', 'enemy');
+        expect(byEither.length).toBeGreaterThan(bySelf.length);
+        await openExplore(page);
+        await openFilters(page);
+        await side(page, 'Attack', 'Reacts').click();
+        await who(page, 'This creature').click();
+        await expectAddressKeywords(page, 'u:attack/self');
+        const before = await historyLength(page);
+
+        await who(page, 'Enemies').click();
+
+        await expectAddressKeywords(page, 'u:attack/self,u:attack/enemy');
+        expect(await historyLength(page)).toBe(before + 1);
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'Enemies')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'Any')).toHaveAttribute('aria-pressed', 'false');
+        await expect(who(page, 'Your creatures')).toHaveAttribute('aria-pressed', 'false');
+        await expect(announcedCount(page)).toHaveText(countText(byEither.length, traits));
+        await expect(side(page, 'Attack', 'Reacts')).toHaveAttribute('aria-pressed', 'true');
+
+        await who(page, 'This creature').click();
+
+        await expectAddressKeywords(page, 'u:attack/enemy');
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'false');
+        await expect(who(page, 'Enemies')).toHaveAttribute('aria-pressed', 'true');
+        await expect(announcedCount(page)).toHaveText(
+          countText(having(traits, 'uses', 'attack', 'enemy').length, traits),
+        );
+
+        await who(page, 'Enemies').click();
+
+        await expectAddressKeywords(page, 'u:attack');
+        await expect(who(page, 'Any')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'Enemies')).toHaveAttribute('aria-pressed', 'false');
+      });
+
+      test('writes the filters of one side as alternatives, in the chips and the effective query', async ({ page }) => {
+        await openExplore(page);
+        await openFilters(page);
+        await side(page, 'Attack', 'Reacts').click();
+        await who(page, 'This creature').click();
+        await who(page, 'Enemies').click();
+        await side(page, 'Weak', 'Relies on').click();
+        await closeFilters(page);
+
+        await expect(chips(page)).toContainText('uses:attack/self');
+        await expect(chips(page)).toContainText('uses:attack/enemy');
+        await expect(page.getByRole('code')).toHaveText('(uses:attack/self OR uses:attack/enemy) uses:weak');
+      });
+
+      test('counts beside the buttons the traits that name at least one of the actors, each once', async ({
+        page,
+        request,
+      }) => {
+        const { traits } = await publishedDataset(request);
+        const either = having(traits, 'applies', 'heal', 'self', 'enemy');
+        expect(either.length).toBeGreaterThan(0);
+        await openExplore(page);
+        await openFilters(page);
+
+        await who(page, 'This creature').click();
+        await who(page, 'Enemies').click();
+
+        // Nothing is filtered yet: no parameter, and the counts are those of the two actors together.
+        expect(addressKeywords(page)).toBeNull();
+        await expect(side(page, 'Heal', 'Causes')).toHaveAccessibleName(`Causes ${format(either.length)} traits`);
+      });
+
+      test('takes every actor off with "Any", in one step, and stays on "Any" when it is pressed again', async ({
+        page,
+      }) => {
+        await openExplore(page, './?kw=u:attack/self,u:attack/enemy');
+        await openFilters(page);
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'Enemies')).toHaveAttribute('aria-pressed', 'true');
+        const before = await historyLength(page);
+
+        await who(page, 'Any').click();
+
+        await expectAddressKeywords(page, 'u:attack');
+        expect(await historyLength(page)).toBe(before + 1);
+        await expect(who(page, 'Any')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'false');
+
+        await who(page, 'Any').click();
+
+        await expectAddressKeywords(page, 'u:attack');
+        expect(await historyLength(page)).toBe(before + 1);
+        await expect(who(page, 'Any')).toHaveAttribute('aria-pressed', 'true');
+      });
+
+      test('gives every event filter the actors, and back undoes it', async ({ page }) => {
+        await openExplore(page, './?kw=u:attack/self,a:death/self');
+        await openFilters(page);
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'true');
+
+        await who(page, 'Your creatures').click();
+
+        await expectAddressKeywords(page, 'u:attack/self,u:attack/ally,a:death/self,a:death/ally');
+        await expect(who(page, 'This creature')).toHaveAttribute('aria-pressed', 'true');
+        await expect(who(page, 'Your creatures')).toHaveAttribute('aria-pressed', 'true');
+
+        await page.goBack();
+
+        await expectAddressKeywords(page, 'u:attack/self,a:death/self');
+        await expect(who(page, 'Your creatures')).toHaveAttribute('aria-pressed', 'false');
+      });
+
+      test('counts in the section, shut, each filter once: an actor is a filter', async ({ page }) => {
+        await openExplore(page);
+        await openFilters(page);
+        await side(page, 'Attack', 'Reacts').click();
+        await side(page, 'Death', 'Reacts').click();
+        await who(page, 'This creature').click();
+        await who(page, 'Enemies').click();
+
+        await section(page, 'Events').click();
+
+        await expect(section(page, 'Events')).toHaveAccessibleName(/^Events 4 on$/);
+        await expect(clearFiltersButton(page)).toHaveAccessibleName('Clear filters (4)');
+      });
+    });
+
     test('keeps what was chosen when the window moves the panel between a column and a sheet', async ({ page }) => {
       await openExplore(page);
       await openFilters(page);
@@ -275,6 +410,7 @@ test.describe('the Events section', () => {
     await openFilters(page);
     await side(page, 'Provoke', 'Reacts').click();
     await who(page, 'Enemies').click();
+    await who(page, 'This creature').click();
 
     expect(await axeViolations(page)).toEqual([]);
   });

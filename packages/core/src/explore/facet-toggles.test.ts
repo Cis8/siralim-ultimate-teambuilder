@@ -93,8 +93,19 @@ describe('toggleKeywordSide', () => {
   it('turns a side on after the others, by the actor it is given', () => {
     const state = stateWith({ keywords: [applies('weak')] });
 
-    expect(toggleKeywordSide(state, uses('attack'), 'self').keywords).toEqual([applies('weak'), self]);
+    expect(toggleKeywordSide(state, uses('attack'), ['self']).keywords).toEqual([applies('weak'), self]);
     expect(toggleKeywordSide(state, uses('attack')).keywords).toEqual([applies('weak'), uses('attack')]);
+    expect(toggleKeywordSide(state, uses('attack'), []).keywords).toEqual([applies('weak'), uses('attack')]);
+  });
+
+  it('turns a side on for several actors with a filter for each, in the order given', () => {
+    const state = stateWith({ keywords: [applies('weak')] });
+
+    expect(toggleKeywordSide(state, uses('attack'), ['self', 'enemy']).keywords).toEqual([
+      applies('weak'),
+      self,
+      enemy,
+    ]);
   });
 
   it('is on when a filter of its field and keyword is, by anyone or by one actor', () => {
@@ -110,7 +121,7 @@ describe('toggleKeywordSide', () => {
       keywords: [applies('attack'), self, uses('provoke'), uses('attack'), enemy, { field: 'kw', key: 'attack' }],
     });
 
-    expect(toggleKeywordSide(state, uses('attack'), 'ally').keywords).toEqual([
+    expect(toggleKeywordSide(state, uses('attack'), ['ally', 'enemy']).keywords).toEqual([
       applies('attack'),
       uses('provoke'),
       { field: 'kw', key: 'attack' },
@@ -119,14 +130,15 @@ describe('toggleKeywordSide', () => {
 
   it('is undone by a second toggle', () => {
     const state = stateWith({ keywords: [applies('weak')] });
+    const toggle = (from: ExploreState) => toggleKeywordSide(from, uses('attack'), ['self', 'enemy']);
 
-    expect(toggleKeywordSide(toggleKeywordSide(state, uses('attack'), 'self'), uses('attack'), 'self')).toEqual(state);
+    expect(toggle(toggle(state))).toEqual(state);
   });
 
   it('leaves the rest of the state alone', () => {
     const state = stateWith({ query: 'weak', classes: ['life'], keywordMode: 'any', sort: 'az' });
 
-    expect(toggleKeywordSide(state, uses('attack'), 'enemy')).toEqual({ ...state, keywords: [enemy] });
+    expect(toggleKeywordSide(state, uses('attack'), ['enemy'])).toEqual({ ...state, keywords: [enemy] });
   });
 });
 

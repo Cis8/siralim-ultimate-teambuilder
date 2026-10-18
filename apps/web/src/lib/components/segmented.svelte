@@ -1,19 +1,20 @@
 <script lang="ts" generics="Value extends string">
   /**
-   * A choice of one among a few, every option in view: a group of toggle buttons, the chosen one pressed. None is pressed
-   * while `value` is `undefined`, when the state lies between the options. In one row, or in `columns` columns when the
-   * options are too long to share a row of the panel.
+   * A few toggle buttons in a frame, every option in view; the options whose value is in `pressed` are pressed. The owner
+   * decides what a press does to the others, so the same row is a choice of one (the match mode) or of several (who acts).
+   * None is pressed while `pressed` is empty, when the state lies between the options. In one row, or in `columns` columns
+   * when the options are too long to share a row of the panel.
    */
   const {
     label,
     options,
-    value,
+    pressed,
     columns,
     onchange,
   }: {
     label: string;
     options: readonly { readonly value: Value; readonly label: string }[];
-    value: Value | undefined;
+    pressed: readonly Value[];
     columns?: number;
     onchange: (value: Value) => void;
   } = $props();
@@ -23,7 +24,7 @@
   {#each options as option (option.value)}
     <button
       type="button"
-      aria-pressed={option.value === value}
+      aria-pressed={pressed.includes(option.value)}
       onclick={() => {
         onchange(option.value);
       }}>{option.label}</button

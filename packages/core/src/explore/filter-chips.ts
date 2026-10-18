@@ -1,5 +1,5 @@
 import { writeKeywordReference } from '../query/keyword-reference';
-import { FLAG_TERMS } from './effective-query';
+import { FLAG_TERMS, keywordSides } from './effective-query';
 import type { ExploreState } from './explore-state';
 import { toggleClass, toggleKeywordFilter } from './facet-toggles';
 
@@ -22,10 +22,12 @@ function locate(state: ExploreState): Located[] {
       chip: { field: 'class', value: name },
       without: (from: ExploreState) => toggleClass(from, name),
     })),
-    ...state.keywords.map((filter) => ({
-      chip: { field: filter.field, value: writeKeywordReference(filter) },
-      without: (from: ExploreState) => toggleKeywordFilter(from, filter),
-    })),
+    ...keywordSides(state.keywords)
+      .flat()
+      .map((filter) => ({
+        chip: { field: filter.field, value: writeKeywordReference(filter) },
+        without: (from: ExploreState) => toggleKeywordFilter(from, filter),
+      })),
     ...(state.artifactEligible
       ? [{ chip: FLAG_TERMS.artifactEligible, without: (from: ExploreState) => ({ ...from, artifactEligible: false }) }]
       : []),

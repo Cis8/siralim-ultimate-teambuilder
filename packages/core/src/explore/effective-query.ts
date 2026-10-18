@@ -2,7 +2,7 @@ import type { ClassName } from '../model/trait';
 import type { QueryNode } from '../query/ast';
 import { writeKeywordReference } from '../query/keyword-reference';
 import { serialise, serialiseTerm } from '../query/serialise';
-import type { ExploreState } from './explore-state';
+import type { ExploreState, KeywordFilter } from './explore-state';
 
 /**
  * The filters of an Explore state as a query of the language (SPEC §8.1). The state stands for the text: typed in the
@@ -64,10 +64,33 @@ function classesNamedInside(chosen: readonly ClassName[], known: readonly ClassN
   return candidates.filter((name) => !wanted.includes(name) && wanted.some((part) => name.includes(part)));
 }
 
+/**
+ * The filters on one side of a keyword (the same field and key) are alternatives, whichever mode: an event can be filtered
+ * by several actors at once, and a trait that has it by either is what is asked for (SPEC §8.1). Match all joins what is
+ * left, one operand for each side.
+ */
 function keywordsQuery({ keywords, keywordMode }: ExploreState): string {
-  const terms = keywords.map(({ field, ...reference }) => serialiseTerm(field, writeKeywordReference(reference)));
-  return keywordMode === 'any' && terms.length > 1 ? `(${terms.join(' OR ')})` : joined(terms);
+  const bySide = keywordSides(keywords).map((side) =>
+    side.map(({ field, ...reference }) => serialiseTerm(field, writeKeywordReference(reference))),
+  );
+  return keywordMode === 'any' ? anyOf(bySide.flat()) : joined(bySide.map(anyOf));
 }
 
-/** The parts that are not empty, apart by a blank: an AND. */
+/**
+ * The keyword filters by side, the sides in the order of their first filter and each side's filters in the order they were
+ * chosen: the order the query writes them in, which the chip row follows.
+ */
+export function keywordSides(keywords: readonly KeywordFilter[]): KeywordFilter[][] {
+  const sides = new Map<string, KeywordFilter[]>();
+  for (const filter of keywords) {
+    const side = `${filter.field}:${filter.key}`;
+    sides.set(side, [...(sides.get(side) ?? []), filter]);
+  }
+  return [...sides.values()];
+}
+
+/** The terms that are not empty, apart by a blank: an AND. */
 const joined = (parts: readonly string[]): string => parts.filter((part) => part !== '').join(' ');
+
+/** One term as it is, several as an OR in parentheses to stand as one operand of an AND. */
+const anyOf = (terms: readonly string[]): string => (terms.length > 1 ? `(${terms.join(' OR ')})` : joined(terms));

@@ -9,15 +9,15 @@
     type KeywordSide,
   } from '@atlas/core';
   import { copy } from '../copy';
-  import { WHO_CHOICES, type EventWho, type WhoChoice } from '../event-who';
+  import { pressedChoices, WHO_CHOICES, type EventWho, type WhoChoice } from '../event-who';
   import KeywordRow from './keyword-row.svelte';
   import Segmented from './segmented.svelte';
 
   /**
-   * The body of the Events section (SPEC §8.1): one "Who" control that narrows every event filter to who acts, then the events
-   * in five groups, each with a button for the traits that cause it and one for those that react to it. The buttons are
-   * pressed for an event by any actor, and what they turn on has the actor `who` says (`eventWho`); their counts are the
-   * traits whose text names that actor.
+   * The body of the Events section (SPEC §8.1): one "Who" control, a toggle for each actor, that sets who acts in every event
+   * filter, then the events in five groups, each with a button for the traits that cause it and one for those that react to
+   * it. The buttons are pressed for an event by any actor, and what they turn on has the actors `who` says (`eventWho`);
+   * their counts are the traits whose text names at least one of them.
    */
   const {
     events,
@@ -46,7 +46,7 @@
 <div class="events">
   <div class="who">
     <span class="caption" aria-hidden="true">{copy.whoLabel}</span>
-    <Segmented label={copy.whoLabel} options={choices} value={who.shown} columns={2} onchange={onwho} />
+    <Segmented label={copy.whoLabel} options={choices} pressed={pressedChoices(who)} columns={2} onchange={onwho} />
   </div>
   {#each groups as { group, events: listed } (group)}
     <h5>{copy.eventGroups[group]}</h5>
@@ -57,10 +57,10 @@
           widths="76px 76px"
           sides={SIDES.map((side) => ({
             name: copy.eventSides[side],
-            count: facetCount(event, side, who.actor),
+            count: facetCount(event, side, who.actors),
             pressed: hasKeywordSide(explore, { field: side, key: event.key }),
             press: () => {
-              onchange(toggleKeywordSide(explore, { field: side, key: event.key }, who.actor));
+              onchange(toggleKeywordSide(explore, { field: side, key: event.key }, who.actors));
             },
           }))}
         />

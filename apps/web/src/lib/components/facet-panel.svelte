@@ -9,9 +9,10 @@
     hasKeywordFilter,
     hasRole,
     KEYWORD_MODES,
-    narrowEventFilters,
+    setEventActors,
     toggleClass,
     toggleKeywordFilter,
+    type ActorSet,
     type ExploreState,
     type Facets,
     type FilterSection,
@@ -19,7 +20,7 @@
   } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
-  import { actorOf, eventWho, type WhoChoice } from '../event-who';
+  import { eventWho, pressChoice, type WhoChoice } from '../event-who';
   import EventFacets from './event-facets.svelte';
   import FacetButton from './facet-button.svelte';
   import KeywordRow from './keyword-row.svelte';
@@ -32,8 +33,8 @@
    * is a toggle with the number of traits it would show; what a press changes is worked out by `core`, and the owner of
    * the state gets the new one. The classes, each kind of keyword and the flags are sections that open and close; which
    * are shut (`shut`) is the owner's too, since this panel is built again whenever the window crosses the width where the
-   * filters change from a column to a sheet. So is `who`, the last choice of the "Who" control of the Events section, which
-   * is what the next event filter turned on gets while none is on.
+   * filters change from a column to a sheet. So is `who`, the actors last chosen with the "Who" control of the Events
+   * section, which is what the next event filter turned on gets while none is on.
    */
   const {
     facets,
@@ -47,10 +48,10 @@
     facets: Facets;
     explore: ExploreState;
     shut: readonly FilterSection[];
-    who: WhoChoice;
+    who: ActorSet;
     onchange: (state: ExploreState) => void;
     ontoggle: (section: FilterSection) => void;
-    onwho: (choice: WhoChoice) => void;
+    onwho: (actors: ActorSet) => void;
   } = $props();
 
   /** The two sides of a buff, a debuff or an effect that have a filter, in the order the row shows them. */
@@ -81,10 +82,11 @@
   let cleared = $state('');
   const clearedAnnouncement = $derived(active === 0 ? cleared : '');
 
-  /** The choice is kept, and the event filters that are on are narrowed to it: one step of the history, or none if nothing changes. */
+  /** The actors a press leaves are kept, and the event filters that are on are set to them: one step of the history, or none if nothing changes. */
   function chooseWho(choice: WhoChoice): void {
-    onwho(choice);
-    const next = narrowEventFilters(explore, facets.keywords, actorOf(choice));
+    const actors = pressChoice(who, choice);
+    onwho(actors);
+    const next = setEventActors(explore, facets.keywords, actors);
     if (next !== explore) onchange(next);
   }
 
@@ -143,7 +145,7 @@
       <Segmented
         label={copy.keywordModeLabel}
         options={modes}
-        value={explore.keywordMode}
+        pressed={[explore.keywordMode]}
         onchange={(keywordMode: KeywordMode) => {
           onchange({ ...explore, keywordMode });
         }}

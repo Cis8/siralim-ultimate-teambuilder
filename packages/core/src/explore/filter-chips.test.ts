@@ -4,7 +4,7 @@ import { KEYWORD_ACTORS } from '../model/trait';
 import { queryChips } from '../query/chips';
 import { filterQuery } from './effective-query';
 import { initialExploreState, type ExploreState } from './explore-state';
-import { filterChips, removeFilterChip } from './filter-chips';
+import { filterChips, removeFilterChip, type FilterChip } from './filter-chips';
 
 const stateWith = (patch: Partial<ExploreState>): ExploreState => ({ ...initialExploreState, ...patch });
 
@@ -48,9 +48,26 @@ describe('filterChips', () => {
 
     expect(filterChips(state)).toEqual([
       { field: 'uses', value: 'attack/self' },
-      { field: 'kw', value: 'start of turn/enemy' },
       { field: 'uses', value: 'attack' },
+      { field: 'kw', value: 'start of turn/enemy' },
     ]);
+  });
+
+  it('keeps the actors of one side of an event together, where the query puts them as alternatives', () => {
+    const state = stateWith({
+      keywords: [
+        { field: 'uses', key: 'attack', actor: 'self' },
+        { field: 'uses', key: 'weak' },
+        { field: 'uses', key: 'attack', actor: 'enemy' },
+      ],
+    });
+
+    expect(filterChips(state)).toEqual([
+      { field: 'uses', value: 'attack/self' },
+      { field: 'uses', value: 'attack/enemy' },
+      { field: 'uses', value: 'weak' },
+    ]);
+    expect(filterQuery(state, []).rest).toBe('(uses:attack/self OR uses:attack/enemy) uses:weak');
   });
 
   it('has the flags only for those that are on', () => {
@@ -160,12 +177,17 @@ describe('the chips of any state', () => {
   });
 
   it('take one filter away each, so that the others are all still there', () => {
+    // The order is the query's, which keeps the filters of one side together: a side whose first filter goes can move.
+    const byTerm = (a: FilterChip, b: FilterChip): number =>
+      `${a.field}:${a.value}`.localeCompare(`${b.field}:${b.value}`);
     fc.assert(
       fc.property(state, fc.nat(), (before, pick) => {
         const chips = filterChips(before);
         fc.pre(chips.length > 0);
         const index = pick % chips.length;
-        expect(filterChips(removeFilterChip(before, index))).toEqual(chips.filter((_chip, at) => at !== index));
+        expect(filterChips(removeFilterChip(before, index)).toSorted(byTerm)).toEqual(
+          chips.filter((_chip, at) => at !== index).toSorted(byTerm),
+        );
       }),
     );
   });

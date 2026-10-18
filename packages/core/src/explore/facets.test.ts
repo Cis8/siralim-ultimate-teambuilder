@@ -3,7 +3,7 @@ import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '
 import { createTraitIndex } from '../query/trait-index';
 import type { TaxonomyEntry } from '../taxonomy/entry';
 import { createTaxonomy } from '../taxonomy/registry';
-import { countFacets, facetCount, facetVocabulary } from './facets';
+import { countFacets, facetCount, facetVocabulary, type KeywordFacet } from './facets';
 
 function trait(id: string, overrides: Partial<Trait> = {}): Trait {
   return {
@@ -262,7 +262,7 @@ describe('countFacets', () => {
     });
   });
 
-  describe('events, by the actor the text names', () => {
+  describe('events, by the actors the text names', () => {
     const attack = (role: KeywordRole, ...actors: (KeywordActor | undefined)[]) =>
       actors.map((actor) => mention('attack', 'event', role, actor));
     const eventTraits = [
@@ -277,80 +277,120 @@ describe('countFacets', () => {
     ];
     const eventIndex = createTraitIndex(eventTraits);
     const eventVocabulary = facetVocabulary(eventIndex, taxonomy);
-    const eventFacet = (key: string, found: readonly string[] = eventTraits.map(({ id }) => id)) => {
+    const eventFacet = (key: string, found: readonly string[] = eventTraits.map(({ id }) => id)): KeywordFacet => {
       const traitsFound = eventIndex.entries.filter(({ trait: each }) => found.includes(each.id));
-      return countFacets(eventVocabulary, traitsFound, traitsFound).keywords.find((facet) => facet.key === key);
+      const facet = countFacets(eventVocabulary, traitsFound, traitsFound).keywords.find((each) => each.key === key);
+      if (facet === undefined) throw new Error(`no facet for ${key}`);
+      return facet;
+    };
+    /** The traits that cause the event and the traits that react to it, for these actors. */
+    const counts = (key: string, actors: readonly KeywordActor[], found?: readonly string[]) => {
+      const facet = eventFacet(key, found);
+      return { applies: facetCount(facet, 'applies', actors), uses: facetCount(facet, 'uses', actors) };
     };
 
     it('counts the traits that cause it or react to it for each actor', () => {
-      expect(eventFacet('attack')?.byActor).toEqual({
-        self: { applies: 0, uses: 3 },
-        ally: { applies: 0, uses: 1 },
-        enemy: { applies: 1, uses: 1 },
-        any: { applies: 0, uses: 0 },
-      });
+      expect(counts('attack', ['self'])).toEqual({ applies: 0, uses: 3 });
+      expect(counts('attack', ['ally'])).toEqual({ applies: 0, uses: 1 });
+      expect(counts('attack', ['enemy'])).toEqual({ applies: 1, uses: 1 });
+      expect(counts('attack', ['any'])).toEqual({ applies: 0, uses: 0 });
     });
 
     it('counts a trait once for an actor, however often its text names it', () => {
-      expect(eventFacet('attack', ['self-twice'])?.byActor?.self).toEqual({ applies: 0, uses: 1 });
+      expect(counts('attack', ['self'], ['self-twice'])).toEqual({ applies: 0, uses: 1 });
     });
 
     it('counts a trait that names two actors for each of them', () => {
-      expect(eventFacet('attack', ['self-and-enemy'])?.byActor).toMatchObject({
-        self: { uses: 1 },
-        enemy: { uses: 1 },
-      });
+      expect(counts('attack', ['self'], ['self-and-enemy'])).toEqual({ applies: 0, uses: 1 });
+      expect(counts('attack', ['enemy'], ['self-and-enemy'])).toEqual({ applies: 0, uses: 1 });
+    });
+
+    it('counts, for several actors, the traits that name at least one of them, each once', () => {
+      // self: three traits, enemy: one of them and another that causes it. A sum of the two would count self-and-enemy twice.
+      expect(counts('attack', ['self', 'enemy'])).toEqual({ applies: 1, uses: 3 });
+      expect(counts('attack', ['self', 'ally'])).toEqual({ applies: 0, uses: 4 });
+      expect(counts('attack', ['self', 'ally', 'enemy'])).toEqual({ applies: 1, uses: 4 });
+      expect(counts('attack', ['self', 'enemy'], ['self-and-enemy'])).toEqual({ applies: 0, uses: 1 });
+    });
+
+    it('counts the traits that name "any creature" with the others when it is one of the actors', () => {
+      const text = [trait('anywhere', { keywords: attack('uses', 'any') }), ...eventTraits];
+      const index = createTraitIndex(text);
+      const facet = countFacets(facetVocabulary(index, taxonomy), index.entries, index.entries).keywords.find(
+        ({ key }) => key === 'attack',
+      );
+
+      expect(facet).toBeDefined();
+      expect(facet && facetCount(facet, 'uses', ['self', 'any'])).toBe(4);
+      expect(facet && facetCount(facet, 'uses', ['any'])).toBe(1);
+    });
+
+    it('counts the same for the same actors, whatever order they are given in', () => {
+      const facet = eventFacet('attack');
+
+      expect(facetCount(facet, 'uses', ['enemy', 'self'])).toBe(facetCount(facet, 'uses', ['self', 'enemy']));
     });
 
     it('keeps the count by anyone as it is: every trait that has the event, whoever acts, and none for a mention with no actor', () => {
       expect(eventFacet('attack')).toMatchObject({ applies: 1, uses: 5, mentions: 7 });
       expect(eventFacet('attack', ['nobody'])).toMatchObject({ uses: 1 });
-      expect(eventFacet('attack', ['nobody'])?.byActor).toEqual({
-        self: { applies: 0, uses: 0 },
-        ally: { applies: 0, uses: 0 },
-        enemy: { applies: 0, uses: 0 },
-        any: { applies: 0, uses: 0 },
-      });
+      expect(counts('attack', ['self', 'ally', 'enemy', 'any'], ['nobody'])).toEqual({ applies: 0, uses: 0 });
+    });
+
+    it('is the count by anyone for no actor at all', () => {
+      const facet = eventFacet('attack');
+
+      expect(facetCount(facet, 'uses', [])).toBe(5);
+      expect(facetCount(facet, 'applies')).toBe(1);
     });
 
     it('counts only the traits found', () => {
-      expect(eventFacet('attack', ['ally', 'the-start'])?.byActor?.self).toEqual({ applies: 0, uses: 0 });
-      expect(eventFacet('attack', ['ally', 'the-start'])?.byActor?.ally).toEqual({ applies: 0, uses: 1 });
+      expect(counts('attack', ['self'], ['ally', 'the-start'])).toEqual({ applies: 0, uses: 0 });
+      expect(counts('attack', ['ally'], ['ally', 'the-start'])).toEqual({ applies: 0, uses: 1 });
+      expect(counts('attack', ['self', 'ally'], ['ally', 'the-start'])).toEqual({ applies: 0, uses: 1 });
     });
 
     it('has the counts of every event, zeros for one that names nobody', () => {
-      expect(eventFacet('start of battle')?.byActor?.self).toEqual({ applies: 0, uses: 0 });
+      expect(counts('start of battle', ['self'])).toEqual({ applies: 0, uses: 0 });
+      expect(counts('start of battle', ['self', 'enemy'])).toEqual({ applies: 0, uses: 0 });
     });
 
-    it('has no count by actor for a keyword that is no event', () => {
-      expect(keywordFacet(everyone, 'weak')).not.toHaveProperty('byActor');
-      expect(keywordFacet(everyone, 'timeline')).not.toHaveProperty('byActor');
+    it('has no count by actors for a keyword that is no event', () => {
+      expect(keywordFacet(everyone, 'weak')).not.toHaveProperty('byActors');
+      expect(keywordFacet(everyone, 'timeline')).not.toHaveProperty('byActors');
     });
   });
 });
 
 describe('facetCount', () => {
-  const byActor = {
+  const byActors = {
     self: { applies: 1, uses: 2 },
     ally: { applies: 3, uses: 4 },
-    enemy: { applies: 5, uses: 6 },
+    'self+enemy': { applies: 5, uses: 6 },
     any: { applies: 7, uses: 8 },
   };
-  const attack = { applies: 20, uses: 30, byActor };
+  const attack = { applies: 20, uses: 30, byActors };
 
   it('is the number of traits that have the side, whoever acts, when no actor is asked for', () => {
     expect(facetCount(attack, 'applies')).toBe(20);
     expect(facetCount(attack, 'uses')).toBe(30);
+    expect(facetCount(attack, 'uses', [])).toBe(30);
   });
 
   it('is the number of traits whose text names the actor, when one is', () => {
-    expect(facetCount(attack, 'applies', 'enemy')).toBe(5);
-    expect(facetCount(attack, 'uses', 'self')).toBe(2);
-    expect(facetCount(attack, 'uses', 'any')).toBe(8);
+    expect(facetCount(attack, 'applies', ['ally'])).toBe(3);
+    expect(facetCount(attack, 'uses', ['self'])).toBe(2);
+    expect(facetCount(attack, 'uses', ['any'])).toBe(8);
   });
 
-  it('is 0 for an actor where nothing names one: a buff has no one acting', () => {
-    expect(facetCount({ applies: 4, uses: 5 }, 'applies', 'self')).toBe(0);
+  it('is the number of traits whose text names one of the actors, when there are several', () => {
+    expect(facetCount(attack, 'applies', ['self', 'enemy'])).toBe(5);
+    expect(facetCount(attack, 'uses', ['enemy', 'self'])).toBe(6);
+  });
+
+  it('is 0 for actors where nothing names one: a buff has no one acting', () => {
+    expect(facetCount({ applies: 4, uses: 5 }, 'applies', ['self'])).toBe(0);
+    expect(facetCount({ applies: 4, uses: 5 }, 'applies', ['self', 'enemy'])).toBe(0);
     expect(facetCount({ applies: 4, uses: 5 }, 'applies')).toBe(4);
   });
 });

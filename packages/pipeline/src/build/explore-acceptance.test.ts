@@ -1,4 +1,5 @@
 import {
+  actorSet,
   createMemoryTraitRepository,
   createSearchService,
   DATASET_SCHEMA_VERSION,
@@ -10,6 +11,7 @@ import {
   KEYWORD_ACTORS,
   KEYWORD_FILTER_FIELDS,
   taxonomy,
+  type ActorSet,
   type ExploreState,
   type KeywordActor,
   type KeywordFilter,
@@ -171,38 +173,71 @@ describe('the Explore filters on the compendium v2.0', () => {
         }
       });
 
-      it('tell the event by one actor from the event by anyone: both can be on', () => {
+      it('tell the event by one actor from the event by anyone: both can be on, and anyone includes the actor', () => {
         const attack = { field: 'uses', key: 'attack' } as const;
         const bySelf = { ...attack, actor: 'self' } as const;
         const byAnyone = idsFound({ keywords: [attack] });
         const both = idsFound({ keywords: [attack, bySelf] });
 
         expect(idsFound({ keywords: [bySelf] }).length).toBeLessThan(byAnyone.length);
-        expect(both).toEqual(idsFound({ keywords: [bySelf] }));
+        expect(both).toEqual(byAnyone);
+      });
+
+      it('find the traits of any of several actors, whichever the mode, and the other sides of the event apart', () => {
+        const attack = { field: 'uses', key: 'attack' } as const;
+        const byEither = idsFound({
+          keywords: [
+            { ...attack, actor: 'self' },
+            { ...attack, actor: 'enemy' },
+          ],
+        });
+        const wanted = inDatasetOrder(
+          (trait) => hasHit(trait, 'uses', 'attack', 'self') || hasHit(trait, 'uses', 'attack', 'enemy'),
+        );
+
+        expect(byEither).toEqual(wanted);
+        expect(byEither.length).toBeGreaterThan(idsFound({ keywords: [{ ...attack, actor: 'self' }] }).length);
+        expect(
+          idsFound({
+            keywords: [
+              { ...attack, actor: 'self' },
+              { ...attack, actor: 'enemy' },
+            ],
+            keywordMode: 'any',
+          }),
+        ).toEqual(wanted);
+        expect(
+          idsFound({
+            keywords: [{ ...attack, actor: 'self' }, { ...attack, actor: 'enemy' }, applies('weak')],
+          }),
+        ).toEqual(inDatasetOrder((trait) => wanted.includes(trait.id) && hasHit(trait, 'applies', 'weak')));
       });
 
       // What the panel shows on a side of an event when "Who" is set: the traits that filter would keep from those shown.
-      it('count the traits of each actor among those shown, and as many as the filter for that actor finds', () => {
+      it('count the traits of each combination of actors among those shown, and as many as their filters find', () => {
+        const everyCombination: ActorSet[] = Array.from({ length: 2 ** KEYWORD_ACTORS.length - 1 }, (_, at) =>
+          actorSet(KEYWORD_ACTORS.filter((_actor, bit) => ((at + 1) >> bit) & 1)),
+        );
         const eventFacets = (overrides: Partial<ExploreState>) =>
           search(overrides).facets.keywords.filter(({ kind }) => kind === 'event');
 
         for (const overrides of [{}, { classes: ['nature'] }, { query: 'class:death' }]) {
           const shown = search(overrides).traits;
           for (const facet of eventFacets(overrides)) {
-            for (const actor of KEYWORD_ACTORS) {
+            for (const actors of everyCombination) {
               for (const side of ['applies', 'uses'] as const) {
-                const label = `${side}:${facet.key}/${actor} with ${JSON.stringify(overrides)}`;
-                expect(facetCount(facet, side, actor), label).toBe(
-                  shown.filter((trait) => hasHit(trait, side, facet.key, actor)).length,
+                const label = `${side}:${facet.key}/${actors.join('+')} with ${JSON.stringify(overrides)}`;
+                expect(facetCount(facet, side, actors), label).toBe(
+                  shown.filter((trait) => actors.some((actor) => hasHit(trait, side, facet.key, actor))).length,
                 );
               }
             }
           }
         }
         for (const facet of eventFacets({})) {
-          for (const actor of KEYWORD_ACTORS) {
-            expect(facetCount(facet, 'uses', actor), `${facet.key}/${actor}`).toBe(
-              idsFound({ keywords: [{ field: 'uses', key: facet.key, actor }] }).length,
+          for (const actors of everyCombination) {
+            expect(facetCount(facet, 'uses', actors), `${facet.key}/${actors.join('+')}`).toBe(
+              idsFound({ keywords: actors.map((actor) => ({ field: 'uses', key: facet.key, actor })) }).length,
             );
           }
         }

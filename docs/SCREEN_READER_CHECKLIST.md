@@ -31,7 +31,7 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 14 | Copy link | "Link copied" |
 | 15 | Add a creature that relies on a debuff nothing in the party applies | in Coverage: "*Debuff* — missing — show traits that apply it, button"; `Enter` moves to the Results with the search made |
 | 16 | Remove the last chip with `Enter` | focus stays on the chips: "Filters and query terms, group", not back at the top of the page |
-| 17 | In the filters, `Tab` into the Events section; press "This creature" in the group "Who acts", then `Tab` to "Attack" and `Space` on its second button | "Who acts, group", "Any, toggle button, pressed"; then "Attack, group", "Causes N traits", "Reacts N traits" (N is the count for this creature); after the press "pressed", and the live line gives "N of M traits" |
+| 17 | In the filters, `Tab` into the Events section; press "This creature" and then "Enemies" in the group "Who acts", then `Tab` to "Attack" and `Space` on its second button | "Who acts, group", "Any, toggle button, pressed"; after the first press "This creature, pressed" and "Any" no longer pressed, after the second "Enemies, pressed" as well; then "Attack, group", "Causes N traits", "Reacts N traits" (N is the count for the two actors together); after the press "pressed", and the live line gives "N of M traits". Press "This creature" again: it is no longer pressed, "Enemies" is; press "Enemies": "Any" is pressed again |
 | 18 | In a card, find an event in a description (for example "attacks" in "After this creature attacks, …") | "Reacts to attacks (this creature) — show traits that cause it, toggle button": the role in the words of the filters, then who acts |
 
 ## iPhone (VoiceOver, Safari)

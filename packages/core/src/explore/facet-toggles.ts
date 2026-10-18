@@ -1,4 +1,5 @@
-import type { ClassName, KeywordActor } from '../model/trait';
+import type { ClassName } from '../model/trait';
+import type { ActorSet } from './actor-set';
 import type { ExploreState, KeywordFilter } from './explore-state';
 
 const lowerCase = (name: ClassName): ClassName => name.toLowerCase();
@@ -53,13 +54,14 @@ export function hasKeywordSide(state: ExploreState, side: KeywordSideFilter): bo
 }
 
 /**
- * What a press on a side of an event in the facet panel does: the filter is added after the others, by `actor` when there
- * is one, or every filter on that side is taken off, whoever it names. An event by an actor is the same side as the event by
- * anyone, so a button that looks pressed turns off what made it so (SPEC §8.1).
+ * What a press on a side of an event in the facet panel does: a filter is added after the others for each of `actors`, or
+ * one that names nobody when there are none, or every filter on that side is taken off, whoever it names. An event by an actor
+ * is the same side as the event by anyone, so a button that looks pressed turns off what made it so (SPEC §8.1).
  */
-export function toggleKeywordSide(state: ExploreState, side: KeywordSideFilter, actor?: KeywordActor): ExploreState {
+export function toggleKeywordSide(state: ExploreState, side: KeywordSideFilter, actors: ActorSet = []): ExploreState {
   if (hasKeywordSide(state, side)) {
     return { ...state, keywords: state.keywords.filter((chosen) => !isOnSide(chosen, side)) };
   }
-  return { ...state, keywords: [...state.keywords, actor === undefined ? side : { ...side, actor }] };
+  const added = actors.length === 0 ? [side] : actors.map((actor) => ({ ...side, actor }));
+  return { ...state, keywords: [...state.keywords, ...added] };
 }

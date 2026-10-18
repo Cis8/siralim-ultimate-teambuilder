@@ -262,7 +262,7 @@ value. `q` is the query bar exactly as typed. `class` and `kw` are comma-separat
 trimmed and without repeats; a comma inside an item is written `%2C` and a percent sign `%25`. A `kw` item is a letter and a
 keyword: `a` = `applies:`, `u` = `uses:`, `k` = `kw:` (the aliases of QUERY_LANGUAGE §2); unknown keys are kept, they match
 nothing. The keyword is a key and, for an event, who acts after a slash: `u:attack/self` (`parseKeywordReference`,
-`writeKeywordReference`; QUERY_LANGUAGE §2). The same event by two actors, or by one and by anyone, are separate items. An
+`writeKeywordReference`; QUERY_LANGUAGE §2). The same event by two actors, or by one and by anyone, are separate items (alternatives of one filter, §8.1). An
 old trigger phrase is read as the event and the actor it stands for and written back so: `kw=k:after this creature attacks` is
 `kw=k:attack/self`, so a link of the first version finds what it found, and possibly more (ADR-0009). A slash with nobody after
 it is dropped (`u:attack/` is `u:attack`), a word after it that is no actor stays in the key, and an actor with no key is no
@@ -329,11 +329,17 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   an event, an optional `actor`: `{ field: 'uses', key: 'attack', actor: 'self' }` is `uses:attack/self`, in the effective
   query, the chip and the address. The event by one actor and by anyone are two filters (`hasKeywordFilter` tells them apart),
   and both can be on. The panel sets it with one control for all the events (below, *The Events section*); the address and the
-  query bar carry it too.
+  query bar carry it too. **The filters on one side of one keyword that differ only in the actor are alternatives**, in both
+  modes: they are one operand of the AND, an OR of their own (`keywordSides`), so `uses:attack/self` and `uses:attack/enemy`
+  find a trait that reacts to attacks by either, and the event by anyone beside an actor finds what anyone finds (anyone
+  includes the actor). The effective query writes them in parentheses, `(uses:attack/self OR uses:attack/enemy) uses:weak`, and
+  the chip row keeps them together, in that order.
 - **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
-  (`kw:`); a mechanic has `mentions` only. An event has, besides, the same two counts for each actor (`byActor`: the traits
-  whose text names that actor, as `applies:attack/self` finds them; `facetCount(facet, side, actor)` picks one). The facets
+  (`kw:`); a mechanic has `mentions` only. An event has, besides, the same two counts for every combination of actors
+  (`byActors`, keyed by `actorSetKey`: the traits whose text names at least one of them, each once, as the alternatives
+  `applies:attack/self` and `applies:attack/enemy` find them; a trait that names two is not counted twice, so the count for
+  two actors is not the sum of the counts for each; `facetCount(facet, side, actors)` picks one). The facets
   list the classes of the dataset and the buffs, debuffs, effects, events and mechanics of the taxonomy, with the counts they
   have, 0 included.
 - **The order of the classes** is fixed when the dataset is loaded (`facetVocabulary`), so the list does not move as the
@@ -352,18 +358,28 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   side of a keyword and per flag, as the chips count; a keyword the panel does not list is in no section). Opening or
   shutting one is no step of the history, and *Clear filters* takes the filters off in shut sections as in open ones.
 - **The Events section** (GAME_RULES R12) has one *Who* control and then the events in their five groups (`EventEntry.group`),
-  each with two buttons, *Causes* (`applies:`) and *Reacts* (`uses:`). A press turns the filter on with the actor the control
-  names (`toggleKeywordSide`), or, if the side is on, takes off every filter of it, whoever it names: the button is pressed for
-  the event by anyone and by an actor alike. The control offers *Any* (no actor: the event whoever acts), *This creature*
-  (`self`), *Your creatures* (`ally`) and *Enemies* (`enemy`); "any creature" is something a text says, not a choice. It
-  follows the filters (`eventActors`): with event filters on it shows the actor they all name, and nothing pressed when they
-  differ; a press gives every event filter that actor (`narrowEventFilters`; two that become the same are one, the first
-  keeping its place), as one step of the history, none when nothing changes. With no event filter on it shows the last choice,
-  which is what the next filter turned on gets; that choice is a state of the page like the shut sections (not in the address,
-  not in the local storage), and *Clear filters* leaves it, as it leaves the match mode. The counts of the buttons are those of
-  the actor shown (`facetCount`), so a button says how many traits it would show. A filter turned on by a click on a keyword
-  names no actor. *Decided 2026-10-18, not built yet (PLAN 8b.11):* the control takes several actors at once, each button a
-  toggle that goes on and off on repeated taps, instead of one choice; the paragraph above describes what is on the page today.
+  each with two buttons, *Causes* (`applies:`) and *Reacts* (`uses:`). A press turns the filter on with the actors the control
+  names (`toggleKeywordSide`: one filter for each, one that names nobody when there is none), or, if the side is on, takes off
+  every filter of it, whoever it names: the button is pressed for the event by anyone and by an actor alike.
+  - **The control takes several actors at once** (decided 2026-10-18): *This creature* (`self`), *Your creatures* (`ally`) and
+    *Enemies* (`enemy`) are toggle buttons that go on and off on repeated taps, and the filters of the actors on are
+    alternatives (above). *Any* (no actor: the event whoever acts) is pressed exactly when no actor is, since anyone includes
+    every actor and an actor beside it would change nothing: pressing it takes the actors off, pressing an actor puts it in
+    beside the others and so takes *Any* off, and taking the last one off leaves *Any* pressed. Pressing *Any* while it is
+    pressed changes nothing. "Any creature" (`any`) is something a text says, not a choice.
+  - It follows the filters (`eventActors`: for each side the actors of its filters, none if one of them names nobody): with
+    event filters on it shows the actors they all name, and nothing pressed, *Any* included, when the sides differ (a click on
+    a keyword makes a filter that names no actor, beside others that do). A press gives every event side the actors the press
+    leaves (`toggleActor`, `setEventActors`; from nothing pressed, the actor alone; a press on *Any* from there, none): a filter
+    that is right stays where it stands, one that is not goes, and what is missing follows the last filter of its side that
+    stays, or takes the place of the first that went; two filters that become the same are one. It is one step of the history,
+    none when nothing changes.
+  - With no event filter on it shows the last choice, which is what the next filter turned on gets; that choice is a state of
+    the page like the shut sections (not in the address, not in the local storage), and *Clear filters* leaves it, as it
+    leaves the match mode.
+  - The counts of the buttons are those of the actors shown (`facetCount`): the traits whose text names at least one of
+    them, so a button says how many traits it would show. A filter turned on by a click on a keyword names no actor. Each
+    actor of a side is a filter, one chip and one in the count of a shut section.
 - **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each

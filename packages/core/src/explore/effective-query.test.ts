@@ -105,6 +105,45 @@ describe('filterQuery', () => {
         '(uses:attack/self OR uses:attack)',
       );
     });
+
+    describe('the same side of an event by several actors', () => {
+      const attack = (actor: 'self' | 'enemy') => ({ field: 'uses', key: 'attack', actor }) as const;
+
+      it('is one filter that either actor satisfies, also when all the keywords are needed', () => {
+        expect(filters({ keywords: [attack('self'), attack('enemy')], keywordMode: 'all' }).rest).toBe(
+          '(uses:attack/self OR uses:attack/enemy)',
+        );
+        expect(filters({ keywords: [attack('self'), attack('enemy'), weak], keywordMode: 'all' }).rest).toBe(
+          '(uses:attack/self OR uses:attack/enemy) uses:weak',
+        );
+      });
+
+      it('is one operand of the AND, where the filters beside it stand, whichever they are chosen between', () => {
+        expect(filters({ keywords: [attack('self'), weak, attack('enemy')], keywordMode: 'all' }).rest).toBe(
+          '(uses:attack/self OR uses:attack/enemy) uses:weak',
+        );
+      });
+
+      it('is as any of the keywords write it when any is enough', () => {
+        expect(filters({ keywords: [attack('self'), attack('enemy'), weak], keywordMode: 'any' }).rest).toBe(
+          '(uses:attack/self OR uses:attack/enemy OR uses:weak)',
+        );
+      });
+
+      it('is a side of its own: the other side of the event, or another field, is another filter', () => {
+        const causes = { field: 'applies', key: 'attack', actor: 'self' } as const;
+
+        expect(filters({ keywords: [attack('self'), causes, attack('enemy')], keywordMode: 'all' }).rest).toBe(
+          '(uses:attack/self OR uses:attack/enemy) applies:attack/self',
+        );
+      });
+
+      it('reads without a repair', () => {
+        const { rest } = filters({ keywords: [attack('self'), attack('enemy'), weak], keywordMode: 'all' });
+
+        expect(parseQuery(rest).diagnostics).toEqual([]);
+      });
+    });
   });
 
   describe('flags', () => {

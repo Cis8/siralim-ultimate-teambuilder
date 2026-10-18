@@ -93,7 +93,8 @@ export {
   toggleKeywordSide,
   type KeywordSideFilter,
 } from './explore/facet-toggles';
-export { eventActors, narrowEventFilters } from './explore/event-actors';
+export { actorSet, type ActorSet } from './explore/actor-set';
+export { eventActors, setEventActors, toggleActor } from './explore/event-actors';
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
 export { clearFilters } from './explore/clear-filters';
 export { activeFilterCounts, FILTER_SECTIONS, type FilterSection } from './explore/active-filter-counts';

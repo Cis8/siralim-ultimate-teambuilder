@@ -1,11 +1,11 @@
 import { CREATURE_CLASSES } from '../enrichment/trait-kind';
-import type { ClassName, KeywordActor, KeywordKey, KeywordKind } from '../model/trait';
+import { KEYWORD_ACTORS, type ClassName, type KeywordActor, type KeywordKey, type KeywordKind } from '../model/trait';
 import type { IndexedTrait } from '../query/indexed-trait';
-import { writeKeywordReference } from '../query/keyword-reference';
 import type { TraitIndex } from '../query/trait-index';
 import type { EventGroup } from '../taxonomy/entry';
 import type { Taxonomy } from '../taxonomy/registry';
 import { compareTextIgnoringCase } from '../text/compare-text';
+import { actorSet, actorSetKey, type ActorSet } from './actor-set';
 
 /** The kinds of keyword that have a facet, in the order the panel shows them. The flag is a checkbox of its own. */
 export const FACET_KEYWORD_KINDS = [
@@ -39,11 +39,12 @@ export interface KeywordFacet {
   /** Traits that mention it in any role, a mention that only guards against it included (what `kw:` finds). */
   readonly mentions: number;
   /**
-   * Events only: `applies` and `uses` again, for the traits whose text names each actor (what `applies:attack/self` finds).
-   * A trait that names two actors is in both, and a mention that names none is in none: the sum can be short of the count
-   * by anyone, and a trait that names several can make it exceed it.
+   * Events only: `applies` and `uses` again, for the traits whose text names some actors, for every combination of them
+   * (`self`, `self+enemy`, …: the key is `actorSetKey`; `facetCount` reads it). A trait counts once when it names at least
+   * one of the actors, which is what the filters of those actors on a side find together (`applies:attack/self` or
+   * `applies:attack/enemy`). A mention that names none is in none: the counts can be short of the count by anyone.
    */
-  readonly byActor?: Readonly<Record<KeywordActor, SideCounts>>;
+  readonly byActors?: Readonly<Record<string, SideCounts>>;
 }
 
 /** The two sides of a keyword that a filter has (`applies:` and `uses:`). */
@@ -51,15 +52,15 @@ export type KeywordSide = 'applies' | 'uses';
 export type SideCounts = Readonly<Record<KeywordSide, number>>;
 
 /**
- * The number the panel shows on a side of a keyword: the traits that have it, whoever acts, or the traits whose text names
- * `actor`. A keyword with no actors (a buff) has none to name, so 0.
+ * The number the panel shows on a side of a keyword: the traits that have it, whoever acts, or the traits whose text names at
+ * least one of `actors`. A keyword with no actors (a buff) has none to name, so 0.
  */
 export function facetCount(
-  facet: Pick<KeywordFacet, KeywordSide | 'byActor'>,
+  facet: Pick<KeywordFacet, KeywordSide | 'byActors'>,
   side: KeywordSide,
-  actor?: KeywordActor,
+  actors: ActorSet = [],
 ): number {
-  return actor === undefined ? facet[side] : (facet.byActor?.[actor][side] ?? 0);
+  return actors.length === 0 ? facet[side] : (facet.byActors?.[actorSetKey(actors)]?.[side] ?? 0);
 }
 
 export interface Facets {
@@ -129,8 +130,8 @@ export function countFacets(
   const applies = tally(found, (trait) => trait.applies);
   const uses = tally(found, (trait) => trait.uses);
   const mentions = tally(found, (trait) => trait.keywords);
-  const actedApplies = tally(found, (trait) => trait.acted.applies.map(writeKeywordReference));
-  const actedUses = tally(found, (trait) => trait.acted.uses.map(writeKeywordReference));
+  const actedApplies = actorHistograms(found, 'applies');
+  const actedUses = actorHistograms(found, 'uses');
   return {
     classes: vocabulary.classes.map(({ name, standard }) => ({
       name,
@@ -144,19 +145,59 @@ export function countFacets(
       mentions: mentions.get(keyword.key) ?? 0,
       ...(keyword.kind === 'event'
         ? {
-            byActor: perActor((actor) => {
-              const written = writeKeywordReference({ key: keyword.key, actor });
-              return { applies: actedApplies.get(written) ?? 0, uses: actedUses.get(written) ?? 0 };
-            }),
+            byActors: Object.fromEntries(
+              ACTOR_SETS.map(({ key, bits }) => [
+                key,
+                {
+                  applies: traitsNaming(actedApplies.get(keyword.key), bits),
+                  uses: traitsNaming(actedUses.get(keyword.key), bits),
+                },
+              ]),
+            ),
           }
         : {}),
     })),
   };
 }
 
-/** One value for each actor. Spelled out so that a new actor is a type error here and not a count that is missing. */
-function perActor<T>(valueOf: (actor: KeywordActor) => T): Record<KeywordActor, T> {
-  return { self: valueOf('self'), ally: valueOf('ally'), enemy: valueOf('enemy'), any: valueOf('any') };
+/** An actor as a bit, in the order of the rules: a set of actors is the bits of its members. */
+const bitOf = (actor: KeywordActor): number => 1 << KEYWORD_ACTORS.indexOf(actor);
+
+/**
+ * Every combination of actors but none, which is the count by anyone, with its key and its bits, worked out once. A new actor
+ * doubles them.
+ */
+const ACTOR_SETS = Array.from({ length: 2 ** KEYWORD_ACTORS.length - 1 }, (_, at) => {
+  const bits = at + 1;
+  return { key: actorSetKey(actorSet(KEYWORD_ACTORS.filter((actor) => (bits & bitOf(actor)) !== 0))), bits };
+});
+
+/**
+ * For each event, how many of the traits name exactly each combination of actors on a side: the position in the list is the
+ * bits of the combination (`bitOf`). A trait names an event as often as its text does, and counts once, for the actors of
+ * all its mentions together.
+ */
+function actorHistograms(traits: readonly IndexedTrait[], side: KeywordSide): Map<KeywordKey, number[]> {
+  const histograms = new Map<KeywordKey, number[]>();
+  for (const { acted } of traits) {
+    const named = new Map<KeywordKey, number>();
+    for (const { key, actor } of acted[side]) named.set(key, (named.get(key) ?? 0) | bitOf(actor));
+    for (const [key, bits] of named) {
+      const histogram = histograms.get(key) ?? Array.from({ length: 2 ** KEYWORD_ACTORS.length }, () => 0);
+      histogram[bits] = (histogram[bits] ?? 0) + 1;
+      histograms.set(key, histogram);
+    }
+  }
+  return histograms;
+}
+
+/** The traits of a histogram that name at least one of the actors, given as bits. */
+function traitsNaming(histogram: readonly number[] | undefined, wanted: number): number {
+  let sum = 0;
+  histogram?.forEach((traits, bits) => {
+    if ((bits & wanted) !== 0) sum += traits;
+  });
+  return sum;
 }
 
 /** How many traits list each name. A trait lists a name once. */

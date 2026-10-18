@@ -70,8 +70,11 @@ the token colours are only guaranteed on the page background.
   after it (`KeywordRow`). Kind headings (Debuffs, Buffs, Effects, Events, Mechanics) take the kind colour and always say it in
   words.
 - **Events** (`EventFacets`, the body of that section): first the **Who** control, a caption "Who acts" over a `Segmented` of four
-  buttons in two columns (Any, This creature, Your creatures, Enemies; it is a `group` named "Who acts" and the choice made is
-  `aria-pressed`, none while the filters on name several actors), then five groups under small headings in `--text-faint`, 11 px
+  buttons in two columns (Any, This creature, Your creatures, Enemies; it is a `group` named "Who acts"). Each button is a toggle
+  (`aria-pressed`): the three actors go on and off on their own and may be on together, *Any* is pressed while none of them is
+  (pressing it turns them off), and none is pressed while the filters on name different actors. The chip row shows the
+  actors of one event side side by side (`uses:attack/self` `uses:attack/enemy`) and the effective query reads them as an OR.
+  Then five groups under small headings in `--text-faint`, 11 px
   (`h5`: Battle and turns, Actions, Hits, Life and death, Buffs and debuffs). Each event is a row like a buff's, with its two sides
   *Causes* and *Reacts* in columns 76 px wide. The caption and the headings are plain text, so a keyboard meets only the Who
   buttons and the sides, and the section is open to begin with like the others (nothing moves on load).

@@ -12,11 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.10 done; 8b.11 (*Who acts* takes several choices) is next, before 8.4.** 8b.11 is
-  only listed and its open questions are in its entry: its plan comes first (core tests, then the web). 8b.10 reversed a
-  decision of 8b.6, so that "immune to debuffs" is now a mention (SPEC §4): tell the owner, who may veto it. 8.4 (credits: ask
-  the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) comes after 8b.11 and
-  closes Phase 1: ask the owner before starting Phase 2.
+- **Phase 1 · M8: 8.1–8.3 done. M8b is closed (8b.1–8b.11); 8.4 is next** (credits: ask the owner to confirm the authors' names
+  first; README; the criteria-to-tests table; ROADMAP ticks) and closes Phase 1: ask the owner before starting Phase 2.
+  For the owner to veto, none blocking: 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 (*Who acts* with several
+  choices) chose that *Any* is pressed exactly when no actor is (pressing it clears the actors, and does nothing when pressed
+  already), that the actors of one event side are alternatives (an OR, also in Match all), and that each actor is a chip.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -110,6 +110,8 @@ session (after `CLAUDE.md`), update it before ending one.
   read by `typing-latency.test.ts` under a 4× CPU): p95 4.3 ms, so no inverted index. The whole keystroke is dearer: median
   7 ms, p95 35–45 ms at 4×, on the keys that swap the list (profile: Svelte creating ~10 rows, and the layout that
   `measureElement` forces by reading `offsetHeight`). If that ever needs to come down, it is the cost of a row, not the search.
+  `countFacets` runs inside every timed search: working out the keys of the 15 actor sets on each call cost +15% on `pnpm bench`'s
+  typing run (and failed the 16 ms e2e once under load), so they are built once at load. Compare `pnpm bench` before and after.
 - Lighthouse (`pnpm lighthouse`, phone profile, simulated slow 4G): serves `apps/web/build` from the root with gzip, so the
   build must not have a `BASE_PATH`; Chromium comes from Playwright (`playwright install chromium`). What is left to gain:
   the LCP (3.0 s, score 0.77) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and 0.035 of
@@ -220,10 +222,10 @@ Inline, DESIGN § Accessibility); a bordered control is 44 px *inside* its borde
       ring (its role outline outranked the page's ring), the sheet opened with the focus on an unnamed scrolled `div` in Chrome
       (now its title), and the filters took 124 presses of Tab to pass (new "Skip filters" link, from 700 px).
 - [ ] **8.4** Final credits (authors confirmed with the owner), README, docs, table mapping acceptance criteria to tests.
-      Starts only when M8b is done (8b.10 and 8b.11 are open).
+      Starts now that M8b is done.
 
-### M8b The owner's notes (before 8.4)
-Phase 1 refinements from the owner's play-testing notes (2026-10-17). Decisions: the "…" shows only where the target slot refuses
+### M8b The owner's notes — done
+Phase 1 refinements from the owner's play-testing notes (2026-10-17/18). Decisions: the "…" shows only where the target slot refuses
 the trait, in place of the disabled add; the five standard classes come first in the filters; back-to-top sits top right.
 Defaults chosen, change on request: filter sections open by default and remembered only while the page lives (not in the
 address, not in `localStorage`); "Clear filters" keeps the query, sort and Match all/any (settings, not filters); input font
@@ -237,42 +239,24 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
   (`allowedSlots`, `addTraitAt`); the rule's sentence stays under the card (criterion 5).
 - *Events (8b.5–8b.8; GAME_RULES R12, ADR-0009).* A census and a sweep of all 1,780 traits by 24 Haiku agents (about 3.3M tokens, not
   the 0.4M estimated) turned the triggers into 18 events plus the mechanics Spells and Stats, each mention with a role and an
-  actor (`readEvent`, `findTurns`, `isStatSense`; 22 overrides). The extractor agrees with the sweep on role in 91–100% of the
-  mentions both found and recalls 84–100% per event, but 53% and 45% for the two buff events (69% and 73% after 8b.10). The keyword fields take an actor
-  after a slash (`uses:attack/self`); the 11 old trigger phrases are aliases, so old links keep finding at least what they found
-  (`triggers-before-events-v2.0.txt`). The filters have an Events section (five groups, *Causes* / *Reacts*, one *Who* control
-  that narrows every event filter, `narrowEventFilters`); the event token leads to the counterpart of its role (the start of
-  battle is the exception: nobody causes it).
+  actor (`readEvent`, `findTurns`, `isStatSense`; 22 overrides). The keyword fields take an actor after a slash
+  (`uses:attack/self`); the 11 old trigger phrases are aliases, so old links keep finding at least what they found
+  (`triggers-before-events-v2.0.txt`). The filters have an Events section (five groups, *Causes* / *Reacts*, one *Who* control,
+  `setEventActors`); the event token leads to the counterpart of its role (the start of battle is the exception: nobody causes it).
 - *Report (8b.9).* An *Events* section (`findEventCandidates`): the sentences that open with After, When, If, While … and the
   phrases around an event word that no keyword covers, as forms (numbers `#`, families `<family>`), one trait is enough;
-  `REVIEWED_EVENT_FORMS` holds those looked at, and `real-sheet.test.ts` fails on any form neither covered nor reviewed. v2.0 had
-  63 conditions and 13 phrases: 14 are events R12 names that the patterns did not read (8b.10 reads them), the rest
-  are states, party conditions, damage as an amount, and dealing damage, gaining stats and a status ending, which R12 leaves
-  out of its 18 events. `isStatSense` is exported from `core` for it.
-
-Slices added on 2026-10-18 after 8b.9:
-- [x] **8b.10** Events: the patterns read the buff and debuff forms that 8b.9 listed as "events the patterns do not read", and
-      the ones the sweep of 8b.5 found beside them. Planned on 2026-10-18 from all 282 uses of the words buff / debuff in the
-      dataset (103 read before), done the same day. *What is an event here* (SPEC §4): a creature gets a buff or debuff that no
-      name gives ("afflicts X with a debuff", "apply / receive a debuff", "gains 5 random buffs", "grants X 1 random buff", "buff
-      an enemy") and the protection from all of them ("resistant / immune to debuffs", "avoid debuffs", "cannot gain additional
-      buffs": `resists`); the actor is who gets it. Not events: a buff or debuff the text names or has just named, how long they
-      last, copying, sharing, stealing or removing them, a count as a state. Shipped: a `#` in a pattern for a number (the
-      registry refuses a digit); 44 patterns; in `readEvent` a phrase that opens with a protective cue is `resists` (and says
-      nothing of what follows) and a phrase that ends with who gets it names them; 5 overrides (Pain Redefined, Katarina's
-      Guidance, Master of Lepers ×2, Righteous Concession); +54 mentions on v2.0 (any buff 50 → 64, any debuff 52 → 90), all
-      read; the 14 forms and "enemies can only gain # buff per turn" are out of `REVIEWED_EVENT_FORMS`. Recall against the sweep
-      53% → 69% (any buff), 45% → 73% (any debuff). **Reverses a decision of 8b.6** ("immune to debuffs" is not a mention, no
-      reason written; 8b.5 had left it to decide): the owner may veto it, and then the 7 protective patterns and the cue rule go.
-      Left unread on purpose: transfers ("gives them its debuffs", "a copy of their debuffs", "up to 3 of its debuffs"),
-      "gain a buff or debuff" as a debuff, "they debuff them instead" (a pronoun for the object).
-- [ ] **8b.11** Filters: *Who acts* takes several choices at once. The owner's note (2026-10-18): today the control is a
-      `Segmented` of one choice (Any, This creature, Your creatures, Enemies); it should let the player turn several on, each
-      button a toggle that goes on and off on repeated taps. Recorded in SPEC §8.1. Questions for the slice to settle before it
-      codes: what a selection of several means for the filters (the same event by two actors is already two items in the
-      address; Match all would have them both, which is surely not meant, so they must be one *or*); how *Any* sits beside the
-      others (a choice of its own, or "none pressed"); what `eventActors` and `narrowEventFilters` (one actor today) become;
-      the counts of the buttons (`facetCount`, `KeywordFacet.byActor`) with several actors; the address and the chips; `Segmented`
-      (it has one value) or a group of toggle buttons. Touches `core` (`event-actors`, `toggleKeywordSide`, `filterQuery`, the
-      query if it needs an actor list), the web (`event-who`, `EventFacets`), SPEC §8.1, QUERY_LANGUAGE §2 if the language
-      changes, DESIGN, SCREEN_READER_CHECKLIST 17, `e2e/events.test.ts`. A plan with tests first for `core`, then the web.
+  `REVIEWED_EVENT_FORMS` holds those looked at, and `real-sheet.test.ts` fails on any form neither covered nor reviewed.
+- *Buff and debuff events (8b.10).* A buff or debuff that no name gives ("afflicts X with a debuff", "gains 5 random buffs", "buff an
+  enemy") is an event, and so is the protection from all of them ("resistant / immune to debuffs": `resists`); the actor is who
+  gets it (SPEC §4). A `#` in a pattern stands for a number; 44 patterns, 5 overrides, +54 mentions on v2.0, all read. Recall
+  against the sweep 53% → 69% (any buff), 45% → 73% (any debuff). **Reversed a decision of 8b.6** ("immune to debuffs" is a
+  mention): the owner may veto it, and then the 7 protective patterns and the cue rule in `readEvent` go. Left unread on
+  purpose: transfers ("gives them its debuffs"), "gain a buff or debuff" as a debuff, "they debuff them instead".
+- *Who acts with several choices (8b.11).* The control is a toggle for each actor. A `KeywordFilter` still has one actor, so
+  several actors are several filters; the filters of one side (same field and key) are alternatives (`keywordSides`: an OR in
+  the effective query in both modes, the chips kept together), which changes a hand-written `u:attack/self,u:attack/enemy` in
+  Match all from an AND to an OR (the panel never made that AND). `ActorSet` (canonical order) is what `eventActors` (one set
+  per side, none when a filter names nobody), `toggleActor`, `setEventActors` (a filter that is right stays where it
+  stands) and `toggleKeywordSide` speak; `KeywordFacet.byActors` has the count for every combination of actors (15, each trait
+  once: the sum of the counts of two actors would count twice a trait that names both), read by `facetCount`. `Segmented`
+  takes `pressed`, a list. The acceptance test on the real sheet checks every combination against an independent count.

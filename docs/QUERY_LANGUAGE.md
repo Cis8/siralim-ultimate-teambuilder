@@ -81,6 +81,8 @@ and unique across the registry; the field name in a query is matched whatever it
   - A word after the slash that is no actor stays in the key and finds nothing (`provoke/nobody`). A slash with nothing after
     it asks for no actor yet, as the query is typed: `provoke/` is `provoke`, `/` is an empty value, and `/self` is every event
     that creature takes part in.
+  - There is one actor to a term. Several actors are an OR of terms: `(uses:attack/self OR uses:attack/enemy)` is what the facet
+    panel's *Who* control writes when two actors are on (SPEC §8.1), and the effective query line shows it.
 - **Old trigger phrases** (the eleven of the first version, ADR-0009) are the whole value of a keyword field: `kw:"is killed"` is
   `kw:death` and `kw:"after this creature attacks"` is `kw:attack/self`. They are aliases of the taxonomy, read whole and alone:
   `kw:after` finds nothing, and an actor after one (`strike/enemy`) makes it the start of a key nobody has. A link or a saved

@@ -27,6 +27,7 @@
     SORT_KEYS,
     traitAt,
     undoEdit,
+    type ActorSet,
     type ClickedKeyword,
     type ExploreState,
     type FilterSection,
@@ -52,7 +53,6 @@
   import { showsBackToTop } from '../lib/back-to-top';
   import { loadSearchService } from '../lib/composition-root';
   import { copy } from '../lib/copy';
-  import type { WhoChoice } from '../lib/event-who';
   import type { KeywordActions } from '../lib/keyword-actions';
   import { createLastPartyStore } from '../lib/last-party-store';
   import { pageAddress } from '../lib/page-address';
@@ -88,11 +88,11 @@
   let shutSections = $state.raw<readonly FilterSection[]>([]);
 
   /**
-   * The last choice of the "Who" control of the Events section. While an event filter is on, the control shows who the filters
-   * name; with none on it shows this, and the next event filter turned on is made for it. It lives as long as the page, like the
-   * sections, and is no part of the address: the filters carry the actor themselves.
+   * The actors last chosen with the "Who" control of the Events section (none: the event whoever acts). While an event filter
+   * is on, the control shows who the filters name; with none on it shows this, and the next event filter turned on is made for
+   * it. It lives as long as the page, like the sections, and is no part of the address: the filters carry the actors themselves.
    */
-  let eventChoice = $state<WhoChoice>('anyone');
+  let eventActorsChosen = $state.raw<ActorSet>([]);
 
   function toggleSection(section: FilterSection): void {
     shutSections = shutSections.includes(section)
@@ -494,11 +494,11 @@
             facets={loaded.outcome.facets}
             {explore}
             shut={shutSections}
-            who={eventChoice}
+            who={eventActorsChosen}
             onchange={exploreChanged}
             ontoggle={toggleSection}
-            onwho={(choice: WhoChoice) => {
-              eventChoice = choice;
+            onwho={(actors: ActorSet) => {
+              eventActorsChosen = actors;
             }}
           />
         {:else if !failed}

@@ -136,7 +136,7 @@ export const copy = {
     life: 'Life and death',
     buffs: 'Buffs and debuffs',
   } as const satisfies Record<EventGroup, string>,
-  /** The control that narrows the event filters to who acts, and its four choices. */
+  /** The control that sets who acts in the event filters (a toggle for each actor and "Any"), and its four choices. */
   whoLabel: 'Who acts',
   whoChoices: {
     anyone: 'Any',
