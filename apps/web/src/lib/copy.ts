@@ -11,6 +11,7 @@ import type {
   TraitKind,
 } from '@atlas/core';
 import type { PageTab } from './page-tab';
+import type { SlotChoice } from './slot-choices';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
@@ -157,9 +158,32 @@ export const copy = {
   addTo: (at: SlotPosition) => `Add to ${slotLabel(at)}`,
   /** The name of that button, which says the trait too (a phone shows no words on it, and a list of them must tell them apart). */
   addToTrait: (at: SlotPosition, name: string) => `Add to ${slotLabel(at)} — ${name}`,
+  /**
+   * The "add" button of a trait the target slot refuses but another slot of the creature takes: it opens the choice of slot
+   * (the sentence under the card says why the target will not do). A phone draws dots, so its name carries the words.
+   */
+  addToElsewhere: 'Add to…',
+  addToElsewhereTrait: (name: string) => `Add to… — ${name}`,
+  /** The sheet that opens: the creature is the target's, and the slots listed are its own. */
+  chooseSlotTitle: (name: string, member: MemberIndex) => `Add ${name} to ${creatureLabel(member)}`,
+  /** One slot of that sheet: what pressing it does, and what is in the slot now (it would be replaced). */
+  slotChoice: ({ position, holds }: SlotChoice) => {
+    const slot = slotNames[position.slot];
+    switch (holds.kind) {
+      case 'empty':
+        return `Add to ${slot} (empty)`;
+      case 'other':
+        return `Replace ${holds.name} in ${slot}`;
+      case 'this':
+        return `Already in ${slot}`;
+    }
+  },
+  cancel: 'Cancel',
   inParty: (places: readonly string[]) => `In party: ${places.join(', ')}`,
   partyAnnouncements: {
-    added: (name: string, at: SlotPosition) => `Added ${name} to ${slotLabel(at)}.`,
+    /** `replaced` is the name of the trait the slot held, when it held one: every add says it. */
+    added: (name: string, at: SlotPosition, replaced?: string) =>
+      `Added ${name} to ${slotLabel(at)}${replaced === undefined ? '' : `, replacing ${replaced}`}.`,
     undid: (edit: string) => `Undid: ${edit}.`,
     redid: (edit: string) => `Redid: ${edit}.`,
   },

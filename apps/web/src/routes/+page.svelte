@@ -6,6 +6,8 @@
   import { MediaQuery } from 'svelte/reactivity';
   import {
     addTrait,
+    addTraitAt,
+    allowedSlots,
     chooseTarget,
     clearParty,
     clearSlot,
@@ -45,6 +47,7 @@
   import QueryInput from '../lib/components/query-input.svelte';
   import ResultCount from '../lib/components/result-count.svelte';
   import ResultsList from '../lib/components/results-list.svelte';
+  import SlotChooser from '../lib/components/slot-chooser.svelte';
   import TabBar from '../lib/components/tab-bar.svelte';
   import { showsBackToTop } from '../lib/back-to-top';
   import { loadSearchService } from '../lib/composition-root';
@@ -57,6 +60,7 @@
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
   import { createPageUrlWriter } from '../lib/page-url-writer';
   import type { PartyActions } from '../lib/party-actions';
+  import { slotChoices } from '../lib/slot-choices';
   import { undoShortcut } from '../lib/undo-shortcut';
   import { trackViewportOffset } from '../lib/viewport-offset';
 
@@ -257,6 +261,10 @@
     remember();
   }
 
+  /** What the player is told a slot held before a trait took its place: its name, or its id when the dataset has no such trait. */
+  const nameOfReplaced = (id: TraitId | null): string | undefined =>
+    id === null ? undefined : (service?.trait(id)?.name ?? id);
+
   function addToParty(trait: Trait): void {
     const placedAt = planner.target;
     const result = addTrait(planner, trait);
@@ -264,7 +272,44 @@
       partyMessage = result.reason;
       return;
     }
-    if (result.planner !== planner) edited(result.planner, copy.partyAnnouncements.added(trait.name, placedAt));
+    if (result.planner !== planner) {
+      edited(result.planner, copy.partyAnnouncements.added(trait.name, placedAt, nameOfReplaced(result.replaced)));
+    }
+  }
+
+  /** The trait whose slot is being chosen, while the sheet is open, and the button that opened it (the focus goes back to it). */
+  let choosing = $state.raw<Trait>();
+  let chooserOpener: HTMLElement | undefined;
+
+  function openSlotChooser(trait: Trait, opener: HTMLElement): void {
+    chooserOpener = opener;
+    choosing = trait;
+  }
+
+  /** The sheet is shut, however: the focus goes back to the button that opened it, if its row is still on the page. */
+  function chooserClosed(): void {
+    choosing = undefined;
+    if (chooserOpener?.isConnected === true) chooserOpener.focus();
+    chooserOpener = undefined;
+  }
+
+  /**
+   * The trait goes in the slot that was chosen, and the target stays where it was. The sheet is shut first and the player told
+   * after: while it is open the page behind it, the live region with it, is inert and would not be heard.
+   */
+  async function addToChosenSlot(position: SlotPosition): Promise<void> {
+    const trait = choosing;
+    if (trait === undefined) return;
+    choosing = undefined;
+    await tick();
+    const result = addTraitAt(planner, trait, position);
+    if (!result.ok) {
+      partyMessage = result.reason;
+      return;
+    }
+    if (result.planner !== planner) {
+      edited(result.planner, copy.partyAnnouncements.added(trait.name, position, nameOfReplaced(result.replaced)));
+    }
   }
 
   function clearPartySlot(at: SlotPosition): void {
@@ -327,17 +372,27 @@
 
   const lookup: TraitLookup = (id) => service?.trait(id);
 
+  /** Why the rules refuse `trait` in the target slot, or `null`. */
+  function refusalOf(trait: Trait): string | null {
+    const placement = slotRules.canPlace(trait, planner.target.slot);
+    return placement.ok ? null : placement.reason;
+  }
+
   const partyActions: PartyActions = {
     get target() {
       return planner.target;
     },
-    refusal: (trait) => {
-      const placement = slotRules.canPlace(trait, planner.target.slot);
-      return placement.ok ? null : placement.reason;
-    },
+    refusal: refusalOf,
     add: addToParty,
+    canChooseSlot: (trait) => allowedSlots(trait).length > 0,
+    chooseSlot: openSlotChooser,
     placesOf: (trait) => SLOT_POSITIONS.filter((at) => traitAt(planner.history.party, at) === trait.id),
   };
+
+  /** The slots the sheet offers: those of the target's creature that take the trait, and what each holds now. */
+  const choices = $derived(
+    choosing === undefined ? [] : slotChoices(planner.history.party, planner.target.member, choosing, lookup),
+  );
 
   /** What the page shows once the data is loaded: the search of the current state, and the dataset it ran on. */
   const loaded = $derived(
@@ -506,6 +561,16 @@
 {#if exploreOnScreen && scrolledAway}
   <BackToTop onpress={backToTop} />
 {/if}
+
+<!-- On the page and not in a row: the rows are virtualised, and a row can be gone while the sheet is open. -->
+<SlotChooser
+  trait={choosing}
+  member={planner.target.member}
+  reason={choosing === undefined ? '' : (refusalOf(choosing) ?? '')}
+  {choices}
+  onchoose={addToChosenSlot}
+  onclose={chooserClosed}
+/>
 
 {#if tabbed.current}
   <TabBar selected={tab} partyFilled={filledSlots(planner.history.party)} onselect={selectTab} />

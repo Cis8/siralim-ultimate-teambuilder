@@ -24,12 +24,14 @@ async function openFromKeyboard(page: Page): Promise<void> {
   await expect(filtersSheet(page)).toBeVisible();
 }
 
-/** Whether the focus is on the page behind the sheet: in the sheet, or out of the page (the browser's own controls), it is not. */
+/**
+ * Whether the focus is on the page behind the sheet: in the sheet, or out of the page (the browser's own controls), it is not.
+ * The sheet is the filters', found by its name: the page has another one, for the choice of a slot.
+ */
 const focusOnPageBehind = (page: Page): Promise<boolean> =>
-  page.evaluate(() => {
+  filtersSheet(page).evaluate((sheet) => {
     const focused = document.activeElement;
-    const sheet = document.querySelector('dialog');
-    return focused !== null && focused !== document.body && sheet !== null && !sheet.contains(focused);
+    return focused !== null && focused !== document.body && !sheet.contains(focused);
   });
 
 test.describe('the filters sheet', () => {
@@ -197,7 +199,7 @@ test.describe('the filters sheet', () => {
 
       await expect(page.getByRole('region', { name: 'Filters' })).toBeVisible();
       await expect(filtersButton(page)).toHaveCount(0);
-      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(filtersSheet(page)).toHaveCount(0);
     });
   });
 });

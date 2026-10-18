@@ -247,7 +247,7 @@ test.describe('the tabs', () => {
       // The fifth row is below the fold: its button is the one a person has scrolled to and left near the foot.
       const add = results(page)
         .locator('li[aria-posinset="5"]')
-        .getByRole('button', { name: /^Add to / });
+        .getByRole('button', { name: /^Add to[ …]/ });
       const underABar = () =>
         add.evaluate((button) => {
           const box = button.getBoundingClientRect();

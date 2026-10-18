@@ -18,7 +18,18 @@ import {
   searchBox,
 } from './support/explore-page';
 import { problemsOf, tabTo, walkTabOrder, type TabWalk } from './support/keyboard';
-import { addButton, partyPanel, plainTraits, slot, tab, toolbarButton, withUniqueName } from './support/party-page';
+import {
+  addButton,
+  addElsewhereButton,
+  findRow,
+  partyPanel,
+  plainTraits,
+  slot,
+  slotChooser,
+  tab,
+  toolbarButton,
+  withUniqueName,
+} from './support/party-page';
 
 // Criterion 8: with the keyboard alone every action is reachable and the focus can be seen (DESIGN § Accessibility). The walks
 // press Tab through a page the way a person does, and stop at every control; the flows do what a person does with the keys.
@@ -113,12 +124,34 @@ test.describe('the tab key', () => {
     await page.keyboard.press('Enter');
     await expect(filtersSheet(page)).toBeVisible();
 
-    const walk = await walkTabOrder(page, { within: 'dialog' });
+    const walk = await walkTabOrder(page, { within: 'dialog[open]' });
 
     expect(walk.stops.length).toBeGreaterThan(10);
     expect(problemsOf(walk)).toEqual([]);
     expect(missed(walk, browserName)).toEqual([]);
     expect(await axeViolations(page)).toEqual([]);
+  });
+
+  test('reaches every slot of the sheet that offers them, and none of the page behind it', async ({
+    page,
+    request,
+    browserName,
+  }) => {
+    const { traits } = await publishedDataset(request);
+    const mastery = withUniqueName(traits).find((trait) => trait.kind === 'mastery' && trait.material !== null);
+    if (mastery === undefined) throw new Error('the dataset has no mastery trait with a material');
+    await openExplore(page);
+    const add = addElsewhereButton(await findRow(page, mastery));
+    await add.focus();
+    await page.keyboard.press('Enter');
+    await expect(slotChooser(page)).toBeVisible();
+
+    const walk = await walkTabOrder(page, { within: 'dialog[open]' });
+
+    // The slot it offers (a mastery fits the Artifact slot only) and Cancel.
+    expect(walk.stops.length).toBeGreaterThanOrEqual(2);
+    expect(problemsOf(walk)).toEqual([]);
+    expect(missed(walk, browserName)).toEqual([]);
   });
 });
 

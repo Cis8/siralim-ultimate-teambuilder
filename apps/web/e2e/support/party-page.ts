@@ -61,7 +61,18 @@ export async function findRow(page: Page, trait: Trait): Promise<Locator> {
   return row.first();
 }
 
-export const addButton = (row: Locator): Locator => row.getByRole('button', { name: /^Add to / });
+/** The "add" button of a row: "Add to Creature 1 · Innate — …", or "Add to… — …" when the target slot refuses the trait. */
+export const addButton = (row: Locator): Locator => row.getByRole('button', { name: /^Add to[ …]/ });
+
+/** The "add" button of a trait the target slot refuses but another slot of the creature takes: it opens the choice of slot. */
+export const addElsewhereButton = (row: Locator): Locator => row.getByRole('button', { name: /^Add to… — / });
+
+/** The sheet that lists the slots of the target's creature for such a trait. It is on the page, not in the row. */
+export const slotChooser = (page: Page): Locator => page.getByRole('dialog', { name: /^Add .+ to Creature \d$/ });
+
+/** One slot of that sheet, by what it says ("Add to Artifact (empty)", "Replace Flesh Rot in Artifact"). */
+export const slotChoice = (page: Page, name: string): Locator =>
+  slotChooser(page).getByRole('button', { name, exact: true });
 
 /** Finds the trait and presses its "add" button. */
 export async function addToParty(page: Page, trait: Trait): Promise<void> {

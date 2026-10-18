@@ -16,13 +16,18 @@
   const parts = $derived(descriptionParts(trait.description, trait.keywords, highlight(trait.description)));
 
   /**
-   * Why the trait cannot go in the target slot, or `null`. The button stays in the tab order with `aria-disabled` and the
-   * reason is on the page and tied to it, so that a keyboard or screen reader user learns why too (SPEC §8.2).
+   * Why the trait cannot go in the target slot, or `null`. The reason is on the page and tied to the button, so that a keyboard
+   * or screen reader user learns why too (SPEC §8.2).
    */
   const refusal = $derived(party.refusal(trait));
+  /**
+   * A trait the target refuses but another slot of the creature takes: the button stays active, opens the choice of slot, and
+   * says so ("Add to…"). With no slot to offer it stays in the tab order with `aria-disabled`, and a press only says why.
+   */
+  const chooses = $derived(refusal !== null && party.canChooseSlot(trait));
   const places = $derived(party.placesOf(trait));
   const reasonId = $derived(`add-reason-${trait.id}`);
-  const addName = $derived(copy.addToTrait(party.target, trait.name));
+  const addName = $derived(chooses ? copy.addToElsewhereTrait(trait.name) : copy.addToTrait(party.target, trait.name));
 </script>
 
 <!--
@@ -46,18 +51,27 @@
     <button
       type="button"
       class="add"
+      class:chooses
       aria-label={addName}
       title={addName}
-      aria-disabled={refusal === null ? undefined : 'true'}
+      aria-haspopup={chooses ? 'dialog' : undefined}
+      aria-disabled={refusal === null || chooses ? undefined : 'true'}
       aria-describedby={refusal === null ? undefined : reasonId}
-      onclick={() => {
-        party.add(trait);
+      onclick={(event) => {
+        if (chooses) party.chooseSlot(trait, event.currentTarget);
+        else party.add(trait);
       }}
     >
-      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+      <svg class="plus" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
         <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
       </svg>
-      <span class="label">{copy.addTo(party.target)}</span>
+      <!-- A phone draws no words: dots stand for "somewhere else" where the plus would say "here". -->
+      <svg class="dots" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+        <circle cx="5" cy="12" r="2.2" fill="currentColor" />
+        <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+        <circle cx="19" cy="12" r="2.2" fill="currentColor" />
+      </svg>
+      <span class="label">{chooses ? copy.addToElsewhere : copy.addTo(party.target)}</span>
     </button>
     {#if refusal !== null || places.length > 0}
       <div class="notes">
@@ -214,6 +228,10 @@
     background: var(--surface-3);
   }
 
+  .dots {
+    display: none;
+  }
+
   .add[aria-disabled='true'] {
     border-color: var(--border-strong);
     background: var(--surface-2);
@@ -274,6 +292,14 @@
     .add svg {
       width: 18px;
       height: 18px;
+    }
+
+    .chooses .plus {
+      display: none;
+    }
+
+    .chooses .dots {
+      display: block;
     }
 
     .label {

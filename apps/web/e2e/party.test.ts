@@ -5,6 +5,7 @@ import { publishedDataset } from './support/dataset';
 import { openExplore, results, searchBox } from './support/explore-page';
 import {
   addButton,
+  addElsewhereButton,
   addToParty,
   clearButton,
   findRow,
@@ -14,6 +15,8 @@ import {
   showExplore,
   showParty,
   slot,
+  slotChoice,
+  slotChooser,
   toolbarButton,
   withUniqueName,
 } from './support/party-page';
@@ -84,7 +87,11 @@ test.describe('the party planner', () => {
   });
 
   test.describe('a trait that cannot go in the target slot (acceptance criterion 5)', () => {
-    test('is not added to the Artifact slot without a material, and the button says why', async ({ page, request }) => {
+    // The target slot refuses it, and the card says why; the button opens the slots of the creature that do take it.
+    test('is not added to the Artifact slot without a material: the card says why, and offers the other slots', async ({
+      page,
+      request,
+    }) => {
       const { traits } = await publishedDataset(request);
       const noMaterial = withUniqueName(traits).find((trait) => isCreature(trait) && trait.material === null);
       if (noMaterial === undefined) throw new Error('the dataset has no creature trait without a material');
@@ -93,25 +100,115 @@ test.describe('the party planner', () => {
       await slot(page, 'Creature 1 · Artifact').click();
 
       const row = await findRow(page, noMaterial);
-      const add = addButton(row);
+      const add = addElsewhereButton(row);
 
-      await expect(add).toHaveAttribute('aria-disabled', 'true');
       const reason = 'This trait has no material, so it cannot go in the Artifact slot.';
       await expect(row.getByText(reason)).toBeVisible();
       await expect(add).toHaveAccessibleDescription(reason);
+      await expect(add).not.toHaveAttribute('aria-disabled', 'true');
+      await expect(add).toHaveAttribute('aria-haspopup', 'dialog');
+      await expect(add).toHaveText('Add to…');
 
-      // Playwright will not click what `aria-disabled` says is disabled; a person can, and nothing happens but the reason.
-      // The button is brought to the middle of the window first, as a person scrolls to it: a click that is forced is made at
-      // the spot where the button is, and at the foot of a narrow screen that is under the bars.
-      await add.evaluate((button) => {
-        button.scrollIntoView({ block: 'center' });
-      });
-      await add.click({ force: true });
-      // The reason is told with the party out of sight, too.
-      await expect(partyAnnouncement(page)).toHaveText(reason);
+      await add.click();
+
+      // Only the slots that take the trait are offered, those of the creature the target is on; the party is unchanged so far.
+      await expect(slotChooser(page)).toBeVisible();
+      await expect(slotChooser(page).getByRole('heading', { level: 2 })).toHaveText(
+        `Add ${noMaterial.name} to Creature 1`,
+      );
+      await expect(slotChooser(page).getByText(reason)).toBeVisible();
+      await expect(slotChooser(page).getByRole('button')).toHaveText([
+        'Add to Innate (empty)',
+        'Add to Fused (empty)',
+        'Cancel',
+      ]);
+
+      await slotChoice(page, 'Add to Fused (empty)').click();
+
+      await expect(slotChooser(page)).toBeHidden();
+      await expect(add).toBeFocused();
+      // The player is told with the party out of sight, too.
+      await expect(partyAnnouncement(page)).toHaveText(`Added ${noMaterial.name} to Creature 1 · Fused.`);
+      await expect(row.getByText('In party: Creature 1 · Fused')).toBeVisible();
       await showParty(page);
 
-      await expect(slot(page, 'Creature 1 · Artifact')).toHaveAccessibleName(/, empty$/);
+      await expect(slot(page, 'Creature 1 · Fused')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Fused, ${noMaterial.name}`,
+      );
+      // The player was filling the Artifact slot, and still is.
+      await expect(slot(page, 'Creature 1 · Artifact')).toHaveAttribute('aria-pressed', 'true');
+      await expect(partyPanel(page).getByText('1/18 slots')).toBeVisible();
+    });
+
+    test('names what it would replace, says so when it does, and puts it back on Undo', async ({ page, request }) => {
+      const { traits } = await publishedDataset(request);
+      const mastery = withUniqueName(traits).find((trait) => trait.kind === 'mastery' && trait.material !== null);
+      const [plain] = plainTraits(traits);
+      if (mastery === undefined || plain === undefined) throw new Error('the dataset has no traits for this');
+      await openExplore(page);
+      await showParty(page);
+      await slot(page, 'Creature 1 · Artifact').click();
+      await addToParty(page, plain);
+      await showParty(page);
+      await slot(page, 'Creature 1 · Innate').click();
+
+      const row = await findRow(page, mastery);
+      await addElsewhereButton(row).click();
+
+      // A mastery fits the Artifact slot only, and that one holds a trait.
+      await expect(slotChooser(page).getByRole('button')).toHaveText([`Replace ${plain.name} in Artifact`, 'Cancel']);
+      await slotChoice(page, `Replace ${plain.name} in Artifact`).click();
+
+      await expect(partyAnnouncement(page)).toHaveText(
+        `Added ${mastery.name} to Creature 1 · Artifact, replacing ${plain.name}.`,
+      );
+      await showParty(page);
+      await expect(slot(page, 'Creature 1 · Artifact')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Artifact, ${mastery.name}`,
+      );
+      // The target is the slot the player chose, not the one the trait went to.
+      await expect(slot(page, 'Creature 1 · Innate')).toHaveAttribute('aria-pressed', 'true');
+
+      // Asked again, the slot says the trait is there already, and choosing it changes nothing.
+      const again = await findRow(page, mastery);
+      await addElsewhereButton(again).click();
+      await expect(slotChooser(page).getByRole('button')).toHaveText(['Already in Artifact', 'Cancel']);
+      await slotChoice(page, 'Already in Artifact').click();
+      await expect(slotChooser(page)).toBeHidden();
+      await showParty(page);
+      await expect(partyPanel(page).getByText('1/18 slots')).toBeVisible();
+
+      await toolbarButton(page, 'Undo').click();
+
+      await expect(slot(page, 'Creature 1 · Artifact')).toHaveAccessibleName(
+        `Target slot: Creature 1 · Artifact, ${plain.name}`,
+      );
+    });
+
+    test('is let go of with Esc or Cancel, which change nothing and give the focus back', async ({ page, request }) => {
+      const { traits } = await publishedDataset(request);
+      const noMaterial = withUniqueName(traits).find((trait) => isCreature(trait) && trait.material === null);
+      if (noMaterial === undefined) throw new Error('the dataset has no creature trait without a material');
+      await openExplore(page);
+      await showParty(page);
+      await slot(page, 'Creature 1 · Artifact').click();
+      const row = await findRow(page, noMaterial);
+      const add = addElsewhereButton(row);
+
+      await add.focus();
+      await page.keyboard.press('Enter');
+      await expect(slotChooser(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+
+      await expect(slotChooser(page)).toBeHidden();
+      await expect(add).toBeFocused();
+
+      await add.click();
+      await slotChooser(page).getByRole('button', { name: 'Cancel' }).click();
+
+      await expect(slotChooser(page)).toBeHidden();
+      await expect(add).toBeFocused();
+      await showParty(page);
       await expect(partyPanel(page).getByText('0/18 slots')).toBeVisible();
     });
 
@@ -581,7 +678,10 @@ test.describe('the party planner', () => {
     });
   });
 
-  test('has no accessibility violations with a party and a refusal on the page (axe)', async ({ page, request }) => {
+  test('has no accessibility violations with a party, a refusal and the slot sheet (axe)', async ({
+    page,
+    request,
+  }) => {
     const { traits } = await publishedDataset(request);
     const [first, second] = plainTraits(traits);
     const noMaterial = withUniqueName(traits).find((trait) => isCreature(trait) && trait.material === null);
@@ -596,8 +696,15 @@ test.describe('the party planner', () => {
     await slot(page, 'Creature 2 · Artifact').click();
     // The refusal is on the results; on a narrow screen the party is on its tab, so each is checked where it is.
     const refused = await findRow(page, noMaterial);
-    await expect(addButton(refused)).toHaveAttribute('aria-disabled', 'true');
+    await expect(addElsewhereButton(refused)).toBeVisible();
     expect(await axeViolations(page)).toEqual([]);
+
+    // The sheet that offers the other slots, open over the page.
+    await addElsewhereButton(refused).click();
+    await expect(slotChooser(page)).toBeVisible();
+    expect(await axeViolations(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(slotChooser(page)).toBeHidden();
 
     await showParty(page);
     await expect(partyPanel(page).getByText('3/18 slots')).toBeVisible();

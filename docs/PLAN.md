@@ -12,8 +12,8 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.3, 8b.5 (the event plan) and 8b.6 (events in core and the data) done; next is
-  8b.4 (party), then 8b.7–8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README;
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.6 done (8b.4: the "Add to…" slot sheet; 8b.5: the event plan; 8b.6: events in core and the
+  data); next is 8b.7, then 8b.8 and 8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README;
   the criteria-to-tests table; ROADMAP ticks) then closes Phase 1: ask the owner before starting Phase 2.
   Until 8b.8 the panel lists the 18 events flat with Applies / Relies on sides, and a click on an event token shows the traits
   that mention it (`clickGoal`: an event has no counterpart yet, nobody causes the start of a battle); 8b.7 gives the actor a
@@ -252,17 +252,16 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       Open by default, so no layout shift. `e2e/filter-sections.test.ts`: toggle, counts, tab order, resize, closing the sheet,
       axe; the walks and touch-target tests cover the new buttons by themselves. SPEC §8.1, DESIGN. Deviation: the hint "any of"
       is hidden with the classes.
-- [ ] **8b.4** Party: the "…" for traits the target slot refuses (mastery, backer, boss on Innate or Fused; avatar on Fused or
-      Artifact; a trait with no material on Artifact). Today the add is disabled and adding onto an occupied slot replaces it
-      without saying so. `core` first: `allowedSlots(trait, rules)` (no such function exists; Phase 3 `pickSlot` will need it),
-      `addTraitAt(planner, trait, position)` returning `replaced`, the target advancing only when the position is the target; the
-      announcement says "replacing Y" for every add. Web: the refused add becomes an active "Add to…" that opens a page-level
-      dialog (rows are virtualised) listing the allowed slots of the target's creature, one button each: "Add to Artifact (empty)"
-      or "Replace Y in Artifact" (icon and text); the rule's sentence stays under the card (acceptance criterion 5). With no
-      allowed slot the disabled add stays. Generalise `bottom-sheet.svelte`'s foot instead of copying it. Rewrite the criterion-5
-      e2e (it presses a disabled button today); `filters-sheet.test.ts:30,197` take the first `<dialog>` for the filters: bind them
-      by name. Docs: SPEC §8.2 ("a disabled add with its reason" changes), DESIGN. Out of scope: adding a plain trait to a slot
-      that is not the target without moving the target.
+- [x] **8b.4** Party: the "Add to…" slot sheet. `core`: `allowedSlots(trait, rules)`, `addTraitAt(planner, trait, at)` and `AddResult`
+      with `replaced` (`addTrait` delegates to it; the target moves on only when the slot is the target). Web: a trait the target
+      slot refuses but another slot of the creature takes gets an active "Add to…" (`aria-haspopup`, dots on a phone) that opens
+      `SlotChooser` on the page (the `choice` variant of `BottomSheet`: `status` optional, fits its content, centred from 700 px, a
+      quiet Cancel): "Add to Artifact (empty)" / "Replace Y in Artifact" / "Already in Artifact" (`slotChoices`). The rule's sentence
+      stays under the card (criterion 5); a trait no slot takes keeps the disabled add (none in v2.0: core-tested only). Every add
+      announces "…, replacing Y"; the announcement waits for the sheet to close (the live region behind it is inert). e2e: criterion 5
+      rewritten with the replace, Esc/Cancel and focus cases, the sheet in the keyboard walk, touch targets and axe. SPEC §8.2,
+      DESIGN. Deviations: `axeViolations` now waits for animations to finish (a rising sheet read as a contrast failure); the e2e
+      `addButton` matches "Add to " and "Add to…" (a refused trait changes the name of its button, and a selector on one broke two tests).
 - [x] **8b.5** Keywords and events: research and plan, no product code. A census of the 774 opening clauses no trigger covers
       (452 forms) and a sweep of all 1,780 traits by 24 Haiku agents (100% of quotes verbatim but 2 of 4,400; every known trigger
       and census clause found; 92% agreement on a second reading of 373 traits), then a prototype on the snapshot. Outcome:

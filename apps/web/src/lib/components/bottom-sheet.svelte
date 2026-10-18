@@ -7,20 +7,26 @@
    * the dimmed page behind and the close button close it too. `onclose` tells the owner of `open` that it is shut, by
    * whatever means, and the owner puts the focus back on what opened it (a browser may not have focused a button that
    * was only clicked, so the dialog cannot be left to remember it). `status` is read out politely while the sheet is
-   * open: the live regions of the page behind it are inert.
+   * open: the live regions of the page behind it are inert; a sheet whose content does not change while it is open has none.
+   *
+   * Two kinds. A `panel` (the filters) is as tall as the window allows, so that its title and its button stay put while the
+   * body scrolls, and its button confirms what was done in it. A `choice` (where to put a trait) is as tall as its content, in the
+   * middle of the window from 700 px, and its button only lets go.
    */
   const {
     open,
     title,
     closeLabel,
     status,
+    variant = 'panel',
     onclose,
     children,
   }: {
     open: boolean;
     title: string;
     closeLabel: string;
-    status: string;
+    status?: string;
+    variant?: 'panel' | 'choice';
     onclose: () => void;
     children: Snippet;
   } = $props();
@@ -47,6 +53,7 @@
 -->
 <dialog
   bind:this={dialog}
+  class={variant}
   aria-labelledby={titleId}
   {onclose}
   onclick={(event) => {
@@ -56,8 +63,8 @@
   <h2 id={titleId} tabindex="-1" bind:this={heading}>{title}</h2>
   <div class="body">{@render children()}</div>
   <div class="foot">
-    <p class="visually-hidden" aria-live="polite">{status}</p>
-    <button type="button" onclick={() => dialog?.close()}>{closeLabel}</button>
+    {#if status !== undefined}<p class="visually-hidden" aria-live="polite">{status}</p>{/if}
+    <button type="button" class={variant} onclick={() => dialog?.close()}>{closeLabel}</button>
   </div>
 </dialog>
 
@@ -78,10 +85,25 @@
     overflow: hidden;
   }
 
+  dialog.choice {
+    height: auto;
+    max-height: min(88dvh, 720px);
+  }
+
   dialog[open] {
     display: flex;
     flex-direction: column;
     animation: rise 160ms ease-out;
+  }
+
+  /* A window this wide has room around a short list of choices: it is a dialog in the middle, not a sheet as wide as the window. */
+  @media (min-width: 700px) {
+    dialog.choice {
+      width: min(440px, calc(100% - 32px));
+      margin: auto;
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+    }
   }
 
   dialog::backdrop {
@@ -137,6 +159,14 @@
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  /* Letting go is not the thing the sheet is for: the button is quiet, so that the choices above it are what draws the eye. */
+  button.choice {
+    border: 1px solid var(--border-strong);
+    background: var(--surface-3);
+    color: var(--text-strong);
+    font-weight: 500;
   }
 
   @keyframes rise {

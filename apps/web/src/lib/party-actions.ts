@@ -8,6 +8,10 @@ export interface PartyActions {
   refusal(trait: Trait): string | null;
   /** Puts `trait` in the target slot. A refusal is announced and changes nothing. */
   add(trait: Trait): void;
+  /** Whether some slot of the target's creature takes `trait`: a trait the target refuses can then be put in another slot. */
+  canChooseSlot(trait: Trait): boolean;
+  /** Opens the choice of slot for `trait`. `opener` is the button that was pressed: it gets the focus back when the choice is over. */
+  chooseSlot(trait: Trait, opener: HTMLElement): void;
   /** The slots that hold `trait`, in reading order. */
   placesOf(trait: Trait): readonly SlotPosition[];
 }

@@ -373,7 +373,9 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   table of GAME_RULES R1: `special-traits-artifact-only` (mastery, backer and `other` traits, R6),
   `avatar-innate-only` (R6), `artifact-needs-material` (R1). The reason speaks of the kind of trait and the slot, not of the
   trait ("Mastery traits can only go in the Artifact slot."), since the page shows next to it which trait it is; it is the
-  visible text of a disabled "add" button. A new rule of the game is a new entry.
+  sentence under a result's "add" button when the target slot refuses the trait. `allowedSlots(trait, rules = slotRules)`
+  gives the slots of a creature that take a trait, in the order of the creature (empty for a mastery, backer or special trait
+  with no material). A new rule of the game is a new entry.
 - **Edits are commands, and the history keeps them** (`party-command`, `party-history`). A `PartyCommand` is data: `place-trait`
   (a slot and the `Trait`, since the rules need the trait and not its id), `clear-slot`, `clear-party`. `applyCommand(party,
   command, rules = slotRules)` gives `{ ok: true, party }` or the refusal of the rules (`{ ok: false, rule, reason }`), and the
@@ -385,8 +387,8 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
 - **The target slot moves on by a strategy** (`TargetStrategy`: party and the slot just filled → the next target; it only
   reads). The one there is, `nextEmptySlot`, takes the first empty slot after it in reading order (`SLOT_POSITIONS`: creature
   by creature, Innate, Fused, Artifact), going round after the last one, and stays where it is when no other slot is empty.
-  It does not look at the rules or at the trait that comes next: a target the next trait cannot use is a disabled "add"
-  with its reason, not a skipped slot.
+  It does not look at the rules or at the trait that comes next: a target the next trait cannot use is an "Add to…" that
+  offers the other slots (see *Add from the results*), not a skipped slot.
 - **Coverage** (`partyCoverage(party, lookup)`, `lookup` gives the `Trait` of an id or `undefined`) is `{ applies, relies,
   duplicates }`. `applies` and `relies` list the buffs, debuffs and effects the party's traits give (`applies`) or need
   (`uses`), once each, in the order of the slots; a `relies` entry is `covered` when some trait of the party applies the
@@ -397,8 +399,11 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   trait, or an unknown id (it is not known whether it stacks), is never listed.
 - **The planner** (`createPlanner`, `addTrait`, `clearSlot`, `clearParty`, `chooseTarget`, `undoEdit`, `redoEdit`;
   `planner.ts`) is a `PartyHistory` and the target slot, immutable like the party, with the page holding only the current
-  one. `addTrait` puts the trait in the target and moves the target on with the strategy; a refusal is returned with its
-  reason, and a trait already in the target changes nothing. Clearing a slot makes it the target, clearing the party puts the
+  one. `addTrait` puts the trait in the target and moves the target on with the strategy; `addTraitAt(planner, trait, at)`
+  puts it in any slot instead, and moves the target on only when that slot is the target (the player is still filling the
+  target otherwise). Both give `{ ok: true, planner, replaced }`, `replaced` being the id the slot held (`null` when it was
+  empty or held the trait already); a refusal is returned with its reason, and a trait already in the slot changes nothing.
+  Clearing a slot makes it the target, clearing the party puts the
   target on the first slot, and undo returns the target to the slot of the edit so that the next trait refills it; choosing a
   target is no edit (it is not undone and keeps what can be redone). Every operation that changes nothing returns the very
   same planner.
@@ -407,13 +412,21 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   *name*"), with a button to clear it; a trait the dataset does not know is shown by its id and "Not found in vX". Undo,
   Redo and Clear party are `aria-disabled` when there is nothing to do, so that the focus stays on them; clearing a slot
   moves the focus to the slot's button. Ctrl/Cmd+Z undoes and Ctrl/Cmd+Shift+Z (or Ctrl+Y) redoes anywhere but in a text
-  field. A polite live region says what changed ("Added X to Creature 1 · Innate.", "Undid: …") and, when a refused add is
-  pressed, why. The coverage (SPEC above) sits under the creatures: a missing dependency is a button that shows the traits
+  field. A polite live region says what changed ("Added X to Creature 1 · Innate.", "Added X to Creature 1 · Artifact,
+  replacing Y.", "Undid: …") and, when a refused add that has no slot to offer is pressed, why. The coverage (SPEC above) sits under the creatures: a missing dependency is a button that shows the traits
   that apply it, a covered one says so; duplicates are a warning with the places of the copies.
-- **Add from the results.** Every result has "Add to *target*" (the creature and slot named). When the slot rules refuse the
-  trait for that slot the button is `aria-disabled`, stays in the tab order, and the reason is on the page under it and its
-  accessible description (acceptance criterion 5); a press then does nothing but announce the reason. A trait that is in the
-  party is marked "In party: …" with where.
+- **Add from the results.** Every result has "Add to *target*" (the creature and slot named), which replaces what the slot
+  holds, and says so in the announcement. When the slot rules refuse the trait for the target slot, the reason is on the page
+  under the button and is its accessible description (acceptance criterion 5), and the button reads "Add to…": it stays
+  active and opens a modal sheet (`SlotChooser`, on the page and not in the row, since the rows are virtualised) titled "Add X
+  to Creature N" with the sentence and one button for each slot of the target's creature that takes the trait (`slotChoices`):
+  "Add to Artifact (empty)", "Replace Y in Artifact" (Y by name, or by id when the dataset does not know it) or "Already in
+  Artifact" (a press changes nothing). A press puts the trait there with `addTraitAt` and leaves the target where the player
+  had it; Esc, Cancel and the dimmed page close the sheet, and the focus returns to the "Add to…" button. The player is told
+  once the sheet has closed, since the live region behind a modal sheet is inert. The undo of such an add puts the target on
+  that slot, as every undo does. A trait that no slot takes (a mastery, backer or special trait with no material; none in
+  v2.0) keeps today's `aria-disabled` add, in the tab order, and a press announces the reason. A trait that is in the party
+  is marked "In party: …" with where.
 - **The tabs.** Where the party has no room beside the list (under 1100 px: the width at which it used to be stacked under
   the list) Explore (the query, the facets and the results) and Party are the two views of a `tablist` of tabs at the foot of
   the window (ARIA tabs: the selected tab is the one in the tab order, the arrows, Home and End move along them and select

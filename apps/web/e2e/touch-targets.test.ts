@@ -13,7 +13,16 @@ import {
   scrollScreens,
   searchBox,
 } from './support/explore-page';
-import { addButton, addToParty, findRow, partyPanel, plainTraits, withUniqueName } from './support/party-page';
+import {
+  addButton,
+  addElsewhereButton,
+  addToParty,
+  findRow,
+  partyPanel,
+  plainTraits,
+  slotChooser,
+  withUniqueName,
+} from './support/party-page';
 
 // On a phone every control is a target for a finger (DESIGN § Accessibility): at least 44 × 44 px, where WCAG 2.5.8 asks for
 // 24. The tests measure what the page draws, in the Pixel 7 and iPhone 14 projects, for the three places a phone shows:
@@ -194,6 +203,26 @@ test.describe('touch targets on a phone', () => {
       /^Show /,
       /^Artifact-eligible/,
     ]);
+  });
+
+  test('has the button that offers other slots, and every slot of its sheet, at least 44 × 44 px', async ({
+    page,
+    request,
+  }) => {
+    const mastery = withUniqueName((await publishedDataset(request)).traits).find(
+      (trait) => trait.kind === 'mastery' && trait.material !== null,
+    );
+    if (mastery === undefined) throw new Error('the dataset has no mastery trait with a material');
+    await openExplore(page);
+    const row = await findRow(page, mastery);
+    // A phone draws dots on it, and no words: its name says them.
+    await expect(addElsewhereButton(row).locator('.label')).toBeHidden();
+    await expectTargetsLargeEnough(row, [/^Add to… — /]);
+
+    await addElsewhereButton(row).click();
+    await expect(slotChooser(page)).toBeVisible();
+
+    await expectTargetsLargeEnough(slotChooser(page), [/^Add to Artifact \(empty\)$/, /^Cancel$/]);
   });
 
   test('has every control of the Party tab at least 44 × 44 px, with a trait, a dependency and a lost trait', async ({

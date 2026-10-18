@@ -109,9 +109,18 @@ the token colours are only guaranteed on the page background.
   link is shown to select). They are `aria-disabled`, not `disabled`, when there
   is nothing to do, so that the focus is not lost when the last undo is done.
 - **Add button** on a result: `--accent-surface` with `--accent-border`, a plus and "Add to Creature 1 · Innate"; its accessible
-  name ends with the trait's name (the plus is decoration; under 700 px the plus is all that is drawn, § Result list). Refused for the target slot, it is `--surface-2` with `--text-faint`, stays in the
-  tab order (`aria-disabled`), and the reason sits under it in `--status-crit` with an icon, tied to it with
-  `aria-describedby`. "In party: Creature 1 · Innate" below is `--status-good` with a check.
+  name ends with the trait's name (the plus is decoration; under 700 px the plus is all that is drawn, § Result list). Refused for
+  the target slot, the reason sits under it in `--status-crit` with an icon, tied to it with `aria-describedby`, and the button
+  changes with what else the trait can do: when another slot of the creature takes it, it stays `--accent-surface` and reads
+  "Add to…" (`aria-haspopup="dialog"`, named "Add to… — *trait*"; under 700 px three dots stand where the plus was) and opens the
+  slot sheet; when no slot takes it, it is `--surface-2` with `--text-faint`, stays in the tab order (`aria-disabled`) and a
+  press announces the reason. "In party: Creature 1 · Innate" below is `--status-good` with a check.
+- **Slot sheet** (`SlotChooser`, the `choice` kind of `BottomSheet`): the title "Add *trait* to Creature 1", the rule's sentence in
+  `--text-muted`, then one 44 px button per slot of that creature that takes the trait, in `--accent-surface` with an icon (a plus
+  for an empty slot, two arrows for "Replace Y in Artifact", a check for "Already in Artifact") and a quiet "Cancel"
+  (`--surface-3`, no fill in `--accent`: letting go is not what the sheet is for). It is as tall as its content, at the foot of the
+  window under 700 px and a 440 px dialog in the middle from there. It has no live line of its own: the player is told on the
+  page once it has closed.
 - **Coverage**: chips in the colour of the keyword's kind; a dependency is a button with an icon and the word *covered*
   (`--status-good`) or *missing* (`--status-crit`, outlined); duplicates are `--status-warn` with an icon, one line per trait
   with the places of its copies.
