@@ -53,10 +53,11 @@ export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
 export { parseKeywordReference, writeKeywordReference } from './query/keyword-reference';
 export { createTraitIndex, type TraitIndex } from './query/trait-index';
+export { createQueryVocabulary, type QueryVocabulary } from './query/query-vocabulary';
 export { evaluate } from './query/evaluate';
 export { visitQuery, type QueryVisitor } from './query/visitor';
 export { createHighlighter, type Highlighter } from './query/highlight';
-export { serialise } from './query/serialise';
+export { serialise, serialiseTerm } from './query/serialise';
 export { queryChips, removeChip, toggleChipNot, type QueryChip } from './query/chips';
 export type {
   BuffEntry,

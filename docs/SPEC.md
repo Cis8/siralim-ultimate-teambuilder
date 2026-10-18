@@ -317,6 +317,9 @@ place (QUERY_LANGUAGE §4, *Chips*).
 
 `SearchService.search(state)` gives, for an `ExploreState`, the traits in the order of the sort, the effective query and the
 facets (`Facets`); any state can be searched, since the parser repairs the query bar and a name nobody has finds nothing.
+The service also lists what it loaded (`traits`, in the order of the dataset; `vocabulary`, the entries a person can type after
+`class:`, `family:`, `creature:` and `trait:`) and answers `countMatches(state, query)`, the number of traits that `query` finds
+among those the filters of `state` leave, which is what a search would list if `query` were in the bar (QUERY_LANGUAGE §3, §5).
 - **The filters are a query.** `filterQuery` writes the class, keyword and flag filters as text of the query language and
   the search runs that very text, so the effective query is not a description of the filters but what they are: the filters
   as `class:… (applies:… OR uses:…) mat:yes stack:no`, then the query bar (an OR of its own in parentheses). Typed in the

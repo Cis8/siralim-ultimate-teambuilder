@@ -5,14 +5,19 @@ import { SEARCH_MEASURE, timeSearches } from './search-timing';
 const outcome = { traits: [] } as unknown as SearchOutcome;
 const someTrait = { id: 'a-trait' } as Trait;
 
+const vocabulary = { class: ['Life'], family: [], creature: [], name: ['A Trait'] };
+
 const service = (searched: unknown[] = []): SearchService => ({
   datasetVersion: '2.0',
   traitCount: 1,
+  traits: [someTrait],
+  vocabulary,
   trait: (id) => (id === someTrait.id ? someTrait : undefined),
   search: (state) => {
     searched.push(state);
     return outcome;
   },
+  countMatches: (_state, query) => query.length,
 });
 
 /** A clock that reads the given times in turn, and the calls made on the timeline. */
@@ -69,5 +74,8 @@ describe('timeSearches', () => {
     expect(timed.traitCount).toBe(1);
     expect(timed.trait('a-trait')).toBe(someTrait);
     expect(timed.trait('gone')).toBeUndefined();
+    expect(timed.traits).toEqual([someTrait]);
+    expect(timed.vocabulary).toBe(vocabulary);
+    expect(timed.countMatches(initialExploreState, 'weak')).toBe(4);
   });
 });

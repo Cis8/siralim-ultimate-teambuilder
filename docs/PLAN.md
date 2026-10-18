@@ -13,9 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1 and 9.2 are done, the next slice is 9.3** (`createQueryVocabulary`,
-  then `vocabulary`, `traits` and `countMatches` on the service; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.4–9.5
-  read the domains of 9.2 (`field.values`: `column`, `accepts(kind)`, `choices`). Phase 1 stays open for slice 8.4 only: credits
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.3 are done, the next slice is 9.4** (`LintRule`, `createLintRegistry`,
+  `LintContext`, the field and value rules; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.4–9.5 read the domains of
+  9.2 (`field.values`: `column`, `accepts(kind)`, `choices`) and the vocabulary of 9.3 (`service.vocabulary[column]`). Phase 1 stays open for slice 8.4 only: credits
   (ask the owner to confirm the authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on
   2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -261,8 +261,7 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
 - *Unchanged, reused:* lexer, parser (never throws), `evaluate`, `visitQuery`, `queryChips`, `serialise`, the URL codecs (`q` stays the
   bar exactly as typed), facets, `ExploreState`, slot rules, the planner, `TraitRepository`.
 - *Extended:* `QueryDiagnostic` (+`severity`, +`fix`), `FieldDefinition` (+`help`, +`values`, +`describe`), `SearchService` (+`vocabulary`,
-  +`traits`, +`countMatches`), `timeSearches` (it times `.search` only today), `core/index.ts` (must export `serialiseTerm` and
-  `compileQuery`), `query-input.svelte` (stays the one `<input>`), `composition-root.ts` (one load, two services), `+page.svelte` (party and
+  +`traits`, +`countMatches`), `timeSearches` (it times `.search` only today), `core/index.ts` (must export `compileQuery`; `serialiseTerm` is), `query-input.svelte` (stays the one `<input>`), `composition-root.ts` (one load, two services), `+page.svelte` (party and
   address logic move to a shared session), `support/keyboard.ts` `CONTROLS` (+`[role=option]`, `[role=combobox]`), `tools/size-budget`
   (+`lazyJs`, +`totalJs`: a lazy chunk is invisible to it today), `lighthouserc.cjs`.
 - *Watch while building:* the mirror must line up across engines (same font stack on both layers, `forced-colors`, selection); IME and
@@ -286,10 +285,13 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       `matcher` and `values` stay two descriptions, so the tests run each matcher against its domain (`fits` lives in
       `fields.test.ts` until 9.4 needs it in `core`). **For 9.4:** §5's unknown-class example `lif` finds Life by substring, so it is
       no error; the row's example becomes `lfe`.
-- [ ] **9.3** Vocabulary and service. `createQueryVocabulary(index, taxonomy)`: classes, families, creatures, trait names, keywords, built
-      once at load (v2.0 when planned: 11 / 166 / 1,399 / 1,780 for the first four). `SearchService` exposes `vocabulary`, `traits` and
-      `countMatches(state, query)` (parse, compile and the state's filters; no facets, sort or highlight). *T:* `countMatches` equals
-      `search(…).traits.length` over 200 sampled queries with filters on the real sheet; vocabulary sizes pinned like the pipeline counts.
+- [x] **9.3** Vocabulary and service. `createQueryVocabulary(index)` (`query-vocabulary.ts`): for each `VocabularyColumn` its distinct entries,
+      first spelling, A to Z; built once at load (v2.0: 11 / 166 / 1,399 / 1,780, pinned in `assist-acceptance.test.ts`, which also
+      checks that a term with any entry finds a trait). `SearchService` +`vocabulary`, +`traits` (for 12.5's one load) and
+      +`countMatches(state, query)`; `search` and it share `narrow`. Deviations: the keywords are not in the vocabulary (the taxonomy
+      has them and `LintContext` carries it), so the signature has no taxonomy; the lists are keyed by column, so `vocabulary[domain.column]`
+      reads them; `serialiseTerm` is exported now (the test writes terms with it). **For 9.4:** `hits(term)` must ask `countMatches` with
+      `initialExploreState`: "in no trait" is about the dataset, whatever the filters (D18's counts are for suggestions only).
 - [ ] **9.4** Lint registry, field and value rules. `LintRule {id, check}`, `createLintRegistry` (hyphenated unique ids, `LintRegistryError`,
       like `createSlotRuleRegistry`), `LintContext {fields, taxonomy, vocabulary, hits(term)}` with `hits` memoised per field and value.
       Rules: unknown field (the fix replaces the field name only), empty value (warning), bad `mat:` / `stack:` value, unknown class

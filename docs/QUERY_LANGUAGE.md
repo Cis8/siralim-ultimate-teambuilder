@@ -112,6 +112,11 @@ For the full dataset (1,780 traits in v2.0) a straightforward evaluation is fast
 takes 0.1–0.8 ms natively and about 3 ms (p95 4.3 ms) in the page with the CPU slowed down 4×, against a 16 ms budget (SPEC §9).
 Add an index (inverted index + keyword bitsets) only if that e2e misses the budget: `TraitIndex` is opaque to `evaluate`'s
 callers, so it can change without them.
+**Counting.** `SearchService.countMatches(state, query)` is the length of the list that `search` would give if `query` were
+in the bar: the text is parsed (and repaired) and compiled like the bar, and it is asked of the traits that the filters of
+`state` leave (classes, keywords, flags). The `query` and the sort of `state` are not read, and no facets are counted, no
+trait sorted and no text highlighted. The counts beside suggestions (§6) include the filters, since that is what Enter would
+show; a test compares it with `search(…).traits.length` over 200 sampled states and queries of the real sheet.
 
 ## 4. Highlighting, writing a query back and chips
 **Highlighting.** `createHighlighter(ast)` works out once what the query marks, and returns a function from a text (the
@@ -182,6 +187,13 @@ was opened.
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
 | Unknown class | error | No class “lif”. Did you mean Life? | replace |
 | Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
+
+**The vocabulary.** What the dataset gives a person to type is listed once, when it is loaded (`createQueryVocabulary(index)`,
+on the service as `vocabulary`): for each column a `vocabulary` domain names (§2: class, family, creature, trait name) its
+distinct entries as the dataset first spells them, from A to Z whatever the letter case. An entry is listed once however its
+letter case varies, since a query compares them folded, and a trait without a value (a mastery has no creature) adds none.
+The keywords are not in it: they come from the taxonomy, which does not depend on the dataset. In v2.0 the lists hold 11 classes,
+166 families, 1,399 creatures and 1,780 trait names, and a term of the field with any entry finds a trait.
 
 **Did you mean.** `closestMatch(input, candidates)` gives the candidate that a misspelling was most likely meant to be, or
 nothing. It allows at most `max(2, ⌊length of the input / 3⌋)` edits (Levenshtein: a letter added, removed or changed, so a

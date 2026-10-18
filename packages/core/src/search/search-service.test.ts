@@ -6,6 +6,7 @@ import {
   KEYWORD_MODES,
   SORT_KEYS,
   type ExploreState,
+  type KeywordFilter,
 } from '../explore/explore-state';
 import { DATASET_SCHEMA_VERSION } from '../model/dataset';
 import type { KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
@@ -112,6 +113,19 @@ describe('createSearchService', () => {
 
     expect(loaded.trait('b-bite')).toBe(traits[1]);
     expect(loaded.trait('gone--from-the-sheet')).toBeUndefined();
+  });
+
+  it('lists the traits it loaded, in the order of the dataset', async () => {
+    expect((await service()).traits).toEqual(traits);
+  });
+
+  it('lists what the dataset gives to type after a field', async () => {
+    const { vocabulary } = await service();
+
+    expect(vocabulary.class).toEqual(['Boss', 'Death', 'Life', 'Nature', 'Nether Boss']);
+    expect(vocabulary.family).toEqual(['Abomination']);
+    expect(vocabulary.creature).toEqual(['Abomination Brute']);
+    expect(vocabulary.name).toEqual(ids(traits));
   });
 
   it('does not load again for a second search', async () => {
@@ -389,6 +403,92 @@ describe('createSearchService', () => {
           }),
         );
       });
+    });
+  });
+});
+
+describe('countMatches', () => {
+  const count = async (query: string, overrides: Partial<ExploreState> = {}) =>
+    (await service()).countMatches(stateWith(overrides), query);
+
+  it('counts the traits a query finds', async () => {
+    expect(await count('weak')).toBe(4);
+    expect(await count('weak -stack:no')).toBe(3);
+    expect(await count('nobody-has-this')).toBe(0);
+  });
+
+  it('counts every trait for a query with no term', async () => {
+    expect(await count('')).toBe(traits.length);
+    expect(await count('  ')).toBe(traits.length);
+  });
+
+  it('counts among the traits the filters of the state leave', async () => {
+    expect(await count('weak', { classes: ['death'] })).toBe(2);
+    expect(await count('weak', { keywords: [{ field: 'uses', key: 'weak' }] })).toBe(1);
+    expect(await count('weak', { artifactEligible: true })).toBe(2);
+    expect(await count('', { doesNotStack: true })).toBe(1);
+    expect(await count('', { classes: ['boss'] })).toBe(1);
+  });
+
+  it('counts the query it is given, not the one in the state', async () => {
+    expect(await count('weak', { query: 'vulnerable' })).toBe(4);
+    expect(await count('', { query: 'vulnerable' })).toBe(traits.length);
+  });
+
+  it('counts the query as it is read, repairs included', async () => {
+    expect(await count('class:life (')).toBe(2);
+    expect(await count(') weak OR')).toBe(4);
+  });
+
+  describe('is the number of traits that a search finds', () => {
+    // Queries as people leave them: words, fields, wrong fields, operators, an unclosed group, nothing yet.
+    const queries = fc
+      .array(
+        fc.constantFrom(
+          'weak',
+          'heal',
+          'class:life',
+          '-class:death',
+          'applies:weak',
+          'uses:weak',
+          'kw:"start of battle"',
+          'mat:yes',
+          'stack:no',
+          'clas:life',
+          'applies:',
+          '"',
+          '(',
+          ')',
+          'OR',
+          'AND',
+          'NOT',
+        ),
+        { maxLength: 6 },
+      )
+      .map((terms) => terms.join(' '));
+    const state = fc.record({
+      classes: fc.uniqueArray(fc.constantFrom('life', 'death', 'boss', 'nether boss', 'nowhere'), { maxLength: 3 }),
+      keywords: fc.constantFrom<readonly KeywordFilter[]>(
+        [],
+        [{ field: 'applies', key: 'weak' }],
+        [{ field: 'kw', key: 'start of battle' }],
+      ),
+      keywordMode: fc.constantFrom(...KEYWORD_MODES),
+      artifactEligible: fc.boolean(),
+      doesNotStack: fc.boolean(),
+    });
+
+    it('for any state and query', async () => {
+      const loaded = await service();
+
+      fc.assert(
+        fc.property(state, queries, (given, query) => {
+          const filters = stateWith({ ...given, query: 'ignored' });
+          const searched = loaded.search({ ...filters, query }).traits.length;
+
+          expect(loaded.countMatches(filters, query), query).toBe(searched);
+        }),
+      );
     });
   });
 });
