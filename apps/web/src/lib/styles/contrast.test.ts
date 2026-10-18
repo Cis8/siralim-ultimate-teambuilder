@@ -112,6 +112,24 @@ describe('the colours of text', () => {
   });
 });
 
+describe('the colours of the issues of a query', () => {
+  // A row of the list sits on a surface of its own, and says its severity in a status colour (beside an icon and a word). The
+  // border is a frame that carries nothing the icon and the word do not say, so it is not held to 3:1.
+  const rows = [
+    { surface: 'issue-error-surface', severity: 'status-crit' },
+    { surface: 'issue-warn-surface', severity: 'status-warn' },
+  ] as const;
+  const pairs = rows.flatMap(({ surface, severity }) => [['text', surface] as const, [severity, surface] as const]);
+
+  it.each(pairs)('%s is at least 4.5:1 on %s', (text, surface) => {
+    expect(contrast(token(text), token(surface))).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+
+  it('reads the surfaces it is meant to check', () => {
+    for (const { surface } of rows) expect(palette.has(surface), surface).toBe(true);
+  });
+});
+
 describe('the lines that show a state or frame a field', () => {
   // The focus ring is `--accent`; a pressed control and the frame of the search field are outlined in `--accent-border`.
   // `--border` and `--border-strong` are dividers and the frame of buttons that name themselves in words: not required.

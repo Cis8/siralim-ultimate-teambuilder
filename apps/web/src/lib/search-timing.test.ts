@@ -1,6 +1,6 @@
 import { initialExploreState, type SearchOutcome, type SearchService, type Trait } from '@atlas/core';
 import { describe, expect, it } from 'vitest';
-import { SEARCH_MEASURE, timeSearches } from './search-timing';
+import { ASSIST_MEASURE, SEARCH_MEASURE, timeAssist, timeSearches } from './search-timing';
 
 const outcome = { traits: [] } as unknown as SearchOutcome;
 const someTrait = { id: 'a-trait' } as Trait;
@@ -77,5 +77,58 @@ describe('timeSearches', () => {
     expect(timed.traits).toEqual([someTrait]);
     expect(timed.vocabulary).toBe(vocabulary);
     expect(timed.countMatches(initialExploreState, 'weak')).toBe(4);
+  });
+});
+
+describe('timeAssist', () => {
+  it('measures each call as the assist, from the moment it starts to the moment it ends', () => {
+    const timing = timeline(3, 5, 8, 8.25);
+    const lint = timeAssist((source: string) => source.length, timing);
+
+    lint('weak');
+    lint('snared');
+
+    expect(timing.calls.filter((call) => call.startsWith('measure'))).toEqual([
+      `measure ${ASSIST_MEASURE} 3-5`,
+      `measure ${ASSIST_MEASURE} 8-8.25`,
+    ]);
+  });
+
+  it('keeps no entry of the measure, and is a separate measure from the search', () => {
+    const timing = timeline(0, 1);
+
+    timeAssist(() => undefined, timing)();
+
+    expect(timing.calls).toEqual([`measure ${ASSIST_MEASURE} 0-1`, `clear ${ASSIST_MEASURE}`]);
+    expect(ASSIST_MEASURE).not.toBe(SEARCH_MEASURE);
+  });
+
+  it('hands over the arguments and returns the result of the work', () => {
+    const calls: unknown[][] = [];
+    const work = (source: string, caret: number | undefined): string => {
+      calls.push([source, caret]);
+      return `${source}!`;
+    };
+
+    const timed = timeAssist(work, timeline(0, 1, 2, 3));
+
+    expect(timed('weak', 4)).toBe('weak!');
+    expect(timed('snared', undefined)).toBe('snared!');
+    expect(calls).toEqual([
+      ['weak', 4],
+      ['snared', undefined],
+    ]);
+  });
+
+  it('measures a call that throws, and lets it throw', () => {
+    const timing = timeline(0, 1);
+    const failing = timeAssist(() => {
+      throw new Error('a rule failed');
+    }, timing);
+
+    expect(() => {
+      failing();
+    }).toThrow('a rule failed');
+    expect(timing.calls).toEqual([`measure ${ASSIST_MEASURE} 0-1`, `clear ${ASSIST_MEASURE}`]);
   });
 });

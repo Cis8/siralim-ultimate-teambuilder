@@ -35,7 +35,7 @@ export { tokenize } from './query/lexer';
 export { parseQuery, type ParseResult } from './query/parser';
 export type { AndNode, NotNode, OrNode, QueryNode, TermNode } from './query/ast';
 export type { DiagnosticFix, DiagnosticSeverity, QueryDiagnostic, SyntaxDiagnosticCode } from './query/diagnostic';
-export { applyEdit, type TextEdit } from './query/text-edit';
+export { applyEdit, caretAfterEdit, type TextEdit } from './query/text-edit';
 export { withSyntaxFixes } from './query/syntax-fixes';
 export type { Span } from './query/span';
 export type { FieldName, SymbolToken, TermToken, Token } from './query/token';

@@ -254,6 +254,28 @@ field and value however it is written (`createLintContext(service)`: one for eac
   `MAX_LINTED_LENGTH` (2,000) characters gets the parser's diagnostics without fixes and no rule: a pasted text, and the work of
   the fixes grows with its square. Fixing the first diagnostic that has a fix, again and again, ends with none left (property test).
 
+**In the field** (`query-input.svelte`, PLAN 9.6). Once the data is loaded the bar calls `lintQuery(text, context, { caret })` after every change of
+the text or of the caret (`context` is `createLintContext(service)`, one for the dataset), and times each call as `atlas:assist` (criterion 7: p95
+under 16 ms at 4×; a text with eight faults of every kind measures 9–10 ms).
+- **The caret** is the field's own while it has the focus and nothing is selected (`caretToLint`). A selection is no caret: the person is choosing
+  text and not finishing a term, and the Tab key selects the whole text of a field it enters. The caret is dropped when the focus leaves for
+  something outside the field, its badge and its list, so that a text is judged as it stands once the person has gone elsewhere; while the focus
+  moves between the three, the last caret is kept, so that a list does not grow under the finger that presses a fix. A fix is pressed without
+  taking the focus from the field (`keepFieldFocus`: the keyboard of a phone stays up), or from the keyboard, where the focus is on the button.
+- **What is shown.** A badge inside the field says "N issues", in the colour and with the icon of the worst one, and opens and shuts the list under the
+  field (`aria-expanded`). The list shows errors first, then warnings, each in the order of the text, at most `MAX_ISSUES_SHOWN` (5) with "and N
+  more" after them; a row is the icon and the word *Error* or *Warning*, the message and, when there is one, the fix as a button. The list
+  opens by itself when the person types a query that has issues and had none, and shuts when none is left; a query that arrives with the address
+  leaves it shut, so that nothing moves on load. The field is `aria-invalid` for errors only (a warning is a query the search takes as written) and
+  is described by the text of every issue the list shows. A polite line says the count once typing has paused (600 ms: "2 issues", "No issues") and
+  the result of a fix at once ("Fixed. 1 issue left.").
+- **A fix** is one `TextEdit` made in the field by `applyFieldEdit` as typing would make it (`execCommand('insertText')`, or `delete` for an empty
+  text), so that Ctrl+Z in the field takes it back; a browser that refuses gets `setRangeText` and an `input` event, with no undo. The caret goes
+  where `caretAfterEdit(caret, edit)` says: before the edit, it stays; after it, it moves by what the edit added or took away (it stays in front of
+  the same text, so a fix at the far end does not pull a caret from the start); in the replaced text, or at an insertion, it ends after the text
+  written. It is put back once the framework has flushed, and the field has the focus. The query is linted again, so a fix that uncovers another
+  issue shows it.
+
 **The fixes of the syntax rows.** A fix is one `TextEdit`; the text outside it stays as typed, and after it the query means
 what it meant, since it puts into the text the repair the parser had made (the property tests compare `serialise` before
 and after). Its `label` says what the button does: *Remove “)”*, *Add the missing “)”*, *Close the quote*.

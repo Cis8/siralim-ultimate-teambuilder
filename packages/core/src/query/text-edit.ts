@@ -10,3 +10,14 @@ export interface TextEdit {
 export function applyEdit(source: string, { span: [start, end], text }: TextEdit): string {
   return source.slice(0, start) + text + source.slice(end);
 }
+
+/**
+ * Where a caret that stood at `caret` in the text stands once the edit is made. A caret before the edit stays, one after it
+ * moves by what the edit added or took away (so it is in front of the same text), and one in the replaced text, or at an
+ * insertion, ends after what was written, as when the person typed it. A caret at the start of replaced text stays in front.
+ */
+export function caretAfterEdit(caret: number, { span: [start, end], text }: TextEdit): number {
+  if (caret < start || (caret === start && end > start)) return caret;
+  if (caret > end) return caret + text.length - (end - start);
+  return start + text.length;
+}

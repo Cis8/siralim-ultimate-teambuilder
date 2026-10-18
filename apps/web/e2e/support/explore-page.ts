@@ -40,6 +40,19 @@ export const backToTopButton = (page: Page) => page.getByRole('button', { name: 
 export const pageHeading = (page: Page) => page.getByRole('heading', { level: 1, name: 'Explore traits' });
 
 export const searchBox = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
+
+/** The badge inside the search field that says how many issues the query has (“2 issues”), and opens and shuts their list. */
+export const issuesBadge = (page: Page) => page.getByRole('button', { name: /^[\d,]+ issues?$/ });
+/** The list under the field of what is wrong with the query. While it is shut it is on the page, hidden. */
+export const issuesList = (page: Page) => page.getByRole('list', { name: 'Query issues' });
+export const issueRows = (page: Page) => issuesList(page).getByRole('listitem');
+/** The button of the list that mends one issue; `label` is what it says (“Change to “class:””). */
+export const fixButton = (page: Page, label: string | RegExp) => issuesList(page).getByRole('button', { name: label });
+/** The polite line that tells a screen reader how many issues there are and what a fix did. It has no role: a live region needs none. */
+export const issuesAnnouncement = (page: Page) => page.locator('.query [aria-live="polite"]');
+/** Where the caret of the search field is. */
+export const caretOf = (page: Page): Promise<number | null> =>
+  searchBox(page).evaluate((field: HTMLInputElement) => field.selectionStart);
 export const chips = (page: Page) => page.getByRole('group', { name: 'Filters and query terms' });
 
 /** Below this width (the `compact` query of the page) the filters are a sheet to open, not a column beside the list. */

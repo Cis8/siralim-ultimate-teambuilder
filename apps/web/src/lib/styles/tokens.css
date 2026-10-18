@@ -23,6 +23,12 @@
   --status-warn: #f3c969;
   --status-crit: #ff9b87;
 
+  /* What is wrong with the query: the surface and the line of each row of the list. Its icon and its word say which. */
+  --issue-error-surface: #2a1816;
+  --issue-error-border: #6e3a33;
+  --issue-warn-surface: #2a2412;
+  --issue-warn-border: #5a4a22;
+
   --kw-debuff: #ff9b87;
   --kw-buff: #74dbb0;
   --kw-mechanic: #a9c1ff;

@@ -13,14 +13,16 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.5 are done, the next slice is 9.6** (issues in the field, the first
-  web slice of Phase 2: `QueryIssues`, `applyFieldEdit`, the `atlas:assist` timing and its e2e; see *For 9.6* under 9.5), in the order
-  M9 → M10 → M12 → M13 → M11 (D15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first),
-  README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done and the next slice is 10.1** (`suggest/context.ts`: the
+  context of the caret, the first of M10 autocomplete), in the order M10 → M12 → M13 → M11 (D15). The field already has the assist's
+  first part (issues, `applyFieldEdit`, `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it lazy and adds
+  `lazyJs` / `totalJs` to the size budget. Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors'
+  names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
-  iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1); when 11.5 lands, the
+  iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
+  of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); when 11.5 lands, the
   mobile search sheet on iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
   trigger; when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be
@@ -129,6 +131,12 @@ slice that builds it then follows.
   `measureElement` forces by reading `offsetHeight`). If that ever needs to come down, it is the cost of a row, not the search.
   `countFacets` runs inside every timed search: working out the keys of the 15 actor sets on each call cost +15% on `pnpm bench`'s
   typing run (and failed the 16 ms e2e once under load), so they are built once at load. Compare `pnpm bench` before and after.
+- `typing-latency` and `assist-latency` (p95 of `atlas:search` / `atlas:assist` at 4× CPU) can fail when the whole e2e suite runs on
+  many workers at once: rerun them alone (`playwright test typing-latency assist-latency --workers=1`) before suspecting the code.
+  Alone: search p95 4.7–5.4 ms; assist p95 9–10 ms on a text with eight faults of every kind (the budget is 16 ms).
+- On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
+  with one stop instead of more than ten, also on a tree without the Phase 2 work (checked 2026-10-18). CI (Linux) is green: if it
+  is the only failure, it is this.
 - Lighthouse (`pnpm lighthouse`, phone profile, simulated slow 4G): serves `apps/web/build` from the root with gzip, so the
   build must not have a `BASE_PATH`; Chromium comes from Playwright (`playwright install chromium`). What is left to gain:
   the LCP (3.0 s, score 0.77) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and 0.035 of
@@ -269,65 +277,20 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
   status 404 (no previews or SEO for `/synergy/…`: accepted, ADR-0001); 13.1 refactors a 776-line page (the Phase 1 e2e is the net);
   assist latency (budget first, then defer the counts); the volume of *Same trigger* (ranked and capped).
 
-### M9 Diagnostics — the field shows issues, each with a one-click fix
-- [x] **9.1** Text edits and syntax fixes. `TextEdit {span, text}` + `applyEdit`, `QueryDiagnostic` +`severity` +`fix?`, and
-      `withSyntaxFixes(source, parsed)` (`syntax-fixes.ts`, a table typed by diagnostic code); the parser is untouched. Deviations the
-      property tests forced (QUERY_LANGUAGE §5): no `applyEdits` (nothing applies several at once); a fix is given only if the query
-      means the same after it (`- AND a`: the `-` goes first; no `)` inside an open quote); only the innermost `(` is closed by a `)`,
-      and a `(` with nothing in it is removed (closing it gave `()`); past 50 problems no fixes (the work is quadratic: 8,000 stray
-      `)` took 20 s). 100 kB with 50 problems costs 0.9 s, so 9.5's `lintQuery` must also skip texts over ~2,000 characters.
-- [x] **9.2** Closest match and value domains. `closestMatch(input, candidates)` (own Levenshtein), `FieldDefinition` +`help`,
-      +`values?: ValueDomain` (`choices` exact | `vocabulary` substring | `keyword` prefix) and +`describe(value)` on all ten fields;
-      the registry refuses help that is not one line and bad choices; `mat:` / `stack:` are built from their choices (no `oneOf`).
-      Deviations (QUERY_LANGUAGE §2, §5): `closestMatch` also asks for fewer edits than the letters of the shorter text (§5's
-      threshold alone offered `c:` for any mistyped letter); the keyword domain carries `accepts(kind)`, not a list of kinds;
-      `matcher` and `values` stay two descriptions, so the tests run each matcher against its domain (with `fitsValue`, 9.4). **For 9.4:** §5's unknown-class example `lif` finds Life by substring, so it is
-      no error; the row's example becomes `lfe`.
-- [x] **9.3** Vocabulary and service. `createQueryVocabulary(index)` (`query-vocabulary.ts`): for each `VocabularyColumn` its distinct entries,
-      first spelling, A to Z; built once at load (v2.0: 11 / 166 / 1,399 / 1,780, pinned in `assist-acceptance.test.ts`, which also
-      checks that a term with any entry finds a trait). `SearchService` +`vocabulary`, +`traits` (for 12.5's one load) and
-      +`countMatches(state, query)`; `search` and it share `narrow`. Deviations: the keywords are not in the vocabulary (the taxonomy
-      has them and `LintContext` carries it), so the signature has no taxonomy; the lists are keyed by column, so `vocabulary[domain.column]`
-      reads them; `serialiseTerm` is exported now (the test writes terms with it). **For 9.4:** `hits(term)` must ask `countMatches` with
-      `initialExploreState`: "in no trait" is about the dataset, whatever the filters (D18's counts are for suggestions only).
-- [x] **9.4** Lint registry, field and value rules. `LintRule {id, check(term, context) → LintFinding | undefined}`, `createLintRegistry`
-      (ids checked by `ruleIdViolations`, now shared with the slot rules; `LintRegistryError`) which stamps the rule's `id` as the `code`;
-      `LintContext {fields, taxonomy, vocabulary, hits(term)}` made by `createLintContext(service)` (in `search/`, so `query/` does not
-      depend on it; `hits` asks `countMatches(initialExploreState, …)` once per field and value). Rules (`field-rules.ts`, listed in
-      `lint-rules.ts` as `lintRegistry`): `unknown-field`, `empty-value`, `invalid-choice`, `unknown-class` (error), `unknown-family`,
-      `unknown-creature`, `unknown-trait` (warnings, D21). Deviations (QUERY_LANGUAGE §5): `QueryDiagnostic<Code>` is generic (the
-      parser's code is a `SyntaxDiagnosticCode`, a rule's its id); `fitsValue(mode, entry, value)` moved from `fields.test.ts` into
-      `field.ts`, and "unknown value" means no entry of the vocabulary fits, which the real sheet proves equal to "the search finds
-      nothing" (`assist-acceptance.test.ts`, 3 mutations of every entry, and each fix finds traits and lints clean); a bare `""` warns
-      too (§2 promised it); "did you mean" compares with whole entries, so a mistyped part of one (`creature:bruser`) gets no offer.
-      The acceptance test samples one name in 25 (a first try took 2.5 s and timed out at 5 s on the runner).
-- [x] **9.5** Keyword rules, free text, `lintQuery`. `readKeywordValue` (the split `parseKeywordReference` now derives from, parts as
-      written); `keyword-rules.ts`: four rules over one diagnosis, so a value has one fault (`unknown-keyword` error, `keyword-without-role`
-      warning on the field name with fix `kw:`, `unknown-actor` error, `keyword-without-actor` warning; `canHaveActor(entry)` in
-      `taxonomy/entry.ts`); `text-rules.ts`: `text-in-no-trait`, which offers only a candidate that itself finds a trait (`nostack` is a
-      key, in no description); `lintQuery(source, context, {caret?})` + `MAX_LINTED_LENGTH` (2,000: past it the parser's diagnostics with no
-      fixes and no rule); `finding-text.ts` (`changeTo` and `writtenValue` moved out of `field-rules.ts`). Deviations (QUERY_LANGUAGE §5, ADR-0010
-      amended): no `settledDiagnostics`: `LintRule.reportsWhileTyping` (only `unknown-field`) and `registry.check(term, ctx, {typing})` leave
-      the other rules unasked for the term being typed, so their offers are not even paid for; the message says "No keyword", not "No buff or
-      debuff" (the fields take four kinds); an actor finding spans the whole value and its fix rewrites it (no offsets into quotes); a keyword
-      is offered only among the keys its field takes. `closestMatch` is 6× cheaper (`editDistance(from, to, limit)` gives up once a row is
-      out of reach and reuses its rows): 6 terms with 5 faults and their offers lint in 0.6 ms native (3.6 before), a clean one in 0.035 ms
-      (`lint.bench.ts`). *T:* soundness on v2.0 (`assist-acceptance.test.ts`): every key, old phrase and actor of the taxonomy lints clean or
-      with the one finding it should, every finding of the new rules is a query that finds 0 traits, the fixes lint clean, free text is
-      flagged exactly when the search finds nothing, and criterion 1 on the real context.
-      **For 9.6:** call `lintQuery(source, lintContext, {caret})` once per dataset context (`createLintContext(service)` remembers the
-      counts), with the caret from the field (decide in the slice what a selection counts as). The span says which term an issue is
-      about and `QueryDiagnostic.code` is the rule `id`. Spans: `unknown-actor` and
-      `keyword-without-actor` cover the whole value, `keyword-without-role` the field name. Hold the 16 ms at 4× with margin: the worst
-      typical query costs 0.6 ms native.
-- [ ] **9.6** Issues in the field (web). `lintQuery` runs after the search, timed as `atlas:assist`. `QueryIssues`: a count badge **inside**
-      the field (icon + "2 issues": no layout change when `?q=` loads), a panel under it (icon + the word Error / Warning, message, Fix
-      button), `aria-invalid` for errors only, `aria-describedby`, a debounced polite line ("2 issues", "Fixed"). A fix is one
-      `TextEdit`, then lint again. `applyFieldEdit(input, edit)` restores the caret after Svelte's flush and keeps native undo where
-      `execCommand('insertText')` / `setRangeText` allow it (the prototype's caret-after-edit bug dies here, for every later edit too).
-      New diagnostic tokens go into `contrast.test.ts`. *T:* e2e criterion 1 on desktop and both phones; keyboard-only fix; axe with the
-      panel open; touch-target block; a new `assist-latency.test.ts` (p95 of `atlas:assist` < 16 ms at 4×). *Docs:* QUERY_LANGUAGE §5
-      (codes, severities, caret policy, D21), DESIGN (issues), checklist rows.
+### M9 Diagnostics — done
+`core`: `TextEdit` + `applyEdit` + `caretAfterEdit`; `QueryDiagnostic<Code>` with `severity` and `fix?`; `withSyntaxFixes` (a fix only if
+the query means the same after it; none past 50 problems); `closestMatch` (own Levenshtein, bounded); `FieldDefinition` +`help`,
++`values` (`choices` | `vocabulary` | `keyword`), +`describe`; `createQueryVocabulary` and `SearchService` +`vocabulary`, +`traits`,
++`countMatches`; the lint registry (`LintRule`, `createLintRegistry`, `lintRegistry`: 12 rules, only `unknown-field` has
+`reportsWhileTyping`, D20) and `lintQuery(source, context, {caret})` (`MAX_LINTED_LENGTH` 2,000). Soundness is tested on the real sheet
+(`assist-acceptance.test.ts`: every finding of the value rules is a query that finds nothing, every fix lints clean). `web`: the badge
+inside the field, the list under it (`QueryIssues`), `applyFieldEdit` (native undo kept), the polite line (`issue-announcer`),
+`atlas:assist` (`timeAssist`), tokens `--issue-*`. Deviations worth knowing: D21 (a `family:`, `creature:` or `trait:` that matches
+nothing is a warning; only the class is an error); the keywords are not in the vocabulary (the taxonomy has them); a value has at most
+one fault; "did you mean" compares whole entries; a selection is no caret (the Tab key selects the whole text of a field); the list
+opens by itself only for a query that was typed, never for one that arrives with the address (nothing moves on load: Lighthouse CLS
+unchanged); `aria-invalid` for errors only; the list shows five issues, errors first. If suggestions push `atlas:assist` up, memoise
+the offers per term first, then defer the counts (ADR-0010).
 
 ### M10 Autocomplete — Tab accepts, the count is shown, screen readers hear it
 - [ ] **10.1** Context. `suggest/context.ts`: from `(source, caret)` the token at the caret (else an empty virtual one), the typed prefix,

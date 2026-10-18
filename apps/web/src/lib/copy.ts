@@ -1,5 +1,6 @@
 import type {
   ClickGoal,
+  DiagnosticSeverity,
   EventGroup,
   FacetKeywordKind,
   KeywordActor,
@@ -19,6 +20,8 @@ import type { SlotChoice } from './slot-choices';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
+
+const issueCount = (count: number): string => `${formatCount(count)} ${count === 1 ? 'issue' : 'issues'}`;
 
 const creatureLabel = (member: MemberIndex): string => `Creature ${String(member + 1)}`;
 const slotNames = { innate: 'Innate', fused: 'Fused', artifact: 'Artifact' } as const satisfies Record<
@@ -79,6 +82,15 @@ export const copy = {
 
   searchLabel: 'Search traits',
   searchPlaceholder: 'vulnerable OR weak  ·  applies:snared  ·  "start of battle"  ·  -stack:no',
+  /** The badge inside the search field: it opens and shuts the list of what is wrong with the query. */
+  issueCount,
+  issuesLabel: 'Query issues',
+  issueSeverity: { error: 'Error', warning: 'Warning' } as const satisfies Record<DiagnosticSeverity, string>,
+  /** The line under the list when it leaves some issues out. */
+  moreIssues: (count: number) => `and ${formatCount(count)} more`,
+  /** What a screen reader is told (a polite line): the count after a pause in the typing, and the result of a fix at once. */
+  noIssues: 'No issues',
+  issuesFixed: (left: number) => (left === 0 ? 'Fixed. No issues left.' : `Fixed. ${issueCount(left)} left.`),
   resultCount: (shown: number, total: number) => `${formatCount(shown)} of ${formatCount(total)} traits`,
   datasetVersion: (version: string) => `Compendium v${version}`,
   sortLabel: 'Sort',

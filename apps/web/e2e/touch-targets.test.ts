@@ -7,6 +7,7 @@ import {
   closeFilters,
   facet,
   filtersSheet,
+  fixButton,
   openExplore,
   openFilters,
   rows,
@@ -173,6 +174,21 @@ test.describe('touch targets on a phone', () => {
     await scrollScreens(page, 3);
     await expect(backToTopButton(page)).toBeVisible();
     await expectTargetsLargeEnough(page.locator('body'), [/^Back to top$/, /^Add to /]);
+  });
+
+  test('has the issues badge and the fix of every issue at least 44 × 44 px, without making the page wider', async ({
+    page,
+  }) => {
+    await openExplore(page);
+    await searchBox(page).fill('clas:life (weak OR snared');
+    await expect(fixButton(page, 'Change to “class:”')).toBeVisible();
+
+    await expectTargetsLargeEnough(page.locator('body'), [
+      /^2 issues$/,
+      /^Change to “class:”$/,
+      /^Add the missing “\)”$/,
+    ]);
+    expect(await widerThanTheWindow(page)).toBe(false);
   });
 
   test('has text of 16 px or more in every text field and select, below which iOS zooms the page in on focus', async ({

@@ -33,6 +33,9 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 16 | Remove the last chip with `Enter` | focus stays on the chips: "Filters and query terms, group", not back at the top of the page |
 | 17 | In the filters, `Tab` into the Events section; press "This creature" and then "Enemies" in the group "Who acts", then `Tab` to "Attack" and `Space` on its second button | "Who acts, group", "Any, toggle button, pressed"; after the first press "This creature, pressed" and "Any" no longer pressed, after the second "Enemies, pressed" as well; then "Attack, group", "Causes N traits", "Reacts N traits" (N is the count for the two actors together); after the press "pressed", and the live line gives "N of M traits". Press "This creature" again: it is no longer pressed, "Enemies" is; press "Enemies": "Any" is pressed again |
 | 18 | In a card, find an event in a description (for example "attacks" in "After this creature attacks, …") | "Reacts to attacks (this creature) — show traits that cause it, toggle button": the role in the words of the filters, then who acts |
+| 19 | In the field, type `clas:life (weak OR snared`, then wait a second | the field is "invalid entry"; once, "2 issues"; `Tab` to "2 issues, button, expanded", then to "Change to “class:”, button" |
+| 20 | Press `Enter` on that fix, then `Tab` twice and press the other fix | "Fixed. 1 issue left." and the focus is back in "Search traits, edit"; then "Fixed. No issues left." and the field is no longer invalid |
+| 21 | Back in the field, with the issues there, ask for its description | each issue, the severity first: "Error Unknown field “clas:”. Did you mean “class:”?" (the severity is said, not only coloured) |
 
 ## iPhone (VoiceOver, Safari)
 
@@ -44,6 +47,7 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 4 | Two-finger scrub (the Z) | the sheet closes and focus returns to "Filters 1 active, button" |
 | 5 | Swipe to a trait's plus button | the full name, not "plus": "Add to Creature 1 · Innate — *trait name*, button" |
 | 6 | Press it, with the Explore tab still showing | "Added *name* to Creature 1 · Innate." (said although the party is on the other tab) |
+| 7 | In the field type `clas:life (weak OR snared`; swipe to the badge inside the field and to the first fix | "2 issues, button, expanded", then "Change to “class:”, button"; a double-tap mends it, the keyboard stays up and the caret is where it was |
 
 ## Anything, anywhere
 

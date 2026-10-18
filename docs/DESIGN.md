@@ -25,6 +25,8 @@ Define as CSS custom properties; never hard-code hex values in components.
 | `--status-warn` | `#f3c969` | conditional, random, conflicts |
 | `--status-crit` | `#ff9b87` | missing, invalid |
 | `--scrim` | `rgb(4 6 9 / 0.62)` | the page behind a modal sheet |
+| `--issue-error-surface` / `-border` | `#2a1816` / `#6e3a33` | a row of the issues list that is an error (text `--text`, the word and icon `--status-crit`) |
+| `--issue-warn-surface` / `-border` | `#2a2412` / `#5a4a22` | the same for a warning (the word and icon `--status-warn`) |
 
 Keyword kinds: debuff `#ff9b87`, buff `#74dbb0`, mechanic `#a9c1ff`, event `#f3c969` (the role shapes of a buff), flag muted italic.
 Class identity dots: Chaos `#ef6b5b`, Death `#b49cf5`, Life `#e9c46a`, Nature `#63c98a`, Sorcery `#5fb0f5`,
@@ -109,6 +111,23 @@ the token colours are only guaranteed on the page background.
 - **Effective query**: `--text` mono, wrapping (no scroll area), a quiet *Copy query* button, and "Copied" in `--status-good`
   for 2.5 s in a polite live region (not `role="status"`: the result count owns that).
 
+### Query issues
+What is wrong with the query (QUERY_LANGUAGE §5), in the search field and under it. Never colour alone: an icon and a word say the severity.
+- **Badge** (`IssueBadge`), inside the frame of the field at its right end: a mono pill, 24 px, with the icon and "2 issues" in `--status-crit`
+  (any error among them) or `--status-warn`, outlined in the same colour. It is a button (`aria-expanded`, `aria-controls` the list) as tall
+  as the field (44 px over the frame, where the pill is 24). A query that arrives with the address moves nothing: the badge takes room from the
+  text inside the field, not from the page. It has a 2 px ring of its own around the pill when focused, besides that of the field.
+- **List** (`QueryIssues`), under the field, shut or open by the badge: a `list` named "Query issues", a row for each issue (at most five, then
+  "and N more" in `--text-muted`) on `--issue-error-surface` or `--issue-warn-surface` with a 1 px border of the matching `--issue-*-border`
+  (decoration: the icon and the word carry the severity). A row is the icon (a crossed circle for an error, a triangle for a warning), the word in
+  bold, the message in `--text` and, to its right (under the message on a phone), the fix: a quiet button as the party's (`--surface-3`,
+  `--border-strong`), 44 px under a coarse pointer, named by what it does ("Change to “class:”", "Add the missing “)”"). The page scrolls: the
+  list pushes the chips down.
+- **Focus.** Pressing a fix with a pointer leaves the focus in the field (the keyboard of a phone stays up); from the keyboard the focus goes to
+  the field after the fix, with the caret after the edit. The order of the tab key is the field, the badge, the fixes, the chips.
+- **Said aloud.** `aria-invalid` on the field for errors only; its description is the text of each issue listed; a polite line (a plain
+  `aria-live`, not a `status`: the result count owns that) says the count after a pause and the result of a fix.
+
 ### Party panel
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
   the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a
@@ -187,8 +206,8 @@ size of the window are watched once for it and for `trackViewportOffset` (`page-
 - **Screen reader**: a person's check, `SCREEN_READER_CHECKLIST.md`.
 - **Touch targets** (`pointer: coarse`, which the Pixel 7 and iPhone 14 e2e projects match): every `button`, `a`, `input`,
   `select` and tab is at least 44 × 44 px (WCAG 2.5.8 asks 24), a checkbox counting with its label. `touch-targets.test.ts`
-  measures them on Explore (with a query and a filter on), in the open filters sheet and on the Party tab, and names the
-  controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
+  measures them on Explore (with a query and a filter on, and with the issues list open), in the open filters sheet and on the Party
+  tab, and names the controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
   target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
   the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the
   line beside it.
@@ -199,7 +218,8 @@ size of the window are watched once for it and for `trackViewportOffset` (`page-
 - Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). `contrast.test.ts` reads `tokens.css` and checks every text colour on every surface
   (`--bg`, `--bg-bar`, `--surface-1…3`, `--accent-surface`), the text of a description under the match highlight (on `--bg`, where
   the descriptions are: a text colour that passes there can fail on a lighter surface, as `--text-muted` does on `--surface-2`),
-  and the lines that show a state or frame the search field (`--accent`, `--accent-border`) at 3:1 (WCAG 1.4.11). `--border` and
+  the text of an issue (`--text`, and `--status-crit` or `--status-warn`) on its own surface, and the lines that show a state or frame the
+  search field (`--accent`, `--accent-border`) at 3:1 (WCAG 1.4.11). `--border` and
   `--border-strong` are dividers and the frame of buttons that name themselves in words: they carry no information and are not
   held to 3:1. A new token or a new surface goes in that test's lists.
 - Combobox per ARIA APG; result count in an `aria-live="polite"` region; bottom sheets are dialogs with focus trap and

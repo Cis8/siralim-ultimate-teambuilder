@@ -10,6 +10,8 @@ import {
   filtersSheet,
   isCompact,
   isTabbed,
+  issuesBadge,
+  issuesList,
   openExplore,
   pageHeading,
   rows,
@@ -95,6 +97,26 @@ test.describe('the tab key', () => {
     expect(walk.stops.length).toBeGreaterThan(10);
     expect(problemsOf(walk)).toEqual([]);
     expect(missed(walk, browserName)).toEqual([]);
+  });
+
+  test('reaches the badge of the issues and every fix of their list, and each shows a ring in sight', async ({
+    page,
+    browserName,
+  }) => {
+    // A parenthesis closed that was never opened, and one opened that is never closed, round a query that finds traits.
+    await openExplore(page, `./?q=${encodeURIComponent('weak OR snared ) (')}`);
+    await tabTo(page, issuesBadge(page), { limit: 6 });
+    await page.keyboard.press('Enter');
+    await expect(issuesList(page)).toBeVisible();
+
+    const walk = await walkTabOrder(page, { within: '#query-issues' });
+
+    expect(walk.stops.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([expect.stringContaining('“Remove “)””'), expect.stringContaining('“Remove “(””')]),
+    );
+    expect(problemsOf(walk)).toEqual([]);
+    expect(missed(walk, browserName)).toEqual([]);
+    expect(await axeViolations(page)).toEqual([]);
   });
 
   test('reaches every control of the Party tab, and each shows a ring in sight', async ({
