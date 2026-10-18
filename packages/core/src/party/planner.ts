@@ -1,5 +1,5 @@
-import type { Trait } from '../model/trait';
-import { sameSlot, type SlotPosition } from './party';
+import type { Trait, TraitId } from '../model/trait';
+import { sameSlot, traitAt, type SlotPosition } from './party';
 import type { Refusal } from './party-command';
 import { createPartyHistory, executeCommand, redo, undo, type PartyEdit, type PartyHistory } from './party-history';
 import { initialPartyState, type PartyState } from './party-state';
@@ -21,18 +21,36 @@ export function createPlanner({ party, target }: PartyState = initialPartyState)
 }
 
 /**
+ * What adding a trait came to: the planner after it, and the trait the slot held until then (`replaced`: its id, since a
+ * party keeps ids; `null` when the slot was empty or already held this very trait), or the slot rules' refusal.
+ */
+export type AddResult = { readonly ok: true; readonly planner: Planner; readonly replaced: TraitId | null } | Refusal;
+
+/**
  * Puts the trait in the target slot, if the slot rules allow, and moves the target on with `strategy`. A refusal comes back
  * with its reason; a trait that is in the target slot already changes nothing, the target included.
  */
-export function addTrait(
+export function addTrait(planner: Planner, trait: Trait, strategy: TargetStrategy = nextEmptySlot): AddResult {
+  return addTraitAt(planner, trait, planner.target, strategy);
+}
+
+/**
+ * Puts the trait in the slot `at`, which need not be the target: a trait the target slot refuses goes to another slot of
+ * the creature. The target moves on with `strategy` only when `at` is the target; the player is still filling the target
+ * otherwise, and it stays. What the slot held is replaced, and said (`replaced`). A trait that is in the slot already
+ * changes nothing, and gives the very same planner.
+ */
+export function addTraitAt(
   planner: Planner,
   trait: Trait,
+  at: SlotPosition,
   strategy: TargetStrategy = nextEmptySlot,
-): { readonly ok: true; readonly planner: Planner } | Refusal {
-  const result = executeCommand(planner.history, { type: 'place-trait', at: planner.target, trait });
+): AddResult {
+  const result = executeCommand(planner.history, { type: 'place-trait', at, trait });
   if (!result.ok) return result;
-  if (result.history === planner.history) return { ok: true, planner };
-  return { ok: true, planner: { history: result.history, target: strategy(result.history.party, planner.target) } };
+  if (result.history === planner.history) return { ok: true, planner, replaced: null };
+  const target = sameSlot(at, planner.target) ? strategy(result.history.party, planner.target) : planner.target;
+  return { ok: true, planner: { history: result.history, target }, replaced: traitAt(planner.history.party, at) };
 }
 
 /** Empties a slot and makes it the target: it is where the next trait is wanted. */

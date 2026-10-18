@@ -5,6 +5,7 @@ import { canRedo, canUndo } from './party-history';
 import { emptyParty, SLOT_POSITIONS, traitAt, withTraitAt, type SlotPosition } from './party';
 import {
   addTrait,
+  addTraitAt,
   chooseTarget,
   clearParty,
   clearSlot,
@@ -143,6 +144,108 @@ describe('addTrait', () => {
 
     expect(traitAt(planner.history.party, at(0, 'innate'))).toBe('a--one');
     expect(planner.target).toEqual(at(0, 'fused'));
+  });
+
+  it('says nothing was replaced when the target slot was empty', () => {
+    expect(addTrait(createPlanner(), a)).toMatchObject({ ok: true, replaced: null });
+  });
+
+  it('says which trait it replaced, so that the page can tell the player', () => {
+    const first = added(createPlanner(), a);
+
+    const result = addTrait(chooseTarget(first, at(0, 'innate')), b);
+
+    expect(result).toMatchObject({ ok: true, replaced: 'a--one' });
+  });
+
+  it('says nothing was replaced when the slot held that very trait already', () => {
+    const planner = chooseTarget(added(createPlanner(), a), at(0, 'innate'));
+
+    expect(addTrait(planner, a)).toEqual({ ok: true, planner, replaced: null });
+  });
+
+  it('puts the replaced trait back when undone, in one step', () => {
+    const first = added(createPlanner(), a);
+    const replaced = added(chooseTarget(first, at(0, 'innate')), b);
+
+    const undone = undoEdit(replaced);
+
+    expect(traitAt(undone.history.party, at(0, 'innate'))).toBe('a--one');
+  });
+});
+
+describe('addTraitAt', () => {
+  it('puts the trait in the slot it is given, not in the target', () => {
+    const planner = createPlanner();
+
+    const result = addTraitAt(planner, a, at(2, 'fused'));
+
+    expect(result.ok && traitAt(result.planner.history.party, at(2, 'fused'))).toBe('a--one');
+    expect(result.ok && traitAt(result.planner.history.party, planner.target)).toBeNull();
+  });
+
+  it('leaves the target where it was when the slot is not the target: the player is still filling that one', () => {
+    const planner = chooseTarget(createPlanner(), at(1, 'innate'));
+
+    const result = addTraitAt(planner, mastery, at(1, 'artifact'));
+
+    expect(result.ok && result.planner.target).toEqual(at(1, 'innate'));
+  });
+
+  it('moves the target on with the strategy when the slot is the target, as addTrait does', () => {
+    const planner = chooseTarget(createPlanner(), at(1, 'artifact'));
+
+    const result = addTraitAt(planner, mastery, at(1, 'artifact'));
+
+    expect(result.ok && result.planner.target).toEqual(at(2, 'innate'));
+    expect(result).toEqual(addTrait(planner, mastery));
+  });
+
+  it('moves the target with the strategy it is given', () => {
+    const lastSlot = () => at(5, 'artifact');
+
+    const result = addTraitAt(createPlanner(), a, at(0, 'innate'), lastSlot);
+
+    expect(result.ok && result.planner.target).toEqual(at(5, 'artifact'));
+  });
+
+  it('says which trait the slot held, and replaces it', () => {
+    const first = added(createPlanner(), a);
+
+    const result = addTraitAt(first, b, at(0, 'innate'));
+
+    expect(result.ok && traitAt(result.planner.history.party, at(0, 'innate'))).toBe('b--two');
+    expect(result).toMatchObject({ ok: true, replaced: 'a--one' });
+  });
+
+  it('is refused with the reason of the rules for that slot, and nothing changes', () => {
+    const planner = createPlanner();
+
+    const result = addTraitAt(planner, mastery, at(0, 'fused'));
+
+    expect(result).toEqual({
+      ok: false,
+      rule: 'special-traits-artifact-only',
+      reason: 'Mastery traits can only go in the Artifact slot.',
+    });
+    expect(planner.history.party).toBe(emptyParty);
+  });
+
+  it('gives the very same planner when the slot holds that trait already', () => {
+    const planner = added(createPlanner(), a);
+
+    expect(addTraitAt(planner, a, at(0, 'innate'))).toEqual({ ok: true, planner, replaced: null });
+  });
+
+  it('is one step to undo, which puts the target on the slot that was filled, as for every edit', () => {
+    const planner = chooseTarget(createPlanner(), at(1, 'innate'));
+    const result = addTraitAt(planner, mastery, at(1, 'artifact'));
+    if (!result.ok) throw new Error('the mastery was refused');
+
+    const undone = undoEdit(result.planner);
+
+    expect(undone.history.party).toBe(emptyParty);
+    expect(undone.target).toEqual(at(1, 'artifact'));
   });
 });
 
