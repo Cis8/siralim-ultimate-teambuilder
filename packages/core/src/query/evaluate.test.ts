@@ -128,7 +128,15 @@ describe('evaluate', () => {
     it('uses the matcher a field gives for its term', () => {
       const idStartsWithWeak: TraitMatcher = ({ trait: subject }) => subject.id.startsWith('weak');
       const registry = createFieldRegistry(
-        [{ name: 'idea', aliases: [], matcher: () => idStartsWithWeak }],
+        [
+          {
+            name: 'idea',
+            aliases: [],
+            help: 'the id of the trait',
+            matcher: () => idStartsWithWeak,
+            describe: (value) => `idea is “${value}”`,
+          },
+        ],
         () => () => false,
       );
       expect(evaluate(parseQuery('idea:x').ast, index, registry).map((each) => each.id)).toEqual([

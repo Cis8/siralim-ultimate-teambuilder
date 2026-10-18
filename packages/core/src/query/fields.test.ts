@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { hasRole } from '../model/keyword-kind';
 import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
+import { taxonomy } from '../taxonomy/taxonomy';
+import type { FieldDefinition, MatchMode, ValueChoice } from './field';
 import { fieldRegistry } from './fields';
 import { indexTrait } from './indexed-trait';
 import { tokenize } from './lexer';
@@ -425,6 +428,234 @@ describe('the fields of the query language', () => {
         expect(matches(source, trait())).toBe(true);
       },
     );
+  });
+
+  // The domain of a field is what lint and suggestions read, so it has to say what the matcher does. Each test below
+  // runs the matcher and compares it with the domain, on traits made to tell the cases apart.
+  describe('the values each field takes', () => {
+    const fieldNamed = (name: string): FieldDefinition => {
+      const found = fieldRegistry.resolve(name);
+      if (found === undefined) throw new Error(`There is no field "${name}"`);
+      return found;
+    };
+
+    /** What `mode` means, written out once for the tests: whether the text `entry` fits the value asked for. */
+    const fits = (mode: MatchMode, entry: string, value: string): boolean =>
+      mode === 'exact' ? entry === value : mode === 'substring' ? entry.includes(value) : entry.startsWith(value);
+
+    it('tells which fields are a list of the dataset, a list of choices or a keyword, and how each is compared', () => {
+      expect(fieldRegistry.fields.map(({ name, values }) => [name, values?.kind, values?.mode])).toEqual([
+        ['class', 'vocabulary', 'substring'],
+        ['family', 'vocabulary', 'substring'],
+        ['creature', 'vocabulary', 'substring'],
+        ['trait', 'vocabulary', 'substring'],
+        ['desc', undefined, undefined],
+        ['applies', 'keyword', 'prefix'],
+        ['uses', 'keyword', 'prefix'],
+        ['kw', 'keyword', 'prefix'],
+        ['mat', 'choices', 'exact'],
+        ['stack', 'choices', 'exact'],
+      ]);
+    });
+
+    describe('a list of the dataset', () => {
+      const subjects = [
+        trait({ class: 'Life', family: 'Clutcher', creature: 'Clutcher Bruiser', name: 'Last Stand' }),
+        trait({ class: 'Death', family: 'Abomination', creature: 'Abomination Brute', name: 'Flesh Rot' }),
+        trait({ class: 'Rodian Master', family: 'Clutcher', creature: 'Clutcher Bruiser', name: 'Stand Alone' }),
+        trait({ kind: 'mastery', creature: null, family: 'Rodian', class: 'Life', name: 'Master of Sins' }),
+      ].map(indexTrait);
+
+      it.each([
+        ['class', 'class'],
+        ['family', 'family'],
+        ['creature', 'creature'],
+        ['trait', 'name'],
+      ] as const)('%s: names the column of the dataset it takes its values from', (name, column) => {
+        expect(fieldNamed(name).values).toMatchObject({ kind: 'vocabulary', column });
+      });
+
+      it.each(['class', 'family', 'creature', 'trait'])(
+        '%s: finds the traits whose entry fits the value, for every part of every entry and for what is none of them',
+        (name) => {
+          const { values, matcher } = fieldNamed(name);
+          if (values?.kind !== 'vocabulary') throw new Error(`${name} has no vocabulary`);
+          const entries = subjects.map(({ columns }) => columns[values.column]);
+          const asked = new Set(['zzz', 'clutchers', 'master of sins and more']);
+          for (const entry of entries) {
+            for (let start = 0; start < entry.length; start += 1) {
+              for (let end = start + 1; end <= entry.length; end += 1) asked.add(entry.slice(start, end));
+            }
+          }
+          for (const value of asked) {
+            const expected = subjects.filter(({ columns }) => fits(values.mode, columns[values.column], value));
+            expect(subjects.filter(matcher(value)), JSON.stringify(value)).toEqual(expected);
+          }
+        },
+      );
+    });
+
+    describe('a list of choices', () => {
+      const subjects = [
+        trait({ material: 'Brute Stitches', stacks: true }),
+        trait({ material: 'Brute Stitches', stacks: false }),
+        trait({ material: null, stacks: true }),
+        trait({ material: null, stacks: false }),
+      ].map(indexTrait);
+
+      const choicesOf = (name: string): readonly ValueChoice[] => {
+        const { values } = fieldNamed(name);
+        if (values?.kind !== 'choices') throw new Error(`${name} has no choices`);
+        return values.choices;
+      };
+
+      it.each([
+        ['mat', [['yes'], ['no', 'none']]],
+        ['stack', [['yes'], ['no']]],
+      ])('%s: takes the spellings of QUERY_LANGUAGE §2', (name, spellings) => {
+        expect(choicesOf(name).map(({ value, aliases }) => [value, ...aliases])).toEqual(spellings);
+      });
+
+      it.each(['mat', 'stack'])('%s: finds, under every spelling of a choice, what the choice finds', (name) => {
+        const { matcher } = fieldNamed(name);
+        for (const choice of choicesOf(name)) {
+          const found = subjects.filter(choice.matcher);
+          // A choice that found every trait or none would tell nothing apart, and the comparison would prove little.
+          expect(found.length, choice.value).toBeGreaterThan(0);
+          expect(found.length, choice.value).toBeLessThan(subjects.length);
+          for (const spelling of [choice.value, ...choice.aliases]) {
+            expect(subjects.filter(matcher(spelling)), spelling).toEqual(found);
+          }
+        }
+      });
+
+      it.each(['mat', 'stack'])('%s: finds nothing for a value that is not a choice', (name) => {
+        const { matcher } = fieldNamed(name);
+        for (const value of [
+          'maybe',
+          'y',
+          'true',
+          'yes!',
+          'yess',
+          'ye',
+          'constructor',
+          '__proto__',
+          'tostring',
+          'has material',
+        ]) {
+          expect(subjects.filter(matcher(value)), value).toEqual([]);
+        }
+      });
+    });
+
+    describe('a keyword', () => {
+      const kinds: KeywordKind[] = ['debuff', 'buff', 'effect', 'event', 'mechanic', 'flag'];
+
+      it.each([
+        ['applies', [true, true, true, true, false, false]],
+        ['uses', [true, true, true, true, false, false]],
+        ['kw', [true, true, true, true, true, true]],
+      ])('%s: takes the kinds of keyword it can find', (name, accepted) => {
+        const { values } = fieldNamed(name);
+        if (values?.kind !== 'keyword') throw new Error(`${name} has no keywords`);
+        expect(kinds.map((kind) => values.accepts(kind))).toEqual(accepted);
+      });
+
+      it.each(['applies', 'uses', 'kw'] as const)(
+        '%s: finds the key of every keyword of the taxonomy exactly when it takes its kind',
+        (name) => {
+          const { values } = fieldNamed(name);
+          if (values?.kind !== 'keyword') throw new Error(`${name} has no keywords`);
+          for (const { key, kind } of taxonomy.entries) {
+            // A keyword that has a role is mentioned in the one the field reads; one that has none is mentioned bare.
+            const role = hasRole(kind) ? (name === 'uses' ? 'uses' : 'applies') : undefined;
+            const subject = trait({ keywords: [hit(key, kind, role)] });
+            expect(matches(`${name}:"${key}"`, subject), `${name}:"${key}" (${kind})`).toBe(values.accepts(kind));
+          }
+        },
+      );
+    });
+  });
+
+  describe('what a term says in words', () => {
+    const say = (field: string, value: string): string => {
+      const found = fieldRegistry.resolve(field);
+      if (found === undefined) throw new Error(`There is no field "${field}"`);
+      return found.describe(value);
+    };
+
+    it.each([
+      ['class', 'life', 'class contains “life”'],
+      ['family', 'clutcher', 'family contains “clutcher”'],
+      ['creature', 'bruiser', 'creature contains “bruiser”'],
+      ['trait', 'last stand', 'trait name contains “last stand”'],
+      ['desc', 'weak', 'description contains “weak”'],
+    ])('%s:%s reads "%s"', (field, value, words) => {
+      expect(say(field, value)).toBe(words);
+    });
+
+    it('reads a field by its name, whichever spelling the query used', () => {
+      expect(say('c', 'life')).toBe(say('class', 'life'));
+    });
+
+    it.each([
+      ['applies', 'vulnerable', 'applies “vulnerable”'],
+      ['applies', 'vul', 'applies “vul”'],
+      ['uses', 'weak', 'relies on “weak”'],
+      ['kw', 'weak', 'has keyword “weak”'],
+      ['uses', 'start of battle', 'relies on “start of battle”'],
+    ])('%s:%s reads "%s"', (field, value, words) => {
+      expect(say(field, value)).toBe(words);
+    });
+
+    it.each([
+      ['self', 'by this creature'],
+      ['ally', 'by your creatures'],
+      ['enemy', 'by an enemy'],
+      ['any', 'by any creature'],
+    ] as const)('says who acts, when the value names %s: %s', (actor, words) => {
+      expect(say('uses', `attack/${actor}`)).toBe(`relies on “attack” ${words}`);
+      expect(say('applies', `provoke/${actor}`)).toBe(`applies “provoke” ${words}`);
+      expect(say('kw', `death/${actor}`)).toBe(`has keyword “death” ${words}`);
+    });
+
+    it('says "any event" for an actor with no key', () => {
+      expect(say('uses', '/self')).toBe('relies on any event by this creature');
+    });
+
+    it('reads a slash with no actor after it as the key alone', () => {
+      expect(say('uses', 'attack/')).toBe('relies on “attack”');
+    });
+
+    it('says a slash and nothing else asks for nothing, as the search takes it', () => {
+      expect(say('uses', '/')).toBe('asks for nothing');
+    });
+
+    it('reads an old trigger phrase as the event and the actor it stands for', () => {
+      expect(say('uses', 'after this creature attacks')).toBe('relies on “attack” by this creature');
+      expect(say('kw', 'is killed')).toBe('has keyword “death”');
+    });
+
+    it('keeps a word after the slash that is no actor in the key, as the search does', () => {
+      expect(say('uses', 'provoke/nobody')).toBe('relies on “provoke/nobody”');
+    });
+
+    it.each([
+      ['mat', 'yes', 'has a material'],
+      ['mat', 'no', 'has no material'],
+      ['mat', 'none', 'has no material'],
+      ['stack', 'yes', 'stacks'],
+      ['stack', 'no', 'does not stack'],
+    ])('%s:%s reads "%s"', (field, value, words) => {
+      expect(say(field, value)).toBe(words);
+    });
+
+    it.each([
+      ['mat', 'maybe', 'mat is “maybe”'],
+      ['stack', 'none', 'stack is “none”'],
+    ])('says what was asked for a value the field does not take: %s:%s', (field, value, words) => {
+      expect(say(field, value)).toBe(words);
+    });
   });
 
   describe('the registry of the app', () => {

@@ -55,11 +55,22 @@ field    = letter , { letter } ;
 | `mat:` | `yes` = has material (artifact-eligible), `no`/`none` = no material | exact |
 | `stack:` | `yes` = stacks, `no` = "does not stack" | exact |
 
-Fields are a **registry** (`createFieldRegistry`; the fields of the app are in `query/fields.ts`). Phase 1 gives a
-`FieldDefinition` `{ name, aliases, matcher(value), highlightsDescription? }`; Phase 2 adds `suggestValues?(prefix)` and
-`describe(value)`. `matcher` is asked once per term, with the value lower-cased, and returns the test to run on each
-trait, so a field parses its value (`yes`, `no`) once, not once per trait. Names and aliases are lower-case ASCII letters (what the lexer reads before a colon)
+Fields are a **registry** (`createFieldRegistry`; the fields of the app are in `query/fields.ts`). A `FieldDefinition` is
+`{ name, aliases, help, matcher(value), highlightsDescription?, values?, describe(value) }`. `matcher` is asked once per
+term, with the value lower-cased, and returns the test to run on each trait, so a field parses its value (`yes`, `no`)
+once, not once per trait. Names and aliases are lower-case ASCII letters (what the lexer reads before a colon)
 and unique across the registry; the field name in a query is matched whatever its letter case.
+- `help` is what the field looks for, in one line (no padding, no line break), for the person typing it.
+- `values` says where the values of the field come from and how a value is compared with them (`mode`), and is absent where the
+  value is free text (`desc:`). Evaluation, lint and suggestions read this one description, and the tests run each matcher
+  against it. `choices`: a short list the field defines (`mat:`, `stack:`), compared exactly; each choice has its spellings
+  (`none` is a spelling of `no`), the test it stands for and what it means in words. `vocabulary`: a column of the dataset
+  (class, family, creature, trait name), any part of an entry. `keyword`: the keys of the taxonomy of the kinds the field can
+  find (`applies:` and `uses:` take buffs, debuffs, effects and events, `kw:` every kind), the start of a key, and for an event
+  `/actor`. The registry refuses a list of choices that is empty, a spelling that is not lower case, trimmed and not empty, and
+  one that is given twice.
+- `describe(value)` is the term in words, for the explanation of a query (§7): `class contains “life”`, `relies on “attack” by
+  this creature`, `does not stack`. A value the field does not take is described as what was asked for (`mat is “maybe”`).
 - **No field, or an unknown one.** A word with no field is looked for in the six columns of the table, one at a time, so a
   phrase never runs from the end of a column into the start of the next. An unknown field makes the whole token a free-text
   term: `clas:life` looks for the text `clas:life`, quotes stripped (and a diagnostic in Phase 2).
@@ -171,6 +182,13 @@ was opened.
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
 | Unknown class | error | No class “lif”. Did you mean Life? | replace |
 | Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
+
+**Did you mean.** `closestMatch(input, candidates)` gives the candidate that a misspelling was most likely meant to be, or
+nothing. It allows at most `max(2, ⌊length of the input / 3⌋)` edits (Levenshtein: a letter added, removed or changed, so a
+swap of two letters is two edits) and does not count the letter case; the candidate is given as it was written. It also asks
+for **fewer edits than the letters of the shorter text**, which the threshold alone does not: the match keeps a letter of the
+input, or `x:` would be taken for `c:` and any two letters for a one-letter alias. Of the close candidates the one with the
+fewest edits wins, then the one that shares the longer start with the input, then the first given.
 
 **The fixes of the syntax rows.** A fix is one `TextEdit`; the text outside it stays as typed, and after it the query means
 what it meant, since it puts into the text the repair the parser had made (the property tests compare `serialise` before

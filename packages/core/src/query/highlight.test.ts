@@ -172,11 +172,19 @@ describe('createHighlighter', () => {
       () =>
       () =>
         matches;
+    const field = (name: string, aliases: string[], rest: Partial<FieldDefinition> = {}): FieldDefinition => ({
+      name,
+      aliases,
+      help: `the ${name}`,
+      matcher: lookup(true),
+      describe: (value) => `${name} is “${value}”`,
+      ...rest,
+    });
     const registry = createFieldRegistry(
       [
-        { name: 'story', aliases: ['s'], matcher: lookup(true), highlightsDescription: true },
-        { name: 'other', aliases: [], matcher: lookup(true) },
-        { name: 'never', aliases: [], matcher: lookup(true), highlightsDescription: false },
+        field('story', ['s'], { highlightsDescription: true }),
+        field('other', []),
+        field('never', [], { highlightsDescription: false }),
       ],
       () => () => true,
     );

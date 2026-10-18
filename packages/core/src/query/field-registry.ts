@@ -31,8 +31,9 @@ export interface FieldRegistry {
 const matchEveryTrait: TraitMatcher = () => true;
 
 /**
- * Checks the fields and wraps them. Adding a field is adding a definition; the lexer, the parser and the evaluator do
- * not change. `freeText` is what a word with no field, and one with a field nobody knows, is looked for with.
+ * Checks the fields (their spellings, their line of help and their lists of choices) and wraps them. Adding a field is
+ * adding a definition; the lexer, the parser and the evaluator do not change. `freeText` is what a word with no field,
+ * and one with a field nobody knows, is looked for with.
  *
  * @throws FieldRegistryError listing every violation.
  */
@@ -40,7 +41,12 @@ export function createFieldRegistry(
   fields: readonly FieldDefinition[],
   freeText: (value: string) => TraitMatcher,
 ): FieldRegistry {
-  const violations = [...spellingViolations(fields), ...nameViolations(fields)];
+  const violations = [
+    ...spellingViolations(fields),
+    ...nameViolations(fields),
+    ...helpViolations(fields),
+    ...choiceViolations(fields),
+  ];
   if (violations.length > 0) {
     throw new FieldRegistryError(`The fields are not valid:\n- ${violations.join('\n- ')}`);
   }
@@ -82,11 +88,41 @@ function spellingViolations(fields: readonly FieldDefinition[]): string[] {
 }
 
 function nameViolations(fields: readonly FieldDefinition[]): string[] {
+  return repeats(fields.flatMap((field) => [field.name, ...field.aliases])).map(
+    ([spelling, count]) => `${JSON.stringify(spelling)} names ${count} fields`,
+  );
+}
+
+/** The help is shown on one line beside the name of the field. */
+function helpViolations(fields: readonly FieldDefinition[]): string[] {
+  return fields
+    .filter(({ help }) => help === '' || help !== help.trim() || /[\r\n]/.test(help))
+    .map(({ name }) => `field "${name}" needs one line of help: not empty, no padding, no line break`);
+}
+
+/** The matcher of a choice is asked for the value as the registry reads it from a term: lower case, trimmed and not empty. */
+function choiceViolations(fields: readonly FieldDefinition[]): string[] {
+  return fields.flatMap(({ name, values }) => {
+    if (values?.kind !== 'choices') return [];
+    const spellings = values.choices.flatMap(({ value, aliases }) => [value, ...aliases]);
+    return [
+      ...(values.choices.length === 0 ? [`field "${name}" has no choice`] : []),
+      ...spellings
+        .filter((spelling) => spelling === '' || spelling !== spelling.trim().toLowerCase())
+        .map(
+          (spelling) =>
+            `field "${name}" lists the choice ${JSON.stringify(spelling)}, which must be lower case, trimmed and not empty`,
+        ),
+      ...repeats(spellings).map(
+        ([spelling]) => `field "${name}" lists the choice ${JSON.stringify(spelling)} more than once`,
+      ),
+    ];
+  });
+}
+
+/** The texts that come up more than once, with how many times. */
+function repeats(texts: readonly string[]): [text: string, count: number][] {
   const counts = new Map<string, number>();
-  for (const spelling of fields.flatMap((field) => [field.name, ...field.aliases])) {
-    counts.set(spelling, (counts.get(spelling) ?? 0) + 1);
-  }
-  return [...counts]
-    .filter(([, count]) => count > 1)
-    .map(([spelling, count]) => `${JSON.stringify(spelling)} names ${count} fields`);
+  for (const text of texts) counts.set(text, (counts.get(text) ?? 0) + 1);
+  return [...counts].filter(([, count]) => count > 1);
 }

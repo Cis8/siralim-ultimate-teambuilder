@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { tokenize } from './lexer';
-import type { FieldDefinition, TraitMatcher } from './field';
+import type { FieldDefinition, TraitMatcher, ValueChoice, ValueDomain } from './field';
 import { createFieldRegistry, FieldRegistryError } from './field-registry';
 import type { IndexedTrait } from './indexed-trait';
 import type { TermToken } from './token';
@@ -11,7 +11,21 @@ const anyTrait = {} as IndexedTrait;
 const definition = (name: string, aliases: string[] = [], matcher?: FieldDefinition['matcher']): FieldDefinition => ({
   name,
   aliases,
+  help: `the ${name} of a trait`,
   matcher: matcher ?? (() => () => true),
+  describe: (value) => `${name} is “${value}”`,
+});
+
+const choice = (value: string, aliases: string[] = []): ValueChoice => ({
+  value,
+  aliases,
+  matcher: () => true,
+  meaning: `is ${value}`,
+});
+
+const withChoices = (name: string, ...choices: ValueChoice[]): FieldDefinition => ({
+  ...definition(name),
+  values: { kind: 'choices', mode: 'exact', choices },
 });
 
 function termOf(source: string): TermToken {
@@ -200,6 +214,82 @@ describe('createFieldRegistry', () => {
       const message = problems([definition('class', ['c']), definition('Creature', ['c'])]);
       expect(message).toContain('"Creature" must be');
       expect(message).toContain('"c" names 2 fields');
+    });
+  });
+
+  describe('the help of a field', () => {
+    it.each(['', '   ', ' padded ', 'two\nlines', 'carriage\rreturn'])(
+      'rejects %j: it is one line of text, as it is shown beside the name',
+      (help) => {
+        expect(problems([{ ...definition('class'), help }])).toContain('field "class" needs one line of help');
+      },
+    );
+
+    it('accepts a line with inner blanks and punctuation', () => {
+      const field = { ...definition('mat'), help: 'yes = artifact-eligible (has a material), no = has none' };
+      expect(createFieldRegistry([field], () => () => true).resolve('mat')?.help).toBe(field.help);
+    });
+  });
+
+  describe('the values of a field', () => {
+    const registryOf = (field: FieldDefinition) => createFieldRegistry([field], () => () => true);
+
+    it('keeps the domain as it was given, whatever its kind', () => {
+      const domains: ValueDomain[] = [
+        { kind: 'choices', mode: 'exact', choices: [choice('yes'), choice('no', ['none'])] },
+        { kind: 'vocabulary', mode: 'substring', column: 'class' },
+        { kind: 'keyword', mode: 'prefix', accepts: () => true },
+      ];
+      for (const values of domains) {
+        expect(registryOf({ ...definition('field'), values }).resolve('field')?.values).toBe(values);
+      }
+    });
+
+    it('accepts a field with no domain: its value is free text', () => {
+      expect(registryOf(definition('desc')).resolve('desc')?.values).toBeUndefined();
+    });
+
+    it('rejects a list of choices with nothing in it: no value would be right', () => {
+      expect(problems([withChoices('mat')])).toContain('field "mat" has no choice');
+    });
+
+    it.each(['Yes', ' yes', 'yes ', 'ye s ', ''])(
+      'rejects the choice %j: the matcher is asked for lower case, trimmed and not empty text',
+      (value) => {
+        expect(problems([withChoices('mat', choice(value))])).toContain(
+          `field "mat" lists the choice ${JSON.stringify(value)}, which must be lower case, trimmed and not empty`,
+        );
+      },
+    );
+
+    it('checks the aliases of a choice like the choice', () => {
+      expect(problems([withChoices('mat', choice('no', ['None']))])).toContain('the choice "None"');
+    });
+
+    it('rejects a spelling that two choices share, or a choice that repeats its own', () => {
+      expect(problems([withChoices('mat', choice('yes'), choice('no', ['yes']))])).toContain(
+        'field "mat" lists the choice "yes" more than once',
+      );
+      expect(problems([withChoices('mat', choice('no', ['none', 'none']))])).toContain('"none" more than once');
+      expect(problems([withChoices('mat', choice('no', ['no']))])).toContain('"no" more than once');
+    });
+
+    it('lets two fields use the same choice', () => {
+      expect(() =>
+        createFieldRegistry([withChoices('mat', choice('yes')), withChoices('stack', choice('yes'))], () => () => true),
+      ).not.toThrow();
+    });
+
+    it('lists every violation of every field at once', () => {
+      const message = problems([
+        { ...withChoices('mat', choice('Yes')), help: '' },
+        withChoices('stack'),
+        definition('Bad'),
+      ]);
+      expect(message).toContain('field "mat" needs one line of help');
+      expect(message).toContain('field "mat" lists the choice "Yes"');
+      expect(message).toContain('field "stack" has no choice');
+      expect(message).toContain('"Bad" must be');
     });
   });
 });

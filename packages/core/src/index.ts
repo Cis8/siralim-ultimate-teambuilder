@@ -39,7 +39,15 @@ export { applyEdit, type TextEdit } from './query/text-edit';
 export { withSyntaxFixes } from './query/syntax-fixes';
 export type { Span } from './query/span';
 export type { FieldName, SymbolToken, TermToken, Token } from './query/token';
-export type { FieldDefinition, TraitMatcher } from './query/field';
+export type {
+  FieldDefinition,
+  MatchMode,
+  TraitMatcher,
+  ValueChoice,
+  ValueDomain,
+  VocabularyColumn,
+} from './query/field';
+export { closestMatch } from './query/closest-match';
 export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
 export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';

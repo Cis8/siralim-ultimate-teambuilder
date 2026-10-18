@@ -13,8 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1 is done, the next slice is 9.2** (`closestMatch` and the value
-  domains of the fields, tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). Phase 1 stays open for slice 8.4 only: credits
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1 and 9.2 are done, the next slice is 9.3** (`createQueryVocabulary`,
+  then `vocabulary`, `traits` and `countMatches` on the service; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.4–9.5
+  read the domains of 9.2 (`field.values`: `column`, `accepts(kind)`, `choices`). Phase 1 stays open for slice 8.4 only: credits
   (ask the owner to confirm the authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on
   2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -277,11 +278,14 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       means the same after it (`- AND a`: the `-` goes first; no `)` inside an open quote); only the innermost `(` is closed by a `)`,
       and a `(` with nothing in it is removed (closing it gave `()`); past 50 problems no fixes (the work is quadratic: 8,000 stray
       `)` took 20 s). 100 kB with 50 problems costs 0.9 s, so 9.5's `lintQuery` must also skip texts over ~2,000 characters.
-- [ ] **9.2** Closest match and value domains. `closestMatch(input, candidates)` (own Levenshtein, §5 threshold `max(2, ⌊len/3⌋)`,
-      case-folded; ties: distance, shared prefix, candidate order). `FieldDefinition` gains `help` (one line), `values?: ValueDomain`
-      (`choices` | `vocabulary` | `keyword`, each with its matching mode: exact, substring, prefix) and `describe(value)`; the registry
-      validates them; the `mat:` / `stack:` choices leave their private `oneOf` maps so lint and suggestions read one table. *T:* each
-      field's matcher agrees with its domain (every choice matches, a value outside matches nothing); the registry rejects bad domains.
+- [x] **9.2** Closest match and value domains. `closestMatch(input, candidates)` (own Levenshtein), `FieldDefinition` +`help`,
+      +`values?: ValueDomain` (`choices` exact | `vocabulary` substring | `keyword` prefix) and +`describe(value)` on all ten fields;
+      the registry refuses help that is not one line and bad choices; `mat:` / `stack:` are built from their choices (no `oneOf`).
+      Deviations (QUERY_LANGUAGE §2, §5): `closestMatch` also asks for fewer edits than the letters of the shorter text (§5's
+      threshold alone offered `c:` for any mistyped letter); the keyword domain carries `accepts(kind)`, not a list of kinds;
+      `matcher` and `values` stay two descriptions, so the tests run each matcher against its domain (`fits` lives in
+      `fields.test.ts` until 9.4 needs it in `core`). **For 9.4:** §5's unknown-class example `lif` finds Life by substring, so it is
+      no error; the row's example becomes `lfe`.
 - [ ] **9.3** Vocabulary and service. `createQueryVocabulary(index, taxonomy)`: classes, families, creatures, trait names, keywords, built
       once at load (v2.0 when planned: 11 / 166 / 1,399 / 1,780 for the first four). `SearchService` exposes `vocabulary`, `traits` and
       `countMatches(state, query)` (parse, compile and the state's filters; no facets, sort or highlight). *T:* `countMatches` equals
