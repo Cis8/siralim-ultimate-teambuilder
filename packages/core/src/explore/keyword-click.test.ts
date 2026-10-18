@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import type { KeywordKind, KeywordRole } from '../model/trait';
+import { KEYWORD_ACTORS, type KeywordHit, type KeywordKind, type KeywordRole } from '../model/trait';
 import { initialExploreState, type ExploreState } from './explore-state';
 import { clickGoal, clickKeyword, isClickOn } from './keyword-click';
 
@@ -20,9 +20,16 @@ describe('clickGoal', () => {
     ['a buff that is applied', { key: 'shelled', kind: 'buff', role: 'applies' }, 'users'],
     ['an effect that is relied on', { key: 'zombies', kind: 'effect', role: 'uses' }, 'appliers'],
     ['a debuff that is only guarded against', debuff('silenced', 'resists'), 'mentions'],
-    ['an event that is caused', { key: 'attack', kind: 'event', role: 'applies' }, 'mentions'],
-    ['an event that is waited for', { key: 'start of battle', kind: 'event', role: 'uses' }, 'mentions'],
+    ['an event that is caused', { key: 'attack', kind: 'event', role: 'applies' }, 'users'],
+    ['an event that is waited for', { key: 'attack', kind: 'event', role: 'uses' }, 'appliers'],
     ['an event that is prevented', { key: 'death', kind: 'event', role: 'resists' }, 'mentions'],
+    // Nobody makes a battle start: the traits that cause it are none, so the click shows the ones that mention it.
+    [
+      'the start of a battle, which is only waited for',
+      { key: 'start of battle', kind: 'event', role: 'uses' },
+      'mentions',
+    ],
+    ['an event nobody knows, waited for', { key: 'no such event', kind: 'event', role: 'uses' }, 'appliers'],
     ['a mechanic', { key: 'charges', kind: 'mechanic' }, 'mentions'],
     ['the flag "does not stack"', { key: 'nostack', kind: 'flag' }, 'nonStacking'],
     ['a flag nobody has a filter for', { key: 'unheard-of', kind: 'flag' }, 'mentions'],
@@ -52,6 +59,49 @@ describe('clickKeyword', () => {
     expect(clickKeyword(initialExploreState, { key: 'start of battle', kind: 'event' }).keywords).toEqual([
       { field: 'kw', key: 'start of battle' },
     ]);
+  });
+
+  describe('on an event', () => {
+    const waitedFor: KeywordHit = { key: 'attack', kind: 'event', span: [0, 6], role: 'uses', actor: 'self' };
+
+    it('leads to the counterpart of the role, whoever the text says acts', () => {
+      expect(clickKeyword(initialExploreState, waitedFor).keywords).toEqual([{ field: 'applies', key: 'attack' }]);
+      expect(clickKeyword(initialExploreState, { ...waitedFor, role: 'applies' }).keywords).toEqual([
+        { field: 'uses', key: 'attack' },
+      ]);
+    });
+
+    it('leaves the side the panel has on for an actor in place of it, as it does for a buff', () => {
+      const state = stateWith({ keywords: [{ field: 'uses', key: 'attack', actor: 'self' }] });
+
+      expect(clickKeyword(state, waitedFor).keywords).toEqual([{ field: 'applies', key: 'attack' }]);
+    });
+
+    it('takes off a side that is on for an actor too, with a second click', () => {
+      const state = stateWith({ keywords: [{ field: 'applies', key: 'attack', actor: 'enemy' }] });
+
+      expect(clickKeyword(state, waitedFor)).toEqual(stateWith({ keywords: [] }));
+    });
+
+    it('keeps the filters of other events, by whoever they name', () => {
+      const state = stateWith({
+        keywords: [
+          { field: 'uses', key: 'death', actor: 'ally' },
+          { field: 'uses', key: 'attack', actor: 'self' },
+        ],
+      });
+
+      expect(clickKeyword(state, waitedFor).keywords).toEqual([
+        { field: 'uses', key: 'death', actor: 'ally' },
+        { field: 'applies', key: 'attack' },
+      ]);
+    });
+
+    it('shows the traits that mention the start of a battle, which nobody causes', () => {
+      expect(clickKeyword(initialExploreState, { ...waitedFor, key: 'start of battle' }).keywords).toEqual([
+        { field: 'kw', key: 'start of battle' },
+      ]);
+    });
   });
 
   it('shows only the traits that do not stack, when the flag is clicked', () => {
@@ -164,11 +214,20 @@ describe('isClickOn', () => {
     expect(isClickOn(stateWith({ doesNotStack: true }), flag)).toBe(true);
     expect(isClickOn(stateWith({ doesNotStack: false }), flag)).toBe(false);
   });
+
+  it('is on for an event whose side is on for an actor, as the panel’s button for it is', () => {
+    const attacked: Clicked = { key: 'attack', kind: 'event', role: 'applies' };
+    const state = stateWith({ keywords: [{ field: 'uses', key: 'attack', actor: 'enemy' }] });
+
+    expect(isClickOn(state, attacked)).toBe(true);
+    expect(isClickOn(state, { ...attacked, role: 'uses' })).toBe(false);
+    expect(isClickOn(state, { key: 'death', kind: 'event', role: 'applies' })).toBe(false);
+  });
 });
 
 describe('a click, on any state', () => {
   const clicked = fc.record({
-    key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'nostack'),
+    key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'attack', 'nostack'),
     kind: fc.constantFrom<KeywordKind>('debuff', 'buff', 'effect', 'event', 'mechanic', 'flag'),
     role: fc.option(fc.constantFrom<KeywordRole>('applies', 'uses', 'resists'), { nil: undefined }),
   });
@@ -176,10 +235,14 @@ describe('a click, on any state', () => {
     query: fc.string(),
     classes: fc.array(fc.constantFrom('life', 'death')),
     keywords: fc.array(
-      fc.record({
-        field: fc.constantFrom('applies', 'uses', 'kw'),
-        key: fc.constantFrom('vulnerable', 'weak', 'start of battle'),
-      }),
+      fc.record(
+        {
+          field: fc.constantFrom('applies', 'uses', 'kw'),
+          key: fc.constantFrom('vulnerable', 'weak', 'start of battle', 'attack'),
+          actor: fc.constantFrom(...KEYWORD_ACTORS),
+        },
+        { requiredKeys: ['field', 'key'] },
+      ),
     ),
     keywordMode: fc.constantFrom('all', 'any'),
     artifactEligible: fc.boolean(),

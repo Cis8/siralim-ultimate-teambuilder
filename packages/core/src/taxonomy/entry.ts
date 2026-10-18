@@ -16,6 +16,10 @@ export const TRIGGER_PHASES = [
 ] as const;
 export type TriggerPhase = (typeof TRIGGER_PHASES)[number];
 
+/** The kinds of event the filters set apart (the semicolons of the list in GAME_RULES R12), in the order they show them. */
+export const EVENT_GROUPS = ['battle', 'actions', 'hits', 'life', 'buffs'] as const;
+export type EventGroup = (typeof EVENT_GROUPS)[number];
+
 interface EntryBase<K extends KeywordKind> {
   readonly kind: K;
   /** What queries call it: `vulnerable`, `start of battle`. Lower case. */
@@ -66,6 +70,8 @@ export interface EventAlias {
  * the extractor reads from the text around it: the entry only says what the event is called in the texts.
  */
 export interface EventEntry extends EntryBase<'event'> {
+  /** The heading the filters list it under: battle and turns, actions, hits, life and death, buffs and debuffs. */
+  readonly group: EventGroup;
   /** Absent for the events that can happen at any time. */
   readonly phase?: TriggerPhase;
   /** The edge of a turn this event is, which is not a phrase but a grammar ("start of <whose> turn"): see `findTurns`. */

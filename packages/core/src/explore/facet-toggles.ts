@@ -1,4 +1,4 @@
-import type { ClassName } from '../model/trait';
+import type { ClassName, KeywordActor } from '../model/trait';
 import type { ExploreState, KeywordFilter } from './explore-state';
 
 const lowerCase = (name: ClassName): ClassName => name.toLowerCase();
@@ -39,4 +39,27 @@ export function toggleKeywordFilter(state: ExploreState, filter: KeywordFilter):
       ? state.keywords.filter((chosen) => !isSameKeywordFilter(chosen, filter))
       : [...state.keywords, filter],
   };
+}
+
+/** One side of a keyword: the field and the key, whoever acts. The panel's button for it does not know who does. */
+export type KeywordSideFilter = Pick<KeywordFilter, 'field' | 'key'>;
+
+const isOnSide = (chosen: KeywordFilter, { field, key }: KeywordSideFilter): boolean =>
+  chosen.field === field && chosen.key === key;
+
+/** Whether a filter on this side of the keyword is on, by anyone or by an actor: what the pressed state of its button says. */
+export function hasKeywordSide(state: ExploreState, side: KeywordSideFilter): boolean {
+  return state.keywords.some((chosen) => isOnSide(chosen, side));
+}
+
+/**
+ * What a press on a side of an event in the facet panel does: the filter is added after the others, by `actor` when there
+ * is one, or every filter on that side is taken off, whoever it names. An event by an actor is the same side as the event by
+ * anyone, so a button that looks pressed turns off what made it so (SPEC §8.1).
+ */
+export function toggleKeywordSide(state: ExploreState, side: KeywordSideFilter, actor?: KeywordActor): ExploreState {
+  if (hasKeywordSide(state, side)) {
+    return { ...state, keywords: state.keywords.filter((chosen) => !isOnSide(chosen, side)) };
+  }
+  return { ...state, keywords: [...state.keywords, actor === undefined ? side : { ...side, actor }] };
 }

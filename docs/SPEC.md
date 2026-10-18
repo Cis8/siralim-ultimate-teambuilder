@@ -88,8 +88,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
 ## 4. Keyword extraction
 
 - **Taxonomy as data** (`packages/core/src/taxonomy/*.ts`): debuffs, buffs, effects, events, mechanics, flags — each entry
-  has `key`, `label`, `kind`, `patterns` (one or more phrases), for events a `phase` (see §8.5) or none, and for debuffs
-  `canBeRandomlyApplied` (GAME_RULES R8).
+  has `key`, `label`, `kind`, `patterns` (one or more phrases), for events a `group` (the heading the filters list it under)
+  and a `phase` (see §8.5) or none, and for debuffs `canBeRandomlyApplied` (GAME_RULES R8).
 - **Buffs and debuffs come from canonical lists** (20 debuffs, 18 buffs; Barrier is a buff), transcribed once with a
   source note, not classified by hand:
   [wiki Buffs](https://siralimultimate.wiki.gg/wiki/Buffs), [wiki Debuffs](https://siralimultimate.wiki.gg/wiki/Debuffs),
@@ -109,7 +109,8 @@ Derived per member (GAME_RULES R2): `family` from innate, `class` from fused if 
   lists can grow.
 - **Events** (GAME_RULES R12, ADR-0009) are the 18 things that happen in battle, in the order of the rules: start of battle,
   start of turn, end of turn; attack, cast spell, manual cast, defend, provoke; being attacked, dodge, critical hit, damage
-  taken; heal, kill, death, resurrection; any buff, any debuff. An entry lists every inflection as a pattern ("die", "dies",
+  taken; heal, kill, death, resurrection; any buff, any debuff, which are also its five `EVENT_GROUPS` (battle and turns,
+  actions, hits, life and death, buffs and debuffs: the semicolons). An entry lists every inflection as a pattern ("die", "dies",
   "died", "dead", "killed" are a death) and has a `phase` (`TRIGGER_PHASES`: start of battle, start of turn, attacking, being
   attacked, defending, spellcasting, kills and deaths, end of turn; none for heal and the two buff events). Spells and Stats
   are mechanics. The eleven trigger phrases of the first version are `aliases` of the event (and, where the phrase names
@@ -309,11 +310,14 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   those fields, which the taxonomy keeps exact (no key is the start of another). A `KeywordFilter` is a field, a key and, for
   an event, an optional `actor`: `{ field: 'uses', key: 'attack', actor: 'self' }` is `uses:attack/self`, in the effective
   query, the chip and the address. The event by one actor and by anyone are two filters (`hasKeywordFilter` tells them apart),
-  and both can be on. The panel has no control for the actor until M8b.8; the address and the query bar carry it already.
+  and both can be on. The panel sets it with one control for all the events (below, *The Events section*); the address and the
+  query bar carry it too.
 - **Counts.** A class is counted among the traits the other filters and the query bar find, so choosing a class does not
   empty the others. A keyword is counted among the traits shown: how many apply it, rely on it, or mention it in any role
-  (`kw:`); a mechanic has `mentions` only. The facets list the classes of the dataset and the buffs, debuffs, effects,
-  events and mechanics of the taxonomy, with the counts they have, 0 included.
+  (`kw:`); a mechanic has `mentions` only. An event has, besides, the same two counts for each actor (`byActor`: the traits
+  whose text names that actor, as `applies:attack/self` finds them; `facetCount(facet, side, actor)` picks one). The facets
+  list the classes of the dataset and the buffs, debuffs, effects, events and mechanics of the taxonomy, with the counts they
+  have, 0 included.
 - **The order of the classes** is fixed when the dataset is loaded (`facetVocabulary`), so the list does not move as the
   filters change: the five classes of a creature first (Chaos, Death, Life, Nature, Sorcery, from A to Z; GAME_RULES R7),
   then the others by the number of traits they have in the dataset, the largest first and from A to Z among equals. In
@@ -329,6 +333,18 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   new visit finds them open. A shut section says how many filters are on inside (`activeFilterCounts`: one per class, per
   side of a keyword and per flag, as the chips count; a keyword the panel does not list is in no section). Opening or
   shutting one is no step of the history, and *Clear filters* takes the filters off in shut sections as in open ones.
+- **The Events section** (GAME_RULES R12) has one *Who* control and then the events in their five groups (`EventEntry.group`),
+  each with two buttons, *Causes* (`applies:`) and *Reacts* (`uses:`). A press turns the filter on with the actor the control
+  names (`toggleKeywordSide`), or, if the side is on, takes off every filter of it, whoever it names: the button is pressed for
+  the event by anyone and by an actor alike. The control offers *Any* (no actor: the event whoever acts), *This creature*
+  (`self`), *Your creatures* (`ally`) and *Enemies* (`enemy`); "any creature" is something a text says, not a choice. It
+  follows the filters (`eventActors`): with event filters on it shows the actor they all name, and nothing pressed when they
+  differ; a press gives every event filter that actor (`narrowEventFilters`; two that become the same are one, the first
+  keeping its place), as one step of the history, none when nothing changes. With no event filter on it shows the last choice,
+  which is what the next filter turned on gets; that choice is a state of the page like the shut sections (not in the address,
+  not in the local storage), and *Clear filters* leaves it, as it leaves the match mode. The counts of the buttons are those of
+  the actor shown (`facetCount`), so a button says how many traits it would show. A filter turned on by a click on a keyword
+  names no actor.
 - **The description of a result** is cut by `descriptionParts(description, keywords, marks)` into the keywords of the trait
   (spans of the dataset, in order and apart: tested on the real sheet) and the plain text between them, each with the
   pieces that the query marks (`SearchOutcome.highlight`); a mark that crosses the edge of a keyword is one piece in each
@@ -337,17 +353,21 @@ facets (`Facets`); any state can be searched, since the parser repairs the query
   the query bar alone. A keyword a trait applies leads to the traits that rely on it (`uses:key`), one it relies on to the
   traits that apply it (`applies:key`): the two are sides of one keyword, so turning one on takes the other off
   (`applies:vulnerable` becomes `uses:vulnerable`, and the click shows the counterpart, not the traits that are both).
-  A keyword with no side (an event for now, M8b.8 gives it one; a mechanic; a mention that only `resists`, GAME_RULES R9) is `kw:key`; the flag "does
-  not stack" is `doesNotStack`. A second click on a token whose filter is on turns it off, which leaves the other side as
-  it was. The page then shows the new list from its first trait and moves the focus to the results heading, since the row
-  clicked may be gone.
+  An event has its two sides like a buff (a trait that causes an attack leads to those that react to attacks, and the other
+  way round), whoever the text says acts: the filter a click makes names no actor. The start of a battle is the exception
+  (`EventEntry.moment`): nobody causes it, so a click on it shows the traits that mention it. A keyword with no side (a
+  mechanic; a mention that only `resists`, GAME_RULES R9) is `kw:key`; the flag "does not stack" is `doesNotStack`.
+  A side is on when a filter of its field and keyword is, by anyone or by an actor (`hasKeywordSide`), so the token is pressed
+  as the panel's button is. A second click on a token whose side is on turns it off, every filter of it (`toggleKeywordSide`),
+  which leaves the other side as it was. The page then shows the new list from its first trait and moves the focus to the
+  results heading, since the row clicked may be gone.
 - **Sort** is a strategy per key: `book` keeps the order of the dataset (by family, then trait name, since the dataset is
   sorted by id, §6), `class` and `az` compare ignoring letter case, and traits that tie keep the order of the dataset.
 - **The facet panel** turns the filters on and off with the same state-in, state-out functions as the click on a keyword
   (`toggleClass`, `toggleKeywordFilter`; `hasClass`, `hasKeywordFilter` tell what is on). Classes are toggles with the count of
-  traits each would show; a buff, a debuff, an effect or an event has two, *Applies* and *Relies on* (`applies:` and
-  `uses:`), and a mechanic one (`kw:`), counted by the traits that mention it. Unlike a click in a description, the panel does
-  what it is told: both sides of a keyword can be on at once (traits that give it *and* rely on it with *Match all*, either
+  traits each would show; a buff, a debuff or an effect has two, *Applies* and *Relies on* (`applies:` and `uses:`), an event
+  two, *Causes* and *Reacts* (the same fields), and a mechanic one (`kw:`), counted by the traits that mention it. Unlike a
+  click in a description, the panel does what it is told: both sides of a keyword can be on at once (traits that give it *and* rely on it with *Match all*, either
   with *Match any*). *Match all / Match any* is a pair of toggle buttons; the two flags are checkboxes. Under 700 px the panel is
   not on the page but in a modal bottom sheet that a "Filters" button (with the number of filters on) opens; Esc, its close
   button ("Show N traits") or a tap outside close it and the focus goes back to the button (DESIGN § Facet panel and chips).

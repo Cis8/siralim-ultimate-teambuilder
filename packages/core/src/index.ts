@@ -53,12 +53,13 @@ export type {
   EffectEntry,
   EventAlias,
   EventEntry,
+  EventGroup,
   FlagEntry,
   MechanicEntry,
   TaxonomyEntry,
   TriggerPhase,
 } from './taxonomy/entry';
-export { TRIGGER_PHASES } from './taxonomy/entry';
+export { EVENT_GROUPS, TRIGGER_PHASES } from './taxonomy/entry';
 export { createTaxonomy, TaxonomyError, type Taxonomy } from './taxonomy/registry';
 export { taxonomy } from './taxonomy/taxonomy';
 export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';
@@ -76,13 +77,22 @@ export {
   type KeywordMode,
   type SortKey,
 } from './explore/explore-state';
-export { FACET_KEYWORD_KINDS } from './explore/facets';
-export type { ClassFacet, FacetKeywordKind, Facets, KeywordFacet } from './explore/facets';
+export { facetCount, FACET_KEYWORD_KINDS } from './explore/facets';
+export type { ClassFacet, FacetKeywordKind, Facets, KeywordFacet, KeywordSide, SideCounts } from './explore/facets';
 export { decodeExploreState, encodeExploreState, EXPLORE_PARAMS } from './explore/explore-url';
 export type { ParamReader, UrlParams } from './url/url-params';
 export { descriptionParts, type DescriptionPart, type TextPiece } from './explore/description-parts';
 export { clickGoal, clickKeyword, isClickOn, type ClickedKeyword, type ClickGoal } from './explore/keyword-click';
-export { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './explore/facet-toggles';
+export {
+  hasClass,
+  hasKeywordFilter,
+  hasKeywordSide,
+  toggleClass,
+  toggleKeywordFilter,
+  toggleKeywordSide,
+  type KeywordSideFilter,
+} from './explore/facet-toggles';
+export { eventActors, narrowEventFilters } from './explore/event-actors';
 export { filterChips, removeFilterChip, type FilterChip } from './explore/filter-chips';
 export { clearFilters } from './explore/clear-filters';
 export { activeFilterCounts, FILTER_SECTIONS, type FilterSection } from './explore/active-filter-counts';

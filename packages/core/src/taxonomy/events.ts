@@ -10,6 +10,7 @@ import { event } from './entries';
  */
 export const events = [
   event('start of battle', 'Start of battle', {
+    group: 'battle',
     phase: 'startOfBattle',
     moment: true,
     patterns: [
@@ -23,14 +24,21 @@ export const events = [
   }),
   // The turns are read by a grammar ("start of <whose> turn"): the possessive can be a family ("your Phoenixes' turns").
   event('start of turn', 'Start of turn', {
+    group: 'battle',
     phase: 'startOfTurn',
     turnEdge: 'start',
     patterns: ['start-of-turn'],
     aliases: [{ key: "start of this creature's turn", actor: 'self' }],
   }),
-  event('end of turn', 'End of turn', { phase: 'endOfTurn', turnEdge: 'end', patterns: ['end-of-turn'] }),
+  event('end of turn', 'End of turn', {
+    group: 'battle',
+    phase: 'endOfTurn',
+    turnEdge: 'end',
+    patterns: ['end-of-turn'],
+  }),
   // "attacked" alone is the attack in the past ("for each time it attacked"); done to a creature it is the next entry.
   event('attack', 'Attack', {
+    group: 'actions',
     phase: 'attacking',
     patterns: ['attack', 'attacks', 'attacking', 'attacked', 'on-attack'],
     statPatterns: ['attack'],
@@ -40,21 +48,29 @@ export const events = [
       { key: 'after this creature attacks', actor: 'self' },
     ],
   }),
-  event('cast spell', 'Cast spell', { phase: 'spellcasting', patterns: ['cast', 'casts', 'casting', 'on-cast'] }),
+  event('cast spell', 'Cast spell', {
+    group: 'actions',
+    phase: 'spellcasting',
+    patterns: ['cast', 'casts', 'casting', 'on-cast'],
+  }),
   event('manual cast', 'Manual cast', {
+    group: 'actions',
     phase: 'spellcasting',
     patterns: ['manually cast', 'manually casts', 'cast spells manually', 'cast manually', 'manually casting'],
     aliases: [{ key: 'manually cast a spell' }, { key: 'manually casts a spell' }],
   }),
   event('defend', 'Defend', {
+    group: 'actions',
     phase: 'defending',
     patterns: ['defend', 'defends', 'defended', 'defending', 'on-defend'],
   }),
   event('provoke', 'Provoke', {
+    group: 'actions',
     phase: 'defending',
     patterns: ['provoke', 'provokes', 'provoked', 'provoking', 'on-provoke'],
   }),
   event('being attacked', 'Being attacked', {
+    group: 'hits',
     phase: 'beingAttacked',
     patterns: [
       'is attacked',
@@ -72,11 +88,13 @@ export const events = [
     aliases: [{ key: 'after this creature is attacked', actor: 'self' }],
   }),
   event('dodge', 'Dodge', {
+    group: 'hits',
     phase: 'beingAttacked',
     patterns: ['dodge', 'dodges', 'dodged', 'dodging', 'on-dodge'],
     aliases: [{ key: 'after an enemy dodges', actor: 'enemy' }],
   }),
   event('critical hit', 'Critical hit', {
+    group: 'hits',
     phase: 'attacking',
     patterns: [
       'deal critical damage',
@@ -88,6 +106,7 @@ export const events = [
     aliases: [{ key: 'deals critical damage' }],
   }),
   event('damage taken', 'Damage taken', {
+    group: 'hits',
     phase: 'beingAttacked',
     patterns: [
       'takes damage',
@@ -102,22 +121,29 @@ export const events = [
       'damaged by',
     ],
   }),
-  event('heal', 'Heal', { patterns: ['heal', 'heals', 'healed', 'healing', 'recover', 'recovers', 'recovered'] }),
+  event('heal', 'Heal', {
+    group: 'life',
+    patterns: ['heal', 'heals', 'healed', 'healing', 'recover', 'recovers', 'recovered'],
+  }),
   event('kill', 'Kill', {
+    group: 'life',
     phase: 'killsAndDeaths',
     patterns: ['kill', 'kills', 'killing'],
     aliases: [{ key: 'kills a creature' }],
   }),
   event('death', 'Death', {
+    group: 'life',
     phase: 'killsAndDeaths',
     patterns: ['die', 'dies', 'died', 'dying', 'dead', 'death', 'killed', 'on-death'],
     aliases: [{ key: 'is killed' }],
   }),
   event('resurrection', 'Resurrection', {
+    group: 'life',
     phase: 'killsAndDeaths',
     patterns: ['resurrect', 'resurrects', 'resurrected', 'resurrection', 'resurrecting', 'on-resurrect'],
   }),
   event('any buff', 'Any buff', {
+    group: 'buffs',
     patterns: [
       'each buff',
       'every buff',
@@ -138,6 +164,7 @@ export const events = [
     ],
   }),
   event('any debuff', 'Any debuff', {
+    group: 'buffs',
     patterns: [
       'each debuff',
       'every debuff',

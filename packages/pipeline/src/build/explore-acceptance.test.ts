@@ -4,6 +4,7 @@ import {
   DATASET_SCHEMA_VERSION,
   decodeExploreState,
   encodeExploreState,
+  facetCount,
   FACET_KEYWORD_KINDS,
   initialExploreState,
   KEYWORD_ACTORS,
@@ -178,6 +179,45 @@ describe('the Explore filters on the compendium v2.0', () => {
 
         expect(idsFound({ keywords: [bySelf] }).length).toBeLessThan(byAnyone.length);
         expect(both).toEqual(idsFound({ keywords: [bySelf] }));
+      });
+
+      // What the panel shows on a side of an event when "Who" is set: the traits that filter would keep from those shown.
+      it('count the traits of each actor among those shown, and as many as the filter for that actor finds', () => {
+        const eventFacets = (overrides: Partial<ExploreState>) =>
+          search(overrides).facets.keywords.filter(({ kind }) => kind === 'event');
+
+        for (const overrides of [{}, { classes: ['nature'] }, { query: 'class:death' }]) {
+          const shown = search(overrides).traits;
+          for (const facet of eventFacets(overrides)) {
+            for (const actor of KEYWORD_ACTORS) {
+              for (const side of ['applies', 'uses'] as const) {
+                const label = `${side}:${facet.key}/${actor} with ${JSON.stringify(overrides)}`;
+                expect(facetCount(facet, side, actor), label).toBe(
+                  shown.filter((trait) => hasHit(trait, side, facet.key, actor)).length,
+                );
+              }
+            }
+          }
+        }
+        for (const facet of eventFacets({})) {
+          for (const actor of KEYWORD_ACTORS) {
+            expect(facetCount(facet, 'uses', actor), `${facet.key}/${actor}`).toBe(
+              idsFound({ keywords: [{ field: 'uses', key: facet.key, actor }] }).length,
+            );
+          }
+        }
+      });
+
+      it('are listed in five groups, in the order of the rules, for the panel to head', () => {
+        const listed = search().facets.keywords.filter(({ kind }) => kind === 'event');
+
+        expect(listed.map(({ group }) => group)).toEqual([
+          ...Array<string>(3).fill('battle'),
+          ...Array<string>(5).fill('actions'),
+          ...Array<string>(4).fill('hits'),
+          ...Array<string>(4).fill('life'),
+          ...Array<string>(2).fill('buffs'),
+        ]);
       });
     });
 

@@ -200,7 +200,14 @@ describe('createKeywordMatcher', () => {
       it('is only a stat where the entry says so: a word of another event keeps its meaning', () => {
         const custom = createKeywordMatcher(
           createTaxonomy([
-            { kind: 'event', key: 'attack', label: 'Attack', patterns: ['attack', 'strike'], statPatterns: ['attack'] },
+            {
+              kind: 'event',
+              key: 'attack',
+              label: 'Attack',
+              patterns: ['attack', 'strike'],
+              group: 'actions',
+              statPatterns: ['attack'],
+            },
           ]),
         );
         expect(custom.match('15% more attack and a strike').map((match) => match.span)).toEqual([[22, 28]]);

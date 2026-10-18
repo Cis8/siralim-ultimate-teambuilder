@@ -10,9 +10,10 @@ const taxonomy = createTaxonomy([
     key: 'attack',
     label: 'Attack',
     patterns: ['attack'],
+    group: 'actions',
     aliases: [{ key: 'after this creature attacks', actor: 'self' }, { key: 'strike' }],
   },
-  { kind: 'event', key: 'start of turn', label: 'Start of turn', patterns: ['start of turn'] },
+  { kind: 'event', key: 'start of turn', label: 'Start of turn', patterns: ['start of turn'], group: 'battle' },
   { kind: 'debuff', key: 'weak', label: 'Weak', patterns: ['Weak'], canBeRandomlyApplied: true },
 ]);
 const parse = (text: string) => parseKeywordReference(text, taxonomy);

@@ -52,12 +52,15 @@ export function mechanic(key: string, label: string, patterns: readonly string[]
   return { kind: 'mechanic', key, label, patterns };
 }
 
-export interface EventOptions extends Pick<EventEntry, 'phase' | 'turnEdge' | 'moment' | 'statPatterns' | 'aliases'> {
+export interface EventOptions extends Pick<
+  EventEntry,
+  'group' | 'phase' | 'turnEdge' | 'moment' | 'statPatterns' | 'aliases'
+> {
   /** Every written form, the inflections included. Absent: the key alone. */
   readonly patterns?: readonly string[];
 }
 
-export function event(key: string, label: string, options: EventOptions = {}): EventEntry {
+export function event(key: string, label: string, options: EventOptions): EventEntry {
   const { patterns = [key], ...rest } = options;
   return { kind: 'event', key, label, patterns, ...rest };
 }

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
+import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
 import { createTraitIndex } from '../query/trait-index';
 import type { TaxonomyEntry } from '../taxonomy/entry';
 import { createTaxonomy } from '../taxonomy/registry';
-import { countFacets, facetVocabulary } from './facets';
+import { countFacets, facetCount, facetVocabulary } from './facets';
 
 function trait(id: string, overrides: Partial<Trait> = {}): Trait {
   return {
@@ -25,10 +25,11 @@ function trait(id: string, overrides: Partial<Trait> = {}): Trait {
   };
 }
 
-const mention = (key: string, kind: KeywordKind, role?: KeywordRole): KeywordHit => ({
+const mention = (key: string, kind: KeywordKind, role?: KeywordRole, actor?: KeywordActor): KeywordHit => ({
   key,
   kind,
   ...(role === undefined ? {} : { role }),
+  ...(actor === undefined ? {} : { actor }),
   span: [0, 1],
 });
 
@@ -41,9 +42,10 @@ const taxonomy = createTaxonomy([
   entry('buff', 'shelled'),
   entry('debuff', 'weak', { canBeRandomlyApplied: true }),
   entry('flag', 'nostack'),
-  entry('event', 'start of battle', { phase: 'startOfBattle' }),
+  entry('event', 'start of battle', { group: 'battle', phase: 'startOfBattle' }),
   entry('debuff', 'vulnerable', { canBeRandomlyApplied: true }),
   entry('effect', 'zombies'),
+  entry('event', 'attack', { group: 'actions', phase: 'attacking' }),
 ]);
 
 describe('facetVocabulary', () => {
@@ -129,8 +131,18 @@ describe('facetVocabulary', () => {
       'buff:shelled',
       'effect:zombies',
       'event:start of battle',
+      'event:attack',
       'mechanic:timeline',
     ]);
+  });
+
+  it('gives an event the group it is listed under, and no other keyword one', () => {
+    const { keywords } = facetVocabulary(createTraitIndex([]), taxonomy);
+
+    expect(
+      keywords.filter((keyword) => keyword.kind === 'event').map(({ key, group }) => `${key}:${String(group)}`),
+    ).toEqual(['start of battle:battle', 'attack:actions']);
+    expect(keywords.filter((keyword) => keyword.kind !== 'event').every((keyword) => !('group' in keyword))).toBe(true);
   });
 
   it('lists no class for an empty dataset', () => {
@@ -234,7 +246,7 @@ describe('countFacets', () => {
     it('lists every keyword of the taxonomy, with 0 for one nobody mentions', () => {
       const { keywords } = facetsFor([]);
 
-      expect(keywords).toHaveLength(6);
+      expect(keywords).toHaveLength(7);
       expect(keywords.every(({ applies, uses, mentions }) => applies + uses + mentions === 0)).toBe(true);
     });
 
@@ -248,5 +260,97 @@ describe('countFacets', () => {
 
       expect(keywords.map(({ key }) => key)).not.toContain('mystery');
     });
+  });
+
+  describe('events, by the actor the text names', () => {
+    const attack = (role: KeywordRole, ...actors: (KeywordActor | undefined)[]) =>
+      actors.map((actor) => mention('attack', 'event', role, actor));
+    const eventTraits = [
+      trait('self', { keywords: attack('uses', 'self') }),
+      trait('self-twice', { keywords: attack('uses', 'self', 'self') }),
+      trait('ally', { keywords: attack('uses', 'ally') }),
+      trait('enemy-causes', { keywords: attack('applies', 'enemy') }),
+      trait('self-and-enemy', { keywords: attack('uses', 'self', 'enemy') }),
+      trait('nobody', { keywords: attack('uses', undefined) }),
+      trait('guards', { keywords: attack('resists', 'enemy') }),
+      trait('the-start', { keywords: [mention('start of battle', 'event', 'uses')] }),
+    ];
+    const eventIndex = createTraitIndex(eventTraits);
+    const eventVocabulary = facetVocabulary(eventIndex, taxonomy);
+    const eventFacet = (key: string, found: readonly string[] = eventTraits.map(({ id }) => id)) => {
+      const traitsFound = eventIndex.entries.filter(({ trait: each }) => found.includes(each.id));
+      return countFacets(eventVocabulary, traitsFound, traitsFound).keywords.find((facet) => facet.key === key);
+    };
+
+    it('counts the traits that cause it or react to it for each actor', () => {
+      expect(eventFacet('attack')?.byActor).toEqual({
+        self: { applies: 0, uses: 3 },
+        ally: { applies: 0, uses: 1 },
+        enemy: { applies: 1, uses: 1 },
+        any: { applies: 0, uses: 0 },
+      });
+    });
+
+    it('counts a trait once for an actor, however often its text names it', () => {
+      expect(eventFacet('attack', ['self-twice'])?.byActor?.self).toEqual({ applies: 0, uses: 1 });
+    });
+
+    it('counts a trait that names two actors for each of them', () => {
+      expect(eventFacet('attack', ['self-and-enemy'])?.byActor).toMatchObject({
+        self: { uses: 1 },
+        enemy: { uses: 1 },
+      });
+    });
+
+    it('keeps the count by anyone as it is: every trait that has the event, whoever acts, and none for a mention with no actor', () => {
+      expect(eventFacet('attack')).toMatchObject({ applies: 1, uses: 5, mentions: 7 });
+      expect(eventFacet('attack', ['nobody'])).toMatchObject({ uses: 1 });
+      expect(eventFacet('attack', ['nobody'])?.byActor).toEqual({
+        self: { applies: 0, uses: 0 },
+        ally: { applies: 0, uses: 0 },
+        enemy: { applies: 0, uses: 0 },
+        any: { applies: 0, uses: 0 },
+      });
+    });
+
+    it('counts only the traits found', () => {
+      expect(eventFacet('attack', ['ally', 'the-start'])?.byActor?.self).toEqual({ applies: 0, uses: 0 });
+      expect(eventFacet('attack', ['ally', 'the-start'])?.byActor?.ally).toEqual({ applies: 0, uses: 1 });
+    });
+
+    it('has the counts of every event, zeros for one that names nobody', () => {
+      expect(eventFacet('start of battle')?.byActor?.self).toEqual({ applies: 0, uses: 0 });
+    });
+
+    it('has no count by actor for a keyword that is no event', () => {
+      expect(keywordFacet(everyone, 'weak')).not.toHaveProperty('byActor');
+      expect(keywordFacet(everyone, 'timeline')).not.toHaveProperty('byActor');
+    });
+  });
+});
+
+describe('facetCount', () => {
+  const byActor = {
+    self: { applies: 1, uses: 2 },
+    ally: { applies: 3, uses: 4 },
+    enemy: { applies: 5, uses: 6 },
+    any: { applies: 7, uses: 8 },
+  };
+  const attack = { applies: 20, uses: 30, byActor };
+
+  it('is the number of traits that have the side, whoever acts, when no actor is asked for', () => {
+    expect(facetCount(attack, 'applies')).toBe(20);
+    expect(facetCount(attack, 'uses')).toBe(30);
+  });
+
+  it('is the number of traits whose text names the actor, when one is', () => {
+    expect(facetCount(attack, 'applies', 'enemy')).toBe(5);
+    expect(facetCount(attack, 'uses', 'self')).toBe(2);
+    expect(facetCount(attack, 'uses', 'any')).toBe(8);
+  });
+
+  it('is 0 for an actor where nothing names one: a buff has no one acting', () => {
+    expect(facetCount({ applies: 4, uses: 5 }, 'applies', 'self')).toBe(0);
+    expect(facetCount({ applies: 4, uses: 5 }, 'applies')).toBe(4);
   });
 });

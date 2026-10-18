@@ -15,6 +15,7 @@ const event = (key: string, extra: Partial<Extract<TaxonomyEntry, { kind: 'event
   key,
   label: key,
   patterns: [key],
+  group: 'battle',
   phase: 'startOfBattle',
   ...extra,
 });

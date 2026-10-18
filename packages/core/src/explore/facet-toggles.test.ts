@@ -2,7 +2,14 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { KEYWORD_ACTORS } from '../model/trait';
 import { initialExploreState, type ExploreState, type KeywordFilter } from './explore-state';
-import { hasClass, hasKeywordFilter, toggleClass, toggleKeywordFilter } from './facet-toggles';
+import {
+  hasClass,
+  hasKeywordFilter,
+  hasKeywordSide,
+  toggleClass,
+  toggleKeywordFilter,
+  toggleKeywordSide,
+} from './facet-toggles';
 
 const stateWith = (patch: Partial<ExploreState>): ExploreState => ({ ...initialExploreState, ...patch });
 
@@ -76,6 +83,50 @@ describe('toggleKeywordFilter', () => {
     expect(hasKeywordFilter(state, { field: 'kw', key: 'vulnerable' })).toBe(true);
     expect(hasKeywordFilter(state, applies('vulnerable'))).toBe(false);
     expect(hasKeywordFilter(state, { field: 'kw', key: 'weak' })).toBe(false);
+  });
+});
+
+describe('toggleKeywordSide', () => {
+  const self: KeywordFilter = { field: 'uses', key: 'attack', actor: 'self' };
+  const enemy: KeywordFilter = { field: 'uses', key: 'attack', actor: 'enemy' };
+
+  it('turns a side on after the others, by the actor it is given', () => {
+    const state = stateWith({ keywords: [applies('weak')] });
+
+    expect(toggleKeywordSide(state, uses('attack'), 'self').keywords).toEqual([applies('weak'), self]);
+    expect(toggleKeywordSide(state, uses('attack')).keywords).toEqual([applies('weak'), uses('attack')]);
+  });
+
+  it('is on when a filter of its field and keyword is, by anyone or by one actor', () => {
+    expect(hasKeywordSide(stateWith({ keywords: [self] }), uses('attack'))).toBe(true);
+    expect(hasKeywordSide(stateWith({ keywords: [uses('attack')] }), uses('attack'))).toBe(true);
+    expect(hasKeywordSide(stateWith({ keywords: [applies('attack')] }), uses('attack'))).toBe(false);
+    expect(hasKeywordSide(stateWith({ keywords: [self] }), uses('provoke'))).toBe(false);
+    expect(hasKeywordSide(initialExploreState, uses('attack'))).toBe(false);
+  });
+
+  it('turns a side off whoever acts in the filters on it, and keeps everything else', () => {
+    const state = stateWith({
+      keywords: [applies('attack'), self, uses('provoke'), uses('attack'), enemy, { field: 'kw', key: 'attack' }],
+    });
+
+    expect(toggleKeywordSide(state, uses('attack'), 'ally').keywords).toEqual([
+      applies('attack'),
+      uses('provoke'),
+      { field: 'kw', key: 'attack' },
+    ]);
+  });
+
+  it('is undone by a second toggle', () => {
+    const state = stateWith({ keywords: [applies('weak')] });
+
+    expect(toggleKeywordSide(toggleKeywordSide(state, uses('attack'), 'self'), uses('attack'), 'self')).toEqual(state);
+  });
+
+  it('leaves the rest of the state alone', () => {
+    const state = stateWith({ query: 'weak', classes: ['life'], keywordMode: 'any', sort: 'az' });
+
+    expect(toggleKeywordSide(state, uses('attack'), 'enemy')).toEqual({ ...state, keywords: [enemy] });
   });
 });
 

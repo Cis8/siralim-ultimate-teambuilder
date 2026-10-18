@@ -1,7 +1,9 @@
 import { CREATURE_CLASSES } from '../enrichment/trait-kind';
-import type { ClassName, KeywordKey, KeywordKind } from '../model/trait';
+import type { ClassName, KeywordActor, KeywordKey, KeywordKind } from '../model/trait';
 import type { IndexedTrait } from '../query/indexed-trait';
+import { writeKeywordReference } from '../query/keyword-reference';
 import type { TraitIndex } from '../query/trait-index';
+import type { EventGroup } from '../taxonomy/entry';
 import type { Taxonomy } from '../taxonomy/registry';
 import { compareTextIgnoringCase } from '../text/compare-text';
 
@@ -28,12 +30,36 @@ export interface KeywordFacet {
   readonly key: KeywordKey;
   readonly label: string;
   readonly kind: FacetKeywordKind;
+  /** Events only: the heading the panel lists it under. */
+  readonly group?: EventGroup;
   /** Traits that give it. */
   readonly applies: number;
   /** Traits that rely on it. */
   readonly uses: number;
   /** Traits that mention it in any role, a mention that only guards against it included (what `kw:` finds). */
   readonly mentions: number;
+  /**
+   * Events only: `applies` and `uses` again, for the traits whose text names each actor (what `applies:attack/self` finds).
+   * A trait that names two actors is in both, and a mention that names none is in none: the sum can be short of the count
+   * by anyone, and a trait that names several can make it exceed it.
+   */
+  readonly byActor?: Readonly<Record<KeywordActor, SideCounts>>;
+}
+
+/** The two sides of a keyword that a filter has (`applies:` and `uses:`). */
+export type KeywordSide = 'applies' | 'uses';
+export type SideCounts = Readonly<Record<KeywordSide, number>>;
+
+/**
+ * The number the panel shows on a side of a keyword: the traits that have it, whoever acts, or the traits whose text names
+ * `actor`. A keyword with no actors (a buff) has none to name, so 0.
+ */
+export function facetCount(
+  facet: Pick<KeywordFacet, KeywordSide | 'byActor'>,
+  side: KeywordSide,
+  actor?: KeywordActor,
+): number {
+  return actor === undefined ? facet[side] : (facet.byActor?.[actor][side] ?? 0);
 }
 
 export interface Facets {
@@ -51,7 +77,7 @@ export interface FacetVocabulary {
    * the whole dataset, not of the traits shown, so that the list does not move as the filters change.
    */
   readonly classes: readonly Pick<ClassFacet, 'name' | 'standard'>[];
-  readonly keywords: readonly Pick<KeywordFacet, 'key' | 'label' | 'kind'>[];
+  readonly keywords: readonly Pick<KeywordFacet, 'key' | 'label' | 'kind' | 'group'>[];
 }
 
 export function facetVocabulary(index: TraitIndex, taxonomy: Taxonomy): FacetVocabulary {
@@ -69,7 +95,12 @@ export function facetVocabulary(index: TraitIndex, taxonomy: Taxonomy): FacetVoc
   return {
     classes: classes.toSorted(compareClasses).map(({ name, standard }) => ({ name, standard })),
     keywords: FACET_KEYWORD_KINDS.flatMap((kind) =>
-      taxonomy.ofKind(kind).map(({ key, label }) => ({ key, label, kind })),
+      taxonomy.ofKind(kind).map((entry) => ({
+        key: entry.key,
+        label: entry.label,
+        kind,
+        ...(entry.kind === 'event' ? { group: entry.group } : {}),
+      })),
     ),
   };
 }
@@ -98,6 +129,8 @@ export function countFacets(
   const applies = tally(found, (trait) => trait.applies);
   const uses = tally(found, (trait) => trait.uses);
   const mentions = tally(found, (trait) => trait.keywords);
+  const actedApplies = tally(found, (trait) => trait.acted.applies.map(writeKeywordReference));
+  const actedUses = tally(found, (trait) => trait.acted.uses.map(writeKeywordReference));
   return {
     classes: vocabulary.classes.map(({ name, standard }) => ({
       name,
@@ -109,8 +142,21 @@ export function countFacets(
       applies: applies.get(keyword.key) ?? 0,
       uses: uses.get(keyword.key) ?? 0,
       mentions: mentions.get(keyword.key) ?? 0,
+      ...(keyword.kind === 'event'
+        ? {
+            byActor: perActor((actor) => {
+              const written = writeKeywordReference({ key: keyword.key, actor });
+              return { applies: actedApplies.get(written) ?? 0, uses: actedUses.get(written) ?? 0 };
+            }),
+          }
+        : {}),
     })),
   };
+}
+
+/** One value for each actor. Spelled out so that a new actor is a type error here and not a count that is missing. */
+function perActor<T>(valueOf: (actor: KeywordActor) => T): Record<KeywordActor, T> {
+  return { self: valueOf('self'), ally: valueOf('ally'), enemy: valueOf('enemy'), any: valueOf('any') };
 }
 
 /** How many traits list each name. A trait lists a name once. */

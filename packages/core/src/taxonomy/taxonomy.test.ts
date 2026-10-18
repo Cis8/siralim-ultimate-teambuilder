@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRIGGER_PHASES } from './entry';
+import { EVENT_GROUPS, TRIGGER_PHASES } from './entry';
 import { taxonomy } from './taxonomy';
 
 // The names below are transcribed from the canonical sources, not from the code under test:
@@ -107,6 +107,20 @@ describe('the taxonomy', () => {
         'any debuff',
       ]);
       expect(new Set(events.map((event) => event.phase))).toEqual(new Set([...TRIGGER_PHASES, undefined]));
+    });
+
+    // The semicolons of the list in GAME_RULES R12: the filters show the events in these five groups, and since the groups
+    // follow one another in the list, the order of the events is also the order of the panel.
+    it('stand in the five groups of the rules', () => {
+      expect(
+        EVENT_GROUPS.map((group) => events.filter((event) => event.group === group).map((event) => event.key)),
+      ).toEqual([
+        ['start of battle', 'start of turn', 'end of turn'],
+        ['attack', 'cast spell', 'manual cast', 'defend', 'provoke'],
+        ['being attacked', 'dodge', 'critical hit', 'damage taken'],
+        ['heal', 'kill', 'death', 'resurrection'],
+        ['any buff', 'any debuff'],
+      ]);
     });
 
     it.each([
