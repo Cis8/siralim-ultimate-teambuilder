@@ -7,7 +7,7 @@ import { MAX_FIXABLE_DIAGNOSTICS, withSyntaxFixes } from './syntax-fixes';
 import { applyEdit } from './text-edit';
 
 /** What the field shows for a text: the parser's diagnostics, each with the fix this module gives it. */
-function diagnose(source: string): QueryDiagnostic[] {
+function diagnose(source: string): QueryDiagnostic<SyntaxDiagnosticCode>[] {
   return withSyntaxFixes(source, parseQuery(source));
 }
 

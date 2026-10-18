@@ -13,9 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.3 are done, the next slice is 9.4** (`LintRule`, `createLintRegistry`,
-  `LintContext`, the field and value rules; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.4–9.5 read the domains of
-  9.2 (`field.values`: `column`, `accepts(kind)`, `choices`) and the vocabulary of 9.3 (`service.vocabulary[column]`). Phase 1 stays open for slice 8.4 only: credits
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1–9.4 are done, the next slice is 9.5** (the keyword and free-text rules and
+  `lintQuery`; tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). 9.5 reads the same `LintContext` (`fields`, `taxonomy`,
+  `vocabulary`, `hits`) and adds its rules to `lint-rules.ts`; see *For 9.5* under 9.4. Phase 1 stays open for slice 8.4 only: credits
   (ask the owner to confirm the authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on
   2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -282,8 +282,7 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       the registry refuses help that is not one line and bad choices; `mat:` / `stack:` are built from their choices (no `oneOf`).
       Deviations (QUERY_LANGUAGE §2, §5): `closestMatch` also asks for fewer edits than the letters of the shorter text (§5's
       threshold alone offered `c:` for any mistyped letter); the keyword domain carries `accepts(kind)`, not a list of kinds;
-      `matcher` and `values` stay two descriptions, so the tests run each matcher against its domain (`fits` lives in
-      `fields.test.ts` until 9.4 needs it in `core`). **For 9.4:** §5's unknown-class example `lif` finds Life by substring, so it is
+      `matcher` and `values` stay two descriptions, so the tests run each matcher against its domain (with `fitsValue`, 9.4). **For 9.4:** §5's unknown-class example `lif` finds Life by substring, so it is
       no error; the row's example becomes `lfe`.
 - [x] **9.3** Vocabulary and service. `createQueryVocabulary(index)` (`query-vocabulary.ts`): for each `VocabularyColumn` its distinct entries,
       first spelling, A to Z; built once at load (v2.0: 11 / 166 / 1,399 / 1,780, pinned in `assist-acceptance.test.ts`, which also
@@ -292,11 +291,19 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
       has them and `LintContext` carries it), so the signature has no taxonomy; the lists are keyed by column, so `vocabulary[domain.column]`
       reads them; `serialiseTerm` is exported now (the test writes terms with it). **For 9.4:** `hits(term)` must ask `countMatches` with
       `initialExploreState`: "in no trait" is about the dataset, whatever the filters (D18's counts are for suggestions only).
-- [ ] **9.4** Lint registry, field and value rules. `LintRule {id, check}`, `createLintRegistry` (hyphenated unique ids, `LintRegistryError`,
-      like `createSlotRuleRegistry`), `LintContext {fields, taxonomy, vocabulary, hits(term)}` with `hits` memoised per field and value.
-      Rules: unknown field (the fix replaces the field name only), empty value (warning), bad `mat:` / `stack:` value, unknown class
-      (error), unknown family / creature / trait value (warning, D21). *T:* per rule the §5 message verbatim (operator as written), the
-      span is only the part at fault, the fix lints clean.
+- [x] **9.4** Lint registry, field and value rules. `LintRule {id, check(term, context) → LintFinding | undefined}`, `createLintRegistry`
+      (ids checked by `ruleIdViolations`, now shared with the slot rules; `LintRegistryError`) which stamps the rule's `id` as the `code`;
+      `LintContext {fields, taxonomy, vocabulary, hits(term)}` made by `createLintContext(service)` (in `search/`, so `query/` does not
+      depend on it; `hits` asks `countMatches(initialExploreState, …)` once per field and value). Rules (`field-rules.ts`, listed in
+      `lint-rules.ts` as `lintRegistry`): `unknown-field`, `empty-value`, `invalid-choice`, `unknown-class` (error), `unknown-family`,
+      `unknown-creature`, `unknown-trait` (warnings, D21). Deviations (QUERY_LANGUAGE §5): `QueryDiagnostic<Code>` is generic (the
+      parser's code is a `SyntaxDiagnosticCode`, a rule's its id); `fitsValue(mode, entry, value)` moved from `fields.test.ts` into
+      `field.ts`, and "unknown value" means no entry of the vocabulary fits, which the real sheet proves equal to "the search finds
+      nothing" (`assist-acceptance.test.ts`, 3 mutations of every entry, and each fix finds traits and lints clean); a bare `""` warns
+      too (§2 promised it); "did you mean" compares with whole entries, so a mistyped part of one (`creature:bruser`) gets no offer.
+      **For 9.5:** no rule reads `hits` yet, it is for the free-term rule, which must skip a term with an unknown field (it has its
+      finding already) and one with no value; a rule's span is only the part at fault, its fix one edit of that span, so the new
+      rules use `changeTo` / `writtenValue` of `field-rules.ts` (move them to a module of their own when the second file needs them).
 - [ ] **9.5** Keyword rules, free text, `lintQuery`. A role on a mechanic or flag (warning, fix `kw:`), unknown keyword (accepts every key
       prefix, the 11 old phrases and `key/actor`: reuse the split `parseKeywordReference` does), unknown actor (error), an actor on a
       keyword that has none (warning: buffs, debuffs, effects, mechanics, the start of battle), a free term in no trait (warning, "did you

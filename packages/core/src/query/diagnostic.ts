@@ -20,8 +20,12 @@ export interface DiagnosticFix {
   readonly edit: TextEdit;
 }
 
-export interface QueryDiagnostic {
-  readonly code: SyntaxDiagnosticCode;
+/**
+ * What is wrong with a stretch of a query. The parser reports `QueryDiagnostic<SyntaxDiagnosticCode>`; a lint rule
+ * reports its own `id` as the code, so the codes of the rules are open, as the registry of rules is.
+ */
+export interface QueryDiagnostic<Code extends string = string> {
+  readonly code: Code;
   readonly severity: DiagnosticSeverity;
   /** The text at fault. */
   readonly span: Span;

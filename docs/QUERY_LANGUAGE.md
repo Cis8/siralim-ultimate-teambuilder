@@ -166,8 +166,8 @@ The parser already returns the syntax diagnostics (the first seven rows), as `{ 
 message }` with the `message` of the table, the operator as written in it. `severity` is `'error' | 'warning'` and a
 diagnostic may carry `fix?: { label, edit: TextEdit }` (`TextEdit` is `{ span, text }`, `applyEdit(source, edit)` makes it).
 The parser gives no fix: `withSyntaxFixes(source, parseQuery(source))` adds the ones of the first seven rows, and the
-warning severity and the other rows come with the lint registry (9.4, 9.5). One diagnostic per unclosed `(`, where it
-was opened.
+other rows are lint rules (below; the keyword and free-text ones come with 9.5). One diagnostic per unclosed `(`, where it
+was opened. `QueryDiagnostic<Code>` is generic in its code: the parser's are `SyntaxDiagnosticCode`, a rule's is its `id`.
 
 | Rule | Severity | Message | Fix |
 |---|---|---|---|
@@ -185,7 +185,8 @@ was opened.
 | Unknown actor | error | No actor called “nobody”. Use self, ally, enemy or any | replace |
 | Actor on a keyword that has none | warning | Weak is not done by anyone, so “/self” finds nothing | remove the actor |
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
-| Unknown class | error | No class “lif”. Did you mean Life? | replace |
+| Unknown class | error | No class “lfe”. Did you mean Life? | replace |
+| Unknown family, creature or trait name (D21) | warning | No family “clutchr”. Did you mean Clutcher? | replace |
 | Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
 
 **The vocabulary.** What the dataset gives a person to type is listed once, when it is loaded (`createQueryVocabulary(index)`,
@@ -201,6 +202,27 @@ swap of two letters is two edits) and does not count the letter case; the candid
 for **fewer edits than the letters of the shorter text**, which the threshold alone does not: the match keeps a letter of the
 input, or `x:` would be taken for `c:` and any two letters for a one-letter alias. Of the close candidates the one with the
 fewest edits wins, then the one that shares the longer start with the input, then the first given.
+
+**The lint rules.** A `LintRule` is `{ id, check(term, context) }`: it reads one term and returns what it finds wrong with it
+(`severity`, `span`, `message` and perhaps a `fix`) or nothing. `createLintRegistry(rules)` refuses an `id` that is not lower-case
+words joined by hyphens, or that two rules share (`LintRegistryError`, like the slot rules), and its `check(term, context)` gives
+each finding as a `QueryDiagnostic` whose `code` is the id of its rule. The rules of the app are `lintRegistry`: a new rule is
+written and listed there, and nothing else changes. `LintContext` is what a rule may ask besides the term: `fields`, `taxonomy`,
+`vocabulary` and `hits(term)`, how many traits of the **whole dataset** (no filter of the page) the term finds, asked once for each
+field and value however it is written (`createLintContext(service)`: one for each dataset).
+- **Field and value rules** (`field-rules.ts`) read the `values` domain of the field, as the matcher does, so they cannot disagree
+  with it. `unknown-field` (the span is the letters of the name, the fix replaces them; the candidates are every name and alias),
+  `empty-value` (the whole term; also `""`, “Nothing between the quotes”, but not a quote still open), `invalid-choice` (the
+  value; the message lists the values of the field, not the aliases, and the fix is the closest *value*), and `unknown-class`,
+  `unknown-family`, `unknown-creature`, `unknown-trait` (the value). The last four fire when **no entry of the column fits the
+  value in the way the field compares them** (`fitsValue(mode, entry, value)`: for these fields, any part of an entry), which is
+  exactly when the search finds nothing; the real sheet tests it. A class is an error, the other three are warnings (D21).
+- **What a finding says.** The field is quoted as written (`“CLAS:”`), the value as typed. The fix is one edit of the span, labelled
+  *Change to “Life”*, with the replacement written as the lexer needs it (`"Rodian Master"` in quotes, `Life` not). It is given
+  only when something is close; and once applied, the finding is gone. “Did you mean” compares with whole entries, so a mistyped
+  part of one (`creature:bruser` for Clutcher Bruiser) is reported without an offer.
+- **One finding for one fault.** A term whose field is unknown gets that finding alone (`clas:zzz` is not also an unknown value);
+  a term with no value gets `empty-value` alone (not also an unknown class).
 
 **The fixes of the syntax rows.** A fix is one `TextEdit`; the text outside it stays as typed, and after it the query means
 what it meant, since it puts into the text the repair the parser had made (the property tests compare `serialise` before

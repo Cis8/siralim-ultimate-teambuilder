@@ -48,6 +48,9 @@ export type {
   VocabularyColumn,
 } from './query/field';
 export { closestMatch } from './query/closest-match';
+export type { LintContext, LintFinding, LintRule } from './query/lint-rule';
+export { createLintRegistry, LintRegistryError, type LintRegistry } from './query/lint-registry';
+export { lintRegistry } from './query/lint-rules';
 export { createFieldRegistry, FieldRegistryError, type FieldRegistry } from './query/field-registry';
 export { fieldRegistry } from './query/fields';
 export { indexTrait, type ColumnName, type IndexedTrait } from './query/indexed-trait';
@@ -78,6 +81,7 @@ export { DatasetLoadError, type TraitRepository } from './repository/trait-repos
 export { createMemoryTraitRepository } from './repository/memory-trait-repository';
 export { readDataset, readManifest } from './repository/read-dataset';
 export { createSearchService, type SearchOutcome, type SearchService } from './search/search-service';
+export { createLintContext, type LintSource } from './search/lint-context';
 export {
   initialExploreState,
   KEYWORD_FILTER_FIELDS,

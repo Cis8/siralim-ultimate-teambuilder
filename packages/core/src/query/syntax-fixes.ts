@@ -10,8 +10,8 @@ import type { Token } from './token';
 interface FixContext {
   readonly source: string;
   readonly tokens: readonly Token[];
-  readonly diagnostics: readonly QueryDiagnostic[];
-  readonly diagnostic: QueryDiagnostic;
+  readonly diagnostics: readonly QueryDiagnostic<SyntaxDiagnosticCode>[];
+  readonly diagnostic: QueryDiagnostic<SyntaxDiagnosticCode>;
 }
 
 type SyntaxFix = (context: FixContext) => DiagnosticFix | undefined;
@@ -68,7 +68,7 @@ export const MAX_FIXABLE_DIAGNOSTICS = 50;
  * end of the text) would end up inside it. For a text with up to `MAX_FIXABLE_DIAGNOSTICS` problems, fixing the first
  * diagnostic that has a fix, again and again, ends with none left.
  */
-export function withSyntaxFixes(source: string, parsed: ParseResult): QueryDiagnostic[] {
+export function withSyntaxFixes(source: string, parsed: ParseResult): QueryDiagnostic<SyntaxDiagnosticCode>[] {
   const { tokens, diagnostics } = parsed;
   if (diagnostics.length > MAX_FIXABLE_DIAGNOSTICS) return [...diagnostics];
   const meaning = serialise(parsed.ast);

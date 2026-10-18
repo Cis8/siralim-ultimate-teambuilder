@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { hasRole } from '../model/keyword-kind';
 import type { KeywordActor, KeywordHit, KeywordKind, KeywordRole, Trait } from '../model/trait';
 import { taxonomy } from '../taxonomy/taxonomy';
-import type { FieldDefinition, MatchMode, ValueChoice } from './field';
+import { fitsValue, type FieldDefinition, type ValueChoice } from './field';
 import { fieldRegistry } from './fields';
 import { indexTrait } from './indexed-trait';
 import { tokenize } from './lexer';
@@ -439,9 +439,19 @@ describe('the fields of the query language', () => {
       return found;
     };
 
-    /** What `mode` means, written out once for the tests: whether the text `entry` fits the value asked for. */
-    const fits = (mode: MatchMode, entry: string, value: string): boolean =>
-      mode === 'exact' ? entry === value : mode === 'substring' ? entry.includes(value) : entry.startsWith(value);
+    // `fitsValue` is what lint reads of a mode: the comparison with the matchers below is what keeps it honest.
+    it.each([
+      ['exact', 'life', 'life', true],
+      ['exact', 'life', 'lif', false],
+      ['exact', 'life', 'ife', false],
+      ['substring', 'rodian master', 'dian ma', true],
+      ['substring', 'rodian master', 'rodian', true],
+      ['substring', 'rodian master', 'master rodian', false],
+      ['prefix', 'dire wolves', 'dire w', true],
+      ['prefix', 'dire wolves', 'wolves', false],
+    ] as const)('reads the mode %s: is "%s" fit by "%s"? %s', (mode, entry, value, expected) => {
+      expect(fitsValue(mode, entry, value)).toBe(expected);
+    });
 
     it('tells which fields are a list of the dataset, a list of choices or a keyword, and how each is compared', () => {
       expect(fieldRegistry.fields.map(({ name, values }) => [name, values?.kind, values?.mode])).toEqual([
@@ -488,7 +498,7 @@ describe('the fields of the query language', () => {
             }
           }
           for (const value of asked) {
-            const expected = subjects.filter(({ columns }) => fits(values.mode, columns[values.column], value));
+            const expected = subjects.filter(({ columns }) => fitsValue(values.mode, columns[values.column], value));
             expect(subjects.filter(matcher(value)), JSON.stringify(value)).toEqual(expected);
           }
         },

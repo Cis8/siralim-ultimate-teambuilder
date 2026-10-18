@@ -1,4 +1,6 @@
 import {
+  applyEdit,
+  createLintContext,
   createMemoryTraitRepository,
   createSearchService,
   DATASET_SCHEMA_VERSION,
@@ -8,10 +10,14 @@ import {
   initialExploreState,
   KEYWORD_ACTORS,
   KEYWORD_MODES,
+  lintRegistry,
   serialiseTerm,
   taxonomy,
+  tokenize,
   type ExploreState,
   type KeywordFilter,
+  type LintContext,
+  type QueryDiagnostic,
   type QueryVocabulary,
   type SearchService,
 } from '@atlas/core';
@@ -23,6 +29,7 @@ import { buildRealSheet } from '../testing/real-build';
 
 describe('the query assist on the compendium v2.0', () => {
   let service: SearchService;
+  let context: LintContext;
 
   beforeAll(async () => {
     const built = await buildRealSheet();
@@ -33,6 +40,7 @@ describe('the query assist on the compendium v2.0', () => {
         traits: built.traits,
       }),
     );
+    context = createLintContext(service);
   });
 
   describe('the vocabulary', () => {
@@ -57,6 +65,74 @@ describe('the query assist on the compendium v2.0', () => {
           ).toBeGreaterThan(0);
         }
       }
+    });
+  });
+
+  describe('the lint rules of the fields and their values', () => {
+    const lint = (source: string): QueryDiagnostic[] =>
+      tokenize(source).flatMap((token) => (token.kind === 'term' ? lintRegistry.check(token, context) : []));
+
+    /** The vocabulary fields with their entries; of the long lists every `every`th, so that the test stays quick. */
+    const entriesOfFields = (every: Record<string, number>) =>
+      fieldRegistry.fields.flatMap(({ name, values }) =>
+        values?.kind === 'vocabulary'
+          ? [
+              {
+                field: name,
+                entries: service.vocabulary[values.column].filter((_, at) => at % (every[name] ?? 1) === 0),
+              },
+            ]
+          : [],
+      );
+    const sampled = { creature: 7, trait: 7 };
+
+    it('finds nothing wrong with any entry of the vocabulary written as a value of its field', () => {
+      for (const { field, entries } of entriesOfFields({})) {
+        for (const entry of entries) expect(lint(serialiseTerm(field, entry)), `${field}:${entry}`).toEqual([]);
+      }
+    });
+
+    it('calls a value unknown exactly when the search finds no trait, and the fix it offers finds some', () => {
+      let unknown = 0;
+      let known = 0;
+      let fixes = 0;
+      for (const { field, entries } of entriesOfFields(sampled)) {
+        for (const entry of entries) {
+          // A letter missing near the start, a letter added at the end, and the first half of the entry: part of an entry is no fault.
+          const lower = entry.toLowerCase();
+          const half = lower.slice(0, Math.ceil(lower.length / 2));
+          for (const value of [lower.slice(0, 1) + lower.slice(2), `${lower}z`, half]) {
+            const source = serialiseTerm(field, value);
+            const asked = lint(source).filter(({ code }) => code.startsWith('unknown-'));
+            const found = service.countMatches(initialExploreState, source);
+
+            expect(asked.length > 0, source).toBe(found === 0);
+            if (found === 0) unknown += 1;
+            else known += 1;
+            const fix = asked[0]?.fix;
+            if (fix === undefined) continue;
+            fixes += 1;
+            const mended = applyEdit(source, fix.edit);
+            expect(service.countMatches(initialExploreState, mended), mended).toBeGreaterThan(0);
+            expect(lint(mended), mended).toEqual([]);
+          }
+        }
+      }
+      // The sample must ask both questions, and the fixes must be tried.
+      expect(unknown).toBeGreaterThan(200);
+      expect(known).toBeGreaterThan(20);
+      expect(fixes).toBeGreaterThan(100);
+    });
+
+    it('offers the class a misspelling of it stands for (QUERY_LANGUAGE §5)', () => {
+      const [found] = lint('class:lfe');
+
+      expect(found).toMatchObject({
+        code: 'unknown-class',
+        severity: 'error',
+        message: 'No class “lfe”. Did you mean Life?',
+        fix: { edit: { span: [6, 9], text: 'Life' } },
+      });
     });
   });
 

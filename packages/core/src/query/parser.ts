@@ -9,7 +9,7 @@ export interface ParseResult {
   readonly ast: QueryNode | undefined;
   readonly tokens: readonly Token[];
   /** What had to be repaired to read the query, in the order of the query. */
-  readonly diagnostics: readonly QueryDiagnostic[];
+  readonly diagnostics: readonly QueryDiagnostic<SyntaxDiagnosticCode>[];
 }
 
 /**
@@ -30,7 +30,7 @@ export const MAX_NESTING = 32;
  */
 export function parseQuery(source: string): ParseResult {
   const tokens = tokenize(source);
-  const diagnostics: QueryDiagnostic[] = [];
+  const diagnostics: QueryDiagnostic<SyntaxDiagnosticCode>[] = [];
   let position = 0;
   let groups = 0;
   let nesting = 0;

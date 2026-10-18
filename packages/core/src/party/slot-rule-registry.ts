@@ -1,4 +1,5 @@
 import type { Trait } from '../model/trait';
+import { ruleIdViolations } from '../registry/rule-id-violations';
 import type { SlotName } from './party';
 import type { Placement, SlotRule } from './slot-rule';
 
@@ -27,7 +28,7 @@ export interface SlotRuleRegistry {
  * @throws SlotRuleRegistryError listing every violation.
  */
 export function createSlotRuleRegistry(rules: readonly SlotRule[]): SlotRuleRegistry {
-  const violations = [...idViolations(rules), ...duplicateViolations(rules)];
+  const violations = ruleIdViolations(rules);
   if (violations.length > 0) {
     throw new SlotRuleRegistryError(`The slot rules are not valid:\n- ${violations.join('\n- ')}`);
   }
@@ -42,18 +43,4 @@ export function createSlotRuleRegistry(rules: readonly SlotRule[]): SlotRuleRegi
       return { ok: true };
     },
   };
-}
-
-function idViolations(rules: readonly SlotRule[]): string[] {
-  return rules
-    .filter(({ id }) => !/^[a-z]+(-[a-z]+)*$/.test(id))
-    .map(({ id }) => `id ${JSON.stringify(id)} must be lower case words joined by hyphens`);
-}
-
-function duplicateViolations(rules: readonly SlotRule[]): string[] {
-  const counts = new Map<string, number>();
-  for (const { id } of rules) counts.set(id, (counts.get(id) ?? 0) + 1);
-  return [...counts]
-    .filter(([, count]) => count > 1)
-    .map(([id, count]) => `id ${JSON.stringify(id)} is used by ${count} rules`);
 }

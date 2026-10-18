@@ -7,6 +7,21 @@ export type TraitMatcher = (trait: IndexedTrait) => boolean;
 /** How a value is compared with what it is looked for in: the whole of it, any part of it, or the start of it. */
 export type MatchMode = 'exact' | 'substring' | 'prefix';
 
+/**
+ * Whether `value` is what `mode` looks for in `entry`: all of it, any part of it, or its start. Both are lower case,
+ * as a matcher reads the column of a trait and the value of a term.
+ */
+export function fitsValue(mode: MatchMode, entry: string, value: string): boolean {
+  switch (mode) {
+    case 'exact':
+      return entry === value;
+    case 'substring':
+      return entry.includes(value);
+    case 'prefix':
+      return entry.startsWith(value);
+  }
+}
+
 /** The columns whose values are a list the dataset gives: the others are text (the description) or too many (the material). */
 export type VocabularyColumn = Extract<ColumnName, 'class' | 'family' | 'creature' | 'name'>;
 
