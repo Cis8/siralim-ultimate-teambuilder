@@ -32,7 +32,7 @@ field    = letter , { letter } ;
   source span. `ast` is `undefined` for a query with no term, which matches everything. A node's span is the text it was
   read from, its parentheses included (`(weak)` spans six characters, its `term` token four).
 - **Repairs.** What does not make a query is reported and read as if it were not there, so the tree is the one of the query
-  with the reported text removed (which is also what the Phase 2 fixes will do): a `)` that closes nothing is skipped; a
+  with the reported text removed (which is also what the fixes of §5 do): a `)` that closes nothing is skipped; a
   `(` left open is closed at the end; an `AND`/`OR` without a term on both sides, a `NOT` with nothing to negate and `()`
   are dropped. No term is ever dropped. Juxtaposition and `AND` build one n-ary node per chain; a group written inside a
   group of the same kind stays a node of its own (`a OR (b OR c)`).
@@ -145,18 +145,21 @@ does not exist leaves the text as it is.
   two tokens when there was none (`(a OR b OR c)` without `OR c` is `(a OR b)`; `-(a b)` without `a` is `-b`; `a(b)c` without
   `(b)` is `a c`, since `ac` would be one word). The other chips are never changed by the edit (a property test on any text).
 
-## 5. Diagnostics (syntax: Phase 1, the rest: Phase 2)
+## 5. Diagnostics (syntax: Phase 1 and the fixes of 9.1, the rest: Phase 2)
 The parser already returns the syntax diagnostics (the first seven rows), as `{ code, severity: 'error', span,
-message }` with the `message` of the table, the operator as written in it. Phase 2 adds `fix?: { label, edit: TextEdit }`, the
-`warning` severity and the other rows, as a registry of lint rules. One diagnostic per unclosed `(`, where it was opened.
+message }` with the `message` of the table, the operator as written in it. `severity` is `'error' | 'warning'` and a
+diagnostic may carry `fix?: { label, edit: TextEdit }` (`TextEdit` is `{ span, text }`, `applyEdit(source, edit)` makes it).
+The parser gives no fix: `withSyntaxFixes(source, parseQuery(source))` adds the ones of the first seven rows, and the
+warning severity and the other rows come with the lint registry (9.4, 9.5). One diagnostic per unclosed `(`, where it
+was opened.
 
 | Rule | Severity | Message | Fix |
 |---|---|---|---|
 | Unmatched `)` | error | Unmatched “)” | remove it |
-| Unclosed `(` | error | Unclosed “(” | append `)` |
+| Unclosed `(` | error | Unclosed “(” | append `)` (a `(` with nothing in it: remove it) |
 | Dangling `AND`/`OR` | error | “OR” needs a term on both sides | remove operator |
 | `NOT` without operand | error | “NOT” needs a term after it | remove |
-| Unclosed quote | error | Unclosed quote | close it |
+| Unclosed quote | error | Unclosed quote | close it (append `"`) |
 | Empty `()` | error | Nothing between “(” and “)” | remove it |
 | Nesting past the limit | error | Nested too deeply: “(” is ignored | remove it |
 | Unknown field | error | Unknown field “clas:”. Did you mean “class:”? | replace (Levenshtein ≤ max(2, ⌊len/3⌋)) |
@@ -168,6 +171,23 @@ message }` with the `message` of the table, the operator as written in it. Phase
 | Bad `mat:`/`stack:` value | error | “mat:” takes yes or no | replace |
 | Unknown class | error | No class “lif”. Did you mean Life? | replace |
 | Free term with zero hits | warning | “vulnrable” appears in no trait. Did you mean “vulnerable”? | replace from vocabulary |
+
+**The fixes of the syntax rows.** A fix is one `TextEdit`; the text outside it stays as typed, and after it the query means
+what it meant, since it puts into the text the repair the parser had made (the property tests compare `serialise` before
+and after). Its `label` says what the button does: *Remove “)”*, *Add the missing “)”*, *Close the quote*.
+- **Blanks.** A removal takes the blanks after the text with it, or those before it when it ends the text or a group and none
+  follow (`a OR b` without `OR` is `a b`, `(a OR)` is `(a)`); `b -() c` without `-` is `b () c`. Where that would run two
+  words into one (`a)b` without `)`) the blanks stay, and failing that a space takes the place of the text (`a b`).
+- **A fix that would change the meaning is not given yet.** `- AND a` reads as `a`: removing `AND` alone would hand `a` to the
+  `-`, so the `-` (the first diagnostic) is fixed first and the `AND` gets its fix after. In the same way a `)` is not added
+  to a text that ends in an open quote (the quote runs to the end, parentheses included, and would take it in): the quote
+  is closed first.
+- **Unclosed `(`.** A `)` at the end closes the innermost group still open, so only the innermost unclosed `(` has the fix
+  that appends one; the outer ones follow as the inner ones are closed. A `(` with nothing after it but operators and
+  parentheses is removed, not closed into an empty `()`.
+- **Fixing the first diagnostic that has a fix, again and again, ends with none left** (property test). Past
+  `MAX_FIXABLE_DIAGNOSTICS` (50) problems a text gets no fixes at all: each fix reads the whole text again, so the work
+  grows with the square of its size (8,000 stray `)` took twenty seconds), and such a text is junk.
 
 ## 6. Autocomplete (Phase 2)
 Context = token at the caret (prefix up to caret) and the previous token.

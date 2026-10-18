@@ -18,8 +18,9 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
 ## Decision
 - **`core` owns every rule and stays pure.** New modules, each a registry or a pure function so that adding a rule, a field or a
   context never edits the engine (open/closed):
-  - `TextEdit {span, text}` and `applyEdit(s)`. A fix is one edit; **text outside the edit stays byte-identical**.
-  - `QueryDiagnostic` gains `severity` (`error` | `warning`) and `fix?: {label, edit}`. The parser still reports syntax only;
+  - `TextEdit {span, text}` and `applyEdit`. A fix is one edit; **text outside the edit stays byte-identical**.
+  - `QueryDiagnostic` gains `severity` (`error` | `warning`) and `fix?: {label, edit}`. The parser still reports syntax only
+    (the fixes of those reports are added by `withSyntaxFixes`, and a fix is given only if the query means the same after it);
     semantic checks need the vocabulary and so live in the lint layer, not in the parser.
   - A **lint-rule registry** (`LintRule {id, check}` over a `LintContext` with the fields, the taxonomy, the vocabulary and a memoised
     `hits(term)`), and `lintQuery(source, context)`. `settledDiagnostics` hides warnings and unknown-value errors for the term still

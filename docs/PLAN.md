@@ -13,9 +13,10 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is planned (D14–D25, *Phase 2 — slices* below) and starts with slice 9.1** (`TextEdit` and the syntax fixes, tests first),
-  in the order M9 → M10 → M12 → M13 → M11 (D15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the
-  authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
+- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): 9.1 is done, the next slice is 9.2** (`closestMatch` and the value
+  domains of the fields, tests first), in the order M9 → M10 → M12 → M13 → M11 (D15). Phase 1 stays open for slice 8.4 only: credits
+  (ask the owner to confirm the authors' names first), README, the criteria-to-tests table, ROADMAP ticks. The owner deferred it on
+  2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
@@ -270,11 +271,12 @@ them true, never ahead of it. Every new `core` module must be reachable from `co
   assist latency (budget first, then defer the counts); the volume of *Same trigger* (ranked and capped).
 
 ### M9 Diagnostics — the field shows issues, each with a one-click fix
-- [ ] **9.1** Text edits and syntax fixes. `TextEdit {span, text}`, `applyEdit(s)`; `QueryDiagnostic` gains `severity: 'error' | 'warning'`
-      and `fix?: {label, edit}`; `syntax-fixes.ts` is a registry keyed by diagnostic code (remove the span and one adjacent blank,
-      append `)`, close the quote); the parser is untouched. *T:* per code the fix removes exactly that diagnostic and the rest of the
-      text is byte-identical (QUERY_LANGUAGE: text outside the edit stays as typed); property test: applying the first fixable fix
-      again and again ends with no diagnostic.
+- [x] **9.1** Text edits and syntax fixes. `TextEdit {span, text}` + `applyEdit`, `QueryDiagnostic` +`severity` +`fix?`, and
+      `withSyntaxFixes(source, parsed)` (`syntax-fixes.ts`, a table typed by diagnostic code); the parser is untouched. Deviations the
+      property tests forced (QUERY_LANGUAGE §5): no `applyEdits` (nothing applies several at once); a fix is given only if the query
+      means the same after it (`- AND a`: the `-` goes first; no `)` inside an open quote); only the innermost `(` is closed by a `)`,
+      and a `(` with nothing in it is removed (closing it gave `()`); past 50 problems no fixes (the work is quadratic: 8,000 stray
+      `)` took 20 s). 100 kB with 50 problems costs 0.9 s, so 9.5's `lintQuery` must also skip texts over ~2,000 characters.
 - [ ] **9.2** Closest match and value domains. `closestMatch(input, candidates)` (own Levenshtein, §5 threshold `max(2, ⌊len/3⌋)`,
       case-folded; ties: distance, shared prefix, candidate order). `FieldDefinition` gains `help` (one line), `values?: ValueDomain`
       (`choices` | `vocabulary` | `keyword`, each with its matching mode: exact, substring, prefix) and `describe(value)`; the registry
