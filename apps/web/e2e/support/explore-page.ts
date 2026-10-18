@@ -112,11 +112,17 @@ export async function sectionBody(page: Page, name: string): Promise<Locator> {
   return filters(page).locator(`[id="${id}"]`);
 }
 
-/** One of the two sides of a buff, a debuff or an effect in the panel. */
-export const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on'): Locator =>
+/** One of the two sides of a keyword in the panel: Applies and Relies on for a buff, a debuff or an effect, Causes and Reacts for an event. */
+export const side = (page: Page, keyword: string, which: 'Applies' | 'Relies on' | 'Causes' | 'Reacts'): Locator =>
   filters(page)
     .getByRole('group', { name: keyword, exact: true, includeHidden: true })
     .getByRole('button', { name: new RegExp(`^${which}\\s`), includeHidden: true });
+
+/** One choice of the "Who" control of the Events section. */
+export const who = (page: Page, choice: 'Any' | 'This creature' | 'Your creatures' | 'Enemies'): Locator =>
+  filters(page)
+    .getByRole('group', { name: 'Who acts', includeHidden: true })
+    .getByRole('button', { name: choice, exact: true, includeHidden: true });
 
 export const mode = (page: Page, label: 'Match all' | 'Match any'): Locator =>
   filters(page)

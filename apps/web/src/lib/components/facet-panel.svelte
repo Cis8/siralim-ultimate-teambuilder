@@ -2,12 +2,14 @@
   import {
     activeFilterCounts,
     clearFilters,
+    eventActors,
     FACET_KEYWORD_KINDS,
     filterChips,
     hasClass,
     hasKeywordFilter,
     hasRole,
     KEYWORD_MODES,
+    narrowEventFilters,
     toggleClass,
     toggleKeywordFilter,
     type ExploreState,
@@ -17,7 +19,10 @@
   } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
+  import { actorOf, eventWho, type WhoChoice } from '../event-who';
+  import EventFacets from './event-facets.svelte';
   import FacetButton from './facet-button.svelte';
+  import KeywordRow from './keyword-row.svelte';
   import SectionToggle from './section-toggle.svelte';
   import Segmented from './segmented.svelte';
 
@@ -27,20 +32,25 @@
    * is a toggle with the number of traits it would show; what a press changes is worked out by `core`, and the owner of
    * the state gets the new one. The classes, each kind of keyword and the flags are sections that open and close; which
    * are shut (`shut`) is the owner's too, since this panel is built again whenever the window crosses the width where the
-   * filters change from a column to a sheet.
+   * filters change from a column to a sheet. So is `who`, the last choice of the "Who" control of the Events section, which
+   * is what the next event filter turned on gets while none is on.
    */
   const {
     facets,
     explore,
     shut,
+    who: chosenWho,
     onchange,
     ontoggle,
+    onwho,
   }: {
     facets: Facets;
     explore: ExploreState;
     shut: readonly FilterSection[];
+    who: WhoChoice;
     onchange: (state: ExploreState) => void;
     ontoggle: (section: FilterSection) => void;
+    onwho: (choice: WhoChoice) => void;
   } = $props();
 
   /** The two sides of a buff, a debuff or an effect that have a filter, in the order the row shows them. */
@@ -61,6 +71,7 @@
     ),
   );
 
+  const who = $derived(eventWho(eventActors(explore, facets.keywords), chosenWho));
   const active = $derived(filterChips(explore).length);
   const counts = $derived(activeFilterCounts(explore, facets.keywords));
   const isOpen = (section: FilterSection): boolean => !shut.includes(section);
@@ -69,6 +80,13 @@
   /** What a screen reader is told after the button was pressed. It is only said while no filter is on again. */
   let cleared = $state('');
   const clearedAnnouncement = $derived(active === 0 ? cleared : '');
+
+  /** The choice is kept, and the event filters that are on are narrowed to it: one step of the history, or none if nothing changes. */
+  function chooseWho(choice: WhoChoice): void {
+    onwho(choice);
+    const next = narrowEventFilters(explore, facets.keywords, actorOf(choice));
+    if (next !== explore) onchange(next);
+  }
 
   /** It stays in the tab order with nothing to clear (`aria-disabled`, not `disabled`): the focus is not lost with the last press. */
   function clear(): void {
@@ -143,34 +161,36 @@
         >
       </h4>
       <div id={bodyId(group.kind)} hidden={!isOpen(group.kind)}>
-        <div class="list">
-          {#each group.keywords as facet (facet.key)}
-            {#if hasRole(group.kind)}
-              <div class="keyword" role="group" aria-label={facet.label}>
-                <span class="name">{facet.label}</span>
-                {#each SIDES as side (side)}
-                  {@const filter = { field: side, key: facet.key }}
-                  <FacetButton
-                    size="compact"
-                    pressed={hasKeywordFilter(explore, filter)}
-                    count={facet[side]}
-                    onclick={() => {
-                      onchange(toggleKeywordFilter(explore, filter));
-                    }}>{copy.keywordSides[side]}</FacetButton
-                  >
-                {/each}
-              </div>
-            {:else}
-              <FacetButton
-                pressed={hasKeywordFilter(explore, { field: 'kw', key: facet.key })}
-                count={facet.mentions}
-                onclick={() => {
-                  onchange(toggleKeywordFilter(explore, { field: 'kw', key: facet.key }));
-                }}>{facet.label}</FacetButton
-              >
-            {/if}
-          {/each}
-        </div>
+        {#if group.kind === 'event'}
+          <EventFacets events={group.keywords} {explore} {who} {onchange} onwho={chooseWho} />
+        {:else}
+          <div class="list">
+            {#each group.keywords as facet (facet.key)}
+              {#if hasRole(group.kind)}
+                <KeywordRow
+                  label={facet.label}
+                  widths="80px 92px"
+                  sides={SIDES.map((side) => ({
+                    name: copy.keywordSides[side],
+                    count: facet[side],
+                    pressed: hasKeywordFilter(explore, { field: side, key: facet.key }),
+                    press: () => {
+                      onchange(toggleKeywordFilter(explore, { field: side, key: facet.key }));
+                    },
+                  }))}
+                />
+              {:else}
+                <FacetButton
+                  pressed={hasKeywordFilter(explore, { field: 'kw', key: facet.key })}
+                  count={facet.mentions}
+                  onclick={() => {
+                    onchange(toggleKeywordFilter(explore, { field: 'kw', key: facet.key }));
+                  }}>{facet.label}</FacetButton
+                >
+              {/if}
+            {/each}
+          </div>
+        {/if}
       </div>
     {/each}
   </div>
@@ -316,21 +336,6 @@
     width: 9px;
     height: 9px;
     border-radius: 2px;
-  }
-
-  /* The two sides are columns of their own, so that the buttons of every keyword line up. */
-  .keyword {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 80px 92px;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .name {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
-    overflow-wrap: anywhere;
   }
 
   .flags {

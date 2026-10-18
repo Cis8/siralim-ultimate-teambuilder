@@ -57,7 +57,9 @@ R9) = solid outline. Colour is the kind: an *effect* (Dire Wolves, Mega Magic) t
 a status, and an *event* (attack, start of battle) its own, with the same shapes (it is caused, waited for or prevented). Search matches add a yellow highlight (`<mark>`, 22 % of `--status-warn`, which keeps every token colour above
 4.5:1), also inside a token. The token is a toggle `button`: its accessible name says what the trait does with the keyword
 (a shape cannot be heard) and what a click shows ("Applies Vulnerable — show traits that rely on it"), and `title` says the
-same to the pointer. `aria-pressed` and a 2 px ring in `--accent-border` mean its filter is on; a hover is a 1 px ring in
+same to the pointer. An event says it in the words of its filters, and who acts where the text names who: "Reacts to attacks
+(this creature) — show traits that cause it" (*Causes*, *Reacts to*, *Prevents*; the colour and the shape say neither the role's
+name nor the actor to a screen reader). `aria-pressed` and a 2 px ring in `--accent-border` mean its filter is on; a hover is a 1 px ring in
 `--border-strong`. Never a fill: a match highlight over a lighter fill takes a debuff or the muted flag under 4.5:1, since
 the token colours are only guaranteed on the page background.
 
@@ -65,7 +67,14 @@ the token colours are only guaranteed on the page background.
 - **Facet buttons** (`FacetButton`) are toggles: `aria-pressed`, a fill in `--accent-surface` with a `--accent-border` outline when
   on, and the count in mono, `--text-faint`, carrying its unit ("12 traits") for a screen reader. The two sides of a keyword
   (*Applies*, *Relies on*) sit in fixed columns so that the buttons of every keyword line up; each keyword is a `group` named
-  after it. Kind headings (Debuffs, Buffs, Effects, Events, Mechanics) take the kind colour and always say it in words.
+  after it (`KeywordRow`). Kind headings (Debuffs, Buffs, Effects, Events, Mechanics) take the kind colour and always say it in
+  words.
+- **Events** (`EventFacets`, the body of that section): first the **Who** control, a caption "Who acts" over a `Segmented` of four
+  buttons in two columns (Any, This creature, Your creatures, Enemies; it is a `group` named "Who acts" and the choice made is
+  `aria-pressed`, none while the filters on name several actors), then five groups under small headings in `--text-faint`, 11 px
+  (`h5`: Battle and turns, Actions, Hits, Life and death, Buffs and debuffs). Each event is a row like a buff's, with its two sides
+  *Causes* and *Reacts* in columns 76 px wide. The caption and the headings are plain text, so a keyboard meets only the Who
+  buttons and the sides, and the section is open to begin with like the others (nothing moves on load).
 - **Clear filters** is the first control of the panel, a quiet button (as the party toolbar's) that says how many filters it takes
   off ("Clear filters (3)"). With none on it is `aria-disabled`, not `disabled`, and says "Clear filters": the focus stays on it
   when its own press clears the last filter, and a polite line says what was done ("Cleared 3 filters."). Under a coarse

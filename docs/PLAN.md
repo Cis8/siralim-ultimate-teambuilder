@@ -12,13 +12,11 @@ session (after `CLAUDE.md`), update it before ending one.
 - Target size: under ~250 lines. When a phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.7 done; next is 8b.8 (the Events section, the "Who" control, the event token), then
-  8b.9; one session each.** 8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests
-  table; ROADMAP ticks) then closes Phase 1: ask the owner before starting Phase 2.
-  Until 8b.8 the panel lists the 18 events flat with Applies / Relies on sides, and a click on an event token shows the traits
-  that mention it (`clickGoal`). For 8b.8: a `KeywordFilter` has an optional `actor` and `hasKeywordFilter` compares it, so a
-  Causes / Reacts toggle that is "on whoever acts" must look for the field and key itself; `parseKeywordReference` and
-  `writeKeywordReference` are exported for the web.
+- **Phase 1 · M8: 8.1–8.3 done. M8b: 8b.1–8b.8 done; next is 8b.9 (the Events section of the pipeline report), one session.**
+  8.4 (credits: ask the owner to confirm the authors' names first; README; the criteria-to-tests table; ROADMAP ticks) then
+  closes Phase 1: ask the owner before starting Phase 2.
+  For 8b.9: `packages/pipeline/.cache/research/events-v2.0/scripts/census.mjs` (this machine only, see the Note on 8b.5) holds the
+  census of event words and opening clauses to turn into a finder; the report's *Taxonomy* section (`build-report`) is the model.
   Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong;
   on a real iPhone (Safari and Chrome), check that focusing the search field and the sort no longer zooms the page (8b.1).
   A new control needs `min-height: var(--target-min)` under `pointer: coarse`, or `touch-targets.test.ts` fails and names it.
@@ -293,14 +291,23 @@ address, not in `localStorage`); "Clear filters" keeps the query, sort and Match
       the key lists of `IndexedTrait` stay plain keys and the actor is a list of its own (the facets count the lists by key, and
       `attack/self` is a key no facet has); a slash with nothing after it is no actor yet (`provoke/` is `provoke`, so the list
       does not empty while `/self` is typed); an alias stands alone (`strike/enemy` is the start of a key nobody has).
-- [ ] **8b.8** Web: the Events section and the event token. The section in place of Triggers, with five groups under small
-      headings (Battle and turns, Actions, Hits, Life and death, Buffs and debuffs), each event with Causes / Reacts toggles
-      counted as a buff's Applies / Relies on; one "Who" segmented control at the top of the section (Any, This creature, Your
-      creatures, Enemies) that narrows every event filter on (writes the suffix, one step of the history, counted by
-      `activeFilterCounts`). The token of an event has a buff's role shapes in the event colour and says who in its accessible
-      name; a click leads to the counterpart without the actor. *T:* a new e2e (toggles, who, chips, address, back), the walks
-      and touch-target tests on the new controls, axe, Lighthouse layout shift (open by default, nothing moves). Docs: SPEC §8.1,
-      DESIGN (facet panel, tokens).
+- [x] **8b.8** Web: the Events section and the event token. The section lists the 18 events in five groups under small headings
+      (`EventEntry.group`, `EVENT_GROUPS`: Battle and turns, Actions, Hits, Life and death, Buffs and debuffs), each with
+      *Causes* / *Reacts* buttons (`applies:` / `uses:`); one *Who* control (Any, This creature, Your creatures, Enemies) follows
+      the event filters (`eventActors`) and narrows them all with a press (`narrowEventFilters`: one step of the history, none if
+      nothing changes; two filters that become one are one). With none on it keeps the last choice in the page (`eventChoice`,
+      not in the address), which is what the next filter gets; several actors on show nothing pressed. A press on a side is
+      `toggleKeywordSide`: pressed for the event by anyone and by an actor alike, off takes away every filter of the side. The
+      token keeps its role shapes and says in its name "Reacts to attacks (this creature) — show traits that cause it"; its click
+      leads to the counterpart of the role with no actor (`clickGoal`), pressed as the panel's button is (`hasKeywordSide`).
+      SPEC §4, §8.1, DESIGN (tokens, facet panel), SCREEN_READER_CHECKLIST 17–18. *T:* unit tests beside each function of
+      `core`, `event-who` and `copy` in the web, on the real sheet the counts by actor against the hits and the groups
+      (`explore-acceptance`), and `e2e/events.test.ts` (groups, toggles, Who narrowing and back, chosen first, several actors,
+      resize across 700 px, section count, the token's name and click, axe). Deviations: the buttons' counts follow the Who
+      (`KeywordFacet.byActor`, `facetCount`), which the plan did not ask for: "Reacts 244" next to a result of 37 would have
+      been wrong; the start of a battle is the exception to the counterpart (nobody causes it, so a click shows the traits that
+      mention it); the group is data of the taxonomy and not of the panel, so an event cannot be added without one; `KeywordRow`
+      is the row of every keyword with two sides, and `Segmented` takes `columns` and a value that may be none.
 - [ ] **8b.9** Report: an *Events* section in the pipeline report, as the *Taxonomy* one is for capitalised words: the event
       words of the 8b.5 census and the opening clauses no keyword covers, with counts and an example, and a reviewed list for
       those looked at, so a new version of the sheet shows its new forms. *T:* the finder's unit tests, `build-report` test.

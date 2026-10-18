@@ -1,6 +1,9 @@
 import type {
   ClickGoal,
+  EventGroup,
   FacetKeywordKind,
+  KeywordActor,
+  KeywordHit,
   KeywordMode,
   KeywordRole,
   MemberIndex,
@@ -10,6 +13,7 @@ import type {
   SortKey,
   TraitKind,
 } from '@atlas/core';
+import type { WhoChoice } from './event-who';
 import type { PageTab } from './page-tab';
 import type { SlotChoice } from './slot-choices';
 
@@ -37,6 +41,27 @@ const keywordGoal = {
   mentions: 'show traits that mention it',
   nonStacking: 'show only traits that do not stack',
 } as const satisfies Record<ClickGoal, string>;
+
+/** The same for an event, in the words of its filters (GAME_RULES R12): a trait causes an event, reacts to it or prevents it. */
+const eventRole = {
+  applies: 'Causes',
+  uses: 'Reacts to',
+  resists: 'Prevents',
+} as const satisfies Record<KeywordRole, string>;
+
+const eventGoal = {
+  ...keywordGoal,
+  appliers: 'show traits that cause it',
+  users: 'show traits that react to it',
+} as const satisfies Record<ClickGoal, string>;
+
+/** Who acts in the mention of an event, as the words of the "Who" control say it, for a sentence. */
+const actorName = {
+  self: 'this creature',
+  ally: 'your creatures',
+  enemy: 'enemies',
+  any: 'any creature',
+} as const satisfies Record<KeywordActor, string>;
 
 /** Every user-facing string lives here so the UI stays i18n-ready (DESIGN § Copy). */
 export const copy = {
@@ -101,6 +126,24 @@ export const copy = {
   } as const satisfies Record<FacetKeywordKind, string>,
   /** The two sides of a buff, a debuff or an effect: what a trait does with it (GAME_RULES R9 has a third, not a filter). */
   keywordSides: { applies: 'Applies', uses: 'Relies on' } as const,
+  /** The two sides of an event: a trait causes it, or pays off when it happens (GAME_RULES R12 has a third, not a filter). */
+  eventSides: { applies: 'Causes', uses: 'Reacts' } as const,
+  /** The headings of the five groups of events (the semicolons of the list in GAME_RULES R12). */
+  eventGroups: {
+    battle: 'Battle and turns',
+    actions: 'Actions',
+    hits: 'Hits',
+    life: 'Life and death',
+    buffs: 'Buffs and debuffs',
+  } as const satisfies Record<EventGroup, string>,
+  /** The control that narrows the event filters to who acts, and its four choices. */
+  whoLabel: 'Who acts',
+  whoChoices: {
+    anyone: 'Any',
+    self: 'This creature',
+    ally: 'Your creatures',
+    enemy: 'Enemies',
+  } as const satisfies Record<WhoChoice, string>,
   flagsHeading: 'Flags',
   /** On a shut section of the filter panel, beside its name: how many of the filters inside are on. */
   sectionActive: (count: number) => `${String(count)} on`,
@@ -122,9 +165,20 @@ export const copy = {
   copiedQuery: 'Copied',
   copyFailed: 'Could not copy — select the text instead',
   noMaterial: 'No material — not artifact-eligible',
-  /** The name of a keyword in a description, a button: what the trait does with it, then what a click shows. */
-  keywordButton: (text: string, role: KeywordRole | undefined, goal: ClickGoal) =>
-    `${role === undefined ? '' : `${keywordRole[role]} `}${text} — ${keywordGoal[goal]}`,
+  /**
+   * The name of a keyword in a description, a button: what the trait does with it, who acts if the text says (an event), then
+   * what a click shows. `text` is what the description says there.
+   */
+  keywordButton: (
+    { kind, role, actor }: Pick<KeywordHit, 'kind' | 'role' | 'actor'>,
+    text: string,
+    goal: ClickGoal,
+  ) => {
+    const isEvent = kind === 'event';
+    const roleName = role === undefined ? '' : `${(isEvent ? eventRole : keywordRole)[role]} `;
+    const who = actor === undefined ? '' : ` (${actorName[actor]})`;
+    return `${roleName}${text}${who} — ${(isEvent ? eventGoal : keywordGoal)[goal]}`;
+  },
   /** What stands in the creature's place for a trait that has no creature. */
   traitKind: {
     creature: 'Creature trait',

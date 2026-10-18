@@ -138,9 +138,9 @@ test.describe('the filters sheet', () => {
       await openFilters(page);
 
       // A control far down the panel: focusing it scrolls the filters to it.
-      await side(page, 'Start of battle', 'Relies on').focus();
+      await side(page, 'Start of battle', 'Reacts').focus();
 
-      await expect(side(page, 'Start of battle', 'Relies on')).toBeInViewport();
+      await expect(side(page, 'Start of battle', 'Reacts')).toBeInViewport();
       await expect(filtersSheet(page).getByRole('heading', { level: 2, name: 'Filters' })).toBeInViewport();
       await expect(filtersSheet(page).getByRole('button', { name: /^Show / })).toBeInViewport();
       // Nothing of the panel reaches beyond the sheet itself (text for a screen reader is placed out of the way, and

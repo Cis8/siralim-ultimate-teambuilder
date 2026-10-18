@@ -584,8 +584,8 @@ test.describe('explore', () => {
       await expect(side(page, 'Vulnerable', 'Applies')).toHaveAttribute('aria-pressed', 'false');
       await side(page, 'Vulnerable', 'Relies on').click();
 
-      await side(page, 'Start of battle', 'Relies on').click();
-      await expect(side(page, 'Start of battle', 'Relies on')).toHaveAttribute('aria-pressed', 'true');
+      await side(page, 'Start of battle', 'Reacts').click();
+      await expect(side(page, 'Start of battle', 'Reacts')).toHaveAttribute('aria-pressed', 'true');
       await expect(announcedCount(page)).toHaveText(countText(mentioning.length, traits));
     });
 
@@ -752,7 +752,7 @@ test.describe('explore', () => {
       await openFilters(page);
       await facet(page, 'Life').click();
       await side(page, 'Vulnerable', 'Applies').click();
-      await side(page, 'Start of battle', 'Relies on').click();
+      await side(page, 'Start of battle', 'Reacts').click();
       await flag(page, 'Artifact-eligible (has material)').check();
       await closeFilters(page);
       await searchBox(page).fill('weak OR snared');

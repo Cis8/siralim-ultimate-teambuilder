@@ -1,19 +1,25 @@
 <script lang="ts" generics="Value extends string">
-  /** A choice of one among a few, every option in view: a group of toggle buttons, the chosen one pressed. */
+  /**
+   * A choice of one among a few, every option in view: a group of toggle buttons, the chosen one pressed. None is pressed
+   * while `value` is `undefined`, when the state lies between the options. In one row, or in `columns` columns when the
+   * options are too long to share a row of the panel.
+   */
   const {
     label,
     options,
     value,
+    columns,
     onchange,
   }: {
     label: string;
     options: readonly { readonly value: Value; readonly label: string }[];
-    value: Value;
+    value: Value | undefined;
+    columns?: number;
     onchange: (value: Value) => void;
   } = $props();
 </script>
 
-<div class="segmented" role="group" aria-label={label}>
+<div class="segmented" class:grid={columns !== undefined} style:--columns={columns} role="group" aria-label={label}>
   {#each options as option (option.value)}
     <button
       type="button"
@@ -33,6 +39,11 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     background: var(--surface-2);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
   }
 
   button {
