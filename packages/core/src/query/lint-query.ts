@@ -1,6 +1,6 @@
 import type { QueryDiagnostic } from './diagnostic';
 import type { LintContext } from './lint-rule';
-import { lintRegistry } from './lint-rules';
+import { checkTerm } from './lint-term';
 import { parseQuery } from './parser';
 import { withSyntaxFixes } from './syntax-fixes';
 import type { TermToken } from './token';
@@ -40,7 +40,7 @@ export function lintQuery(source: string, context: LintContext, { caret }: LintO
   const found: QueryDiagnostic[] = [...withSyntaxFixes(source, parsed)];
   for (const token of parsed.tokens) {
     if (token.kind !== 'term') continue;
-    found.push(...lintRegistry.check(token, context, { typing: isBeingTyped(token, source, caret) }));
+    found.push(...checkTerm(token, context, isBeingTyped(token, source, caret)));
   }
   // Array.sort is stable: findings that start together stay in the order they were found, syntax first.
   return found.sort((a, b) => a.span[0] - b.span[0]);

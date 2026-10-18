@@ -82,7 +82,10 @@ slice that builds it then follows.
   where `.editorconfig`, Prettier and so `pnpm check` (the pre-push hook) failed on every file. Node 24 is not the default
   there: `fnm install 24`, put `%APPDATA%\fnm\node-versions\v24.22.0\installation` on PATH (from PowerShell: Git Bash does not
   expand `%APPDATA%`), `corepack prepare pnpm@12.14.0 --activate`. `gh` may be missing: read CI from
-  `https://api.github.com/repos/Cis8/siralim-ultimate-teambuilder/actions/runs?branch=main&per_page=3`.
+  `https://api.github.com/repos/Cis8/siralim-ultimate-teambuilder/actions/runs?branch=main&per_page=3` (a full SHA, not a short one;
+  60 requests an hour without a token, then it answers 403). Without the API: `github.com/Cis8/siralim-ultimate-teambuilder/actions?query=branch%3Amain`
+  has the state of each run in an `aria-label` ("failed: Run 85 of CI. …"), and the page of a run's job lists the failing step and the
+  errors of the log in its *Annotations*. A run that is `in_progress` is not a green `main`: wait for it before starting.
 - `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
   data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
   `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
@@ -135,7 +138,10 @@ slice that builds it then follows.
   typing run (and failed the 16 ms e2e once under load), so they are built once at load. Compare `pnpm bench` before and after.
 - `typing-latency` and `assist-latency` (p95 of `atlas:search` / `atlas:assist` at 4× CPU) can fail when the whole e2e suite runs on
   many workers at once: rerun them alone (`playwright test typing-latency assist-latency --workers=1`) before suspecting the code.
-  Alone: search p95 4.7–5.4 ms; assist p95 9–10 ms on a text with eight faults of every kind (the budget is 16 ms).
+  Alone: search p95 4.7–5.4 ms; assist p95 1.5–2 ms on a text with eight faults of every kind (the budget is 16 ms).
+  The assist sat at 13–14 ms here before `lint-term.ts` (2026-10-18) and went red on CI at 20–23 ms, on two runs in a row: the Linux
+  runner is ~1.5× slower than this machine, so **a budget used past ~60% locally will fail there** (no Windows run can show it).
+  The cost was the offer for a finished word that no trait has (a search of the vocabulary, 1.5 ms), paid again by every later key.
 - On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
   with one stop instead of more than ten, also on a tree without the Phase 2 work (checked 2026-10-18). CI (Linux) is green: if it
   is the only failure, it is this.
@@ -291,8 +297,9 @@ inside the field, the list under it (`QueryIssues`), `applyFieldEdit` (native un
 nothing is a warning; only the class is an error); the keywords are not in the vocabulary (the taxonomy has them); a value has at most
 one fault; "did you mean" compares whole entries; a selection is no caret (the Tab key selects the whole text of a field); the list
 opens by itself only for a query that was typed, never for one that arrives with the address (nothing moves on load: Lighthouse CLS
-unchanged); `aria-invalid` for errors only; the list shows five issues, errors first. If suggestions push `atlas:assist` up, memoise
-the offers per term first, then defer the counts (ADR-0010).
+unchanged); `aria-invalid` for errors only; the list shows five issues, errors first. The findings of a term are remembered per text,
+`typing` flag and context (`lint-term.ts`; a text that stands elsewhere gets them moved). If suggestions push `atlas:assist` up,
+defer the counts (ADR-0010).
 
 ### M10 Autocomplete — Tab accepts, the count is shown, screen readers hear it
 - [x] **10.1** Context. `suggest/context.ts`: from `(source, caret)` the token at the caret (else an empty virtual one), the typed prefix,

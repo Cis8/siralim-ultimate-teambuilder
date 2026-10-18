@@ -26,6 +26,8 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
     `hits(term)`), and `lintQuery(source, context, {caret})`. For the term still being typed (PLAN D20) the rules that do not
     `reportsWhileTyping` are not asked at all, so their findings are neither shown nor paid for. This replaces the separate
     `settledDiagnostics` filter the first plan had, which would have worked out the offers only to throw them away.
+    What the rules find in a term is remembered per context for each text of a term and typing flag (`checkTerm`, spans moved to
+    where the text stands): every key lints the whole query again, and a finished term does not change with the keys after it.
   - **Value domains** on `FieldDefinition` (`choices` | `vocabulary` | `keyword`, with a matching mode) and `describe(value)`:
     evaluation, lint, suggestions and the explanation read **one table** per field, so they cannot disagree.
   - **Suggestions**: a context detector over `(source, caret)`, a registry of providers per context, ranking, `acceptSuggestion`
