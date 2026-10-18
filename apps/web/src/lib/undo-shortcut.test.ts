@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { undoShortcut, type ShortcutEvent } from './undo-shortcut';
+import type { ShortcutEvent } from './shortcut-event';
+import { undoShortcut } from './undo-shortcut';
 
 const press = (overrides: Partial<ShortcutEvent> = {}): ShortcutEvent => ({
   key: 'z',

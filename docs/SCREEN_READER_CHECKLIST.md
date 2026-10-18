@@ -36,6 +36,7 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 19 | In the field, type `clas:life (weak OR snared`, then wait a second | the field is "invalid entry"; once, "2 issues"; `Tab` to "2 issues, button, expanded", then to "Change to “class:”, button" |
 | 20 | Press `Enter` on that fix, then `Tab` twice and press the other fix | "Fixed. 1 issue left." and the focus is back in "Search traits, edit"; then "Fixed. No issues left." and the field is no longer invalid |
 | 21 | Back in the field, with the issues there, ask for its description | each issue, the severity first: "Error Unknown field “clas:”. Did you mean “class:”?" (the severity is said, not only coloured) |
+| 22 | Leave the field, press `/` (the slash key) | focus goes to "Search traits, edit" and no slash is typed into it |
 
 ## iPhone (VoiceOver, Safari)
 

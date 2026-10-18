@@ -13,15 +13,19 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D25, *Phase 2 — slices* below): M9 is done, 10.1–10.3 are done and the next slice is 10.4** (the
-  `Combobox` over a pure `combobox-state.ts`, and `search-shortcut.ts`; it renders `CountedSuggestion`s from `suggestQuery` → `withCounts`,
-  and Tab / Enter apply `acceptSuggestion`'s `TextEdit` through `applyFieldEdit`), in the order M10 → M12 → M13 → M11 (D15). The field
-  already has the assist's first part (issues, `applyFieldEdit`, `atlas:assist`), eager in the initial chunk (81 kB of 150): 10.5 makes it
-  lazy and adds `lazyJs` / `totalJs` to the size budget.
+- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 is done, 10.1–10.4 are done and the next slice is 10.5** (wire the
+  `Combobox` into the field, lazily: `query-input.svelte` already exposes its `<input>` as `bind:input`; the assist chunk is `import()`ed
+  on first idle, focus or pointer and attaches the `Combobox` to that element; `suggestQuery` → `withCounts` → an adapter to
+  `ComboboxOption` → `onaccept` → `acceptSuggestion` → `applyFieldEdit`; the size budget gains `lazyJs` / `totalJs`), in the order
+  M10 → M12 → M13 → M11 (D15). The assist's first part (issues, `applyFieldEdit`, `atlas:assist`) is still eager in the initial chunk
+  (81 kB of 150). The `/` shortcut works already; the `Combobox` has no consumer until 10.5.
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D25 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
+- For the owner to veto, none blocking: D18–D26 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
+  **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
+  off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
+  the shortcut. Until then it ships as QUERY_LANGUAGE §6 says.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
   iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
   of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); when 11.5 lands, the
@@ -53,9 +57,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D23 | (default) The bottom bar keeps its ARIA tablist (Explore, Party) and gets a *Synergies link* beside it, not a third tab; the Synergy pages are routes (`/synergy/…`) with a shared party session. DESIGN and SPEC §7 speak of a third tab: they are changed in 13.2 | ADR-0011 |
 | D24 | (default) No new dependency in Phase 2: own Levenshtein, own narrowing of the imported JSON | here |
 | D25 | (default) Slice 8.4 stays open while Phase 2 starts early on the owner's go-ahead; Phase 1 closes when 8.4 lands | here |
+| D26 | (default) Typing makes the first suggestion active, so Tab and Enter accept it (what the ghost text shows); after an accept, a caret move, Esc or a blur nothing is active and Tab leaves the field. A hover does not activate | QUERY_LANGUAGE §6 |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D25 are defaults Claude chose when planning Phase 2 (2026-10-18). None blocks; the owner may veto or change any, and the
+D18–D26 are defaults Claude chose while building Phase 2 (2026-10-18). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -331,19 +336,30 @@ defer the counts (ADR-0010).
       already takes one; the caret is `caretAfterEdit`'s). A blank that follows is not skipped over: the caret stays where the word ended
       (the cost: an operator accepted before an existing blank has the caret before it). An operator before `)` gets its blank, a finished
       term does not. A bare field takes the word that follows it as its value.
-- [ ] **10.4** Combobox. A reusable `Combobox` (APG editable combobox with list: `role=combobox`, `aria-expanded` / `aria-controls` /
-      `aria-activedescendant`, options with ids, a pointer pick does not take the focus) over a pure `combobox-state.ts`: it opens on
-      input or ArrowDown; **no option is active until the person types or uses the arrows, so Tab is never captured on a plain focus**
-      (the prototype trapped it); ↑ / ↓ wrap; Tab and Enter accept the active option; Esc closes; the active option's name carries kind,
-      detail and "42 traits"; a debounced polite line gives the list size. `search-shortcut.ts`: `/` focuses the search except in
-      editable targets or with modifiers. *T:* state-table tests; shortcut guards.
+- [x] **10.4** Combobox. `combobox-state.ts` (pure: `typed`, `accepted`, `moved`, `pressKey`, `comboboxView`; the key table is a table of
+      tests), `combobox.svelte` (APG editable combobox with list, attached to the host's `<input>`: sets `role`, `aria-expanded` /
+      `-controls` / `-activedescendant`, listens to keydown, input, keyup, click and blur, draws the listbox, a pointer pick keeps the
+      focus; its size is told by `list-announcer.ts`, a polite line after 500 ms), `combobox-option.ts` (the row: badge, label,
+      detail, count with a spoken unit). `search-shortcut.ts` (with `shortcut-event.ts`, shared with `undo-shortcut`) is wired in the
+      page, and so is `query-input`'s `bind:input`. Rules in QUERY_LANGUAGE §6 (D26). *T:* the state table, the announcer, the shortcut
+      guards (Shift allowed: an Italian keyboard types `/` with it), e2e `search-shortcut.test.ts` on the three projects.
+      Deviations: the `Combobox` takes the `input` as a prop instead of owning one, which is what 10.5's lazy attach needs and what the
+      Synergy picker (13.2) can do as well; an option that `continues` (a field, an operator) keeps the list open after an accept;
+      the list does not scroll (a scroll area failed axe's `scrollable-region-focusable`, and nine rows fit): the page scrolls to the
+      active option; no footer of key hints; `--shadow-popup` is a new token. **Checked on a throwaway page** (focus, Tab, ↑ / ↓ and
+      wrap, Enter, Esc, a pointer pick keeps the focus, Shift+Tab, a continuing option, axe with the list open) in the three e2e
+      projects, then removed: nothing renders the `Combobox` until 10.5, which carries its e2e.
 - [ ] **10.5** Wired in, lazy. `query-input.svelte` keeps the plain `<input>`; the assist chunk (lint, suggest, dropdown, issues) is
       `import()`ed on first idle, focus or pointer and attaches to that same element: nothing swaps, so no focus is lost and nothing
-      shifts. IME guard (`isComposing`). The size budget gains `lazyJs` (the limit is set from the first measurement) and `totalJs`.
-      Keyboard walk: Tab leaves the field with the popup open after a plain focus; type, ArrowDown, Tab accepts. *T:* e2e criteria 2
-      and 3 (the active option's name has the count and the live line says it), axe with the popup open, option targets 44 px under
-      coarse, Lighthouse CLS ≤ 0.1, typing latency unchanged. *Docs:* QUERY_LANGUAGE §6 (ranking, accept, Tab policy), DESIGN
-      (suggestion list), checklist rows.
+      shifts. The `<Combobox>` goes inside `.field` (the popup is positioned against it). The size budget gains `lazyJs` (the limit is
+      set from the first measurement) and `totalJs`. Traps found while building 10.4: a **fix raises an `input` event too** (as an accept
+      does, which `onaccept` already shields) and must not open the list nor make an option active; Safari reports the Enter that ends an
+      IME composition with `isComposing` false and `keyCode` 229 (`pressKey` reads `isComposing` only); `[role=option]` and
+      `[role=combobox]` go into `support/keyboard.ts` `CONTROLS`, the options' 44 px into `touch-targets.test.ts`, and `searchBox` (a
+      `textbox` by role) becomes a `combobox`.
+      Keyboard walk: Tab leaves the field after a plain focus; type, ArrowDown, Tab accepts. *T:* e2e criteria 2 and 3 (the active
+      option's name has the count and the live line says it), axe with the popup open, option targets 44 px under coarse, Lighthouse
+      CLS ≤ 0.1, typing latency unchanged. *Docs:* DESIGN (suggestion list), checklist rows.
 
 ### M12 Relations engine (core) — pure, tested on the real sheet
 Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97 cause, 370

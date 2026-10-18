@@ -91,6 +91,9 @@ export const copy = {
   /** What a screen reader is told (a polite line): the count after a pause in the typing, and the result of a fix at once. */
   noIssues: 'No issues',
   issuesFixed: (left: number) => (left === 0 ? 'Fixed. No issues left.' : `Fixed. ${issueCount(left)} left.`),
+  /** The list of suggestions under a field (QUERY_LANGUAGE §6): its name, and what a screen reader is told of its size (a polite line). */
+  suggestionsLabel: 'Suggestions',
+  suggestionCount: (count: number) => `${formatCount(count)} ${count === 1 ? 'suggestion' : 'suggestions'}`,
   resultCount: (shown: number, total: number) => `${formatCount(shown)} of ${formatCount(total)} traits`,
   datasetVersion: (version: string) => `Compendium v${version}`,
   sortLabel: 'Sort',

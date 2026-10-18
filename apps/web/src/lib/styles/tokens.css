@@ -48,6 +48,8 @@
 
   /* What dims the page behind a modal sheet. */
   --scrim: rgb(4 6 9 / 0.62);
+  /* What lifts a list that opens over the page (the suggestions of a field). */
+  --shadow-popup: 0 18px 40px rgb(0 0 0 / 0.45);
 
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;

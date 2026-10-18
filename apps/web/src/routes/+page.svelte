@@ -60,7 +60,9 @@
   import { pageAddress } from '../lib/page-address';
   import { pageScroll } from '../lib/page-scroll';
   import type { PageState } from '../lib/page-state';
+  import { isSearchShortcut } from '../lib/search-shortcut';
   import { timeAssist } from '../lib/search-timing';
+  import type { ShortcutEvent } from '../lib/shortcut-event';
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
   import { createPageUrlWriter } from '../lib/page-url-writer';
   import type { PartyActions } from '../lib/party-actions';
@@ -81,6 +83,7 @@
   let pageHeading = $state<HTMLHeadingElement>();
   let resultsHeading = $state<HTMLHeadingElement>();
   let resultsSection = $state<HTMLElement>();
+  let queryField = $state<HTMLInputElement>();
   /** Whether the page is scrolled more than a screen from its top: the Back to top button is then on offer. */
   let scrolledAway = $state(false);
   /**
@@ -352,16 +355,34 @@
     remember();
   }
 
-  /** Ctrl+Z / Ctrl+Shift+Z undo and redo the party, but not in a field where the keys undo the typing. */
+  /** The slash takes the person to the search field, from the Party tab too (it is brought forward first). */
+  async function focusSearch(): Promise<void> {
+    if (!exploreOnScreen) {
+      selectTab('explore');
+      await tick();
+    }
+    queryField?.focus();
+  }
+
+  /**
+   * Ctrl+Z / Ctrl+Shift+Z undo and redo the party, but not in a field where the keys undo the typing; the slash focuses the
+   * search, but not in a field where it is a character. The key is kept from being typed into the field it has just reached.
+   */
   function onKeydown(event: KeyboardEvent): void {
-    const shortcut = undoShortcut({
+    const press: ShortcutEvent = {
       key: event.key,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
       shiftKey: event.shiftKey,
       altKey: event.altKey,
       target: event.target instanceof HTMLElement ? event.target : null,
-    });
+    };
+    if (isSearchShortcut(press)) {
+      event.preventDefault();
+      void focusSearch();
+      return;
+    }
+    const shortcut = undoShortcut(press);
     if (shortcut === undefined) return;
     event.preventDefault();
     if (shortcut === 'undo') undoParty();
@@ -459,6 +480,7 @@
     <div class="query-section">
       <search>
         <QueryInput
+          bind:input={queryField}
           value={explore.query}
           {lint}
           onchange={(query: string) => {

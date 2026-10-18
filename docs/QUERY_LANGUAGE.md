@@ -370,8 +370,25 @@ Enter would show, **within the active filters** (D18): the page passes `(query) 
 field of a suggestion stay as they were. Each count is one search, so at most nine per list: if they ever hold up `atlas:assist`, the page
 draws the list first and counts after (ADR-0010).
 
-Max 9 items. Keyboard: ↑/↓ move, Tab/Enter accept, Esc closes; `/` focuses search from anywhere (not while typing in another input).
-ARIA: combobox pattern (`role=combobox` input, `listbox`/`option`, `aria-activedescendant`).
+**The list and the keys** (`Combobox` over `combobox-state.ts`, PLAN 10.4). An editable combobox with a list (ARIA APG): the field has
+`role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls` the listbox and `aria-activedescendant` the active
+option; focus never leaves the field, and a press on an option does not take it either. At most nine options (`MAX_SUGGESTIONS`); a
+list with none is not shown. An option's name is all its text: the kind, what is written, the detail and the count with its unit
+("Debuff applies:vulnerable applies “vulnerable” 42 traits").
+- **Opens** on typing or on ↓ / ↑ (↓ the first option, ↑ the last), never on a plain focus or a click.
+- **Active option.** None until the person types or uses the arrows: typing makes the first one active (the one the ghost text
+  shows), ↑ / ↓ move and wrap. None again after an accept, a caret move (arrows, Home, End, a click), Esc and a blur, so that a
+  Tab that is not meant for the list leaves the field (WCAG 2.1.2) instead of taking what the next list puts first.
+- **Tab and Enter** accept the active option; with none active, or the list shut, they are the field's own. Shift+Tab, and Tab or
+  Enter with Ctrl, Alt or Cmd held, are never taken. A key pressed in the middle of an IME composition is never taken either.
+- **After an accept** a finished term shuts the list; a field or an operator (`complete` false) keeps it open for what comes next,
+  with nothing active. **Esc** shuts a showing list (otherwise it is the page's: it may close a sheet). **Alt+↓** opens without
+  choosing, **Alt+↑** shuts; ↑ / ↓ with Shift, Ctrl or Cmd are the field's (they select or jump in the text).
+- **Said aloud.** The size of the list is told by a polite line ("9 suggestions") once it has kept its size for half a second, and
+  again only when it changes; a list that goes away is forgotten, not announced.
+- **`/`** goes to the search field from anywhere but a field that can be typed in (Shift allowed: an Italian keyboard types the
+  slash with it; Ctrl, Alt and Cmd are not). It is kept from being typed into the field it reaches, and from the Party tab it
+  brings the Explore tab forward first. It is a character-key shortcut with no way to turn it off (WCAG 2.1.4): see PLAN.
 
 ## 7. Explain (Phase 2)
 A Visitor renders the AST as plain language, with parentheses only where precedence needs them:

@@ -18,17 +18,19 @@
    * the data is. The issues are a badge inside the field and a list under it; a fix is one edit of the text, made in the field as a
    * person's typing is.
    */
-  const {
+  let {
     value,
     onchange,
     lint,
+    input = $bindable(),
   }: {
     value: string;
     onchange: (value: string) => void;
     lint: ((source: string, caret: number | undefined) => readonly QueryDiagnostic[]) | undefined;
+    /** The `<input>`, for whoever needs to focus it or attach to it (the `/` shortcut, the suggestions of the next slice). */
+    input?: HTMLInputElement | undefined;
   } = $props();
 
-  let input = $state<HTMLInputElement>();
   let container = $state<HTMLElement>();
   /** Where the caret is while the person is in the field or in what belongs to it, and none otherwise: every term is then judged as it stands. */
   let caret = $state<number>();
