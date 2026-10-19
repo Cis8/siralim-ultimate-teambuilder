@@ -13,9 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9 and M10 are done, 12.1–12.4 are done and the next slice is 12.5**
-  (wiring: `createRelationService` with an LRU, the composition root loading the dataset once, keyword slugs, `findTraits`, the bench
-  of the relations), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9, M10 and M12 are done and the next slice is 13.1** (the shared party
+  session, a refactor of the 776-line `+page.svelte` with no behaviour change: the whole Phase 1 e2e suite is the net), in the order
+  M13 → M11 (D15). Nothing calls `loadRelationService()` yet; 13.2 does. The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
   lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
@@ -343,69 +343,25 @@ the fixes) **and under the fixed bars** (z-index 4; on a phone the Filters butto
 (200 kB), and dependency-cruiser runs over `apps/web/src` with the rule `assist-stays-lazy`. e2e: `searchBox` is a combobox (it waits for the layer),
 `query-suggestions.test.ts`, the option targets in `touch-targets.test.ts`.
 
-### M12 Relations engine (core) — pure, tested on the real sheet
-Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97 cause, 370
-react), hence D16. 27 enemy-only random sources (30 traits afflict a random debuff, minus Going Mad, Dusty Struggle and Glitch) and 4
-conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing read `randomDebuff`, `conditionalSources` or
-`canBeRandomlyApplied` outside enrichment.
-- [x] **12.1** Relation index. `createRelationIndex(traits, taxonomy)` (`core/src/relations/relation-index.ts`): `keys` (the 42 buffs, debuffs
-      and effects, taxonomy order) and `get(key)` → `KeyRelations {key, appliers, conditional, random, users}` of `Trait`s in dataset order;
-      `resists` in none (R9), events, mechanics and flags in none (R12), the taxonomy decides what a key is. Deviations: a trait is listed
-      **once per key among the sources, under the strongest** (applies > conditional > random), so those three never overlap (no real trait
-      is in two; it is defended in the unit tests); the index is not built beside the search index yet (12.5 wires it). **Not an invariant of
-      the index:** a trait that gives what it relies on (the 4 pair traits, and any that applies and uses one key) is in `users` and in a
-      source list of that key: `relationsOf` of 12.2 leaves the focus out. *T:* `relation-index.test.ts` (hand-made traits, fast-check
-      invariants) and `pipeline/src/build/relation-acceptance.test.ts` (v2.0: 27 random sources in all 18 randomizable debuffs, never in
-      Inverted, Mania, buffs or effects; the 4 pairs; `applies:` / `uses:` find as many traits as `appliers` / `users` for all 42 keys).
-- [x] **12.2** Enabled by / Enables. `index.relationsOf(id, {artifactOnly})` → `{enabledBy, enables}` (`undefined` for an unknown id; the
-      algorithm is `relationsOfTrait` in `trait-relations.ts`). A side = `RelationSide {several (score ≥ 2), single: {key, entries}[], unmet,
-      count}` of `RelatedTrait {trait, links: {key, strength}[], score, strength}`: **one per trait per side** (D17); `strength` is the
-      strongest link (`specific < conditional < random`), so a mixed trait ranks by its best; ranked by tier, score desc, name ignoring
-      case, id. A lane exists only for a key with a trait of its own, in the focus's key order; `unmet` = keys no trait is tied through (a
-      key whose traits all sit in `several` is not unmet); `artifactOnly` drops candidates without material before ranking, never the
-      focus. Deviations: **the Enables side lists only what the focus applies by name (D27)**, so Pandemic and the four pair traits have
-      an empty Enables side; names are compared with `compareTextIgnoringCase` (as Explore's A–Z), not `compareText`; `KeyRelations`
-      moved to `key-relations.ts` (the index calls the algorithm and a cycle is forbidden). **For 13.3:** a trait relying on two
-      debuffs that can be random gets all 27 random sources in `several`, `×2`, after the specific and conditional ones (Flesh Rot:
-      36 enabled by, 8 outside the random group), so the random group needs the collapsed disclosure; Zantai's Envy is the one real
-      mixed trait (random for the debuffs, specific for Mega Magic). The whole sheet costs 5.5 ms (3 µs a trait). *T:*
-      `trait-relations.test.ts` (hand-made, fast-check on a dense generator: once per side, order, symmetry, shuffled input, filter) and
-      `relation-acceptance.test.ts` (criteria 4 and 5 on v2.0; the party-side random traits never; Here to Die ⇄ Kindling conditional;
-      Flesh Rot between the specific and the random; symmetry over all 1,780 traits; reversed dataset gives the same lists).
-- [x] **12.3** Alternatives, Same trigger, Same family. Three more methods of the index, each `undefined` for an unknown id, each taking
-      `artifactOnly`, none listing the focus, each returning the whole ranked list (the UI caps): `alternativesOf(id)` → `Alternative {trait,
-      shared: {key, role}[]}[]` (a tie = a key in the role `applies` or `uses`, for the 42 keys; ranked by ties shared, then name);
-      `sameTriggerOf(id)` → `SameTrigger {triggers, entries: {trait, shared: event keys}[]}` (the events the focus *relies on*, once each;
-      a trait is listed if it relies on one with an actor that can be the same: equal, or either names none or says `any`, so `self` and
-      `ally` stay apart and a moment such as the start of battle matches by key; ranked by events shared, then name; `triggers: []` is the
-      "no trigger" state: 531 of 1,780); `sameFamilyOf(id)` → `SameFamily {family, entries: Trait[]}` (mastery, creature, avatar, backer,
-      other, then name; a mastery's family is `masteryFamily`, which equals `family` in v2.0). Deviations: **D28**; `RelationOptions` moved to
-      `relation-options.ts` and the name order to `trait-order.ts` (both shared by the four sections). **For 13.4:** the biggest lists in
-      v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same family (Numerical Nightmare), so
-      the cap of 200 bites on Same trigger only; Exotic (148 creatures), Backer (135) and Avatar (31) are *families* of the sheet, not
-      real ones, so their lists are long and not meaningful: the page decides whether to show Same family for them. All three for all 1,780
-      traits cost 95 ms (53 µs a trait). *T:* a unit file for each section (hand-made traits, fast-check against a brute-force oracle:
-      exactly who is listed, rank, symmetry, shuffled input, filter; the tests were mutation-checked) and `relation-acceptance.test.ts`
-      on v2.0 (Sin and Sentence's six alternatives, Culmination's 17, Extra Padding's 208, the Abomination and Apocalypse families, and a
-      full-pair oracle for all three sections).
-- [x] **12.4** Keyword view. Two more methods of the index, each taking `artifactOnly`: `keywordView(key)` → `KeywordView` (`undefined` as
-      `get`: the four lists of `KeyRelations`, already filtered, + `stats {appliers, conditional, random, users}` + `verdict` + `coApplied
-      {key, count}[]`) and `keywordStats()` → a `Map` of the same `stats` for all 42 keys in taxonomy order (the chips of 13.5: one source
-      for the chip and the summary, so the filter cannot move one without the other). The verdict is `verdictOf(stats)`: **D29**.
-      `coApplied` = the other keys among the 42 that the **specific** appliers also apply, once per trait, count desc, ties by taxonomy
-      order (no event or mechanic: they have no keyword view); it is symmetric (the traits that apply both are the same). Real data: every
-      key of v2.0 has an applier, so `no-source`, `only-random` and `only-conditional` never show on the real sheet (unit-tested only);
-      `scarce`: Blighted, Bomb, Burning, Feared, Mania; `no-payoff`: Inverted and seven buffs (Agile, Defensive, Immune, Protected,
-      Savage, Taunting, Warded); the filter moves no verdict on v2.0, only counts. All 42 views cost 0.22 ms, `keywordStats` 17 µs.
-      **For 13.5:** the counts are for display, the lists are the traits; "Often applied together" can be empty (Barrier, Zombies, Inverted).
-      *T:* `keyword-view.test.ts` (a table for `verdictOf` at every boundary, hand-made traits, fast-check against a brute-force oracle
-      for lists, counts and co-applied; mutation-checked: 12 of 12 killed) and `keyword-view-acceptance.test.ts` on v2.0: **agreement
-      with Explore** (appliers / users equal the facet panel's `applies` / `uses` for all 42 keys, with and without `mat:yes`; the
-      chips too; the lists equal what `applies:` / `uses:` find) and the committed `snapshots/keyword-verdicts-v2.0.txt`.
-- [ ] **12.5** Wiring, slugs, speed. `createRelationService` (memoised `relationsOf`, LRU 32); the composition root loads the dataset once
-      for both services; `keywordSlug(key)` / `keywordFromSlug(slug)` for `/synergy/kw/<slug>` (unique across the taxonomy, tested like
-      the key-prefix rule); `findTraits(text, limit)` for the focus picker (name prefix, name substring, creature or family). `pnpm bench`
-      gains the relations of all 1,780 traits (budget about 0.15 ms each) and the index build.
+### M12 Relations engine (core) — done
+`core/src/relations/`: `createRelationIndex(traits, taxonomy)` over the 42 keys that can be a dependency (buffs, debuffs, effects; no event,
+mechanic or flag: R12, D16). `get(key)` → the traits that apply, apply conditionally or at random, and rely on it (a trait is listed once per
+key among the sources, under the strongest); `relationsOf(id)` → Enabled by / Enables (one trait per side, a `several` lane first, `unmet`
+keys, ranked by tier, links, name: D17; Enables lists only what the focus applies by name: D27); `alternativesOf`, `sameTriggerOf`,
+`sameFamilyOf` (D28); `keywordView(key)` / `keywordStats()` (lists, counts, verdict D29, co-applied keys). Each takes `artifactOnly`, returns
+the whole ranked list (the UI caps) and `undefined` for an unknown id or key. `createRelationService(repository)` is the web's entry: the four
+sections of a trait are remembered for the last 32 questions (`memoiseRecent`), beside `trait(id)`, `datasetVersion` and `findTraits(text,
+limit)` for the focus picker (the name begins with the text, has a word that does, has it inside; then the creature or the family). `keywordSlug` /
+`keywordFromSlug(slug, keys)` write and read `/synergy/kw/<slug>` (`createTaxonomy` refuses two keys with one slug or none, as it does a key
+that starts another; the slug is read exactly, and the caller gives `index.keys`, because an event's key has no page). `loadOnce(repository)`:
+the composition root fetches the dataset once for both services; `loadRelationService()` is there and no page calls it before 13.2, so the
+relation code is tree-shaken out (initial JS 79.7 kB). Tested on the real sheet (`relation-acceptance`, `keyword-view-acceptance`: the counts
+equal Explore's facet panel for all 42 keys, with and without `mat:yes`, and the committed `keyword-verdicts-v2.0.txt`;
+`relation-service-acceptance`) and with hand-made traits and fast-check oracles, all mutation-checked. `pnpm bench` (`relations.bench.ts`):
+the index builds in 0.55 ms; the four sections of all 1,780 traits cost 2 µs (Enabled by / Enables), 1 µs (Alternatives), 44 µs (Same
+trigger) and 7 µs (Same family) a trait on average, 0.3 ms at worst for all four (Squirmies); all 42 keyword views 0.17 ms; one key of the
+focus picker 0.25 ms. Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97
+cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-source traits exist.
 
 ### M13 Synergy UI — a new page, the party shared
 - [ ] **13.1** Shared party session (a refactor, no behaviour change). The planner, the live announcements, the chooser state, the
@@ -420,7 +376,8 @@ conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing 
       `target` carried); links through `resolve()` (the lint rule `no-navigation-without-resolve` accepts few forms: a helper may be
       needed). Header nav on wide screens (Explore · Synergies · Party n/18); the bottom bar keeps its tablist and gains a Synergies link
       beside it (D23); on the Synergy routes the bar is a `nav` of three links with `aria-current`. An unknown id is "not found in vX"
-      with a name search; an unknown slug opens the keyword picker. The focus picker is the `Combobox` of 10.4 over `findTraits`. *T:*
+      with a name search; an unknown slug opens the keyword picker (`keywordFromSlug(slug, relations.keys)`). The focus picker is the
+      `Combobox` of 10.4 over `relations.findTraits(text, limit)`; the page gets `relations` from `loadRelationService()`. *T:*
       address codec table, garbage included; e2e: a direct visit of both URL shapes, Back / Forward, a built-output smoke test that
       the assets in `404.html` carry the base path; axe; keyboard walk and touch-target block for Synergy. *Docs:* SPEC §7 and DESIGN
       (the tab becomes a link, D23).
@@ -431,15 +388,27 @@ conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing 
       "Re-centre on X", creature · class, "×N links", tier label *conditional* / *random*, no material, add), the **several-keys lane
       first**, the random tier a labelled group last (a collapsed disclosure when > 3), the prototype's empty copy, the artifact
       checkbox (`mat=yes`), the trail (`nav`, last 6, session memory, `aria-current="location"`, fresh on a deep link). Re-centre is a
-      history entry; the focus moves to the new `h1`; a polite "Now centred on X"; `document.title` follows. *T:* the trail module
+      history entry; the focus moves to the new `h1`; a polite "Now centred on X"; `document.title` follows. **Data:** a trait relying
+      on two debuffs that can be random gets all 27 random sources in `several`, `×2`, after the specific and conditional ones (Flesh
+      Rot: 36 enabled by, 8 outside the random group), so the random group needs the collapsed disclosure; Zantai's Envy is the one
+      real mixed trait (random for the debuffs, specific for Mega Magic); Pandemic and the four pair traits have an empty Enables side
+      (D27). *T:* the trail module
       (append, truncate, limit); e2e criteria 4 and 5 on screen, add from a card and from the focus, Back / Forward, the artifact
       filter, keyboard only.
 - [ ] **13.4** Secondary sections. Alternatives (with the reason line), Same trigger, Same family: `h2` and a count, 6 cards and "Show all
-      N" (capped at 200 with a message; plain DOM, measure before reaching for the virtual list). *T:* e2e counts equal core's; "Show
-      all" keeps the focus.
+      N" (capped at 200 with a message; plain DOM, measure before reaching for the virtual list). **Data:** the biggest lists in v2.0
+      are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same family (Numerical Nightmare), so the
+      cap bites on Same trigger only; Exotic (148 creatures), Backer (135) and Avatar (31) are *families* of the sheet, not real ones, so
+      their lists are long and not meaningful: the page decides whether to show Same family for them; 531 of 1,780 traits rely on no
+      event (`triggers: []`, the "no trigger" state). *T:* e2e counts equal core's; "Show all" keeps the focus.
 - [ ] **13.5** Keyword view. A chip picker (counts spoken as "N appliers, M users", not glyphs), the summary (pill, counts, the verdict
       with icon and text, co-applied as links), Appliers and Rely on it lists (random and conditional labelled, last), "See in Explore"
-      (`?kw=a:key`, `u:key`), `/synergy/kw/<slug>`; the verdict goes to the live line. *T:* e2e verdict texts for three keys; the counts
+      (`?kw=a:key`, `u:key`), `/synergy/kw/<slug>`; the verdict goes to the live line. **Data:** the counts are for display, the
+      lists are the traits; "Often applied together" can be empty (Barrier, Zombies, Inverted); every key of v2.0 has an applier, so
+      `no-source`, `only-random` and `only-conditional` never show on the real sheet; a trait that gives what it relies on (the 4 pair
+      traits, any that applies and uses one key) is in both lists of that key, which is true to the sheet; `scarce`: Blighted, Bomb, Burning, Feared, Mania;
+      `no-payoff`: Inverted and seven buffs (Agile, Defensive, Immune, Protected, Savage, Taunting, Warded); the artifact filter moves
+      no verdict on v2.0, only counts. *T:* e2e verdict texts for three keys; the counts
       equal the Explore facet panel (criterion 11).
 - [ ] **13.6** Mobile. Under 700 px: the trail is a horizontally scrolling `nav` of 44 px pills; a compact focus card (the description
       folds to 3 lines, "Show more"); a `tablist` Enabled by · Enables · Alternatives · Related (Same trigger and Same family stacked);

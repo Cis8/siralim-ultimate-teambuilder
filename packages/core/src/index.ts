@@ -95,15 +95,18 @@ export type {
 } from './taxonomy/entry';
 export { canHaveActor, EVENT_GROUPS, TRIGGER_PHASES } from './taxonomy/entry';
 export { createTaxonomy, TaxonomyError, type Taxonomy } from './taxonomy/registry';
+export { keywordFromSlug, keywordSlug } from './taxonomy/keyword-slug';
 export { taxonomy } from './taxonomy/taxonomy';
 export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';
 export { createMemoryTraitRepository } from './repository/memory-trait-repository';
+export { loadOnce } from './repository/load-once';
 export { readDataset, readManifest } from './repository/read-dataset';
 export type { Alternative, SharedKey, SharedRole } from './relations/alternatives';
 export type { KeyRelations } from './relations/key-relations';
 export type { CoApplied, KeywordStats, KeywordVerdict, KeywordView } from './relations/keyword-view';
 export { createRelationIndex, type RelationIndex } from './relations/relation-index';
 export type { RelationOptions } from './relations/relation-options';
+export { createRelationService, type RelationService } from './relations/relation-service';
 export type { SameFamily } from './relations/same-family';
 export type { SameTrigger, TriggerMatch } from './relations/same-trigger';
 export type {

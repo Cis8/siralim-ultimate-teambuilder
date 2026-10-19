@@ -82,6 +82,17 @@ describe('createTaxonomy', () => {
     it('accepts keys that only share their first words', () => {
       expect(createTaxonomy([event('start of battle'), event('start of turn')]).entries).toHaveLength(2);
     });
+
+    // A keyword has a page at `/synergy/kw/<slug>` (ADR-0011): two keys with one slug would share it.
+    it('refuses two keys that are written alike in an address', () => {
+      expect(violations([buff('mega magic'), buff('mega-magic')])).toMatch(
+        /keys "mega magic" and "mega-magic" are both written "mega-magic" in an address/,
+      );
+    });
+
+    it('refuses a key that is nothing in an address', () => {
+      expect(violations([buff('???')])).toMatch(/key "\?\?\?" has nothing to write in an address/);
+    });
   });
 
   describe('refusing entries that could never match', () => {

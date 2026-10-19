@@ -30,7 +30,8 @@ an unknown path.
 - **Navigation**: the header on wide screens (Explore · Synergies · Party n/18). On a phone the bottom bar **keeps its ARIA tablist**
   (Explore, Party), which still swaps views of one page, and gets a **Synergies link beside it**, not a third tab (PLAN D23); on the
   Synergy routes the bar is a `nav` of three links with `aria-current`.
-- **Keyword slugs** are explicit: `keywordSlug(key)` and `keywordFromSlug(slug)`, unique across the taxonomy and tested.
+- **Keyword slugs** are explicit: `keywordSlug(key)` and `keywordFromSlug(slug, keys)` (the keys that have a page). Uniqueness is
+  a rule of `createTaxonomy`, as is the rule that no key starts another: a taxonomy with two keys of one slug does not load.
 - **Unknown input is a state**: an unknown trait id is "not found in vX" with a name search (as the party already does); an unknown
   slug opens the keyword picker.
 

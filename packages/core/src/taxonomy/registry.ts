@@ -1,5 +1,6 @@
 import type { KeywordKey, KeywordKind, KeywordReference } from '../model/trait';
 import type { TaxonomyEntry } from './entry';
+import { keywordSlug } from './keyword-slug';
 
 /** The entries break a rule that would make keyword matching ambiguous or impossible. */
 export class TaxonomyError extends Error {
@@ -22,9 +23,10 @@ export interface Taxonomy {
 }
 
 /**
- * Checks the entries and wraps them: keys are unique, lower case and none the start of another (a query finds a keyword
- * by the start of its key), every entry has a label and plain-text patterns, no pattern names two entries, and an alias
- * of an event is neither a key nor the start of one. Adding a keyword is adding an entry; nothing else changes.
+ * Checks the entries and wraps them: keys are unique, lower case, none the start of another (a query finds a keyword by the
+ * start of its key) and each has a slug of its own (`keywordSlug`); every entry has a label and plain-text patterns, no
+ * pattern names two entries, and an alias of an event is neither a key nor the start of one. Adding a keyword is adding an
+ * entry; nothing else changes.
  *
  * @throws TaxonomyError listing every violation.
  */
@@ -32,6 +34,7 @@ export function createTaxonomy(entries: readonly TaxonomyEntry[]): Taxonomy {
   const violations = [
     ...keyViolations(entries),
     ...keyPrefixViolations(entries),
+    ...keySlugViolations(entries),
     ...entryViolations(entries),
     ...patternViolations(entries),
     ...aliasViolations(entries),
@@ -76,6 +79,20 @@ function keyPrefixViolations(entries: readonly TaxonomyEntry[]): string[] {
           `key "${key}" is the start of key "${other}": queries find a keyword by the start of its key, so they could not tell them apart`,
       ),
   );
+}
+
+/** A keyword's page is at the address its slug makes (ADR-0011): a key with none, or two with one, would have no page of their own. */
+function keySlugViolations(entries: readonly TaxonomyEntry[]): string[] {
+  const keysBySlug = new Map<string, Set<string>>();
+  for (const { key } of entries) {
+    const slug = keywordSlug(key);
+    keysBySlug.set(slug, (keysBySlug.get(slug) ?? new Set<string>()).add(key));
+  }
+  return [...keysBySlug].flatMap(([slug, keys]) => {
+    if (slug === '') return [...keys].map((key) => `key "${key}" has nothing to write in an address`);
+    const quoted = [...keys].map((key) => `"${key}"`).join(' and ');
+    return keys.size > 1 ? [`keys ${quoted} are both written "${slug}" in an address`] : [];
+  });
 }
 
 function entryViolations(entries: readonly TaxonomyEntry[]): string[] {

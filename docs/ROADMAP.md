@@ -71,7 +71,7 @@ riskiest and needs the owner's iPhone.
 - [x] **M10 Autocomplete.** Context detection, providers per field, result-count preview, ghost text, keyboard + ARIA combobox
       (Tab never captured on a plain focus), the assist layer lazy-loaded over the same `<input>`. (The ghost text is written in
       `core` and drawn with the mirror of M11.2.)
-- [ ] **M12 Relations engine (core).** `enabledBy`, `enables`, link scores, alternatives, shared triggers, same family,
+- [x] **M12 Relations engine (core).** `enabledBy`, `enables`, link scores, alternatives, shared triggers, same family,
       random-debuff sources (GAME_RULES R5), conditional sources (R10), keyword view stats + verdicts. Buffs, debuffs and effects
       only: no event is a dependency (R12; PLAN D16). Unit-tested on the real sheet.
 - [ ] **M13 Synergy UI.** By trait (lanes, trail, re-centre, add to party, artifact-eligible filter), by keyword
