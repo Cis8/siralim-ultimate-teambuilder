@@ -122,6 +122,9 @@ slice that builds it then follows.
   from `enter` / `popstate` / `link` (read). A navigation started while another is in flight drops the first one's history
   entry, hence the writer's queue. The lint rule `no-navigation-without-resolve` accepts `resolve()` only with `'/'` or
   `` `/?${string}` ``, and `page.url` is a read-only type: build a `URL` from its `href`.
+- e2e, the announced count (`announcedCount`, the live region): it is empty until the count has stood still for 400 ms, then it says the
+  whole list until the search's count has stood still as long. Reading it right after a `fill` gives either, depending on the speed of the
+  machine (a fast one passes, the CI runner failed): wait for `toContainText('of')` **and** `not.toContainText('<total> of')` first.
 - e2e: `rows` is the list items of the *Results* region (the party panel has lists too). Playwright will not click a button
   that says `aria-disabled="true"`: `click({ force: true })` is the person pressing it. A poll that waits for an address
   parameter can be satisfied by an earlier write: wait for the value the step just wrote.

@@ -304,7 +304,10 @@ test.describe('explore', () => {
       const { traits } = await publishedDataset(request);
       await openExplore(page);
       await searchBox(page).fill('vulnerable');
+      // The live region is empty until the count has been the same for a moment, and then says the whole list until the
+      // search's count has been: it must be said, and be the search's.
       await expect(announcedCount(page)).toContainText('of');
+      await expect(announcedCount(page)).not.toContainText(`${traits.length.toLocaleString('en-US')} of`);
       const before = (await announcedCount(page).textContent()) ?? '';
       await rows(page)
         .getByRole('button', { name: /^Applies Vulnerable — / })
