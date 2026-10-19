@@ -21,10 +21,13 @@ an unknown path.
   dynamic routes set `prerender = false` and `ssr = false`: `404.html` (the SPA fallback `adapter({ fallback: '404.html' })` already
   writes) boots the app and the client router reads the path. One shell copied 1,780 times would be pointless. Slice 13.2 proves a
   direct visit of both URL shapes in the e2e, and the built-output smoke test covers what Pages itself does.
-- **A shared party session** at module level (`party-session.svelte.ts`): the planner (undo history included), the announcements,
-  the chooser state, the last-party persistence and the `party` / `target` address sync. Pages read and write it; navigation does
-  not drop it. A second writer, `createAddressWriter(bar, addressOf)`, replaces the page-bound one: each page says how its state
-  becomes an address. The party travels in the address of every page (ADR-0008), so a Synergy link can be shared with the party.
+- **A shared party session** at module level (`party-session.ts`, made once in `composition-root.ts`): the planner (undo history
+  included), the announcements, the chooser state, the last-party persistence and the `party` / `target` address sync. Pages read
+  and write it; navigation does not drop it. It is plain TypeScript, so Vitest tests it as it is; Svelte's `createSubscriber` makes
+  every field it hands out reactive, so no runes (and no `.svelte.ts`) are needed. A generic writer,
+  `createAddressWriter(bar, addressOf)`, replaces the page-bound one: each page says how its state becomes an address, and the
+  session tells the page in front what a change of the party asks of the address (`syncAddress`). The party travels in the address
+  of every page (ADR-0008), so a Synergy link can be shared with the party.
 - **The state of a Synergy view is in the address**: the focus (path), `mat=yes` for the artifact-eligible filter, `section=` for the
   open tab on a phone. A re-centre is a history entry, so Back and Forward walk the trail.
 - **Navigation**: the header on wide screens (Explore · Synergies · Party n/18). On a phone the bottom bar **keeps its ARIA tablist**

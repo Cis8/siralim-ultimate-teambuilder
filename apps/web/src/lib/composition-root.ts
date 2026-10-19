@@ -6,7 +6,10 @@ import {
   type RelationService,
   type SearchService,
 } from '@atlas/core';
+import { tick } from 'svelte';
 import { createStaticTraitRepository } from './data/static-trait-repository';
+import { createLastPartyStore } from './last-party-store';
+import { createPartySession } from './party-session';
 import { timeSearches } from './search-timing';
 
 // `asset` takes only the names of files that exist when the app is built, and the dataset file is renamed whenever the
@@ -47,3 +50,12 @@ export function loadRelationService(): Promise<RelationService> {
   });
   return relationService;
 }
+
+/**
+ * The party every page shares, with its undo history (ADR-0011). It is made once, at module level: the prerender runs no page code
+ * that reads or changes it, and in the browser there is one visitor, so it is never one person's party shown to another.
+ */
+export const partySession = createPartySession({
+  store: createLastPartyStore(() => (typeof localStorage === 'undefined' ? undefined : localStorage)),
+  rendered: tick,
+});

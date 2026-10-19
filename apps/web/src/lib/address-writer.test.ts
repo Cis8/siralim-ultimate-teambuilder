@@ -7,7 +7,8 @@ import {
   type ExploreState,
 } from '@atlas/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPageUrlWriter, TYPING_PAUSE_MS, type AddressBar, type HistoryEntry } from './page-url-writer';
+import { createAddressWriter, TYPING_PAUSE_MS, type AddressBar, type HistoryEntry } from './address-writer';
+import { pageAddress } from './page-address';
 import type { PageState } from './page-state';
 
 const start = 'https://example.test/app/';
@@ -55,7 +56,7 @@ function addressBar(initial = start) {
 
 const queryOf = (href: string) => new URL(href).searchParams.get('q');
 
-describe('createPageUrlWriter', () => {
+describe('createAddressWriter', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -66,7 +67,7 @@ describe('createPageUrlWriter', () => {
   describe('while the query is typed', () => {
     it('writes nothing until typing pauses, then replaces the entry once, with what was typed last', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       for (const query of ['w', 'we', 'wea', 'weak']) {
         writer.typed(stateWith({ query }));
@@ -80,7 +81,7 @@ describe('createPageUrlWriter', () => {
 
     it('writes nothing when the text is back to what the address already says', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'w' }));
       writer.typed(stateWith({ query: '' }));
@@ -91,7 +92,7 @@ describe('createPageUrlWriter', () => {
 
     it('replaces again, not pushes, for the next pause: one entry for a stretch of typing', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       await vi.advanceTimersByTimeAsync(TYPING_PAUSE_MS);
@@ -105,7 +106,7 @@ describe('createPageUrlWriter', () => {
   describe('when something is chosen', () => {
     it('pushes a new entry at once', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.chosen(stateWith({ classes: ['life'] }));
       await vi.advanceTimersByTimeAsync(0);
@@ -115,7 +116,7 @@ describe('createPageUrlWriter', () => {
 
     it('writes nothing for a choice that leaves the address as it is', async () => {
       const { bar, gone } = addressBar(`${start}?class=life`);
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.chosen(stateWith({ classes: ['life'] }));
       await vi.advanceTimersByTimeAsync(0);
@@ -125,7 +126,7 @@ describe('createPageUrlWriter', () => {
 
     it('first leaves what was typed in the entry it was typed in, so that back returns to it', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       writer.chosen(stateWith({ query: 'weak', classes: ['life'] }));
@@ -139,7 +140,7 @@ describe('createPageUrlWriter', () => {
 
     it('does not write the typed text a second time when the pause runs out', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       writer.chosen(stateWith({ query: 'weak', classes: ['life'] }));
@@ -157,7 +158,7 @@ describe('createPageUrlWriter', () => {
 
     it('replaces the entry at once, no step of its own', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.refined(withTarget(stateWith({})));
       await vi.advanceTimersByTimeAsync(0);
@@ -167,7 +168,7 @@ describe('createPageUrlWriter', () => {
 
     it('first leaves what was typed in the entry it was typed in', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       writer.refined(withTarget(stateWith({ query: 'weak' })));
@@ -181,7 +182,7 @@ describe('createPageUrlWriter', () => {
 
     it('writes nothing when the address already says it', async () => {
       const { bar, gone } = addressBar(`${start}?target=3-fused`);
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.refined(withTarget(stateWith({})));
       await vi.advanceTimersByTimeAsync(0);
@@ -192,7 +193,7 @@ describe('createPageUrlWriter', () => {
 
   it('writes the party with the search, as one address', async () => {
     const { bar, gone } = addressBar();
-    const writer = createPageUrlWriter(bar);
+    const writer = createAddressWriter(bar, pageAddress);
     const party = withTraitAt(emptyParty, { member: 0, slot: 'innate' }, 'a--one');
 
     writer.chosen({ ...stateWith({ classes: ['life'] }), party: { party, target: firstEmptySlot(party) } });
@@ -203,7 +204,7 @@ describe('createPageUrlWriter', () => {
 
   it('writes the tab with the rest, a step of its own', async () => {
     const { bar, gone } = addressBar();
-    const writer = createPageUrlWriter(bar);
+    const writer = createAddressWriter(bar, pageAddress);
 
     writer.chosen({ ...stateWith({}), tab: 'party' });
     await vi.advanceTimersByTimeAsync(0);
@@ -218,7 +219,7 @@ describe('createPageUrlWriter', () => {
 
   it('leaves the other parameters of the address alone', async () => {
     const { bar, gone } = addressBar(`${start}?ref=abc&q=old`);
-    const writer = createPageUrlWriter(bar);
+    const writer = createAddressWriter(bar, pageAddress);
 
     writer.chosen(stateWith({ query: 'old', classes: ['death'] }));
     await vi.advanceTimersByTimeAsync(0);
@@ -230,7 +231,7 @@ describe('createPageUrlWriter', () => {
     it('waits for a navigation to be over before the next starts, so that none supersedes the one before', async () => {
       const { bar, gone, settleByHand, settleNext } = addressBar();
       settleByHand();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       writer.chosen(stateWith({ query: 'weak', classes: ['life'] }));
@@ -245,7 +246,7 @@ describe('createPageUrlWriter', () => {
     it('goes on after a navigation that failed, from where the address really is', async () => {
       const { bar, gone, settleByHand, settleNext, moveTo } = addressBar();
       settleByHand();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.chosen(stateWith({ classes: ['life'] }));
       await vi.advanceTimersByTimeAsync(0);
@@ -265,7 +266,7 @@ describe('createPageUrlWriter', () => {
   describe('when the browser goes to another address by itself (back, forward, a link)', () => {
     it('forgets the text that was waiting to be written', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.typed(stateWith({ query: 'weak' }));
       writer.arrived(new URL(`${start}?class=life`));
@@ -276,7 +277,7 @@ describe('createPageUrlWriter', () => {
 
     it('writes from the address it arrived at', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.chosen(stateWith({ classes: ['life'] }));
       writer.arrived(new URL(`${start}?ref=abc`));
@@ -291,7 +292,7 @@ describe('createPageUrlWriter', () => {
 
     it('does not write the state that is already the address', async () => {
       const { bar, gone } = addressBar();
-      const writer = createPageUrlWriter(bar);
+      const writer = createAddressWriter(bar, pageAddress);
 
       writer.arrived(new URL(`${start}?class=life&sort=az`));
       writer.chosen(stateWith({ classes: ['life'], sort: 'az' }));

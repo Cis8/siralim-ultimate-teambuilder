@@ -13,11 +13,12 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9, M10 and M12 are done and the next slice is 13.1** (the shared party
-  session, a refactor of the 776-line `+page.svelte` with no behaviour change: the whole Phase 1 e2e suite is the net), in the order
-  M13 → M11 (D15). Nothing calls `loadRelationService()` yet; 13.2 does. The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1 is done and the next slice is 13.2**
+  (routes, deep links, navigation), in the order M13 → M11 (D15). The party now lives in `partySession` (`composition-root.ts`): 13.2's
+  pages read it and register `syncAddress` while they are in front, as `+page.svelte` does. Nothing calls `loadRelationService()` yet;
+  13.2 does. The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
-  lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
+  lazy JS; initial JS 80.1 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
@@ -164,7 +165,7 @@ slice that builds it then follows.
 - `pnpm lint` runs dependency-cruiser over `apps/web/src` as well. The rule `assist-stays-lazy` lets only `query-assist-loader.ts` import
   `query-assist.ts`, with `import()`; what the loaded layer needs goes through `query-assist.ts`. Anything that `query-input.svelte` or the
   page imports statically is in the first script, which the rule cannot see: after touching imports run `pnpm build && pnpm size-budget`
-  (lazy JS 9.2 kB now, initial 79.5) or look for `aria-autocomplete` in the chunks.
+  (lazy JS 9.2 kB now, initial 80.1) or look for `aria-autocomplete` in the chunks.
 - Lighthouse: fetching the assist chunk while the first results were being drawn cost 150 ms of LCP (0.92 → 0.90): Lantern counts a
   request that starts before the LCP paint. `FETCH_AFTER_DATA_MS` (500) in `query-input.svelte` keeps it out (back to 0.91–0.92).
 - On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
@@ -237,7 +238,7 @@ the serialiser quotes a value exactly when the lexer would read it otherwise (it
 `clickKeyword`, `descriptionParts`. `web`: three columns (filters | results | party), query input, chip row, result count in
 `aria-live`, virtualised results against the window (`@tanstack/virtual-core`), keyword tokens by role shape, `<mark>`
 highlights, facet panel (`aria-pressed`), effective query + copy, empty state, and the URL kept in step with the state
-(`page-address`, `page-url-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
+(`page-address`, `address-writer`; SPEC §7). Deviations worth knowing: the filters are written as a query and that
 text is what is searched (`filterQuery`); a click on a token turns the other side of the keyword off, the panel does not;
 filter chips are remove-only; a pressed token is a ring, not a fill (contrast of a highlight); narrow screens stack the
 panel above the list until the bottom sheet (M7.1); back and forward bring back the state and start the list over.
@@ -364,12 +365,17 @@ focus picker 0.25 ms. Data worth knowing: the lanes are small (Poisoned 14 appli
 cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-source traits exist.
 
 ### M13 Synergy UI — a new page, the party shared
-- [ ] **13.1** Shared party session (a refactor, no behaviour change). The planner, the live announcements, the chooser state, the
-      last-party persistence and the `party` / `target` address sync move from `+page.svelte` into `party-session.svelte.ts` (module
-      level: survives navigation, undo history included); `createPageUrlWriter` becomes `createAddressWriter(bar, addressOf)`; `go()`
-      takes a path. **The whole Phase 1 e2e suite must pass untouched** (party, tabs, keyboard, explore-url): it is the safety net.
-      *T:* the session's unit tests, moved from the page's logic (the same party keeps its history, another starts one; the
-      announcement texts).
+- [x] **13.1** Shared party session (a refactor, no behaviour change; the whole Phase 1 e2e suite passed untouched, 519 tests).
+      `party-session.ts`: `createPartySession({ store, rendered })` holds the planner (undo history included), the announcement, the
+      chooser, the last-party persistence and the party's side of an arrival (`arrive`); `syncAddress(sink)` tells the page in front
+      what a change asks of the address (`'chosen'` | `'refined'`); fields are reactive through `createSubscriber`; one instance,
+      `partySession`, in `composition-root.ts`. `createPageUrlWriter` became the generic `createAddressWriter<State>(bar, addressOf)`
+      (`address-writer.ts`). `+page.svelte` went from 800 to 593 lines; initial JS 79.5 → 80.1 kB. Deviations, on purpose: plain
+      `.ts`, not `.svelte.ts` (Vitest has no Svelte compiler and D24 allows no new dependency; `createSubscriber` needs no runes);
+      `go()` still takes a URL: the one route there is is `/`, so the bar of each page resolves its own (13.2, where the lint rule
+      `no-navigation-without-resolve` meets a second route); the live `<p>` stays in the page (`partyAnnouncement` in e2e finds it
+      beside the views; 13.3 decides where both pages get it); a page that goes away drops an open sheet (`forgetChooser`), or the
+      next one would reopen it. *T:* `party-session.test.ts` (mutation-checked) and the writer's tests, moved.
 - [ ] **13.2** Routes, deep links, navigation. `routes/synergy/+page.svelte` (picker and "start from your party"),
       `synergy/[traitId]/+page.ts` and `synergy/kw/[key]/+page.ts` with `prerender = false; ssr = false` (adapter-static's `404.html` boots
       them on Pages; 1,780 prerendered copies of one shell would be pointless); `synergy-address.ts` (`mat=yes`, `section=`, `party` /

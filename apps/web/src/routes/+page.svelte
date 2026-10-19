@@ -5,39 +5,22 @@
   import { onMount, tick } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import {
-    addTrait,
-    addTraitAt,
-    allowedSlots,
-    chooseTarget,
-    clearParty,
-    clearSlot,
     clickKeyword,
-    createPlanner,
     decodeExploreState,
-    decodePartyState,
     filledSlots,
     filterChips,
     initialExploreState,
     isClickOn,
     lostTraitSearch,
-    redoEdit,
-    samePartyState,
-    slotRules,
-    SLOT_POSITIONS,
     SORT_KEYS,
-    traitAt,
-    undoEdit,
     type ActorSet,
     type ClickedKeyword,
     type ExploreState,
     type FilterSection,
-    type Planner,
     type SearchService,
     type SlotPosition,
     type SortKey,
-    type Trait,
     type TraitId,
-    type TraitLookup,
   } from '@atlas/core';
   import BackToTop from '../lib/components/back-to-top.svelte';
   import ChipRow from '../lib/components/chip-row.svelte';
@@ -51,32 +34,24 @@
   import SlotChooser from '../lib/components/slot-chooser.svelte';
   import TabBar from '../lib/components/tab-bar.svelte';
   import { showsBackToTop } from '../lib/back-to-top';
-  import { loadSearchService } from '../lib/composition-root';
+  import { createAddressWriter } from '../lib/address-writer';
+  import { loadSearchService, partySession } from '../lib/composition-root';
   import { copy } from '../lib/copy';
   import type { KeywordActions } from '../lib/keyword-actions';
-  import { createLastPartyStore } from '../lib/last-party-store';
   import { pageAddress } from '../lib/page-address';
   import { pageScroll } from '../lib/page-scroll';
   import type { PageState } from '../lib/page-state';
   import { isSearchShortcut } from '../lib/search-shortcut';
   import type { ShortcutEvent } from '../lib/shortcut-event';
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
-  import { createPageUrlWriter } from '../lib/page-url-writer';
-  import type { PartyActions } from '../lib/party-actions';
-  import { slotChoices } from '../lib/slot-choices';
   import { undoShortcut } from '../lib/undo-shortcut';
   import { trackViewportOffset } from '../lib/viewport-offset';
 
   let service = $state.raw<SearchService>();
   let failed = $state(false);
   let explore = $state.raw<ExploreState>(initialExploreState);
-  let planner = $state.raw<Planner>(createPlanner());
   /** The view a narrow screen shows. A wide one shows them all, and the tab then only rides along in the address. */
   let tab = $state<PageTab>(initialTab);
-  /** What the party panel tells a screen reader about the last change. */
-  let partyMessage = $state('');
-  /** The version of the dataset the address stated for its party: written back as it was while the data loads. */
-  let linkedVersion = $state<string | null>(null);
   let pageHeading = $state<HTMLHeadingElement>();
   let resultsHeading = $state<HTMLHeadingElement>();
   let resultsSection = $state<HTMLElement>();
@@ -167,17 +142,9 @@
     if (window.scrollY > top) window.scrollTo({ top });
   }
 
-  /** The party of the last visit (ADR-0005): a convenience, used only when the address names no party of its own. */
-  const lastParty = createLastPartyStore(() => (typeof localStorage === 'undefined' ? undefined : localStorage));
-
   /** Everything the address stands for: the search, the party and the tab, under the version of the dataset in use. */
   function pageState(): PageState {
-    return {
-      explore,
-      party: { party: planner.history.party, target: planner.target },
-      tab,
-      datasetVersion: service?.datasetVersion ?? linkedVersion,
-    };
+    return { explore, party: partySession.partyState, tab, datasetVersion: partySession.datasetVersion };
   }
 
   /**
@@ -185,14 +152,17 @@
    * goes to another address, and every change of the state is written to it. A write is a navigation to the same page,
    * so it leaves the scroll and the focus where they are (`reset: false`).
    */
-  const urlWriter = createPageUrlWriter({
-    current: () => new URL(page.url.href),
-    go: (url, entry) =>
-      goto(resolve(url.search === '' ? '/' : `/?${url.search.slice(1)}`), {
-        replace: entry === 'replace',
-        reset: false,
-      }),
-  });
+  const urlWriter = createAddressWriter<PageState>(
+    {
+      current: () => new URL(page.url.href),
+      go: (url, entry) =>
+        goto(resolve(url.search === '' ? '/' : `/?${url.search.slice(1)}`), {
+          replace: entry === 'replace',
+          reset: false,
+        }),
+    },
+    pageAddress,
+  );
 
   afterNavigate(({ type, to }) => {
     // The page wrote that address itself (`goto`): the state is already what it says.
@@ -204,21 +174,7 @@
     const tabChanged = type !== 'enter' && arrivedAt !== tab;
     if (tabChanged) showTab(arrivedAt);
     else tab = arrivedAt;
-    const shared = decodePartyState(to.url.searchParams);
-    linkedVersion = shared.datasetVersion;
-    // The same party as before (back to an entry that differed in the search only) keeps what can be undone.
-    if (!samePartyState({ party: planner.history.party, target: planner.target }, shared)) {
-      planner = createPlanner(shared);
-    }
-    // A visit to an address with no party starts from the one of the last visit, which the address then says.
-    if (type === 'enter' && !to.url.searchParams.has('party')) {
-      const remembered = lastParty.load();
-      if (remembered !== undefined) {
-        planner = createPlanner(remembered);
-        linkedVersion = remembered.datasetVersion;
-        urlWriter.refined(pageState());
-      }
-    }
+    if (partySession.arrive(to.url.searchParams, type === 'enter')) urlWriter.refined(pageState());
     if (type !== 'enter' && !tabChanged) void showResultsFromTheTop();
   });
 
@@ -256,102 +212,6 @@
     },
   };
 
-  /** Keeps the party for the next visit. */
-  function remember(): void {
-    lastParty.save(
-      { party: planner.history.party, target: planner.target },
-      service?.datasetVersion ?? linkedVersion ?? '',
-    );
-  }
-
-  /** An edit of the party, told to the address as a step of its own and to a screen reader in words. */
-  function edited(next: Planner, announcement: string): void {
-    planner = next;
-    partyMessage = announcement;
-    urlWriter.chosen(pageState());
-    remember();
-  }
-
-  /** What the player is told a slot held before a trait took its place: its name, or its id when the dataset has no such trait. */
-  const nameOfReplaced = (id: TraitId | null): string | undefined =>
-    id === null ? undefined : (service?.trait(id)?.name ?? id);
-
-  function addToParty(trait: Trait): void {
-    const placedAt = planner.target;
-    const result = addTrait(planner, trait);
-    if (!result.ok) {
-      partyMessage = result.reason;
-      return;
-    }
-    if (result.planner !== planner) {
-      edited(result.planner, copy.partyAnnouncements.added(trait.name, placedAt, nameOfReplaced(result.replaced)));
-    }
-  }
-
-  /** The trait whose slot is being chosen, while the sheet is open, and the button that opened it (the focus goes back to it). */
-  let choosing = $state.raw<Trait>();
-  let chooserOpener: HTMLElement | undefined;
-
-  function openSlotChooser(trait: Trait, opener: HTMLElement): void {
-    chooserOpener = opener;
-    choosing = trait;
-  }
-
-  /** The sheet is shut, however: the focus goes back to the button that opened it, if its row is still on the page. */
-  function chooserClosed(): void {
-    choosing = undefined;
-    if (chooserOpener?.isConnected === true) chooserOpener.focus();
-    chooserOpener = undefined;
-  }
-
-  /**
-   * The trait goes in the slot that was chosen, and the target stays where it was. The sheet is shut first and the player told
-   * after: while it is open the page behind it, the live region with it, is inert and would not be heard.
-   */
-  async function addToChosenSlot(position: SlotPosition): Promise<void> {
-    const trait = choosing;
-    if (trait === undefined) return;
-    choosing = undefined;
-    await tick();
-    const result = addTraitAt(planner, trait, position);
-    if (!result.ok) {
-      partyMessage = result.reason;
-      return;
-    }
-    if (result.planner !== planner) {
-      edited(result.planner, copy.partyAnnouncements.added(trait.name, position, nameOfReplaced(result.replaced)));
-    }
-  }
-
-  function clearPartySlot(at: SlotPosition): void {
-    const next = clearSlot(planner, at);
-    if (next !== planner) edited(next, copy.clearedSlot(at));
-  }
-
-  function clearWholeParty(): void {
-    const next = clearParty(planner);
-    if (next !== planner) edited(next, copy.clearedParty);
-  }
-
-  function undoParty(): void {
-    const edit = planner.history.done.at(-1);
-    if (edit !== undefined) edited(undoEdit(planner), copy.partyAnnouncements.undid(copy.partyEdit(edit.command)));
-  }
-
-  function redoParty(): void {
-    const edit = planner.history.undone.at(-1);
-    if (edit !== undefined) edited(redoEdit(planner), copy.partyAnnouncements.redid(copy.partyEdit(edit.command)));
-  }
-
-  /** Choosing the slot results go to is part of the address, but no step of its own: the entry is replaced. */
-  function chooseSlot(at: SlotPosition): void {
-    const next = chooseTarget(planner, at);
-    if (next === planner) return;
-    planner = next;
-    urlWriter.refined(pageState());
-    remember();
-  }
-
   /** The slash takes the person to the search field, from the Party tab too (it is brought forward first). */
   async function focusSearch(): Promise<void> {
     if (!exploreOnScreen) {
@@ -382,8 +242,8 @@
     const shortcut = undoShortcut(press);
     if (shortcut === undefined) return;
     event.preventDefault();
-    if (shortcut === 'undo') undoParty();
-    else redoParty();
+    if (shortcut === 'undo') partySession.undo();
+    else partySession.redo();
   }
 
   /** A click on a missing dependency of the party shows the traits that apply it, as a click on a keyword does. */
@@ -399,30 +259,6 @@
     searchFromParty({ ...initialExploreState, query: lostTraitSearch(id).query });
   }
 
-  const lookup: TraitLookup = (id) => service?.trait(id);
-
-  /** Why the rules refuse `trait` in the target slot, or `null`. */
-  function refusalOf(trait: Trait): string | null {
-    const placement = slotRules.canPlace(trait, planner.target.slot);
-    return placement.ok ? null : placement.reason;
-  }
-
-  const partyActions: PartyActions = {
-    get target() {
-      return planner.target;
-    },
-    refusal: refusalOf,
-    add: addToParty,
-    canChooseSlot: (trait) => allowedSlots(trait).length > 0,
-    chooseSlot: openSlotChooser,
-    placesOf: (trait) => SLOT_POSITIONS.filter((at) => traitAt(planner.history.party, at) === trait.id),
-  };
-
-  /** The slots the sheet offers: those of the target's creature that take the trait, and what each holds now. */
-  const choices = $derived(
-    choosing === undefined ? [] : slotChoices(planner.history.party, planner.target.member, choosing, lookup),
-  );
-
   /** What the page shows once the data is loaded: the search of the current state, and the dataset it ran on. */
   const loaded = $derived(
     service && { outcome: service.search(explore), total: service.traitCount, version: service.datasetVersion },
@@ -433,6 +269,7 @@
   onMount(() => {
     loadSearchService().then(
       (searchService) => {
+        partySession.useDataset(searchService);
         service = searchService;
       },
       () => {
@@ -440,12 +277,23 @@
       },
     );
 
+    // The party is shared by the pages of the app: this one is told what its changes ask of the address while it is in front.
+    const stopSyncing = partySession.syncAddress((step) => {
+      urlWriter[step](pageState());
+    });
+
     // A reload leaves the page where it was scrolled to: the button is read before the first scroll.
     const readScroll = (): void => {
       scrolledAway = showsBackToTop(window.scrollY, window.innerHeight);
     };
     readScroll();
-    return pageScroll().subscribe(readScroll);
+    const stopReadingScroll = pageScroll().subscribe(readScroll);
+
+    return () => {
+      stopReadingScroll();
+      stopSyncing();
+      partySession.forgetChooser();
+    };
   });
 </script>
 
@@ -549,7 +397,7 @@
             traits={loaded.outcome.traits}
             highlight={loaded.outcome.highlight}
             actions={keywordActions}
-            party={partyActions}
+            party={partySession.actions}
             suggestMatchAny={explore.keywordMode === 'all' && explore.keywords.length > 1}
           />
         {/if}
@@ -568,15 +416,25 @@
       <h2 id="party-heading" class="panel-heading">{copy.partyHeading}</h2>
       {#if loaded}
         <PartyPanel
-          {planner}
-          {lookup}
+          planner={partySession.planner}
+          lookup={partySession.lookup}
           datasetVersion={loaded.version}
           address={shareAddress}
-          onchoose={chooseSlot}
-          onclear={clearPartySlot}
-          onclearall={clearWholeParty}
-          onundo={undoParty}
-          onredo={redoParty}
+          onchoose={(at: SlotPosition) => {
+            partySession.chooseSlot(at);
+          }}
+          onclear={(at: SlotPosition) => {
+            partySession.clearSlot(at);
+          }}
+          onclearall={() => {
+            partySession.clearAll();
+          }}
+          onundo={() => {
+            partySession.undo();
+          }}
+          onredo={() => {
+            partySession.redo();
+          }}
           onfind={findAppliers}
           onfindlost={findLostTrait}
         />
@@ -587,7 +445,7 @@
   </div>
 
   <!-- Outside the views: a change of the party made from the results is told while the party is not on screen. -->
-  <p class="visually-hidden" aria-live="polite">{partyMessage}</p>
+  <p class="visually-hidden" aria-live="polite">{partySession.message}</p>
 </div>
 
 <!--
@@ -600,16 +458,18 @@
 
 <!-- On the page and not in a row: the rows are virtualised, and a row can be gone while the sheet is open. -->
 <SlotChooser
-  trait={choosing}
-  member={planner.target.member}
-  reason={choosing === undefined ? '' : (refusalOf(choosing) ?? '')}
-  {choices}
-  onchoose={addToChosenSlot}
-  onclose={chooserClosed}
+  trait={partySession.choosing}
+  member={partySession.planner.target.member}
+  reason={partySession.choosing === undefined ? '' : (partySession.actions.refusal(partySession.choosing) ?? '')}
+  choices={partySession.choices}
+  onchoose={(position: SlotPosition) => partySession.addToChosenSlot(position)}
+  onclose={() => {
+    partySession.closeChooser();
+  }}
 />
 
 {#if tabbed.current}
-  <TabBar selected={tab} partyFilled={filledSlots(planner.history.party)} onselect={selectTab} />
+  <TabBar selected={tab} partyFilled={filledSlots(partySession.planner.history.party)} onselect={selectTab} />
 {/if}
 
 <style>

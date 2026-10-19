@@ -1,5 +1,11 @@
 import type { SlotPosition, Trait } from '@atlas/core';
 
+/** A control that can be given the focus again, if it is still on the page: the button that opened a sheet. */
+export interface Focusable {
+  readonly isConnected: boolean;
+  focus(): void;
+}
+
 /** What a result can do with the party it is shown beside: the "add" button and the "in party" marker. */
 export interface PartyActions {
   /** The slot "add" puts a trait in. */
@@ -11,7 +17,7 @@ export interface PartyActions {
   /** Whether some slot of the target's creature takes `trait`: a trait the target refuses can then be put in another slot. */
   canChooseSlot(trait: Trait): boolean;
   /** Opens the choice of slot for `trait`. `opener` is the button that was pressed: it gets the focus back when the choice is over. */
-  chooseSlot(trait: Trait, opener: HTMLElement): void;
+  chooseSlot(trait: Trait, opener: Focusable): void;
   /** The slots that hold `trait`, in reading order. */
   placesOf(trait: Trait): readonly SlotPosition[];
 }

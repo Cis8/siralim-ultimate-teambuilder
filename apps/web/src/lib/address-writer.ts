@@ -1,6 +1,3 @@
-import { pageAddress } from './page-address';
-import type { PageState } from './page-state';
-
 /** How long the query must stay as typed before the address follows it. */
 export const TYPING_PAUSE_MS = 400;
 
@@ -15,37 +12,47 @@ export interface AddressBar {
 }
 
 /**
- * Keeps the address in step with the state of the page, the search and the party (SPEC §7, ADR-0005). It only writes: the page reads an address when it
+ * How a page's state becomes an address: the address `current` with the parameters the state stands for replaced, and
+ * whatever else it carries left as it is. Each page says it for its own state (the search and the party, a trait in focus).
+ */
+export type AddressOf<State> = (current: URL, state: State) => URL;
+
+/**
+ * Keeps the address in step with the state of a page (SPEC §7, ADR-0005). It only writes: the page reads an address when it
  * is opened and when the browser arrives at another one.
  */
-export interface PageUrlWriter {
+export interface AddressWriter<State> {
   /**
    * The query bar changed. Typing is a stretch of one history entry: the address is replaced once the text has stayed as
    * it is for `TYPING_PAUSE_MS`, which also keeps a browser's limit on how often the history may be changed far away.
    */
-  typed(state: PageState): void;
+  typed(state: State): void;
   /** A facet, a chip, a click on a keyword, the sort or an edit of the party: a new history entry, so that back undoes just that. */
-  chosen(state: PageState): void;
+  chosen(state: State): void;
   /**
    * Something changed that is in the address but is no step of its own (the slot results go to): the entry is replaced,
    * at once, after the text typed so far has been written to it.
    */
-  refined(state: PageState): void;
+  refined(state: State): void;
   /** The browser went to `address` by itself (back, forward, a link): what was waiting to be written is out of date. */
   arrived(address: URL): void;
 }
 
-export function createPageUrlWriter(bar: AddressBar, pauseMs: number = TYPING_PAUSE_MS): PageUrlWriter {
+export function createAddressWriter<State>(
+  bar: AddressBar,
+  addressOf: AddressOf<State>,
+  pauseMs: number = TYPING_PAUSE_MS,
+): AddressWriter<State> {
   // Where the history will be once what was asked has been done; read from the bar when first needed, as it is not there
   // when the page is prerendered.
   let address: URL | undefined;
-  let typing: { readonly state: PageState; readonly timer: ReturnType<typeof setTimeout> } | undefined;
+  let typing: { readonly state: State; readonly timer: ReturnType<typeof setTimeout> } | undefined;
   // One navigation at a time: a router drops the one in flight when another starts, and with it a history entry.
   let writes: Promise<void> = Promise.resolve();
 
-  function write(state: PageState, entry: HistoryEntry): void {
+  function write(state: State, entry: HistoryEntry): void {
     const from = (address ??= bar.current());
-    const next = pageAddress(from, state);
+    const next = addressOf(from, state);
     if (next.href === from.href) return;
     address = next;
     writes = writes

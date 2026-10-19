@@ -283,7 +283,7 @@ every id, known to the dataset or not. `SharedParty.datasetVersion` is the versi
 states none; the page compares it with the dataset it has (6.7). Eighteen of the longest ids of v2.0 stay below 1,000
 characters, commas escaped (`party-acceptance.test.ts`).
 
-**The page and its address** (`page-address.ts`, `page-url-writer.ts`). The page reads the address when it opens and
+**The page and its address** (`page-address.ts`, `address-writer.ts`). The page reads the address when it opens and
 when the browser goes to another one (back, forward, a link); an address it cannot read is the plain page and stays as it is
 until something changes. Every change of the state, the search, the party and the tab, is written back by one writer, and
 the parameters that are none of theirs stay:
