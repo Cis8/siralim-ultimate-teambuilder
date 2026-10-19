@@ -5,10 +5,14 @@ import {
   DATASET_SCHEMA_VERSION,
   initialExploreState,
   taxonomy,
+  type Alternative,
+  type KeywordActor,
   type RelatedTrait,
   type RelationIndex,
   type RelationOptions,
   type RelationSide,
+  type SameFamily,
+  type SameTrigger,
   type SearchService,
   type Trait,
   type TraitRelations,
@@ -150,12 +154,13 @@ describe('the relation index on the compendium v2.0', () => {
     });
   });
 
+  const traitNamed = (name: string): Trait => {
+    const found = traits.find((trait) => trait.name === name);
+    if (found === undefined) throw new Error(`the sheet has no trait "${name}"`);
+    return found;
+  };
+
   describe('what enables a trait and what it enables', () => {
-    const traitNamed = (name: string): Trait => {
-      const found = traits.find((trait) => trait.name === name);
-      if (found === undefined) throw new Error(`the sheet has no trait "${name}"`);
-      return found;
-    };
     const relationsOf = (trait: Trait, options?: RelationOptions, from: RelationIndex = index): TraitRelations => {
       const found = from.relationsOf(trait.id, options);
       if (found === undefined) throw new Error(`the index has no trait "${trait.name}"`);
@@ -391,6 +396,386 @@ describe('the relation index on the compendium v2.0', () => {
       for (const trait of withoutMaterial) {
         expect(relationsOf(trait, { artifactOnly: true }).enabledBy.count, trait.name).toBeGreaterThan(0);
       }
+    });
+  });
+
+  describe('alternatives, the same trigger and the same family (SPEC §8.4)', () => {
+    const OPTIONS: readonly RelationOptions[] = [{}, { artifactOnly: true }];
+    const found = <Found>(list: Found | undefined, trait: Trait): Found => {
+      if (list === undefined) throw new Error(`the index has no trait "${trait.name}"`);
+      return list;
+    };
+    const alternativesOf = (
+      trait: Trait,
+      options?: RelationOptions,
+      from: RelationIndex = index,
+    ): readonly Alternative[] => found(from.alternativesOf(trait.id, options), trait);
+    const sameTriggerOf = (trait: Trait, options?: RelationOptions, from: RelationIndex = index): SameTrigger =>
+      found(from.sameTriggerOf(trait.id, options), trait);
+    const sameFamilyOf = (trait: Trait, options?: RelationOptions, from: RelationIndex = index): SameFamily =>
+      found(from.sameFamilyOf(trait.id, options), trait);
+    const inCase = (name: string) => name.toLowerCase();
+    const hasMaterial = (trait: Trait) => trait.material !== null;
+    /** Reads something of a trait once: the oracles below look at every pair of the 1,780 traits. */
+    const memoised = <Value>(read: (trait: Trait) => Value) => {
+      const cache = new Map<string, Value>();
+      return (trait: Trait): Value => {
+        const known = cache.get(trait.id);
+        if (known !== undefined) return known;
+        const value = read(trait);
+        cache.set(trait.id, value);
+        return value;
+      };
+    };
+
+    describe('alternatives', () => {
+      const sentence = ({ trait, shared }: Alternative) =>
+        `${trait.name}: ${shared.map(({ role, key }) => `${role} ${key}`).join(', ')}`;
+      /** What a trait gives or relies on among the 42 keys, as a tie each (a role and a key), in the order it names them. */
+      const tiesOf = memoised((trait) => [
+        ...new Set(
+          trait.keywords
+            .filter(({ role, key }) => (role === 'applies' || role === 'uses') && DEPENDENCY_KEYS.includes(key))
+            .map(({ role, key }) => `${role} ${key}`),
+        ),
+      ]);
+
+      it('lists for a trait that relies on Weak and Vulnerable the one that relies on both first, then those that rely on one', () => {
+        expect(alternativesOf(traitNamed('Sin and Sentence')).map(sentence)).toEqual([
+          'Flesh Rot: uses weak, uses vulnerable',
+          'Cloudy Constitution: uses vulnerable',
+          'Frailty: uses vulnerable',
+          'Manipulate Fear: uses weak',
+          'Quell: uses vulnerable',
+          'Wretchedness: uses vulnerable',
+        ]);
+      });
+
+      it('lists for a mastery that applies Weak and Vulnerable the creatures that apply them', () => {
+        expect(alternativesOf(traitNamed('Master of Abominations')).map(sentence)).toEqual([
+          'Cannon Shot: applies vulnerable',
+          'Cloudy Constitution: applies vulnerable',
+          'Crunch: applies vulnerable',
+          'Curse of the Outspoken: applies vulnerable',
+          'Scourge: applies weak',
+          'Steel Eater: applies vulnerable',
+          'Turn to Gray: applies vulnerable',
+          'Wrecking Ball: applies vulnerable',
+        ]);
+      });
+
+      it('has nobody for a trait that gives and relies on no buff, debuff or effect', () => {
+        const alone = traits.filter((trait) => tiesOf(trait).length === 0);
+
+        expect(alone.length).toBeGreaterThan(1000);
+        for (const trait of alone) expect(alternativesOf(trait), trait.name).toEqual([]);
+      });
+
+      it('lists, for every trait, exactly the other traits that share a key and a role with it, with the ties they share', () => {
+        for (const focus of traits) {
+          const own = tiesOf(focus);
+          const expected = traits
+            .filter(({ id }) => id !== focus.id)
+            .map((other) => [other.id, own.filter((tie) => tiesOf(other).includes(tie))] as const)
+            .filter(([, shared]) => shared.length > 0)
+            .toSorted(([a], [b]) => (a < b ? -1 : 1));
+          const listed = alternativesOf(focus)
+            .map(({ trait, shared }) => [trait.id, shared.map(({ role, key }) => `${role} ${key}`)] as const)
+            .toSorted(([a], [b]) => (a < b ? -1 : 1));
+
+          expect(listed, focus.name).toEqual(expected);
+        }
+      });
+
+      it('ranks by the number of keys shared, then by name regardless of case', () => {
+        for (const focus of traits) {
+          const list = alternativesOf(focus);
+          for (const [at, entry] of list.entries()) {
+            const before = list[at - 1];
+            if (before === undefined) continue;
+            const key = (alternative: Alternative) =>
+              [-alternative.shared.length, inCase(alternative.trait.name)] as const;
+            const [countBefore, nameBefore] = key(before);
+            const [count, name] = key(entry);
+
+            expect(countBefore < count || (countBefore === count && nameBefore <= name), focus.name).toBe(true);
+          }
+        }
+      });
+    });
+
+    describe('same trigger', () => {
+      const events = (trait: Trait, event: string) =>
+        trait.keywords.filter((hit) => hit.kind === 'event' && hit.role === 'uses' && hit.key === event);
+      const actorsOf = (trait: Trait, event: string) => events(trait, event).map(({ actor }) => actor);
+      /** The events a trait waits for, in the order it names them, with who does each, mention by mention. */
+      const waitsOf = memoised((trait) => {
+        const waits = new Map<string, (KeywordActor | undefined)[]>();
+        for (const { key } of trait.keywords.filter((hit) => hit.kind === 'event' && hit.role === 'uses')) {
+          waits.set(key, actorsOf(trait, key));
+        }
+        return waits;
+      });
+      const canBeTheSame = (a: KeywordActor | undefined, b: KeywordActor | undefined) =>
+        a === undefined || b === undefined || a === 'any' || b === 'any' || a === b;
+      const sharedBy = (focus: Trait, other: Trait) =>
+        [...waitsOf(focus)]
+          .filter(([event, actors]) =>
+            (waitsOf(other).get(event) ?? []).some((theirs) => actors.some((ours) => canBeTheSame(ours, theirs))),
+          )
+          .map(([event]) => event);
+      const namesOf = (list: SameTrigger) => list.entries.map(({ trait }) => trait.name);
+
+      it('has no trigger and lists nobody for a trait that waits for no event: 531 of the 1,780', () => {
+        const without = traits.filter((trait) => sameTriggerOf(trait).triggers.length === 0);
+
+        expect(without).toHaveLength(531);
+        expect(without.map((trait) => waitsOf(trait).size)).toEqual(without.map(() => 0));
+        expect(sameTriggerOf(traitNamed('Master of Abominations'))).toEqual({ triggers: [], entries: [] });
+        for (const trait of without) expect(sameTriggerOf(trait).entries, trait.name).toEqual([]);
+      });
+
+      it('lists for a trait that waits for its creature to attack the traits that wait for an attack by this creature, nobody named or any creature', () => {
+        const focus = traitNamed('Sin and Sentence');
+        const list = sameTriggerOf(focus);
+        const onlyOthers = traits.filter((trait) => {
+          const actors = actorsOf(trait, 'attack');
+          return actors.length > 0 && actors.every((actor) => actor === 'ally' || actor === 'enemy');
+        });
+
+        expect(list.triggers).toEqual(['attack']);
+        expect(namesOf(list)).toContain('Abation');
+        expect(list.entries.every(({ shared }) => shared.length === 1)).toBe(true);
+        expect(list.entries).toHaveLength(252);
+        for (const trait of list.entries.map((entry) => entry.trait)) {
+          expect(
+            actorsOf(trait, 'attack').some((actor) => actor === undefined || actor === 'self' || actor === 'any'),
+            trait.name,
+          ).toBe(true);
+        }
+        expect(onlyOthers.length).toBeGreaterThan(50);
+        expect(namesOf(list).filter((name) => onlyOthers.some((trait) => trait.name === name))).toEqual([]);
+      });
+
+      it('lists for Culmination, which waits for the manual cast of an ally, the 17 traits that wait for one with a fitting actor', () => {
+        const list = sameTriggerOf(traitNamed('Culmination'));
+        const excluded = traits.filter(
+          (trait) =>
+            trait.name !== 'Culmination' &&
+            actorsOf(trait, 'manual cast').length > 0 &&
+            !list.entries.some((entry) => entry.trait.id === trait.id),
+        );
+
+        expect(list.triggers).toEqual(['manual cast']);
+        expect(namesOf(list)).toEqual([
+          'Apprenticeship',
+          'Arcane Echo',
+          'Charging Rod',
+          'Ditto',
+          'Escalation',
+          'Feed The Fire',
+          'I Am Above',
+          'Lune',
+          'Pandora',
+          'Protect the Glass Cannon',
+          'Pyromaniac',
+          'Shared Consciousness',
+          'Slosh',
+          'Spectrum of Eternity',
+          'Stay Inspired',
+          'Twist of Fate',
+          'Worship',
+        ]);
+        // A trait that casts a spell is no trait that waits for a manual one (GAME_RULES R12): all 17 wait for it themselves.
+        for (const { trait } of list.entries) expect(actorsOf(trait, 'manual cast'), trait.name).not.toEqual([]);
+        expect(excluded).toHaveLength(11);
+        for (const trait of excluded) {
+          expect(
+            actorsOf(trait, 'manual cast').every((actor) => actor === 'self' || actor === 'enemy'),
+            trait.name,
+          ).toBe(true);
+        }
+      });
+
+      it('lists for a trait that waits for the start of battle, a moment with no actor, every other trait that waits for it', () => {
+        const focus = traitNamed('Extra Padding');
+        const everyone = traits.filter(
+          ({ id, keywords }) =>
+            id !== focus.id && keywords.some((hit) => hit.key === 'start of battle' && hit.role === 'uses'),
+        );
+        const list = sameTriggerOf(focus);
+
+        expect(list.triggers).toEqual(['start of battle']);
+        expect(everyone).toHaveLength(208);
+        expect(list.entries.map(({ trait }) => trait.id).toSorted()).toEqual(everyone.map(({ id }) => id).toSorted());
+        // Extra Padding has no material, and is read all the same.
+        expect(hasMaterial(focus)).toBe(false);
+        expect(sameTriggerOf(focus, { artifactOnly: true }).entries.map(({ trait }) => trait.id)).toEqual(
+          list.entries.filter(({ trait }) => hasMaterial(trait)).map(({ trait }) => trait.id),
+        );
+      });
+
+      it('lists, for every trait, exactly the other traits that wait for one of its events with a fitting actor, with the events shared', () => {
+        for (const focus of traits) {
+          const list = sameTriggerOf(focus);
+          const expected = traits
+            .filter(({ id }) => id !== focus.id)
+            .map((other) => [other.id, sharedBy(focus, other)] as const)
+            .filter(([, shared]) => shared.length > 0)
+            .toSorted(([a], [b]) => (a < b ? -1 : 1));
+
+          expect(list.triggers, focus.name).toEqual([...waitsOf(focus).keys()]);
+          expect(
+            list.entries
+              .map(({ trait, shared }) => [trait.id, shared] as const)
+              .toSorted(([a], [b]) => (a < b ? -1 : 1)),
+            focus.name,
+          ).toEqual(expected);
+        }
+      });
+
+      it('ranks by the number of events shared, then by name regardless of case', () => {
+        for (const focus of traits) {
+          const { entries } = sameTriggerOf(focus);
+          for (const [at, entry] of entries.entries()) {
+            const before = entries[at - 1];
+            if (before === undefined) continue;
+
+            expect(
+              before.shared.length > entry.shared.length ||
+                (before.shared.length === entry.shared.length && inCase(before.trait.name) <= inCase(entry.trait.name)),
+              focus.name,
+            ).toBe(true);
+          }
+        }
+      });
+    });
+
+    describe('same family', () => {
+      const KIND_ORDER = ['mastery', 'creature', 'avatar', 'backer', 'other'];
+
+      it('lists the mastery of the family first, then its creatures by name', () => {
+        const list = sameFamilyOf(traitNamed('Sin and Sentence'));
+
+        expect(list.family).toBe('Abomination');
+        expect(list.entries.map(({ name }) => name)).toEqual([
+          'Master of Abominations',
+          'Extra Padding',
+          'Flesh Rot',
+          'Frailty',
+          'Manipulate Fear',
+          'Quell',
+          'Turn to Gray',
+          'Wretchedness',
+        ]);
+      });
+
+      it('lists for the mastery its creatures, and for a family with creatures and other traits the kinds in order', () => {
+        const mastery = sameFamilyOf(traitNamed('Master of Abominations'));
+        const apocalypse = sameFamilyOf(traitNamed('Culmination'));
+
+        expect(mastery.entries).toHaveLength(8);
+        expect(mastery.entries.map(({ kind }) => kind)).toEqual(Array<string>(8).fill('creature'));
+        expect(apocalypse.family).toBe('Apocalypse');
+        expect(apocalypse.entries.map(({ name, kind }) => `${kind}: ${name}`)).toEqual([
+          'mastery: Master of Apocalypses',
+          'creature: Mungus Harbinger',
+          'creature: Naxor Harbinger',
+          'creature: Phase Out',
+          'creature: Quahn Harbinger',
+          'creature: Urdox Harbinger',
+          'creature: Urh Harbinger',
+          'other: Gift of Charybdis',
+          'other: Torn Between Scylla and Charybdis',
+        ]);
+      });
+
+      it('lists, for every trait, exactly the other traits of its family', () => {
+        for (const focus of traits) {
+          const list = sameFamilyOf(focus);
+
+          expect(list.family, focus.name).toBe(focus.family);
+          expect(list.entries.map(({ id }) => id).toSorted(), focus.name).toEqual(
+            traits
+              .filter(({ id, family }) => id !== focus.id && family === focus.family)
+              .map(({ id }) => id)
+              .toSorted(),
+          );
+        }
+      });
+
+      it('ranks by kind, then by name regardless of case, so the mastery of a family is always first', () => {
+        for (const focus of traits) {
+          const { entries } = sameFamilyOf(focus);
+          for (const [at, entry] of entries.entries()) {
+            const before = entries[at - 1];
+            if (before === undefined) continue;
+            const kinds = [KIND_ORDER.indexOf(before.kind), KIND_ORDER.indexOf(entry.kind)] as const;
+
+            expect(
+              kinds[0] < kinds[1] || (kinds[0] === kinds[1] && inCase(before.name) <= inCase(entry.name)),
+              focus.name,
+            ).toBe(true);
+          }
+        }
+      });
+
+      it('has nobody but names the family for the six traits that are alone in theirs', () => {
+        const alone = traits.filter((trait) => sameFamilyOf(trait).entries.length === 0).map(({ name }) => name);
+
+        expect(alone.toSorted()).toEqual([
+          'Brilliant Creation',
+          'Gentle Giant',
+          'Memoriae',
+          'Monster Crown',
+          'No Sanctuary',
+          'Photomorphogenesis',
+        ]);
+      });
+    });
+
+    describe('all three', () => {
+      it('are as long at most as the pages will show, once capped: the biggest lists are 67, 548 and 147', () => {
+        const biggest = (length: (trait: Trait) => number) => Math.max(...traits.map(length));
+
+        expect(biggest((trait) => alternativesOf(trait).length)).toBe(67);
+        expect(biggest((trait) => sameTriggerOf(trait).entries.length)).toBe(548);
+        expect(biggest((trait) => sameFamilyOf(trait).entries.length)).toBe(147);
+      });
+
+      it('list the traits with material of the whole lists, in the same order, when the artifact filter is on', () => {
+        for (const focus of traits) {
+          expect(alternativesOf(focus, { artifactOnly: true }), focus.name).toEqual(
+            alternativesOf(focus).filter(({ trait }) => hasMaterial(trait)),
+          );
+          expect(sameTriggerOf(focus, { artifactOnly: true }), focus.name).toEqual({
+            triggers: sameTriggerOf(focus).triggers,
+            entries: sameTriggerOf(focus).entries.filter(({ trait }) => hasMaterial(trait)),
+          });
+          expect(sameFamilyOf(focus, { artifactOnly: true }).entries, focus.name).toEqual(
+            sameFamilyOf(focus).entries.filter(hasMaterial),
+          );
+        }
+      });
+
+      it('give the same lists whatever the order of the dataset', () => {
+        const reversed = createRelationIndex(traits.toReversed(), taxonomy);
+        const ids = (list: readonly { readonly trait: Trait }[]) => list.map(({ trait }) => trait.id);
+
+        for (const focus of traits) {
+          for (const options of OPTIONS) {
+            const other = {
+              alternatives: alternativesOf(focus, options, reversed),
+              trigger: sameTriggerOf(focus, options, reversed),
+              family: sameFamilyOf(focus, options, reversed),
+            };
+
+            expect(ids(other.alternatives), focus.name).toEqual(ids(alternativesOf(focus, options)));
+            expect(other.trigger, focus.name).toEqual(sameTriggerOf(focus, options));
+            expect(other.family, focus.name).toEqual(sameFamilyOf(focus, options));
+          }
+        }
+      });
     });
   });
 

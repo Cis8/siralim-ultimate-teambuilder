@@ -5,7 +5,8 @@ import { buff, debuff, effect, event, mechanic } from '../taxonomy/entries';
 import { createTaxonomy } from '../taxonomy/registry';
 import { compareText, compareTextIgnoringCase } from '../text/compare-text';
 import { createRelationIndex, type RelationIndex } from './relation-index';
-import type { KeyLink, RelatedTrait, RelationOptions, RelationSide, TraitRelations } from './trait-relations';
+import type { RelationOptions } from './relation-options';
+import type { KeyLink, RelatedTrait, RelationSide, TraitRelations } from './trait-relations';
 
 const taxonomy = createTaxonomy([
   debuff('Poisoned'),

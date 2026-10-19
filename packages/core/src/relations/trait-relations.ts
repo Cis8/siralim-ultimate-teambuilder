@@ -1,6 +1,7 @@
 import type { KeywordKey, KeywordRole, Trait, TraitId } from '../model/trait';
-import { compareText, compareTextIgnoringCase } from '../text/compare-text';
 import type { KeyRelations } from './key-relations';
+import { eligibleTraits, type RelationOptions } from './relation-options';
+import { compareTraitsByName } from './trait-order';
 
 /**
  * How a trait gives a key, strongest first: it applies it by name, it applies it once the other debuff of a pair is there
@@ -57,11 +58,6 @@ export interface TraitRelations {
   readonly enables: RelationSide;
 }
 
-export interface RelationOptions {
-  /** Leave out the traits without material: they can never sit in the Artifact slot (GAME_RULES R1). Never the focus. */
-  readonly artifactOnly?: boolean;
-}
-
 type Tiers = (relations: KeyRelations) => readonly (readonly [SourceStrength, readonly Trait[]])[];
 
 const ENABLED_BY: Tiers = ({ appliers, conditional, random }) => [
@@ -73,9 +69,6 @@ const ENABLED_BY: Tiers = ({ appliers, conditional, random }) => [
 /** Only a trait that applies a key by name enables the traits that rely on it: the weaker sources have no side here. */
 const ENABLES: Tiers = ({ users }) => [['specific', users]];
 
-const hasMaterial = (trait: Trait) => trait.material !== null;
-const anyTrait = () => true;
-
 /**
  * What enables the focus and what it enables, from the lists of who gives and who relies on each key. Pure: the index
  * hands it its `get`. The focus is never in its own lists, though a trait can give what it relies on.
@@ -85,7 +78,7 @@ export function relationsOfTrait(
   lookup: (key: KeywordKey) => KeyRelations | undefined,
   options: RelationOptions,
 ): TraitRelations {
-  const eligible = options.artifactOnly === true ? hasMaterial : anyTrait;
+  const eligible = eligibleTraits(options);
   return {
     enabledBy: sideOf(focus, focusKeys(focus, 'uses', lookup), ENABLED_BY, eligible),
     enables: sideOf(focus, focusKeys(focus, 'applies', lookup), ENABLES, eligible),
@@ -161,10 +154,5 @@ function strongest(links: readonly KeyLink[]): SourceStrength {
 }
 
 function byRank(a: RelatedTrait, b: RelatedTrait): number {
-  return (
-    rank(a.strength) - rank(b.strength) ||
-    b.score - a.score ||
-    compareTextIgnoringCase(a.trait.name, b.trait.name) ||
-    compareText(a.trait.id, b.trait.id)
-  );
+  return rank(a.strength) - rank(b.strength) || b.score - a.score || compareTraitsByName(a.trait, b.trait);
 }

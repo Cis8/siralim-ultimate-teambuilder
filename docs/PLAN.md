@@ -13,15 +13,14 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D27, *Phase 2 — slices* below): M9 and M10 are done, 12.1 and 12.2 are done and the next slice is 12.3**
-  (Alternatives, Same trigger, Same family; the events Same trigger needs are not in the `RelationIndex`: they are the hits of
-  `trait.keywords` with `kind: 'event'`, role `uses`, actor optional), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D28, *Phase 2 — slices* below): M9 and M10 are done, 12.1–12.3 are done and the next slice is 12.4**
+  (the keyword view: `keywordView`, its verdicts, `coApplied`, stats, from `index.get(key)`), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
   lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D27 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
+- For the owner to veto, none blocking: D18–D28 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
@@ -61,9 +60,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D25 | (default) Slice 8.4 stays open while Phase 2 starts early on the owner's go-ahead; Phase 1 closes when 8.4 lands | here |
 | D26 | (default) Typing makes the first suggestion active, so Tab and Enter accept it (what the ghost text shows); after an accept, a caret move, Esc or a blur nothing is active and Tab leaves the field. A hover does not activate | QUERY_LANGUAGE §6 |
 | D27 | (default) The Enables side lists only what the focus applies **by name**: a random or conditional source appears in Enabled by (SPEC §8.4) but enables nobody, so Pandemic has an empty Enables. The other way is one table in `trait-relations.ts` and 18 lanes for Pandemic | here |
+| D28 | (default) Alternatives compare what traits say by name, as D27 does: a random or conditional source is nobody's alternative for *applies*, and a mention that only guards (`resists`) makes no tie. Same trigger compares `self` with `ally` as different actors (the plan's rule: equal, or one side says none or `any`) | here |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D27 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
+D18–D28 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -370,11 +370,22 @@ conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing 
       `trait-relations.test.ts` (hand-made, fast-check on a dense generator: once per side, order, symmetry, shuffled input, filter) and
       `relation-acceptance.test.ts` (criteria 4 and 5 on v2.0; the party-side random traits never; Here to Die ⇄ Kindling conditional;
       Flesh Rot between the specific and the random; symmetry over all 1,780 traits; reversed dataset gives the same lists).
-- [ ] **12.3** Alternatives, Same trigger, Same family. Alternatives: other traits sharing ≥ 1 key in the same role, with the shared keys and
-      roles for the reason line, ranked by overlap. Same trigger: the events the focus *relies on*; others relying on at least one of
-      them with a compatible actor (equal, or either names none or any; moments by key), ranked by shared count; "no trigger" is a
-      state. Same family: the others of the family, mastery first, then creature, avatar, backer, other, then name (a mastery uses
-      `masteryFamily`). Core returns totals; the UI caps. *T:* hand-checked traits, nothing lists itself.
+- [x] **12.3** Alternatives, Same trigger, Same family. Three more methods of the index, each `undefined` for an unknown id, each taking
+      `artifactOnly`, none listing the focus, each returning the whole ranked list (the UI caps): `alternativesOf(id)` → `Alternative {trait,
+      shared: {key, role}[]}[]` (a tie = a key in the role `applies` or `uses`, for the 42 keys; ranked by ties shared, then name);
+      `sameTriggerOf(id)` → `SameTrigger {triggers, entries: {trait, shared: event keys}[]}` (the events the focus *relies on*, once each;
+      a trait is listed if it relies on one with an actor that can be the same: equal, or either names none or says `any`, so `self` and
+      `ally` stay apart and a moment such as the start of battle matches by key; ranked by events shared, then name; `triggers: []` is the
+      "no trigger" state: 531 of 1,780); `sameFamilyOf(id)` → `SameFamily {family, entries: Trait[]}` (mastery, creature, avatar, backer,
+      other, then name; a mastery's family is `masteryFamily`, which equals `family` in v2.0). Deviations: **D28**; `RelationOptions` moved to
+      `relation-options.ts` and the name order to `trait-order.ts` (both shared by the four sections). **For 13.4:** the biggest lists in
+      v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same family (Numerical Nightmare), so
+      the cap of 200 bites on Same trigger only; Exotic (148 creatures), Backer (135) and Avatar (31) are *families* of the sheet, not
+      real ones, so their lists are long and not meaningful: the page decides whether to show Same family for them. All three for all 1,780
+      traits cost 95 ms (53 µs a trait). *T:* a unit file for each section (hand-made traits, fast-check against a brute-force oracle:
+      exactly who is listed, rank, symmetry, shuffled input, filter; the tests were mutation-checked) and `relation-acceptance.test.ts`
+      on v2.0 (Sin and Sentence's six alternatives, Culmination's 17, Extra Padding's 208, the Abomination and Apocalypse families, and a
+      full-pair oracle for all three sections).
 - [ ] **12.4** Keyword view. `keywordView(key, {artifactOnly})`: appliers (specific), conditional, random (debuffs), users, `verdict`
       (`no-source` | `only-random` | `only-conditional` | `no-payoff` | `scarce` when appliers × 2 < users | `supported`; D22: the order
       and the mixed case are settled in the slice, tested), `coApplied` (the keys the specific appliers also apply, count desc, ties by

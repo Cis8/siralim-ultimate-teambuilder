@@ -99,13 +99,16 @@ export { taxonomy } from './taxonomy/taxonomy';
 export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';
 export { createMemoryTraitRepository } from './repository/memory-trait-repository';
 export { readDataset, readManifest } from './repository/read-dataset';
+export type { Alternative, SharedKey, SharedRole } from './relations/alternatives';
 export type { KeyRelations } from './relations/key-relations';
 export { createRelationIndex, type RelationIndex } from './relations/relation-index';
+export type { RelationOptions } from './relations/relation-options';
+export type { SameFamily } from './relations/same-family';
+export type { SameTrigger, TriggerMatch } from './relations/same-trigger';
 export type {
   KeyLane,
   KeyLink,
   RelatedTrait,
-  RelationOptions,
   RelationSide,
   SourceStrength,
   TraitRelations,
