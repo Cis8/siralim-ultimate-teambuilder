@@ -1,12 +1,19 @@
 <script lang="ts">
-  import { lostTraitSearch, type Trait } from '@atlas/core';
-  import { classColour } from '../../../lib/class-colour';
+  import { afterNavigate } from '$app/navigation';
+  import { keywordSlug, lostTraitSearch, type KeywordKey, type Trait, type TraitId } from '@atlas/core';
+  import { tick } from 'svelte';
+  import ArtifactFilter from '../../../lib/components/artifact-filter.svelte';
+  import ExplorationTrail from '../../../lib/components/exploration-trail.svelte';
+  import FocusCard from '../../../lib/components/focus-card.svelte';
   import LoadStatus from '../../../lib/components/load-status.svelte';
+  import RelationSide from '../../../lib/components/relation-side.svelte';
   import TraitPicker from '../../../lib/components/trait-picker.svelte';
   import { carriedSearch } from '../../../lib/carried-search';
+  import { partySession } from '../../../lib/composition-root';
   import { copy } from '../../../lib/copy';
+  import { decodeSynergyView } from '../../../lib/synergy-address';
   import { useSynergy } from '../../../lib/synergy-context';
-  import { carriedNow, openTrait, synergyHref } from '../../../lib/synergy-links';
+  import { carriedNow, exploreTraitHref, openTrait, synergyHref, synergyLinkSearch } from '../../../lib/synergy-links';
   import type { PageData } from './$types';
 
   /** How many traits with a name like the one in a dead link are offered. */
@@ -20,6 +27,42 @@
   const lost = $derived(lostTraitSearch(data.traitId));
   const similar = $derived(lost.name === '' ? [] : (relations?.findTraits(lost.name, SIMILAR_TRAITS) ?? []));
   const search = $derived(carriedSearch(carriedNow()));
+
+  const artifactOnly = $derived(synergy.view.matOnly);
+  const sides = $derived(trait === undefined ? undefined : relations?.relationsOf(trait.id, { artifactOnly }));
+  // The links of a trait page carry the party and the artifact filter: the person keeps both as they go from trait to trait.
+  const linkSearch = $derived(synergyLinkSearch(artifactOnly));
+  const traitHref = (id: TraitId) => synergyHref({ page: 'trait', traitId: id }, linkSearch);
+  const keywordHref = (key: KeywordKey) => synergyHref({ page: 'keyword', slug: keywordSlug(key) }, linkSearch);
+  /** The trail by name; a step the dataset has no trait for (a dead link visited earlier) has nothing to show. */
+  const steps = $derived(
+    synergy.trail.flatMap((id) => {
+      const step = relations?.trait(id);
+      return step === undefined ? [] : [{ id, name: step.name }];
+    }),
+  );
+
+  let heading = $state<HTMLHeadingElement>();
+  /** What a screen reader is told when the artifact filter is turned on or off: nothing else about the page moves in front of it. */
+  let filterNote = $state('');
+
+  afterNavigate(({ type, from, to }) => {
+    // The first visit of the app is left alone.
+    if (type === 'enter' || to === null || from === null) return;
+    if (to.params?.traitId !== from.params?.traitId) {
+      // A move to another trait (a card, a step of the trail, the picker, Back) lands on its name: the focus would otherwise be
+      // wherever the page left it, and a screen reader would not learn that the page is another.
+      filterNote = '';
+      void tick().then(() => {
+        heading?.focus({ preventScroll: true });
+      });
+    } else if (decodeSynergyView(from.url.searchParams).matOnly !== decodeSynergyView(to.url.searchParams).matOnly) {
+      void tick().then(() => {
+        filterNote =
+          sides === undefined ? '' : copy.artifactFilterNow(artifactOnly, sides.enabledBy.count, sides.enables.count);
+      });
+    }
+  });
 </script>
 
 <svelte:head>
@@ -63,47 +106,63 @@
       />
     {/key}
   </section>
-{:else}
-  <header class="focus">
-    <h1>
-      <span class="dot" style:background={classColour(trait.class)} aria-hidden="true"></span>
-      {trait.name}
-    </h1>
-    <p class="origin">{copy.traitOrigin(trait.creature, trait.family, trait.class, trait.kind)}</p>
-  </header>
-  <p class="description">{trait.description}</p>
-  <TraitPicker
-    {relations}
-    onpick={(picked: Trait) => {
-      void openTrait(picked.id);
-    }}
-  />
+{:else if sides !== undefined}
+  <div class="toolbar">
+    <TraitPicker
+      {relations}
+      onpick={(picked: Trait) => {
+        void openTrait(picked.id, artifactOnly);
+      }}
+    />
+    <ArtifactFilter
+      checked={artifactOnly}
+      onchange={(matOnly: boolean) => {
+        synergy.choose({ matOnly });
+      }}
+    />
+  </div>
+
+  <p class="visually-hidden" aria-live="polite">{filterNote}</p>
+
+  <ExplorationTrail {steps} hrefOf={traitHref} />
+
+  <!-- The focus comes first in the page; from 1100 px it stands between the two sides, which the grid places. -->
+  <div class="explorer">
+    <div class="focus-cell">
+      <FocusCard
+        {trait}
+        party={partySession.actions}
+        {keywordHref}
+        exploreHref={exploreTraitHref(trait)}
+        bind:heading
+      />
+    </div>
+    <div class="enabled-by-cell">
+      <RelationSide
+        side={sides.enabledBy}
+        direction="enabledBy"
+        focus={trait}
+        {artifactOnly}
+        party={partySession.actions}
+        hrefOf={traitHref}
+      />
+    </div>
+    <div class="enables-cell">
+      <RelationSide
+        side={sides.enables}
+        direction="enables"
+        focus={trait}
+        {artifactOnly}
+        party={partySession.actions}
+        hrefOf={traitHref}
+      />
+    </div>
+  </div>
 {/if}
 
 <style>
-  .focus {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .dot {
-    display: inline-block;
-    width: 11px;
-    height: 11px;
-    margin-inline-end: 6px;
-    border-radius: 3px;
-  }
-
   .origin {
     color: var(--text-muted);
-  }
-
-  .description {
-    max-width: 62ch;
-    color: var(--text);
-    font-size: 15px;
-    line-height: 1.65;
   }
 
   .note {
@@ -132,6 +191,40 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 2px 12px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+  }
+
+  /* One column in the order of the page (the focus, what enables it, what it enables); from 1100 px the focus stands between the sides. */
+  .explorer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px 24px;
+  }
+
+  @media (width >= 1100px) {
+    .explorer {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+      grid-template-areas: 'enabled-by focus enables';
+      align-items: start;
+    }
+
+    .focus-cell {
+      grid-area: focus;
+    }
+
+    .enabled-by-cell {
+      grid-area: enabled-by;
+    }
+
+    .enables-cell {
+      grid-area: enables;
+    }
   }
 
   @media (pointer: coarse) {

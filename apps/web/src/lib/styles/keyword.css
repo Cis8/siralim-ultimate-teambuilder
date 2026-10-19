@@ -1,0 +1,75 @@
+/*
+ * A keyword of a description (docs/DESIGN.md § Keyword tokens): the kind is the colour, the role the shape, so that nothing rests
+ * on colour alone. Three things wear it: `KeywordToken` (a button that toggles a filter, in Explore), `KeywordLink` (a link to the
+ * keyword's page, on the trait page) and a plain `span` (a keyword that leads nowhere: no role, only the colour of its kind).
+ */
+.keyword {
+  color: var(--kw-mechanic);
+}
+
+/* A button or a link in running text: everything the browser gives it is taken back, so that it reads as the words around it. */
+button.keyword,
+a.keyword {
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/*
+ * Rings, never a fill: a match highlight (22 % of a yellow) over a lighter fill leaves a debuff or the muted flag
+ * under 4.5:1, and the token colours are only checked on the page itself. A ring is a box-shadow because the outline
+ * is the shape of the role.
+ */
+button.keyword:hover,
+a.keyword:hover {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.keyword[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--accent-border);
+}
+
+.keyword[data-kind='debuff'] {
+  color: var(--kw-debuff);
+}
+
+.keyword[data-kind='buff'] {
+  color: var(--kw-buff);
+}
+
+.keyword[data-kind='event'] {
+  color: var(--kw-event);
+}
+
+.keyword[data-kind='flag'] {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Applies: a solid bar under the name. Uses: a dashed outline. Resists: a solid outline. */
+.keyword[data-role='applies'] {
+  text-decoration: underline solid 2px;
+  text-underline-offset: 3px;
+}
+
+/* An outline takes no room, so the offset is small enough to leave the space beside the name visible. */
+.keyword[data-role='uses'] {
+  outline: 1px dashed currentcolor;
+  outline-offset: 1px;
+}
+
+.keyword[data-role='resists'] {
+  outline: 1px solid currentcolor;
+  outline-offset: 1px;
+}
+
+/* The outline of a role (above) is as specific as the page's focus ring and would stand in for it: the ring is put back, after it. */
+.keyword:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}

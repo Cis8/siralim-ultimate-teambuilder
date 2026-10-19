@@ -1,10 +1,11 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import type { ResolvedPathname } from '$app/types';
-import type { TraitId } from '@atlas/core';
-import { carriedSearch, type CarriedParty } from './carried-search';
+import type { Trait, TraitId } from '@atlas/core';
+import { carriedSearch, traitSearch, type CarriedParty } from './carried-search';
 import { partySession } from './composition-root';
 import { encodeTab } from './page-tab';
+import { synergySearch } from './synergy-address';
 import type { SynergyPlace } from './synergy-place';
 
 // Each address is made by `resolve` (the base path, the route's parameters) and typed as what it makes: the lint rule that
@@ -52,7 +53,15 @@ export const carriedNow = (): CarriedParty => ({
   datasetVersion: partySession.datasetVersion,
 });
 
-/** Opens a trait's page as a step of the history, carrying the party. */
-export function openTrait(traitId: TraitId): Promise<void> {
-  return goto(synergyHref({ page: 'trait', traitId }, carriedSearch(carriedNow())));
+/** The address of Explore searching for exactly this trait, carrying the party. */
+export const exploreTraitHref = (trait: Pick<Trait, 'name' | 'family'>): ResolvedPathname =>
+  exploreHref(traitSearch(trait, carriedNow()));
+
+/** What a link from one Synergy page to another carries: the party, and the artifact filter, which the person keeps as they go. */
+export const synergyLinkSearch = (matOnly: boolean): string =>
+  synergySearch({ matOnly, section: undefined, ...carriedNow() });
+
+/** Opens a trait's page as a step of the history, carrying the party and the artifact filter. */
+export function openTrait(traitId: TraitId, matOnly = false): Promise<void> {
+  return goto(synergyHref({ page: 'trait', traitId }, synergyLinkSearch(matOnly)));
 }

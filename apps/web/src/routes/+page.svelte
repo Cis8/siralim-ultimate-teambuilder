@@ -31,7 +31,7 @@
   import QueryInput from '../lib/components/query-input.svelte';
   import ResultCount from '../lib/components/result-count.svelte';
   import ResultsList from '../lib/components/results-list.svelte';
-  import SlotChooser from '../lib/components/slot-chooser.svelte';
+  import SessionSlotChooser from '../lib/components/session-slot-chooser.svelte';
   import TabBar from '../lib/components/tab-bar.svelte';
   import { showsBackToTop } from '../lib/back-to-top';
   import { createAddressWriter } from '../lib/address-writer';
@@ -458,16 +458,7 @@
 {/if}
 
 <!-- On the page and not in a row: the rows are virtualised, and a row can be gone while the sheet is open. -->
-<SlotChooser
-  trait={partySession.choosing}
-  member={partySession.planner.target.member}
-  reason={partySession.choosing === undefined ? '' : (partySession.actions.refusal(partySession.choosing) ?? '')}
-  choices={partySession.choices}
-  onchoose={(position: SlotPosition) => partySession.addToChosenSlot(position)}
-  onclose={() => {
-    partySession.closeChooser();
-  }}
-/>
+<SessionSlotChooser />
 
 {#if tabbed.current}
   <TabBar

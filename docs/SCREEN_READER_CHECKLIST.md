@@ -41,6 +41,12 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 24 | Clear the field, type `wea`, wait a second, then `Down` twice | "N suggestions"; each `Down` reads the next one in full, with its count (the last ones may say it a moment after the first words: the counts follow the list); at the end of the list `Down` goes back to the first |
 | 25 | With a suggestion read out, press `Tab` | focus stays in the field; the text now holds what the suggestion wrote and a blank, and typing goes on from there; the list is gone ("collapsed") |
 | 26 | Type `weak`, press `Escape`, then `Tab` | `Escape` collapses the list and leaves the text; `Tab` moves on to the next control and does not take a suggestion |
+| 27 | Open `/synergy/abomination--flesh-rot` (by its address, or pick Flesh Rot in Synergies), then `H` through the headings | the title "Flesh Rot — Synergies — Trait Atlas"; "Flesh Rot" (1); then "Enabled by 36 traits" (2), "Several keys 28 traits" (3), "Random sources · 27" (4, a button), "Applies Weak 1 trait" (3), "Applies Vulnerable 7 traits" (3); then "Enables 0 traits" (2) |
+| 28 | In the description of the focus, `Tab` to "Weak" | "Relies on Weak — see who applies it and who relies on it, link"; an event or a mechanic in a description is not a stop |
+| 29 | `Tab` to a card of a lane and press `Enter` on its name | before: "Re-centre on *name*, link", then "Add to Creature 1 · Innate — *name*, button". After the press: the new page's title and then "*name*, heading level 1", once each. If you hear the name more than twice, or nothing, report it: a line that says "Now centred on …" was left out on purpose, on the belief that the two above are enough |
+| 30 | On Flesh Rot, `Tab` to "Random sources · 27", press `Space` | "Random sources · 27, button, collapsed", then "expanded"; the cards follow, each with "random" among its tags; the 27 are a list |
+| 31 | Re-centre on two traits in a row, then go to the trail with `D` or `N` | "Exploration trail, navigation", a list of 3 items: the first two "Re-centre on …, link", the last "…, current location" (the wording of the last varies with the reader) |
+| 32 | Press the checkbox "Artifact-eligible only" | "Artifact-eligible only, checkbox, checked", then once "Only traits with a material are listed. Enabled by 35 traits. Enables 0 traits." (the numbers are the page's); pressing again says "Every trait is listed. …" |
 
 ## iPhone (VoiceOver, Safari)
 

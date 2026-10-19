@@ -1,39 +1,33 @@
 <script lang="ts">
   import { afterNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { filledSlots, type RelationService } from '@atlas/core';
+  import { filledSlots, type RelationService, type TraitId } from '@atlas/core';
   import { onMount, type Snippet } from 'svelte';
   import { createAddressWriter } from '../../lib/address-writer';
   import BarLink from '../../lib/components/bar-link.svelte';
   import BottomBar from '../../lib/components/bottom-bar.svelte';
+  import SessionSlotChooser from '../../lib/components/session-slot-chooser.svelte';
   import { partySession } from '../../lib/composition-root';
   import { copy } from '../../lib/copy';
   import { loadRelationService } from '../../lib/relation-composition';
-  import { decodeSynergyView, synergyAddress, type SynergyState } from '../../lib/synergy-address';
+  import { decodeSynergyView, synergyAddress, type SynergyState, type SynergyView } from '../../lib/synergy-address';
   import { provideSynergy } from '../../lib/synergy-context';
   import { appLinks, carriedNow, synergyHref } from '../../lib/synergy-links';
   import { synergyPlaceOf } from '../../lib/synergy-place';
+  import { extendTrail } from '../../lib/synergy-trail';
 
   /**
    * What the Synergy pages share (ADR-0011): the relations of the dataset, loaded once however many pages the person visits, the
-   * party of the session and the keeping of it in the address, and the bar at the foot of a narrow screen. The pages under it read
-   * their own state from the address; the party is the one thing they change, and this writes it back.
+   * party of the session and the keeping of it in the address, the trail of the traits looked at, and the bar at the foot of a
+   * narrow screen. The pages under it read their own state from the address; the party and the view are what they change, and this
+   * writes them back.
    */
   const { children }: { children: Snippet } = $props();
 
   let relations = $state.raw<RelationService>();
   let failed = $state(false);
-  provideSynergy({
-    get relations() {
-      return relations;
-    },
-    get failed() {
-      return failed;
-    },
-  });
-
-  const links = $derived(appLinks(carriedNow()));
-  const filled = $derived(filledSlots(partySession.planner.history.party));
+  /** The memory of a session of exploring: it begins empty each time the app opens, and the picker begins it again. */
+  let trail = $state.raw<readonly TraitId[]>([]);
 
   /** Everything the address stands for besides its path: the view it states and the party of the session. */
   const stateNow = (): SynergyState => ({
@@ -58,8 +52,36 @@
     synergyAddress,
   );
 
+  provideSynergy({
+    get relations() {
+      return relations;
+    },
+    get failed() {
+      return failed;
+    },
+    get view() {
+      return decodeSynergyView(page.url.searchParams);
+    },
+    get trail() {
+      return trail;
+    },
+    choose(changes: Partial<SynergyView>) {
+      writer.chosen({ ...stateNow(), ...changes });
+    },
+  });
+
+  /** The page of a trait is wider than the others: its two sides stand beside the focus from 1100 px. */
+  const wide = $derived(page.route.id === '/synergy/[traitId]');
+
+  const links = $derived(appLinks(carriedNow()));
+  const filled = $derived(filledSlots(partySession.planner.history.party));
+
   afterNavigate(({ type, from, to }) => {
     if (to === null) return;
+    // The trail follows the person from trait to trait; the picker is a new start. Idempotent: a write of the party is the same page.
+    const place = synergyPlaceOf(to.route.id, to.params ?? {});
+    if (place?.page === 'picker') trail = [];
+    else if (place?.page === 'trait') trail = extendTrail(trail, place.traitId);
     // The writer's own write: the same page with a new query, and the party it stands for is the session's already.
     if (type === 'goto' && from?.url.pathname === to.url.pathname) return;
     writer.arrived(to.url);
@@ -91,9 +113,15 @@
   });
 </script>
 
-<div class="synergy">
+<div class="synergy" class:wide>
   {@render children()}
 </div>
+
+<!-- Outside the page: a change of the party made from a card is told whatever the page is showing. -->
+<p class="visually-hidden" aria-live="polite">{partySession.message}</p>
+
+<!-- On the page and not in a card: the cards are drawn again as the focus moves, and a card can be gone while the sheet is open. -->
+<SessionSlotChooser />
 
 <BottomBar label={copy.sectionsLabel}>
   <BarLink href={links.explore} icon="explore">{copy.pages.explore}</BarLink>
@@ -115,6 +143,13 @@
     width: min(100%, 880px);
     margin-inline: auto;
     padding: 20px 16px 32px;
+  }
+
+  /* The page of a trait: from 1100 px the focus stands between the two sides it ties to, which need the room (DESIGN § Synergy pages). */
+  @media (width >= 1100px) {
+    .synergy.wide {
+      width: min(100%, 1280px);
+    }
   }
 
   .synergy :global(h1) {

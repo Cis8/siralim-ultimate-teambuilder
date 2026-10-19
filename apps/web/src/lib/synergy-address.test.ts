@@ -14,6 +14,7 @@ import {
   SYNERGY_PARAMS,
   SYNERGY_SECTIONS,
   synergyAddress,
+  synergySearch,
   type SynergySection,
   type SynergyState,
 } from './synergy-address';
@@ -162,5 +163,23 @@ describe('synergyAddress', () => {
 
     expect(decodeSynergyView(params)).toEqual({ matOnly: true, section: 'related' });
     expect(decodePartyState(params)).toEqual({ ...state.party, datasetVersion: '2.0' });
+  });
+});
+
+describe('synergySearch', () => {
+  it('is empty for the initial state: a link to a page with nothing to carry is the plain address of the page', () => {
+    expect(synergySearch(stateWith({}))).toBe('');
+  });
+
+  it('is the query string of the address the writer would write, so that a link and the page it opens agree on one spelling', () => {
+    const state = stateWith({ matOnly: true, party: partyOf('life--mender', 'death--plague') });
+
+    expect(synergySearch(state)).toBe('mat=yes&party=2.0,life--mender,death--plague&target=2-fused');
+    expect(`?${synergySearch(state)}`).toBe(synergyAddress(page, state).search);
+  });
+
+  it('writes the section when the state names one: a link to another page names none, the tab belongs to the page', () => {
+    expect(synergySearch(stateWith({ section: 'enables' }))).toBe('section=enables');
+    expect(synergySearch(stateWith({ matOnly: true, section: undefined }))).toBe('mat=yes');
   });
 });

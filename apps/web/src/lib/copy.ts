@@ -170,6 +170,64 @@ export const copy = {
   /** The title of a page under Synergies, which a screen reader hears when the page changes. */
   synergyDocument: (title: string) => `${title} — Synergies — Trait Atlas`,
   keywordKindName: { debuff: 'Debuff', buff: 'Buff', effect: 'Effect' } as const,
+
+  /** The page of a trait (13.3): the trait in focus, what enables it, what it enables, and the trail of the traits looked at. */
+  focusCaption: 'Focus',
+  focusLabel: 'Focused trait',
+  factRelies: 'Relies on',
+  factApplies: 'Applies',
+  factGuards: 'Guards against',
+  factTriggers: 'Triggers',
+  factMaterial: 'Material',
+  /** A fact the trait has nothing to say about. */
+  factNone: '—',
+  /** An event a trait waits for, and who does it where the text says so. */
+  triggerWithActor: (event: string, actor: KeywordActor) => `${event} (${actorName[actor]})`,
+  openInExplore: 'Open in Explore',
+  trailLabel: 'Exploration trail',
+  trailCaption: 'Trail',
+  /** The name of a link that moves the focus to another trait, whether it is a card or a step of the trail. */
+  recentre: (name: string) => `Re-centre on ${name}`,
+  /** The name of a keyword of the focus, a link to the page of that keyword: what the trait does with it, then where the link leads. */
+  keywordLink: ({ role }: Pick<KeywordHit, 'role'>, text: string) =>
+    `${role === undefined ? '' : `${keywordRole[role]} `}${text} — see who applies it and who relies on it`,
+  artifactOnly: 'Artifact-eligible only',
+  /** What a screen reader is told when the filter is turned on or off, since the counts are all that changes in front of it. */
+  artifactFilterNow: (on: boolean, enabledBy: number, enables: number) =>
+    `${on ? 'Only traits with a material are listed.' : 'Every trait is listed.'} Enabled by ${formatCount(enabledBy)} ${enabledBy === 1 ? 'trait' : 'traits'}. Enables ${formatCount(enables)} ${enables === 1 ? 'trait' : 'traits'}.`,
+  enabledBy: 'Enabled by',
+  enabledByHint: (name: string) => `Traits that apply what ${name} relies on`,
+  enables: 'Enables',
+  enablesHint: (name: string) => `Traits that rely on what ${name} applies`,
+  /** The unit a screen reader says after the count of a heading. */
+  countUnit: (count: number) => (count === 1 ? ' trait' : ' traits'),
+  severalKeys: 'Several keys',
+  severalKeysHint: (side: 'enabledBy' | 'enables') =>
+    side === 'enabledBy'
+      ? 'Traits that apply two or more of the keys it relies on'
+      : 'Traits that rely on two or more of the keys it applies',
+  /** The heading of a lane: the key, and what the focus does with it. */
+  laneApplies: (label: string) => `Applies ${label}`,
+  laneRelies: (label: string) => `Relies on ${label}`,
+  /** The tag of a card that ties to the focus through several keys; the keys are named beside it. */
+  links: (count: number) => `×${String(count)} links`,
+  linkedThrough: (keys: string) => `through ${keys}`,
+  /** A key of a card, with how the card gives it when it is not by name. */
+  keyAs: (label: string, tier: 'conditional' | 'random') => `${label} (${tier})`,
+  /** The tag of a card whose trait gives the key only under a condition, or at random. */
+  tiers: { conditional: 'conditional', random: 'random' } as const,
+  noMaterialTag: 'no material',
+  randomSources: (count: number) => `Random sources · ${formatCount(count)}`,
+  randomSourcesHint: 'They afflict a random debuff on enemies, so this one is not certain.',
+  selfSufficient: (name: string) => `Self-sufficient: ${name} doesn’t rely on any buff, debuff or effect.`,
+  appliesNothingByName: (name: string) =>
+    `${name} applies no buff, debuff or effect by name, so no trait is listed as relying on it.`,
+  /** A key of the focus that nobody gives (or nobody relies on): the artifact filter says it is the filter that leaves it so. */
+  noApplier: (label: string, artifactOnly: boolean) =>
+    `No trait applies ${label} ${artifactOnly ? 'among artifact-eligible traits' : 'in the compendium'}.`,
+  noUser: (label: string, artifactOnly: boolean) =>
+    `Nothing relies on ${label} yet ${artifactOnly ? 'among artifact-eligible traits' : 'in the compendium'}.`,
+
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',

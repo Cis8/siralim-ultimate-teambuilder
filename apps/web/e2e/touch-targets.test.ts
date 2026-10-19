@@ -26,6 +26,7 @@ import {
   withUniqueName,
 } from './support/party-page';
 import { fromParty, synergyHeading, traitPicker, traitSuggestions, whenLoaded } from './support/synergy-page';
+import { cardOf, firstUnique, randomToggle, relationsOfDataset, side } from './support/trait-page';
 
 // On a phone every control is a target for a finger (DESIGN § Accessibility): at least 44 × 44 px, where WCAG 2.5.8 asks for
 // 24. The tests measure what the page draws, in the Pixel 7 and iPhone 14 projects, for the places a phone shows: Explore,
@@ -327,6 +328,60 @@ test.describe('touch targets on a phone', () => {
       await expectTargetsLargeEnough(page.locator('body'), [...including, /^Synergies$/]);
       expect(await widerThanTheWindow(page), address).toBe(false);
     }
+  });
+
+  test('has every control of the page of a trait at least 44 × 44 px: the lanes, the cards, the filter, the trail', async ({
+    page,
+    request,
+  }) => {
+    const { traits, datasetVersion } = await publishedDataset(request);
+    const index = relationsOfDataset(traits);
+    // Lanes of one key and of several, a random group, and a mastery that the target slot refuses (its button offers the choice of slot).
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.relationsOf(each.id)?.enabledBy;
+        if (found === undefined) return false;
+        const all = [...found.several, ...found.single.flatMap(({ entries }) => entries)];
+        return (
+          found.single.length > 0 &&
+          all.some(({ strength, trait }) => strength !== 'random' && trait.kind === 'mastery') &&
+          all.some(({ strength }) => strength === 'random')
+        );
+      },
+      'with a mastery among those that enable it, and a random source of one of its keys',
+    );
+    const [mine] = plainTraits(traits);
+    if (mine === undefined) throw new Error('the dataset has no plain trait');
+    await page.goto(`./synergy/${focus.id}?party=${datasetVersion},${mine.id}`);
+    await expect(synergyHeading(page)).toHaveText(focus.name);
+    await whenLoaded(page);
+
+    await randomToggle(side(page, 'Enabled by')).first().click();
+    // A control scrolled above the window is not measured: the page is taken back to its top, and the cards are all below it.
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await expectTargetsLargeEnough(page.locator('body'), [
+      /^Find a trait$/,
+      /^Artifact-eligible only$/,
+      /^Add to Creature 1 · Fused — /,
+      /^Add to… — /,
+      /^Re-centre on /,
+      /^Open in Explore$/,
+      /^Random sources · /,
+      /^Synergies$/,
+    ]);
+    await expectFieldsNotZoomedIn(page.locator('body'), [/^Find a trait$/]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+
+    // A step on the way adds the trail, whose links are targets too.
+    const [first] = index.relationsOf(focus.id)?.enabledBy.several ?? [];
+    if (first === undefined) throw new Error('no trait ties through several keys');
+    await cardOf(side(page, 'Enabled by'), first.trait.name).getByRole('link').click();
+    await expect(synergyHeading(page)).toHaveText(first.trait.name);
+    await expectTargetsLargeEnough(page.locator('body'), [new RegExp(`^Re-centre on ${focus.name}$`, 'u')]);
+    expect(await widerThanTheWindow(page)).toBe(false);
   });
 
   test('does not make the page wider than the window, on Explore or on the Party tab', async ({ page }) => {

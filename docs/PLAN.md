@@ -13,20 +13,20 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D32, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1 and 13.2 are done and the next slice is
-  13.3** (the trait view), in the order M13 → M11 (D15). What 13.2 leaves for it: `routes/synergy/+layout.svelte` holds the relations
-  (`useSynergy()`, `synergy-context.ts`), the party's place in the address (a writer over `synergyAddress`) and the bar at the foot; a
-  page reads `mat` and `section` from `page.url` with `decodeSynergyView`. `routes/synergy/[traitId]/+page.svelte` is a bare head (dot,
-  `h1`, origin, the description as plain text) and `TraitPicker`: 13.3 puts the focus card and the lanes in its place. It will need to
-  *write* `mat` (the artifact checkbox) and the party (Add to): the layout's writer is not reachable from a page yet, so either put it in
-  the context (`chosen`, `refined`) or navigate with `goto(synergyHref(place, search))`. The search field is a plain `<input>` until the
-  page is idle, or the focus or a pointer arrives; then the assist layer (`query-assist.ts`) is fetched and attaches to it. Sizes now:
-  initial JS 85.3 kB of 150 (80.1 before 13.2: the header, the bars, the links and the copy), lazy 19.3 of 50; Lighthouse 0.89–0.91 (LCP 3.3 s).
+- **Phase 2 is under way (D14–D35, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.3 are done and the next slice is
+  13.4** (Alternatives, Same trigger and Same family under the three columns), in the order M13 → M11 (D15). What 13.3 leaves for it:
+  `routes/synergy/[traitId]/+page.svelte` holds the `.explorer` grid (focus · Enabled by · Enables) and reads `sides` from
+  `relations.relationsOf(id, { artifactOnly })`; the artifact filter is `synergy.view.matOnly` / `synergy.choose({ matOnly })` (the layout's
+  writer) and a link is `synergyLinkSearch(matOnly)` (party and `mat`, never `section`). `TraitCard` (name link, `badge`, `tier`, `detail`, add
+  button, notes) is dumb: `detail` is where Alternatives puts its reason line; `TraitCardList` is the list of `RelatedTrait`s only. A card has
+  its own id for the note under its button (`$props.id()`): a trait is on the page in several places. `AddButton` and `PartyNotes` serve
+  `ResultRow` too. Sizes now: initial JS 87.7 kB of 150 (85.3 before 13.3: the add button, the notes and the copy are in the first script),
+  lazy 23.9 of 50; Lighthouse passes its assertions.
   **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D32 (chosen by Claude; D30: the Synergies link sits after the tab list; D31: Party in the
+- For the owner to veto, none blocking: D18–D35 (chosen by Claude; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
   header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
@@ -72,9 +72,12 @@ session (after `CLAUDE.md`), update it before ending one.
 | D30 | (default) The bar at the foot of a narrow screen is Explore · Party · Synergies: the link comes after the tab list (a tab list may hold only tabs), on Explore and on the Synergy pages alike, so that the items do not move when the page changes | DESIGN § Layout |
 | D31 | (default) "Party n/18" in the header (wide screens) is a link to Explore with `tab=party`: the party is a column of Explore there, so it is the place the party is | DESIGN § Layout |
 | D32 | (default) 13.2's trait page shows the description as plain text under the head, and the "not found" page offers up to 8 traits whose name is like the id's (`lostTraitSearch`) with the picker pre-filled; 13.3 replaces the first by the focus card | DESIGN § Synergy pages |
+| D33 | (default) On the trait page a card and a step of the trail are *links* named “Re-centre on X” (an address: middle-click, Back and Forward work); they carry the party and `mat`, never `section`. After a move to another trait the focus is on the new `h1`. No polite “Now centred on X” (the plan had one): SvelteKit's announcer says the new title and the focus says the name, a third line would be noise; checklist row 29 asks the owner to confirm | DESIGN § Synergy pages |
+| D34 | (default) The trail is session memory: empty when the app opens (so a deep link has none), emptied by the picker page, cut back by a step, not drawn for one step | DESIGN § Synergy pages |
+| D35 | (default) Random sources are a group at the end of their lane, folded behind a button above 3 (v2.0 has 26–27 in every lane that has any); the focus card's rows are the by-name mentions of D27, plus *Guards against* when there is one; the artifact filter says the new counts in a polite line | DESIGN § Synergy pages |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D32 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
+D18–D35 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -195,6 +198,14 @@ slice that builds it then follows.
   `vitest` alone ignores those files; `pnpm bench` needs `--reporter=verbose` to print the table.
 - Svelte templates: `{@render localSnippet(args)}` trips `no-confusing-void-expression` (a rendered `children()` does not): use
   a component. `hidden` loses to any `display` rule on the same element, so a section hides a plain wrapper around its flex box.
+- SvelteKit 3.1 runs `reset_focus` *before* the `afterNavigate` callbacks (`finish_navigation`), so a page that moves the focus after a
+  move (the trait page: the new `h1`) does it there and wins; the router's own `aria-live="assertive"` announcer says `document.title` after
+  each navigation whose title changed.
+- e2e, the page of a trait: a folded group of random sources draws no card, so a test looks for cards among `drawn(side)` (the entries that
+  are not random) and counts the “no material” tags only for a focus with no random source. v2.0 has no lane with 1–3 random sources and no
+  focus for which `mat=yes` leaves a key with nobody: those two branches are covered by `lane-groups.test.ts` and `copy.test.ts` only.
+  `touch-targets.test.ts` skips a control scrolled above the window: take the page back to its top (`scrollTo(0, 0)`) after opening
+  something that scrolls it.
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 - The 8b.5 research lives in `packages/pipeline/.cache/research/events-v2.0/` (git-ignored, this machine only):
@@ -400,20 +411,18 @@ cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-sou
       under the base path), the walks and the targets of the Synergy pages in `keyboard.test.ts` and `touch-targets.test.ts`. *Docs:*
       SPEC §7, DESIGN (§ Synergy pages, § Layout), ADR-0011. Deviations on purpose: D30–D32; the writer ignores a write whose page has
       gone; the layout does not call `partySession.arrive` for a `goto` that changes page (it carries the party it holds).
-- [ ] **13.3** Trait view. The focus card (class dot, `h1`, meta, description with tokens: buff, debuff and effect tokens open the keyword
-      view, events and mechanics are plain kind-coloured text; rows Relies on / Applies / Triggers / Material with the no-material
-      icon), "Add to <target>" through the shared session (the same sentence, "Add to…" chooser, "In party" marker as Explore), "Open in
-      Explore". Two sides (columns from 1100 px): `h3` lane headings with key pills, real lists, a compact `TraitCard` (name button
-      "Re-centre on X", creature · class, "×N links", tier label *conditional* / *random*, no material, add), the **several-keys lane
-      first**, the random tier a labelled group last (a collapsed disclosure when > 3), the prototype's empty copy, the artifact
-      checkbox (`mat=yes`), the trail (`nav`, last 6, session memory, `aria-current="location"`, fresh on a deep link). Re-centre is a
-      history entry; the focus moves to the new `h1`; a polite "Now centred on X"; `document.title` follows. **Data:** a trait relying
-      on two debuffs that can be random gets all 27 random sources in `several`, `×2`, after the specific and conditional ones (Flesh
-      Rot: 36 enabled by, 8 outside the random group), so the random group needs the collapsed disclosure; Zantai's Envy is the one
-      real mixed trait (random for the debuffs, specific for Mega Magic); Pandemic and the four pair traits have an empty Enables side
-      (D27). *T:* the trail module
-      (append, truncate, limit); e2e criteria 4 and 5 on screen, add from a card and from the focus, Back / Forward, the artifact
-      filter, keyboard only.
+- [x] **13.3** Trait view. `FocusCard` (class dot, `h1`, origin, the description with its buffs, debuffs and effects as links to their keyword
+      pages and its events and mechanics as plain text, the rows Relies on / Applies / Guards against / Triggers / Material, the add button
+      and “Open in Explore”, a search for `trait:"Name" family:Family`), `RelationSide` + `TraitLane` (Several keys first, a lane per key headed
+      by a `KeyPill`, the random group last and folded above 3, dashed notes for a key nobody gives or relies on, the prototype's empty copy
+      reworded after D27), `TraitCard`, `ExplorationTrail`, `ArtifactFilter` (a step of the history, a polite line with the new counts).
+      `core`: `traitFacts`. `web`: `synergy-trail`, `lane-groups`, `party-add`, `synergySearch`, `traitSearch`; `AddButton` and `PartyNotes`
+      now serve `ResultRow` as well, `styles/keyword.css` is global (the token has a link and a plain variant), `SessionSlotChooser` stands on
+      Explore and on the Synergy layout (which has the polite line of the party too). *T:* unit tests, mutation-checked, and
+      `synergy-trait.test.ts` (23 tests × 3 projects: ROADMAP criteria 4 and 5 on screen, add from a card, from the focus and through the
+      chooser, Back and Forward, the filter, a trail of 6, the keyboard alone, axe), the trait page in the walks of `keyboard.test.ts` and
+      `touch-targets.test.ts`. *Docs:* DESIGN § Synergy pages, § Keyword tokens, § Party panel; checklist rows 27–32. Deviations on purpose:
+      D33–D35; the page of a trait is 1280 px wide from 1100 px (the layout's `wide` class).
 - [ ] **13.4** Secondary sections. Alternatives (with the reason line), Same trigger, Same family: `h2` and a count, 6 cards and "Show all
       N" (capped at 200 with a message; plain DOM, measure before reaching for the virtual list). **Data:** the biggest lists in v2.0
       are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same family (Numerical Nightmare), so the

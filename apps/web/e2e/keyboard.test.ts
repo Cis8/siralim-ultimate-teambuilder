@@ -33,6 +33,7 @@ import {
   withUniqueName,
 } from './support/party-page';
 import { pathOf, placeLink, synergyHeading, whenLoaded } from './support/synergy-page';
+import { firstUnique, relationsOfDataset } from './support/trait-page';
 
 // Criterion 8: with the keyboard alone every action is reachable and the focus can be seen (DESIGN § Accessibility). The walks
 // press Tab through a page the way a person does, and stop at every control; the flows do what a person does with the keys.
@@ -187,10 +188,24 @@ test.describe('the tab key on the Synergy pages', () => {
     const { traits, datasetVersion } = await publishedDataset(request);
     const [trait] = plainTraits(traits);
     if (trait === undefined) throw new Error('the dataset has no plain trait');
+    // A trait with lanes of several keys and of one, and a group of random sources (folded away, so that the walk is not a hundred stops).
+    const index = relationsOfDataset(traits);
+    const crowded = firstUnique(
+      traits,
+      (each) => {
+        const found = index.relationsOf(each.id)?.enabledBy;
+        return (
+          found !== undefined && found.several.length > 0 && found.single.some(({ entries }) => entries.length > 1)
+        );
+      },
+      'with lanes of several keys and of one',
+    );
     const addresses = [
-      // The picker with a party in it, the page of a trait, of a keyword, and the two pages of what was not found.
+      // The picker with a party in it, the page of a trait (a plain one, and one with lanes and a party), of a keyword, and the two
+      // pages of what was not found.
       `./synergy?party=${datasetVersion},${trait.id},gone--from-the-sheet`,
       `./synergy/${trait.id}`,
+      `./synergy/${crowded.id}?mat=yes&party=${datasetVersion},${trait.id}`,
       './synergy/kw/vulnerable',
       './synergy/retired--some-trait',
       './synergy/kw/not-a-keyword',

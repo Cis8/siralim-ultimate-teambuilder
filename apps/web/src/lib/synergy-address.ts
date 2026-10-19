@@ -61,3 +61,14 @@ export function synergyAddress(current: URL, { party, datasetVersion, ...view }:
   address.search = readableSearch(params.toString());
   return address;
 }
+
+/** Any origin and path do: only the query string of the address is wanted. */
+const NOWHERE = new URL('https://synergy.invalid/');
+
+/**
+ * The query string (without its `?`) that stands for `state`: what a link to a Synergy page carries. It is the one `synergyAddress`
+ * writes, in the same order, so that a page opened by a link finds its address as the writer would have made it.
+ */
+export function synergySearch(state: SynergyState): string {
+  return synergyAddress(NOWHERE, state).search.slice(1);
+}

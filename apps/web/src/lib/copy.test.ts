@@ -45,3 +45,40 @@ describe('the name of a keyword in a description', () => {
     );
   });
 });
+
+describe('the page of a trait', () => {
+  it('names a keyword of the focus by what the trait does with it, then where the link leads', () => {
+    expect(copy.keywordLink({ role: 'uses' }, 'Vulnerable')).toBe(
+      'Relies on Vulnerable — see who applies it and who relies on it',
+    );
+    expect(copy.keywordLink({ role: 'applies' }, 'Weak')).toBe(
+      'Applies Weak — see who applies it and who relies on it',
+    );
+    expect(copy.keywordLink({}, 'Zombies')).toBe('Zombies — see who applies it and who relies on it');
+  });
+
+  it('says a lane is empty in the words of the side it is on, and of the filter that left it so', () => {
+    expect(copy.noApplier('Weak', false)).toBe('No trait applies Weak in the compendium.');
+    expect(copy.noApplier('Weak', true)).toBe('No trait applies Weak among artifact-eligible traits.');
+    expect(copy.noUser('Savage', false)).toBe('Nothing relies on Savage yet in the compendium.');
+    expect(copy.noUser('Savage', true)).toBe('Nothing relies on Savage yet among artifact-eligible traits.');
+  });
+
+  it('writes how many links tie a trait to the focus, and a key it gives in a weaker way', () => {
+    expect(copy.links(2)).toBe('×2 links');
+    expect(copy.keyAs('Weak', 'random')).toBe('Weak (random)');
+    expect(copy.keyAs('Weak', 'conditional')).toBe('Weak (conditional)');
+  });
+
+  it('tells a screen reader what the filter did, since only the counts change', () => {
+    expect(copy.artifactFilterNow(true, 6, 12)).toBe(
+      'Only traits with a material are listed. Enabled by 6 traits. Enables 12 traits.',
+    );
+    expect(copy.artifactFilterNow(false, 1, 0)).toBe('Every trait is listed. Enabled by 1 trait. Enables 0 traits.');
+  });
+
+  it('writes who acts where an event has an actor', () => {
+    expect(copy.triggerWithActor('Attack', 'self')).toBe('Attack (this creature)');
+    expect(copy.triggerWithActor('Dodge', 'enemy')).toBe('Dodge (enemies)');
+  });
+});

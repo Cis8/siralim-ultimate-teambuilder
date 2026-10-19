@@ -15,9 +15,10 @@ import {
   traitPicker,
   traitSuggestions,
 } from './support/synergy-page';
+import { focusCard } from './support/trait-page';
 
 // Phase 2, M13.2: the Synergy explorer is a set of routes (ADR-0011) reached by links and by address, with the party of the
-// session carried along. What a trait page shows besides its head is the work of the slices after this one.
+// session carried along. What a trait page shows besides its head is in `synergy-trait.test.ts`.
 
 /** The first trait the tests can address and find by name: it stacks, has a material, and no other is called the same. */
 async function aTrait(request: Parameters<typeof publishedDataset>[0]): Promise<Trait> {
@@ -57,8 +58,9 @@ test.describe('the Synergy pages, opened from their address', () => {
 
     await expect(synergyHeading(page)).toHaveText(trait.name);
     await expect(page).toHaveTitle(`${trait.name} — Synergies — Trait Atlas`);
-    await expect(page.getByText(`${trait.family} · ${trait.class}`)).toBeVisible();
-    await expect(page.getByText(trait.description, { exact: true })).toBeVisible();
+    // The card of the focus, and not the cards of the lanes, which say "creature · class" and could end the same way.
+    await expect(focusCard(page).getByText(`${trait.family} · ${trait.class}`)).toBeVisible();
+    await expect(focusCard(page).getByText(trait.description, { exact: true })).toBeVisible();
     await expect(traitPicker(page)).toBeVisible();
   });
 

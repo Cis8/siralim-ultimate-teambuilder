@@ -109,6 +109,7 @@ export type { RelationOptions } from './relations/relation-options';
 export { createRelationService, type RelationService } from './relations/relation-service';
 export type { SameFamily } from './relations/same-family';
 export type { SameTrigger, TriggerMatch } from './relations/same-trigger';
+export { traitFacts, type TraitFacts, type Trigger } from './relations/trait-facts';
 export type {
   KeyLane,
   KeyLink,

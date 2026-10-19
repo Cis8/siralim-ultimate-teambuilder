@@ -50,8 +50,9 @@ use the fallback `#8fa1b3`.
 ## Components (build once, reuse)
 `QueryInput` (combobox), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
 `FacetButton`, `SectionToggle`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
-`SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`, `TimelinePhase`, `BottomSheet`,
-`TabBar`, `BackToTop`, `Toast`.
+`AddButton` and `PartyNotes` (what a card does with the party), `FocusCard`, `RelationSide`, `TraitLane`, `KeyPill`,
+`ExplorationTrail`, `ArtifactFilter`, `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`,
+`TimelinePhase`, `BottomSheet`, `TabBar`, `BackToTop`, `Toast`.
 
 ### Keyword tokens
 Role is encoded by **shape**, not colour: *applies* = solid underline bar; *uses* = dashed outline; *resists* (GAME_RULES
@@ -63,7 +64,9 @@ same to the pointer. An event says it in the words of its filters, and who acts 
 (this creature) — show traits that cause it" (*Causes*, *Reacts to*, *Prevents*; the colour and the shape say neither the role's
 name nor the actor to a screen reader). `aria-pressed` and a 2 px ring in `--accent-border` mean its filter is on; a hover is a 1 px ring in
 `--border-strong`. Never a fill: a match highlight over a lighter fill takes a debuff or the muted flag under 4.5:1, since
-the token colours are only guaranteed on the page background.
+the token colours are only guaranteed on the page background. The look is one stylesheet (`styles/keyword.css`: the class
+`keyword` with `data-kind` and `data-role`) that three things wear: the toggle button above, a **link** on the trait page
+(`KeywordLink`, to the page of the keyword) and a plain `span` for a keyword that leads nowhere (the colour of its kind, no role shape).
 
 ### Facet panel and chips
 - **Facet buttons** (`FacetButton`) are toggles: `aria-pressed`, a fill in `--accent-surface` with a `--accent-border` outline when
@@ -162,7 +165,9 @@ APG). Nothing is swapped, so the focus is not lost and nothing moves; a layer th
   effective query: a quiet button and a polite line that says "Link copied", or in `--status-crit` that it could not, and then the
   link is shown to select). They are `aria-disabled`, not `disabled`, when there
   is nothing to do, so that the focus is not lost when the last undo is done.
-- **Add button** on a result: `--accent-surface` with `--accent-border`, a plus and "Add to Creature 1 · Innate"; its accessible
+- **Add button** (`AddButton`, with `PartyNotes` for the sentences under it; a result, a lane card and the focus card share them, each
+  in its variant: the words from 700 px and a square under it; a square with the plus always, 30 px, 44 under a coarse pointer; always the
+  words): `--accent-surface` with `--accent-border`, a plus and "Add to Creature 1 · Innate"; its accessible
   name ends with the trait's name (the plus is decoration; under 700 px the plus is all that is drawn, § Result list). Refused for
   the target slot, the reason sits under it in `--status-crit` with an icon, tied to it with `aria-describedby`, and the button
   changes with what else the trait can do: when another slot of the creature takes it, it stays `--accent-surface` and reads
@@ -220,8 +225,41 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
 - **Not found**: a trait id the dataset does not know is a page, not an error: "Trait not found", the sentence that names the id and
   the version, the traits with a similar name as links (at most 8, "No trait has a similar name." when none), and the picker with the
   name the id kept already typed in. An unknown keyword slug says so and lists the keywords.
-- **A trait page** begins with the class dot, the name (`h1`), the origin line and the description as plain text; the focus card with
-  its tokens and the two sides of lanes are 13.3.
+- **A trait page** (`/synergy/<id>`): the picker and the *Artifact-eligible only* checkbox in a row (`ArtifactFilter`: `mat=yes`, a step of the
+  history; a polite line says the counts it leaves, "Only traits with a material are listed. Enabled by 6 traits. Enables 12 traits."), the
+  trail, then three parts: from 1100 px in one row (Enabled by · the focus · Enables, the page up to 1280 px wide), below it in one column in
+  the order of the page, the focus first, which is the order of the keyboard too.
+  - **The focus card** (`FocusCard`, a region named "Focused trait"): the caption "Focus", the `h1` with the class dot (`tabindex="-1"`: it
+    takes the focus when the page moves to another trait), "creature · family · class", the description, a `dl` of *Relies on*, *Applies*,
+    *Guards against* (only when the trait has one), *Triggers* (an event, with who acts where the text says: "Attack (this creature)") and
+    *Material* ("—" where a row has nothing; "No material — not artifact-eligible" in `--status-crit`, with the cube), then the actions: the
+    add button with words, and "Open in Explore", a link to Explore searching `trait:"Name" family:Family` (the party carried). The notes of
+    the party sit under them. In the description a buff, a debuff or an effect is a link to its keyword (named "Relies on Weak — see who
+    applies it and who relies on it"); an event, a mechanic and a flag are text in their kind's colour (R12: no event is a dependency).
+  - **A side** (`RelationSide`): an `h2` ("Enabled by", "Enables") whose count a screen reader hears as "36 traits", a hint ("Traits that
+    apply what X relies on"), then **lanes** (`TraitLane`, a region named by its `h3`, with the count): first *Several keys* (a trait that
+    ties through two keys or more is there once, "×2 links", and says "through Weak · Vulnerable"; a key it gives in a weaker way than the
+    rest is "Weak (random)"), then one lane for each key with traits of its own, whose `h3` is a `KeyPill` (a pill in the colour of the
+    kind; the words say the rest: "Applies Weak" on the Enabled-by side, "Relies on Weak" on the other). A key that nobody gives (or relies
+    on) is a dashed note after the lanes ("No trait applies X in the compendium.", in `--status-crit` on the Enabled-by side; "Nothing relies
+    on X yet in the compendium."; with the filter on, "… among artifact-eligible traits."), and a side with no key at all says why
+    ("Self-sufficient: X doesn’t rely on any buff, debuff or effect."; "X applies no buff, debuff or effect by name, so no trait is listed as
+    relying on it.", D27).
+  - **Random sources** are the last of their lane, as a group under an `h4` "Random sources · N" with a line that says they afflict a random
+    debuff on enemies, so the key is not certain. Up to 3 are listed; more are behind the button inside the `h4` (`SectionToggle`:
+    `aria-expanded`, `aria-controls`), and the cards of a folded group are not drawn (v2.0 has 27 for each debuff that can be random). Traits
+    that give the key only under a condition (R10) stay with the others, tagged *conditional*.
+  - **A card** (`TraitCard`, a list item on `--surface-1`): the class dot, the name as a **link** ("Re-centre on X": a step of the history that
+    carries the party and the filter), "creature · class" (a mastery, backer or avatar trait: its kind and family), tags in mono (×N links on
+    `--accent-surface`, *conditional*, *random*, "no material" with the cube in `--status-crit`), the compact add button, and the notes under
+    the text. A trait is a card at most once on each side.
+  - **The trail** (`ExplorationTrail`, a `nav` named "Exploration trail", not drawn for one step): the last six traits centred on, oldest first,
+    chevrons between (decoration); the steps before the last are links, the last is text with `aria-current="location"`. It is the memory of
+    a session of exploring: a visit that opens the app (a deep link, a reload) starts it empty, the picker page empties it, a step cuts it
+    back to there, and Back and Forward add the trait they arrive at as a click does.
+  - **Moving the focus**: after a move to another trait (a card, a step, the picker, Back or Forward) the focus is on the new `h1`; a deep link
+    and the writing of the party or the filter leave it alone. The document title follows the trait, and SvelteKit’s own announcer says it:
+    no polite line of ours repeats it (a “Now centred on X” was left out on purpose, PLAN 13.3).
 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
@@ -231,6 +269,7 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   over name, the selected tab has a rule above it and an accent colour; the Party tab carries the count of filled slots). Explore
   is the header, search, chip row, facets (a column from 700 px) and results; Party is the planner alone, at most 520 px wide
   and centred.
+- **Synergy pages**: a column of 880 px at most; the page of a trait is 1280 px at most from 1100 px, where it has three columns (§ Synergy pages).
 - **Places of the app** (ADR-0011, PLAN D23). From 1100 px the header carries Explore · Synergies · Party n/18 (`SiteNav`, a `nav`
   named Pages); under 1100 px the same three are at the foot of the window (`BottomBar`, which is not there from 1100 px): on Explore
   the two tabs and the Synergies link, on the Synergy pages a `nav` named Sections of three links in the same places, so that the
@@ -249,8 +288,8 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
 - **Keyboard** (criterion 8). `keyboard.test.ts` presses Tab through Explore, the Party tab and the open filters sheet, and fails
   for a control the tab key never reaches (arrow keys reach the unselected tabs), one that shows no 2 px ring, or one under a
   fixed bar; and it does a search, an add, Undo / Redo / Clear and a filter without a pointer. It walks the Synergy pages too (the
-  picker with a party, a trait, a keyword, and the two pages of what is not found), and goes from Explore to the Synergies and back by
-  the keyboard. The filters are over a hundred
+  picker with a party, a trait, a trait with lanes and a party, a keyword, and the two pages of what is not found), and goes from
+  Explore to the Synergies and back by the keyboard. The filters are over a hundred
   buttons, so a link after the query, "Skip filters" (visible on focus, from 700 px), moves to the head of the results. A sheet
   puts the focus on its title when it opens. Safari's tab key skips links unless its settings say otherwise: the test does not
   count a link as missed there.
