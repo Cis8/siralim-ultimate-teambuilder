@@ -1,9 +1,12 @@
 <script lang="ts">
-  /** The icon over the name of an item of the bar at the foot of a narrow screen: decoration, the name says the rest. */
-  const { name }: { name: 'explore' | 'party' | 'synergies' } = $props();
+  /**
+   * The icon over the name of an item of the bar at the foot of a narrow screen: decoration, the name says the rest. The link to
+   * the Synergies of a trait draws the `synergies` one smaller (`size`).
+   */
+  const { name, size = 20 }: { name: 'explore' | 'party' | 'synergies'; size?: number } = $props();
 </script>
 
-<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+<svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" focusable="false">
   {#if name === 'explore'}
     <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8" />
     <path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />

@@ -3,12 +3,13 @@
   import { lostTraitSearch, type SlotPosition, type Trait } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
+  import SynergiesLink from './synergies-link.svelte';
 
   /**
    * One of the 18 slots of the party: a button that makes it the target (a toggle: `aria-pressed` says it is) and, when it
-   * holds a trait, one that clears it. `id` is what the slot holds, `trait` what the dataset knows of it: an id it does not
-   * know (a link made on another version) is kept and shown as it is, "not found in" the version in use, with a search for
-   * the name its id keeps (SPEC §5).
+   * holds a trait, a link to the trait's Synergies and a button that clears it. `id` is what the slot holds, `trait` what the
+   * dataset knows of it: an id it does not know (a link made on another version) is kept and shown as it is, "not found in"
+   * the version in use, with a search for the name its id keeps (SPEC §5).
    */
   const {
     at,
@@ -64,6 +65,8 @@
     {/if}
     {#if isTarget}<span class="tag">{copy.targetTag}</span>{/if}
   </button>
+  <!-- A trait the dataset does not know has no page: the slot of an id that is lost offers the search for its name instead. -->
+  {#if trait !== undefined}<SynergiesLink {trait} variant="slot" />{/if}
   {#if held !== undefined}
     <button
       type="button"

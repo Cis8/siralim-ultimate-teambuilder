@@ -55,6 +55,7 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 38 | Back, then `Tab` to a card of Appliers and to a chip of Keywords | the card: “Open *name*, link” (not “Re-centre on”); the chip: “Weak, 2 appliers, 3 users, link” (the arrows and the numbers beside it are not read); the keyword you are on adds “current page” |
 | 39 | Press Enter on that chip | the new page's title and “Weak, heading level 1” once each, then once, politely: “Weak: 2 apply it, 3 rely on it. Well supported. Enough traits apply it for the ones that rely on it.” If you hear the title twice or the line twice, report it |
 | 40 | On Weak, `Tab` to “Random sources · 27”, then press the checkbox “Artifact-eligible only” | the group is folded as in 30 (and the heading above it says “Appliers 2 traits”: the 27 are counted apart); the checkbox is followed once by “Only traits with a material are listed. Appliers 2 traits. Rely on it 3 traits. Well supported.” |
+| 41 | On Explore, search `trait:"Flesh Rot"`, `Tab` from the card's plus button through its description to the end of the card, press `Enter` | the last stop is “Synergies of Flesh Rot, link” (its icon is silent); then the page's title and “Flesh Rot, heading level 1”, once each. Press Back: the field holds the search and the card is there. In the party, a filled slot has the same link between “Target slot: …” and “Clear …” |
 
 ## iPhone (VoiceOver, Safari)
 
@@ -74,6 +75,7 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 12 | On a trait with a long description (say Sleepwalking), double-tap "Show more", swipe on, double-tap again | "Show less, button, expanded" and the rest of the text follows in reading order; then "Show more, button, collapsed" |
 | 13 | Swipe up to "Find a trait, button, has pop-up" and double-tap; type `vuln` | "Find a trait, dialog", the focus in the field with the keyboard up; the list of matches is read as in step 8; a double-tap on one: the new page's title and the name as "heading level 1", once each, and the sheet is gone. Esc does not exist on a phone: the two-finger scrub closes the sheet and the focus is back on "Find a trait, button" |
 | 14 | Open `/synergy/kw/vulnerable` | "Appliers 8 traits, tab, selected, 1 of 2" · "Rely on it 6 traits, tab, 2 of 2"; "Other keywords, button, has pop-up"; a double-tap opens "Keywords, dialog" with the chips read as in step 38 of the desktop list |
+| 15 | On Explore, swipe from a trait's plus button through its description, then on | after the material: “Synergies of *name*, link”, 44 px tall (a double-tap opens the page; the tab bar then shows Synergies as the current page). On the Party tab, a filled slot reads “Target slot: …, toggle button”, “Synergies of *name*, link”, “Clear …, button” |
 
 ## Anything, anywhere
 

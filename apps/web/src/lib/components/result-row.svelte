@@ -7,6 +7,7 @@
   import AddButton from './add-button.svelte';
   import DescriptionText from './description-text.svelte';
   import PartyNotes from './party-notes.svelte';
+  import SynergiesLink from './synergies-link.svelte';
 
   const {
     trait,
@@ -22,8 +23,9 @@
 </script>
 
 <!--
-  A card: the name and where the trait comes from, the button that adds it, then what it does. The button comes before the
-  description in the page as it does on the screen, so that the keyboard reaches it first and the keywords after it.
+  A card: the name and where the trait comes from, the button that adds it, then what it does, its material and the way to its
+  Synergies. The button comes before the description in the page as it does on the screen, so that the keyboard reaches it
+  first and the keywords after it.
 -->
 <article>
   <div class="head">
@@ -43,13 +45,16 @@
   </div>
 
   <p class="description"><DescriptionText {parts} {actions} /></p>
-  <p class="material" class:missing={trait.material === null}>
-    <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
-      <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" />
-      <path d="M4 7.5 12 12l8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" />
-    </svg>
-    {trait.material ?? copy.noMaterial}
-  </p>
+  <div class="foot">
+    <p class="material" class:missing={trait.material === null}>
+      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
+        <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" fill="none" stroke="currentColor" stroke-width="2" />
+        <path d="M4 7.5 12 12l8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="2" />
+      </svg>
+      {trait.material ?? copy.noMaterial}
+    </p>
+    <SynergiesLink {trait} variant="row" />
+  </div>
 </article>
 
 <style>
@@ -60,7 +65,7 @@
     grid-template-areas:
       'head party'
       'description party'
-      'material party';
+      'foot party';
     gap: 6px 16px;
     padding: 14px 20px;
     border-bottom: 1px solid var(--surface-3);
@@ -118,9 +123,18 @@
     text-wrap: pretty;
   }
 
+  /* The material on the left, the way to the Synergies on the right; on a narrow card the second goes under the first. */
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: foot;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px 16px;
+  }
+
   .material {
     display: flex;
-    grid-area: material;
     align-items: center;
     gap: 6px;
     color: var(--text-faint);
@@ -155,7 +169,7 @@
       grid-template-areas:
         'head add'
         'description description'
-        'material material'
+        'foot foot'
         'notes notes';
       padding: 14px 16px;
     }

@@ -13,18 +13,18 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D48, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.6 are done and the next slice is
-  13.7** (a "Synergies of X" link on every Explore result and every filled party slot), in the order M13 → M11 (D15). What 13.6 leaves
-  for it: the result card is `components/result-row.svelte` (under 700 px the add button is a 44 px square at the top right of the
-  card, and the DOM puts it before the description: the new link must keep that order and the touch target); the rows are in the
-  virtual list (`virtual-list.svelte`), so a row that grows needs the list to measure again; the party slot is `party-slot.svelte`;
-  the address of a Synergy page is `synergyHref` in `synergy-links.ts` (it carries the party), and `carried-search.ts` is how Explore
-  hands the party over. Sizes now: initial JS 89.2 kB of 150, lazy 32.2 of 50, total 121.4 of 200; no Lighthouse URL reaches `/synergy`
-  until 13.8. **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on
-  top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14).
+- **Phase 2 is under way (D14–D50, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.7 are done and the next slice is
+  13.8** (close M13: budgets, SPEC §8.4 rewritten, DESIGN, checklist, ROADMAP tick, PLAN collapse), in the order M13 → M11 (D15).
+  What 13.7 leaves for it: sizes now initial JS 89.6 kB of 150, lazy 32.2 of 50, total 121.7 of 200 (`pnpm build && pnpm size-budget`:
+  the Synergy route is among the lazy chunks, so `lazyJs` already counts it; 13.8 only has to decide whether it needs a budget of its
+  own); no Lighthouse URL reaches `/synergy` yet (GitHub Pages serves `404.html` there; `lighthouserc.cjs` needs a static server that
+  falls back to it). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which
+  stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are
+  rows 9–14, the new links row 15).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D48 (chosen by Claude; **D44–D48, the phone: a tab press is a history step so Back flips tabs, the focus card keeps its facts and only the description folds, and "Find a trait" / "Other keywords" are sheets**; D39: on a keyword's page the picker of the other keywords is the last section, with counts there only; D40: *Appliers* lists the traits that apply by name, and the conditional and random sources are groups after it; D41–D43: the wording, the live line and the Explore links of that page; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
+- For the owner to veto, none blocking: D18–D50 (chosen by Claude; **D49–D50, the link of a result and of a slot to a trait's Synergies, and
+  what happens to a search typed a moment before it is followed**; **D44–D48, the phone: a tab press is a history step so Back flips tabs, the focus card keeps its facts and only the description folds, and "Find a trait" / "Other keywords" are sheets**; D39: on a keyword's page the picker of the other keywords is the last section, with counts there only; D40: *Appliers* lists the traits that apply by name, and the conditional and random sources are groups after it; D41–D43: the wording, the live line and the Explore links of that page; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
   families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D37: the three lists under the sides show
   6 cards and a button, up to 200; D38: the filter's polite line counts every list; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
   header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -88,9 +88,11 @@ session (after `CLAUDE.md`), update it before ending one.
 | D46 | (default) The heading of a list that has a tab to itself is not drawn on a phone (the tab says it) and stays for a screen reader; *Related* keeps both headings, since its tab is not their name | DESIGN § Synergy pages |
 | D47 | (default) The focus card of a phone folds the description to 3 lines with "Show more" and keeps the facts (*Relies on*, *Applies*, *Triggers*, *Material*) in view; a text that fits has no button; another trait starts folded; the focus on a keyword in the cut part opens the text (Chrome scrolls the folded box to it, Safari leaves it and the keyword lies below it: `revealFocus` reads both) | DESIGN § Synergy pages |
 | D48 | (default) Under 700 px the picker of a trait page is a button "Find a trait" that opens a sheet with the focus in its field, and a keyword page's picker is a button "Other keywords" that opens the sheet of the 42 chips (the page has no Keywords section then). A pick closes the sheet and the page puts the focus on its `h1`; put away by hand it gives the focus to its button. The picker page and the pages of what is not found keep theirs inline | DESIGN § Synergy pages |
+| D49 | (default) The Synergies link of a result is the last stop of its card (after the description's keywords), drawn in words in the foot beside the material; it wraps under it on a narrow card. A slot's link is an icon square with the words as its name and its `title`. Neither carries the search, only the party: Back returns to the Explore entry, which has the search | DESIGN § Result list |
+| D50 | (default) Leaving Explore for another route drops the text waiting to be written to the address (`abandon`), it does not flush it into the entry: a flush would be a second navigation racing the link's. So a link followed within 400 ms of the last key leaves Back with the search as the address last had it. A person takes longer to reach a link; the e2e waits for the address | SPEC §7 |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D48 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D50 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -141,6 +143,10 @@ slice that builds it then follows.
   library's own `scrollToOffset(…, { behavior: 'smooth' })` is exempt (`scrollState`). The page therefore jumps
   (`window.scrollTo({ top: 0 })`, as "Back to top" does). A scroll test must go far down (20 screens): near the top the rows
   are measured already.
+- e2e: the address follows the typing 400 ms late (`TYPING_PAUSE_MS`). A test that fills the search and then leaves Explore, or reads
+  the address, waits for `paramOf(page, 'q')` first (a person never clicks that fast; D50). The estimated height of a row
+  (`results-list.svelte`) is the mean of the rows drawn: when a card grows or shrinks, measure it again (a throwaway e2e that prints the
+  mean of `li[data-index]` heights at 0, 5 and 40 screens) or "scrolls on to the last trait" takes seconds on a phone.
 - e2e: wait for the first row before typing or clicking (`openExplore`): the traits load after hydration, and a field filled
   earlier is lost (WebKit gets there last). Safari does not focus a button that is clicked: to test focus, use the keyboard.
 - SvelteKit 3 navigation: `pushState` / `replaceState` are deprecated and a shallow entry keeps `page.url` on the page
@@ -485,8 +491,21 @@ cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-sou
       9–14. Deviations on purpose: D44–D48; four tabs and a picker sheet and the artifact filter (the prototype has none), no fixed top block
       (the page scrolls). **Found by the e2e:** `bind:this` hands back `null`, not `undefined`, when the element goes: the trail's effect read
       `scrollWidth` of null on Back, on every width (a 500 page), until `instanceof`.
-- [ ] **13.7** Explore ↔ Synergy. A "Synergies of X" link on every result (44 px under coarse; the row height changes, so the virtual list
-      is re-measured) and on every filled party slot. *T:* e2e: result → page → back keeps the search and the party.
+- [x] **13.7** Explore ↔ Synergy. `SynergiesLink` (two variants): in the foot of a result card, beside the material, the icon and “Synergies of
+      X” (28 px, 44 under a coarse pointer); in a filled slot of the party, an icon square between the slot and its clear button (none for an
+      empty slot or a lost id). `synergiesOfHref` (in `synergy-links.ts`) carries the party and not the search: Explore's own entry holds the
+      search, and Back returns to it. `BarIcon` gained `size`; `results-list.svelte` estimates a row at 175 px (200 under 700 px) from the
+      means measured on the sheet, since the old 150 left the jump to the end of the list on a phone at 6 s instead of 0.5 s (the
+      virtualiser measures again by itself: a `ResizeObserver` is on every row). **Found by the e2e (a bug that was already there):** the
+      address follows the typing 400 ms late, and a link followed in that window was lost, because the pending write (`goto('/?q=…')`) took
+      the place of the move in flight or called the person back from the Synergy page. `AddressWriter.abandon()` and a `beforeNavigate` on
+      Explore drop it when the page is left for another route. *T:* `explore-synergies.test.ts` (8 tests × 3 projects: the link of a result
+      carries the party and follows it, the keyboard reaches it after the description's keywords and Enter opens the page, rows do not overlap
+      near the top and 20 screens down, a link followed right after typing, with the route chunks slowed to 900 ms, still leads there, Back
+      finds the search and the party, a slot's link and none for an empty or lost one, axe on Explore and the Party tab), the writer's
+      two new tests, both links in `touch-targets.test.ts`. The unit test and the e2e of the bug failed first (mutation-checked: the link
+      without the party fails three). *Docs:* DESIGN § Result list, § Party panel; SPEC §7; checklist rows 41 (desktop) and 15 (iPhone).
+      Deviations on purpose: D49–D50.
 - [ ] **13.8** Close M13. `lazyJs` and route-chunk budgets, a Lighthouse URL for `/synergy/<id>` if the static server can fall back to
       `404.html`, SPEC §8.4 rewritten to what shipped, DESIGN (TraitCard, lanes, trail, verdict), checklist, ROADMAP tick, PLAN collapse.
 

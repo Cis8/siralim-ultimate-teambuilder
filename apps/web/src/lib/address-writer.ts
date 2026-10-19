@@ -36,6 +36,11 @@ export interface AddressWriter<State> {
   refined(state: State): void;
   /** The browser went to `address` by itself (back, forward, a link): what was waiting to be written is out of date. */
   arrived(address: URL): void;
+  /**
+   * The page is being left for another one: what waits for the typing to pause is dropped. Written later it would call the person
+   * back to the page they have gone from, or take the place of the move in flight (a router drops the one it was making).
+   */
+  abandon(): void;
 }
 
 export function createAddressWriter<State>(
@@ -63,17 +68,21 @@ export function createAddressWriter<State>(
       });
   }
 
+  function dropTyping(): void {
+    if (typing !== undefined) clearTimeout(typing.timer);
+    typing = undefined;
+  }
+
   function settleTyping(): void {
     if (typing === undefined) return;
-    clearTimeout(typing.timer);
     const { state } = typing;
-    typing = undefined;
+    dropTyping();
     write(state, 'replace');
   }
 
   return {
     typed(state) {
-      if (typing !== undefined) clearTimeout(typing.timer);
+      dropTyping();
       typing = { state, timer: setTimeout(settleTyping, pauseMs) };
     },
     chosen(state) {
@@ -85,9 +94,9 @@ export function createAddressWriter<State>(
       write(state, 'replace');
     },
     arrived(arrivedAt) {
-      if (typing !== undefined) clearTimeout(typing.timer);
-      typing = undefined;
+      dropTyping();
       address = arrivedAt;
     },
+    abandon: dropTyping,
   };
 }

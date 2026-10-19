@@ -188,6 +188,8 @@ export const copy = {
   /** An event a trait waits for, and who does it where the text says so. */
   triggerWithActor: (event: string, actor: KeywordActor) => `${event} (${actorName[actor]})`,
   openInExplore: 'Open in Explore',
+  /** The link of a result and of a filled slot to the page of the trait (13.7); the slot draws only its icon, and this is its name. */
+  synergiesOf: (name: string) => `Synergies of ${name}`,
   trailLabel: 'Exploration trail',
   trailCaption: 'Trail',
   /** The name of a link that moves the focus to another trait, whether it is a card or a step of the trail. */

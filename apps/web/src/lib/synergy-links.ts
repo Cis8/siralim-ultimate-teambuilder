@@ -68,6 +68,10 @@ export const exploreKeywordHref = (
 export const synergyLinkSearch = (matOnly: boolean): string =>
   synergySearch({ matOnly, section: undefined, ...carriedNow() });
 
+/** The address of a trait's page for a link on Explore or in the party panel: it carries the party, and the artifact filter is off. */
+export const synergiesOfHref = (traitId: TraitId): ResolvedPathname =>
+  synergyHref({ page: 'trait', traitId }, synergyLinkSearch(false));
+
 /** Opens a trait's page as a step of the history, carrying the party and the artifact filter. */
 export function openTrait(traitId: TraitId, matOnly = false): Promise<void> {
   return goto(synergyHref({ page: 'trait', traitId }, synergyLinkSearch(matOnly)));

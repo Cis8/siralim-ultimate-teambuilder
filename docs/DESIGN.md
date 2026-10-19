@@ -161,6 +161,9 @@ APG). Nothing is swapped, so the focus is not lost and nothing moves; a layer th
   a trait the dataset does not know shows its id in `--status-warn` and "Not found in vX", with a button under the slot,
   "Search for “name”". The clear button is an icon with
   an accessible name; the accessible name of the slot says which slot and what it holds ("Target slot: Creature 2 · Fused, …").
+- **Synergies link** of a slot (`SynergiesLink`, variant `slot`): between the slot and its clear button, a square of the same size and
+  look with the Synergies icon alone; its name, “Synergies of *trait*”, is also its `title`. A slot that is empty, or whose id the dataset
+  does not know (it offers the search for the name), has none. It carries the party to `/synergy/<id>`.
 - **Toolbar**: the count (`3/18 slots`, mono), *Undo*, *Redo*, *Clear party*, *Copy link* (`CopyButton`, shared with the
   effective query: a quiet button and a polite line that says "Link copied", or in `--status-crit` that it could not, and then the
   link is shown to select). They are `aria-disabled`, not `disabled`, when there
@@ -189,9 +192,15 @@ The page scrolls, not the list: results sit among other panels and stack under t
 is virtualised against the window (rows in the flow of the page between two spacers; `aria-setsize` / `aria-posinset` say
 where a row stands in the whole). Rows are as tall as their text; the browser's find-in-page sees only the rows drawn.
 
-A row is a **card**: the name and where the trait comes from (the *head*), the add button, the description, the material, and what
+A row is a **card**: the name and where the trait comes from (the *head*), the add button, the description, a *foot* and what
 the party says about the trait. The button comes before the description in the page, so the keyboard reaches it first and the
-keywords after it, as the eye does. From 700 px the party's notes (the reason for a refusal, "In party") sit in a column of their
+keywords after it, as the eye does. The foot holds the material on the left and, on the right, the **Synergies link** (`SynergiesLink`,
+PLAN 13.7): a small version of the Synergies icon and “Synergies of *name*” in `--accent`, underlined when pointed at, a link to
+`/synergy/<id>` that carries the party (and not the search: the address of Explore, which Back returns to, has it). It is the last stop
+of the card for the tab key. The foot wraps, the link going under the material on a narrow card; under a coarse pointer the link is
+44 px high, so the foot is as tall as the link. The list estimates a row at 175 px from 700 px wide and 200 px under it (the means of
+the rows drawn from the published sheet, `results-list.svelte`): an estimate far from the rows makes the scroll bar lie and the jump
+to the end of the list take several rounds of measuring. From 700 px the party's notes (the reason for a refusal, "In party") sit in a column of their
 own beside the text, with the button on top. **Under 700 px** the column is gone: the button is a 44 × 44 px square with a plus,
 at the top right beside the name (as in `Mobile.dc.html`; its words are not drawn, but its name still says them and the trait:
 "Add to Creature 1 · Innate — Flesh Rot"), and the notes go under the material, left-aligned.

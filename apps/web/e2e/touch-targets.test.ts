@@ -180,6 +180,7 @@ test.describe('touch targets on a phone', () => {
 
     await expectTargetsLargeEnough(page.locator('body'), [
       /^Add to /,
+      /^Synergies of /,
       /^Remove a$/,
       /^a — exclude it$/,
       /^Copy query$/,
@@ -294,6 +295,7 @@ test.describe('touch targets on a phone', () => {
 
     await expectTargetsLargeEnough(page.locator('body'), [
       /^Target slot: /,
+      /^Synergies of /,
       /^Clear Creature 1 · Innate \(/,
       /^Undo$/,
       /^Copy link$/,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, goto } from '$app/navigation';
+  import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { onMount, tick } from 'svelte';
@@ -164,6 +164,12 @@
     },
     pageAddress,
   );
+
+  // A move to another page (a trait's Synergies, say) while the typing has not paused: its text is not written any more, for it would
+  // call the person back, or take the place of the move in flight. Back then finds the search as the address last had it.
+  beforeNavigate(({ to }) => {
+    if (to !== null && to.route.id !== '/') urlWriter.abandon();
+  });
 
   afterNavigate(({ type, to }) => {
     // The page wrote that address itself (`goto`): the state is already what it says.

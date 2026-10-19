@@ -310,7 +310,10 @@ the parameters that are none of theirs stay:
   it. Choosing the
   target slot *replaces* the entry at once: it is in the address but no step of its own. A state that is already the address
   writes nothing;
-- the writes are made one after another, and an arrival by back or forward drops the text that was waiting;
+- the writes are made one after another, and an arrival by back or forward drops the text that was waiting, as does a move to
+  another page (a link to the Synergies of a trait): written later it would call the person back, or take the place of the move
+  in flight. Back then finds the search as the address last had it, which is behind the text if the link was followed within
+  the 400 ms after the last key;
 - a link is written to be read: the colon of `a:vulnerable` and the comma between two items are not escaped;
 - a party is written under the version of the dataset in use, or while the data loads under the one the address stated, so
   that a link opened before the data arrives is written back as it was; arriving at an address with the same party keeps

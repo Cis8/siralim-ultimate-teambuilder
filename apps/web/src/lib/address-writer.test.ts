@@ -263,6 +263,33 @@ describe('createAddressWriter', () => {
     });
   });
 
+  describe('when the page is being left', () => {
+    it('drops the text that was waiting to be written, so that it does not call the person back', async () => {
+      const { bar, gone } = addressBar();
+      const writer = createAddressWriter(bar, pageAddress);
+
+      writer.typed(stateWith({ query: 'weak' }));
+      writer.abandon();
+      await vi.advanceTimersByTimeAsync(TYPING_PAUSE_MS * 2);
+
+      expect(gone).toEqual([]);
+    });
+
+    it('keeps what was written already, and writes again for a page that is still there', async () => {
+      const { bar, gone } = addressBar();
+      const writer = createAddressWriter(bar, pageAddress);
+
+      writer.chosen(stateWith({ classes: ['life'] }));
+      writer.typed(stateWith({ classes: ['life'], query: 'weak' }));
+      writer.abandon();
+      // The move was cancelled, or went nowhere: the page is still in front of the person.
+      writer.typed(stateWith({ classes: ['life'], query: 'weak OR snared' }));
+      await vi.advanceTimersByTimeAsync(TYPING_PAUSE_MS);
+
+      expect(gone.map(({ href }) => queryOf(href))).toEqual([null, 'weak OR snared']);
+    });
+  });
+
   describe('when the browser goes to another address by itself (back, forward, a link)', () => {
     it('forgets the text that was waiting to be written', async () => {
       const { bar, gone } = addressBar();
