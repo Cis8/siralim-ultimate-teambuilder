@@ -11,6 +11,8 @@ import {
   openExplore,
   rows,
   searchBox,
+  suggestionList,
+  suggestions,
 } from './support/explore-page';
 import { tabTo } from './support/keyboard';
 
@@ -80,6 +82,10 @@ test.describe('the issues of a query', () => {
     await tabTo(page, searchBox(page), { limit: 5 });
     await page.keyboard.type(BROKEN);
     await expect(issuesBadge(page)).toHaveText('2 issues');
+    // Typing has put a suggestion up, and Tab would take it (D26): Escape puts the list away, and Tab is the browser's again.
+    await expect(suggestions(page).first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(suggestionList(page)).toBeHidden();
 
     // The badge follows the field, then the fixes of the list that opened under it.
     await page.keyboard.press('Tab');

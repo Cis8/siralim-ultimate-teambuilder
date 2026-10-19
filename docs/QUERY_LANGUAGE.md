@@ -367,8 +367,15 @@ without the quote the suggestion needs, nor the fix of a misspelt field.
 **Counts** (`withCounts(source, suggestions, count)`): each *complete* suggestion (an operator and a bare field are not searched for) is
 told how many traits it finds, as `count`. The question is the whole query the bar would hold once it is accepted, so the number is what
 Enter would show, **within the active filters** (D18): the page passes `(query) => service.countMatches(state, query)`. Order and every other
-field of a suggestion stay as they were. Each count is one search, so at most nine per list: if they ever hold up `atlas:assist`, the page
-draws the list first and counts after (ADR-0010).
+field of a suggestion stay as they were. Each count is one search, so at most nine per list, and nine of them held a keystroke past its 16 ms
+on a slow phone: the page counts the first suggestion with the list (it is the one that is active as the person types, and a screen reader
+reads it at once) and the rest three at a time (`countNext`), each step in a task of its own after a paint (ADR-0010). A key typed before the
+steps are done calls them off. Every step is timed as `atlas:assist`, like the work of the key.
+
+**Where it lives** (PLAN 10.5). The search field is a plain `<input>` until the page is idle, or the focus or a pointer arrives; then the assist
+layer (lint, suggestions, their list and the issues, ADR-0010) is fetched and attaches to the same element, so nothing is swapped. A layer that
+cannot be fetched leaves the plain field, which searches as before, and the next focus tries again. `analyseQuery` works out the issues and the
+suggestions of a keystroke in one call, so that they are timed as one.
 
 **The list and the keys** (`Combobox` over `combobox-state.ts`, PLAN 10.4). An editable combobox with a list (ARIA APG): the field has
 `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls` the listbox and `aria-activedescendant` the active
@@ -381,6 +388,9 @@ list with none is not shown. An option's name is all its text: the kind, what is
   Tab that is not meant for the list leaves the field (WCAG 2.1.2) instead of taking what the next list puts first.
 - **Tab and Enter** accept the active option; with none active, or the list shut, they are the field's own. Shift+Tab, and Tab or
   Enter with Ctrl, Alt or Cmd held, are never taken. A key pressed in the middle of an IME composition is never taken either.
+- **Where the list is.** Under the list of issues when that is open (not over it: the fixes stay in reach), and under the bars fixed to the
+  foot of the window. An edit made for the person (a fix, an accept: `applyFieldEdit`) raises an `input` event that is not typing, so it
+  neither brings the list back nor makes an option active. The Enter that ends an IME composition is never taken, in Safari too (key code 229).
 - **After an accept** a finished term shuts the list; a field or an operator (`complete` false) keeps it open for what comes next,
   with nothing active. **Esc** shuts a showing list (otherwise it is the page's: it may close a sheet). **Alt+↓** opens without
   choosing, **Alt+↑** shuts; ↑ / ↓ with Shift, Ctrl or Cmd are the field's (they select or jump in the text).

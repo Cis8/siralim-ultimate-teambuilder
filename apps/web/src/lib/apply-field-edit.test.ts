@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFieldEdit, type EditableField } from './apply-field-edit';
+import { applyFieldEdit, isBeingEdited, type EditableField } from './apply-field-edit';
 
 type ExecCommand = (command: string, showUI?: boolean, value?: string) => boolean;
 
@@ -178,5 +178,64 @@ describe('applyFieldEdit', () => {
     expect(field.commands).toEqual([]);
     expect(field.events).toEqual([]);
     expect(field.focused).toBeUndefined();
+  });
+});
+
+describe('isBeingEdited', () => {
+  /** Whether the page, told that the text changed, finds the field being edited for the person (the answer at each `input` event). */
+  const watched = (field: FakeField): boolean[] => {
+    const seen: boolean[] = [];
+    field.onInput = () => {
+      seen.push(isBeingEdited(field));
+    };
+    return seen;
+  };
+
+  it('is true while the page hears of an edit made through the editing command, and not before or after', () => {
+    const field = new FakeField('clas:life', 9);
+    const seen = watched(field);
+    expect(isBeingEdited(field)).toBe(false);
+
+    applyFieldEdit(field, { span: [0, 4], text: 'class' });
+
+    expect(seen).toEqual([true]);
+    expect(isBeingEdited(field)).toBe(false);
+  });
+
+  it('is true for the event of the edit the field makes itself, when the browser has no editing command', () => {
+    const field = new FakeField('(weak', 5, { editing: false });
+    const seen = watched(field);
+
+    applyFieldEdit(field, { span: [5, 5], text: ')' });
+
+    expect(seen).toEqual([true]);
+    expect(isBeingEdited(field)).toBe(false);
+  });
+
+  it('is false again when the edit fails', () => {
+    const field = new FakeField('(weak', 5);
+    field.setRangeText = () => {
+      throw new Error('the field is gone');
+    };
+    field.ownerDocument.execCommand = () => false;
+
+    expect(() => {
+      applyFieldEdit(field, { span: [5, 5], text: ')' });
+    }).toThrow('the field is gone');
+
+    expect(isBeingEdited(field)).toBe(false);
+  });
+
+  it('is about one field: another one, typed in, is not being edited', () => {
+    const edited = new FakeField('clas:life', 9);
+    const typedIn = new FakeField('weak', 4);
+    const seen: boolean[] = [];
+    edited.onInput = () => {
+      seen.push(isBeingEdited(typedIn));
+    };
+
+    applyFieldEdit(edited, { span: [0, 4], text: 'class' });
+
+    expect(seen).toEqual([false]);
   });
 });

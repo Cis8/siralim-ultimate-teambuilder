@@ -128,6 +128,29 @@ What is wrong with the query (QUERY_LANGUAGE §5), in the search field and under
 - **Said aloud.** `aria-invalid` on the field for errors only; its description is the text of each issue listed; a polite line (a plain
   `aria-live`, not a `status`: the result count owns that) says the count after a pause and the result of a fix.
 
+### Suggestions
+What may be typed at the caret (QUERY_LANGUAGE §6), in a list under the search field. The field is a plain text field until the page is idle,
+or the focus or a pointer arrives; then the assist layer (ADR-0010) attaches to the same `<input>` and it becomes an editable combobox (ARIA
+APG). Nothing is swapped, so the focus is not lost and nothing moves; a layer that cannot be fetched leaves the plain field.
+- **List** (`Combobox`): a `listbox` named "Suggestions", nine options at most, drawn over the page from the left to the right edge of the
+  query box on `--surface-2` with a `--border-strong` line and `--shadow-popup`. It sits under the list of issues when that is open, not over it:
+  the fixes stay in reach of a pointer. It is under the bars fixed to the foot of the window (`z-index` 4, the bars 5 and 6): on a phone nine
+  rows reach down to them, and the Filters button and the tabs stay pressable. The list does not scroll (a scroll area is a tab stop for axe);
+  the page scrolls to the active option, clear of the bars (`scroll-padding-bottom`).
+- **Option**: three columns. A badge in mono capitals with the kind in a word (Debuff, Field, Operator, Trait…; coloured as a keyword of the
+  kind for a buff, a debuff, a mechanic and an event, `--text-muted` otherwise); what is written, in mono (`--text-strong`), with what it means
+  beside it (under it on a narrow screen, `--text-faint`); and how many traits it finds, right-aligned in a column of 3.5 rem that is held while
+  the count is not there yet. 44 px tall under a coarse pointer. The active option is `--accent-surface` with a 3 px bar of `--accent` at its
+  left (forced colours: a 2 px `Highlight` outline); the pointer's hover is `--surface-3` and activates nothing.
+- **Counts.** The first option is counted with the list, since it is the one that is active as the person types; the others follow, three at a
+  time, each step after a paint, so that a keystroke is never held up by nine searches. A count is the number of traits that Enter would show,
+  filters included (D18).
+- **Said aloud.** The field has `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls` the list and
+  `aria-activedescendant` the active option, whose name is all of its text: "Debuff applies:vulnerable applies “vulnerable” 42 traits". A polite
+  line inside the frame of the field says the size of the list ("9 suggestions") once it has kept it for half a second.
+- **Focus** never leaves the field. Typing makes the first option active, so Tab and Enter take it; ↑ ↓ move (and wrap), Esc puts the list away.
+  After an accept, a caret move, Esc or a blur nothing is active and Tab is the browser's again.
+
 ### Party panel
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
   the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a
@@ -206,7 +229,7 @@ size of the window are watched once for it and for `trackViewportOffset` (`page-
 - **Screen reader**: a person's check, `SCREEN_READER_CHECKLIST.md`.
 - **Touch targets** (`pointer: coarse`, which the Pixel 7 and iPhone 14 e2e projects match): every `button`, `a`, `input`,
   `select` and tab is at least 44 × 44 px (WCAG 2.5.8 asks 24), a checkbox counting with its label. `touch-targets.test.ts`
-  measures them on Explore (with a query and a filter on, and with the issues list open), in the open filters sheet and on the Party
+  measures them on Explore (with a query and a filter on, and with the issues list and the list of suggestions open), in the open filters sheet and on the Party
   tab, and names the controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
   target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
   the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the

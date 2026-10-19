@@ -16,8 +16,13 @@ export interface Verdict {
 }
 
 // SPEC § Performance. A kB is 1000 bytes, as in the network panel of a browser: the stricter reading of "KB".
+// The two JavaScript budgets that follow the first are Phase 2's (ROADMAP criterion 8): the query assist is the one lazy feature so
+// far (9.2 kB of lazy JS when it was first measured, in 10.5, 8.3 of them its chunk), and the limits leave room for the Synergy
+// route and the editor, which are still to come. Revisit them when those land (PLAN 11.6, 13.8).
 export const SIZE_BUDGETS: readonly SizeBudget[] = [
   { name: 'initial JavaScript', limitBytes: 150_000, files: (sizes) => sizes.initialJs },
+  { name: 'lazy JavaScript', limitBytes: 50_000, files: (sizes) => sizes.lazyJs },
+  { name: 'total JavaScript', limitBytes: 200_000, files: (sizes) => [...sizes.initialJs, ...sizes.lazyJs] },
   { name: 'data', limitBytes: 300_000, files: (sizes) => sizes.data },
 ];
 

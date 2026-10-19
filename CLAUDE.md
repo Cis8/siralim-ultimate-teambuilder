@@ -83,9 +83,9 @@ pnpm dev                 # web dev server
 pnpm test                # all unit tests (Vitest projects: core, pipeline, web, tools)
 pnpm test:e2e            # Playwright: desktop Chromium, Pixel 7, iPhone 14 WebKit; builds first
 pnpm bench               # Vitest bench: times the search on the pinned snapshot (no budget; the e2e holds it)
-pnpm size-budget         # after pnpm build: fails if initial JS > 150 kB or data > 300 kB gzip (tools/size-budget)
+pnpm size-budget         # after pnpm build: fails if initial JS > 150 kB, lazy JS > 50 kB, total JS > 200 kB or data > 300 kB gzip (tools/size-budget)
 pnpm lighthouse          # after pnpm build (without BASE_PATH): Lighthouse CI, phone profile, thresholds in apps/web/lighthouserc.cjs
-pnpm lint                # ESLint + Prettier check + dependency-cruiser
+pnpm lint                # ESLint + Prettier check + dependency-cruiser (packages and apps/web/src)
 pnpm typecheck
 pnpm check               # lint + typecheck + test — the gate before every commit (also the pre-push hook)
 pnpm build               # static site into apps/web/build (BASE_PATH=/siralim-ultimate-teambuilder for Pages)

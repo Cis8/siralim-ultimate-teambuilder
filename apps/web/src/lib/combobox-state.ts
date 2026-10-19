@@ -26,6 +26,31 @@ export interface ComboboxKeyPress {
   readonly isComposing: boolean;
 }
 
+/** What of a `KeyboardEvent` `keyPressOf` reads. */
+export type ComboboxKeyEvent = Pick<
+  KeyboardEvent,
+  'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'isComposing' | 'keyCode'
+>;
+
+/** The key code that every browser gives to a key an IME has taken. */
+const KEY_CODE_IN_COMPOSITION = 229;
+
+/**
+ * The key press of an event. Safari reports the Enter that ends an IME composition after the composition is over (`isComposing`
+ * false), and only the key code 229 says that the key was the IME's: without it that Enter would accept the active option.
+ */
+export function keyPressOf(event: ComboboxKeyEvent): ComboboxKeyPress {
+  return {
+    key: event.key,
+    altKey: event.altKey,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    shiftKey: event.shiftKey,
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- the key code is the only sign of that Enter in Safari
+    isComposing: event.isComposing || event.keyCode === KEY_CODE_IN_COMPOSITION,
+  };
+}
+
 export interface KeyOutcome {
   /** Whether the combobox used the key: the page then keeps it from doing what it does by itself (moving the caret, leaving the field). */
   readonly handled: boolean;

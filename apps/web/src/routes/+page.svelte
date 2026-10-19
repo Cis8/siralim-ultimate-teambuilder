@@ -12,7 +12,6 @@
     clearParty,
     clearSlot,
     clickKeyword,
-    createLintContext,
     createPlanner,
     decodeExploreState,
     decodePartyState,
@@ -20,7 +19,6 @@
     filterChips,
     initialExploreState,
     isClickOn,
-    lintQuery,
     lostTraitSearch,
     redoEdit,
     samePartyState,
@@ -61,7 +59,6 @@
   import { pageScroll } from '../lib/page-scroll';
   import type { PageState } from '../lib/page-state';
   import { isSearchShortcut } from '../lib/search-shortcut';
-  import { timeAssist } from '../lib/search-timing';
   import type { ShortcutEvent } from '../lib/shortcut-event';
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
   import { createPageUrlWriter } from '../lib/page-url-writer';
@@ -431,15 +428,6 @@
     service && { outcome: service.search(explore), total: service.traitCount, version: service.datasetVersion },
   );
 
-  /** What is wrong with a query, once the data is there to say (QUERY_LANGUAGE §5): timed beside the search (`atlas:assist`). */
-  const lint = $derived.by(() => {
-    if (service === undefined) return undefined;
-    const context = createLintContext(service);
-    return timeAssist((source: string, caret: number | undefined) =>
-      lintQuery(source, context, caret === undefined ? {} : { caret }),
-    );
-  });
-
   const isSortKey = (value: string): value is SortKey => SORT_KEYS.some((key) => key === value);
 
   onMount(() => {
@@ -482,7 +470,8 @@
         <QueryInput
           bind:input={queryField}
           value={explore.query}
-          {lint}
+          {service}
+          filters={explore}
           onchange={(query: string) => {
             explore = { ...explore, query };
             urlWriter.typed(pageState());

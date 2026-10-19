@@ -12,6 +12,7 @@ import type {
   SlotName,
   SlotPosition,
   SortKey,
+  SuggestionKind,
   TraitKind,
 } from '@atlas/core';
 import type { WhoChoice } from './event-who';
@@ -94,6 +95,26 @@ export const copy = {
   /** The list of suggestions under a field (QUERY_LANGUAGE §6): its name, and what a screen reader is told of its size (a polite line). */
   suggestionsLabel: 'Suggestions',
   suggestionCount: (count: number) => `${formatCount(count)} ${count === 1 ? 'suggestion' : 'suggestions'}`,
+  /** The word in the badge of a suggestion: what it is, so that its colour never says it alone. */
+  suggestionKinds: {
+    debuff: 'Debuff',
+    buff: 'Buff',
+    effect: 'Effect',
+    event: 'Event',
+    mechanic: 'Mechanic',
+    flag: 'Flag',
+    class: 'Class',
+    family: 'Family',
+    creature: 'Creature',
+    trait: 'Trait',
+    value: 'Value',
+    field: 'Field',
+    operator: 'Operator',
+    actor: 'Actor',
+    text: 'Text',
+  } as const satisfies Record<SuggestionKind, string>,
+  /** How many traits a suggestion finds: the number as it is drawn at the end of the row, and the unit a screen reader reads after it. */
+  suggestionFinds: (count: number) => ({ number: formatCount(count), unit: count === 1 ? 'trait' : 'traits' }),
   resultCount: (shown: number, total: number) => `${formatCount(shown)} of ${formatCount(total)} traits`,
   datasetVersion: (version: string) => `Compendium v${version}`,
   sortLabel: 'Sort',

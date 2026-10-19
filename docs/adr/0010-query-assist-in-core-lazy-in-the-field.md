@@ -35,8 +35,9 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
   - `explainQuery` (a visitor shaped like `serialise`) and `syntaxSegments` (contiguous coloured segments whose concatenation is the
     source), `SearchHistory` with a JSON export and import that never throws.
 - **`web` has one assist layer, loaded lazily and attached to the same `<input>`.** `query-input.svelte` keeps the plain input; the
-  layer (lint, suggestions, dropdown, issues, later the mirror) is `import()`ed on the first idle, focus or pointer event and
-  attaches to that element. Nothing is swapped, so no focus is lost and nothing shifts (Lighthouse CLS ≤ 0.1).
+  layer (lint, suggestions, dropdown, issues, later the mirror) is `import()`ed on the first focus or pointer event, or at the first idle
+  moment half a second after the dataset arrives (earlier, the request counts in the LCP of a slow connection), and attaches to that
+  element. Nothing is swapped, so no focus is lost and nothing shifts (Lighthouse CLS ≤ 0.1).
 - **The dropdown is an editable combobox with a list (ARIA APG).** No option is active until the person types or uses the arrows, so
   Tab is never captured on a plain focus. The active option's name carries kind, detail and count; a debounced polite line gives
   the size of the list; issues are announced the same way.
@@ -49,7 +50,9 @@ the end, a lone quote raised an error at once, and `tidy` rewrote text the perso
   by hand-written narrowing (no schema library, PLAN D24).
 - **Under 700 px with a coarse pointer** the field opens a full-screen modal dialog with the same editor and a docked syntax toolbar.
 - **A budget for the assist.** Lint, suggestions and counts are timed as `atlas:assist` and held to p95 < 16 ms at 4× CPU, beside
-  `atlas:search`. If it misses, the counts are computed after the frame; the mirror stays synchronous.
+  `atlas:search`. If it misses, the counts are computed after the frame; the mirror stays synchronous. (It missed in 10.5, at 16–17 ms:
+  the first suggestion, the active one, is counted with the key and the others three at a time, each step in a task of its own after
+  a paint; p95 is 6.4 ms.)
 
 ## Alternatives considered
 - **A code-editor library (CodeMirror and the like) or a `contenteditable`.** More than the 150 kB budget allows without a lazy

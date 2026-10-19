@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { SIZE_BUDGETS, formatVerdicts, judge, type SizeBudget } from './budgets';
 import type { BuildSizes } from './measure-build';
 
-const sizes = (initialJs: number[], data: number[]): BuildSizes => ({
+const sizes = (initialJs: number[], data: number[], lazyJs: number[] = []): BuildSizes => ({
   initialJs: initialJs.map((gzipBytes, index) => ({ path: `_app/js-${String(index)}.js`, gzipBytes })),
+  lazyJs: lazyJs.map((gzipBytes, index) => ({ path: `_app/lazy-${String(index)}.js`, gzipBytes })),
   data: data.map((gzipBytes, index) => ({ path: `data/file-${String(index)}.json`, gzipBytes })),
 });
 
@@ -13,10 +14,35 @@ const budgets: readonly SizeBudget[] = [
 ];
 
 describe('the budgets of the product', () => {
-  it('are the ones of SPEC § Performance: initial JS 150 kB and data 300 kB, gzipped', () => {
+  it('are the ones of SPEC § Performance, initial JS 150 kB and data 300 kB gzipped, and those of Phase 2 for the JS fetched later', () => {
     expect(SIZE_BUDGETS.map(({ name, limitBytes }) => [name, limitBytes])).toEqual([
       ['initial JavaScript', 150_000],
+      ['lazy JavaScript', 50_000],
+      ['total JavaScript', 200_000],
       ['data', 300_000],
+    ]);
+  });
+
+  it('count the scripts of the first screen in the initial and the total budget, the others in the lazy and the total one', () => {
+    const built = sizes([100], [1], [30]);
+    const covered = (name: string) =>
+      SIZE_BUDGETS.find((budget) => budget.name === name)
+        ?.files(built)
+        .map(({ path }) => path);
+
+    expect(covered('initial JavaScript')).toEqual(['_app/js-0.js']);
+    expect(covered('lazy JavaScript')).toEqual(['_app/lazy-0.js']);
+    expect(covered('total JavaScript')).toEqual(['_app/js-0.js', '_app/lazy-0.js']);
+  });
+
+  it('fail a lazy chunk that grows past its limit although the first screen is light', () => {
+    const verdicts = judge(sizes([10_000], [1_000], [50_001]));
+
+    expect(verdicts.map(({ name, within }) => [name, within])).toEqual([
+      ['initial JavaScript', true],
+      ['lazy JavaScript', false],
+      ['total JavaScript', true],
+      ['data', true],
     ]);
   });
 });

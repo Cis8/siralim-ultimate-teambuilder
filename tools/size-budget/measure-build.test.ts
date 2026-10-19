@@ -84,6 +84,36 @@ describe('measureBuild', () => {
     expect(sizes.initialJs.map((file) => file.path)).toEqual(['_app/start.js']);
   });
 
+  it('measures the scripts the page loads later apart, whatever folder of the app they are in', async () => {
+    const lazy = 'export const assist = "fetched when the field is used";\n'.repeat(100);
+    const route = 'export const route = "fetched when its page is visited";\n'.repeat(100);
+    await put('index.html', page('./_app/start.js'));
+    await put('_app/start.js', 'export const start = 1;\n');
+    await put('_app/immutable/chunks/assist.js', lazy);
+    await put('_app/immutable/nodes/5.js', route);
+    await put('_app/immutable/assets/0.css', 'body { margin: 0 }\n');
+    await put('_app/version.json', '{"version":"1"}');
+    await put('data/manifest.json', '{}');
+
+    const sizes = await measureBuild(buildDir);
+
+    expect(sizes.lazyJs).toEqual([
+      { path: '_app/immutable/chunks/assist.js', gzipBytes: gzipSync(lazy).length },
+      { path: '_app/immutable/nodes/5.js', gzipBytes: gzipSync(route).length },
+    ]);
+  });
+
+  it('does not count a preloaded script as one that is loaded later', async () => {
+    await put('index.html', page('./_app/start.js', './_app/chunks/a.js'));
+    await put('_app/start.js', 'export const start = 1;\n');
+    await put('_app/chunks/a.js', 'export const a = 1;\n');
+    await put('data/manifest.json', '{}');
+
+    const sizes = await measureBuild(buildDir);
+
+    expect(sizes.lazyJs).toEqual([]);
+  });
+
   it('fails when the page preloads nothing, since a budget that measures nothing always passes', async () => {
     await put('index.html', '<head><title>No scripts</title></head>');
     await put('data/manifest.json', '{}');

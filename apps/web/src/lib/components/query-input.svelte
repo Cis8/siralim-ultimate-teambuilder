@@ -1,43 +1,66 @@
 <script lang="ts">
-  import type { QueryDiagnostic } from '@atlas/core';
+  import type { CountedSuggestion, ExploreState, QueryDiagnostic, SearchService } from '@atlas/core';
   import { onDestroy } from 'svelte';
-  import { applyFieldEdit } from '../apply-field-edit';
+  import { afterNextPaint } from '../after-paint';
+  import { applyFieldEdit, isBeingEdited } from '../apply-field-edit';
+  import type { ComboboxOption } from '../combobox-option';
   import { copy } from '../copy';
   import { createIssueAnnouncer } from '../issue-announcer';
   import { issueTextId, summariseIssues } from '../issue-summary';
+  import { whenIdle } from '../lazy-load';
   import { caretToLint } from '../lint-caret';
-  import IssueBadge from './issue-badge.svelte';
-  import QueryIssues from './query-issues.svelte';
+  import { loadQueryAssist, type QueryAssist } from '../query-assist-loader';
 
   /** The id of the list of issues: the badge controls it and the field is described by its texts. */
   const ISSUES_ID = 'query-issues';
+  /** The id of the list of suggestions: the field controls it while it is a combobox. */
+  const SUGGESTIONS_ID = 'query-suggestions';
+  /** How long after the data arrives the assist layer is fetched, if nobody has used the field by then. */
+  const FETCH_AFTER_DATA_MS = 500;
 
   /**
-   * The query bar: a text field the owner of the state reads and writes, one keystroke at a time. `lint` says what is wrong
-   * with a text (PLAN 9.6, QUERY_LANGUAGE §5), given the caret so that the term being typed is left alone; it is not there until
-   * the data is. The issues are a badge inside the field and a list under it; a fix is one edit of the text, made in the field as a
-   * person's typing is.
+   * The query bar: a text field the owner of the state reads and writes, one keystroke at a time. It is a plain `<input>` until the
+   * page is idle, or the focus or a pointer arrives, and then the assist layer (ADR-0010) is fetched and attaches to the same
+   * element: what is wrong with the query (QUERY_LANGUAGE §5), given the caret so that the term being typed is left alone, and
+   * what may be typed at the caret (§6), counted within `filters`. Nothing is swapped, so the focus is not lost and nothing moves.
+   * The issues are a badge inside the field and a list under it, the suggestions a list over the page; both are edits of the text
+   * made in the field as a person's typing is. Neither is there until the layer and the data are.
    */
   let {
     value,
     onchange,
-    lint,
+    service,
+    filters,
     input = $bindable(),
   }: {
     value: string;
     onchange: (value: string) => void;
-    lint: ((source: string, caret: number | undefined) => readonly QueryDiagnostic[]) | undefined;
-    /** The `<input>`, for whoever needs to focus it or attach to it (the `/` shortcut, the suggestions of the next slice). */
+    /** The dataset the assist reads; none until it is loaded. */
+    service: SearchService | undefined;
+    /** The filters of the page: a suggestion is counted among the traits they leave (D18). */
+    filters: ExploreState;
+    /** The `<input>`, for whoever needs to focus it or attach to it (the `/` shortcut, the assist layer). */
     input?: HTMLInputElement | undefined;
   } = $props();
 
   let container = $state<HTMLElement>();
+  /** The assist layer, once fetched. */
+  let assist = $state.raw<QueryAssist>();
   /** Where the caret is while the person is in the field or in what belongs to it, and none otherwise: every term is then judged as it stands. */
   let caret = $state<number>();
   let open = $state(false);
   let announced = $state('');
 
-  const summary = $derived(summariseIssues(lint?.(value, caret) ?? []));
+  const analysis = $derived(
+    assist === undefined || service === undefined ? undefined : assist.analyse(service, filters, value, caret),
+  );
+  /** The suggestions of `analysis` with every one counted: they follow the list, once it is drawn. */
+  let counted = $state.raw<{ of: readonly CountedSuggestion[]; suggestions: readonly CountedSuggestion[] }>();
+  const suggestions = $derived(
+    counted !== undefined && counted.of === analysis?.suggestions ? counted.suggestions : (analysis?.suggestions ?? []),
+  );
+  const options = $derived(assist?.optionsOf(suggestions) ?? []);
+  const summary = $derived(summariseIssues(analysis?.issues ?? []));
   const describedBy = $derived(
     summary.shown.length === 0 ? undefined : summary.shown.map((_, at) => issueTextId(ISSUES_ID, at)).join(' '),
   );
@@ -47,6 +70,28 @@
   });
   onDestroy(() => {
     announcer.stop();
+  });
+
+  /** Fetches the assist layer, once; a load that fails leaves the plain field, and the next focus or pointer tries again. */
+  let wanted = false;
+  function want(): void {
+    if (wanted) return;
+    wanted = true;
+    loadQueryAssist().then(
+      (loaded) => {
+        assist = loaded;
+      },
+      () => {
+        wanted = false;
+      },
+    );
+  }
+  // The layer has nothing to work on until the dataset is there, and fetched while the first results are being drawn it would
+  // count in the largest contentful paint of a slow connection (Lighthouse): it is fetched at the first idle moment half a second
+  // after the data arrives. A focus or a pointer does not wait.
+  $effect(() => {
+    if (service === undefined) return;
+    return whenIdle(want, FETCH_AFTER_DATA_MS);
   });
 
   /**
@@ -67,11 +112,34 @@
     announcer.counted(summary.count);
   });
 
+  // Each count is a search and nine of them hold a keystroke up: the list is drawn with its first suggestion counted, and the
+  // rest follow a few at a time, each step in a task of its own after a paint. A key typed before then calls them off: they
+  // would be for a list that is gone.
+  $effect(() => {
+    const layer = assist;
+    const dataset = service;
+    const current = analysis;
+    if (layer === undefined || dataset === undefined || current === undefined) return;
+    const text = value;
+    const within = filters;
+    let counting = current.suggestions;
+    let cancel: () => void = () => undefined;
+    const step = (): void => {
+      counting = layer.countNext(dataset, within, text, counting);
+      counted = { of: current.suggestions, suggestions: counting };
+      if (layer.hasUncounted(counting)) cancel = afterNextPaint(step);
+    };
+    if (layer.hasUncounted(counting)) cancel = afterNextPaint(step);
+    return () => {
+      cancel();
+    };
+  });
+
   function readCaret(): void {
     caret = input === undefined ? undefined : caretToLint(input);
   }
 
-  /** Focus leaving the field for something outside it (the badge and the list belong to it) takes the caret away. */
+  /** Focus leaving the field for something outside it (the badge and the lists belong to it) takes the caret away. */
   function leave(event: FocusEvent): void {
     if (!(event.relatedTarget instanceof Node && container?.contains(event.relatedTarget))) caret = undefined;
   }
@@ -82,9 +150,19 @@
     applyFieldEdit(input, issue.fix.edit);
     readCaret();
   }
+
+  /** A suggestion taken: its text goes in the place of the word being typed, and the caret after it. */
+  function accept(_option: ComboboxOption, index: number): void {
+    const suggestion = suggestions[index];
+    if (suggestion === undefined || assist === undefined || input === undefined) return;
+    applyFieldEdit(input, assist.acceptSuggestion(value, suggestion));
+    readCaret();
+  }
 </script>
 
-<div class="query" bind:this={container} onfocusout={leave}>
+<!-- A pointer arriving only fetches the layer early; it asks for nothing the keyboard does not have: the focus fetches it too. -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="query" bind:this={container} onfocusin={want} onfocusout={leave} onpointerenter={want}>
   <div class="field">
     <label for="query">
       <span class="visually-hidden">{copy.searchLabel}</span>
@@ -98,7 +176,8 @@
         bind:this={input}
         {value}
         oninput={(event) => {
-          typed = true;
+          // An edit made for the person (a fix, a suggestion) raises this event too, and is not their typing.
+          typed = !isBeingEdited(event.currentTarget);
           readCaret();
           onchange(event.currentTarget.value);
         }}
@@ -116,24 +195,34 @@
         spellcheck="false"
       />
     </label>
-    {#if summary.count > 0}
-      <IssueBadge
-        count={summary.count}
-        hasErrors={summary.hasErrors}
-        {open}
-        controls={ISSUES_ID}
-        onpress={() => {
-          open = !open;
-        }}
-      />
+    {#if assist !== undefined}
+      {#if summary.count > 0}
+        <assist.IssueBadge
+          count={summary.count}
+          hasErrors={summary.hasErrors}
+          {open}
+          controls={ISSUES_ID}
+          onpress={() => {
+            open = !open;
+          }}
+        />
+      {/if}
+      <assist.Combobox {input} {options} id={SUGGESTIONS_ID} label={copy.suggestionsLabel} onaccept={accept} />
     {/if}
   </div>
-  <QueryIssues id={ISSUES_ID} {summary} {open} onfix={fix} />
+  {#if assist !== undefined}
+    <assist.QueryIssues id={ISSUES_ID} {summary} {open} onfix={fix} />
+  {/if}
   <p class="visually-hidden" aria-live="polite">{announced}</p>
 </div>
 
 <style>
+  /*
+   * The list of suggestions is drawn against this box, under the list of issues when that is open (not over it, which would put
+   * the buttons that mend them out of reach of a pointer): the issues are a panel in the flow of the page, the suggestions a popup.
+   */
   .query {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;

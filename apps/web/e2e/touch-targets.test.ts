@@ -13,6 +13,7 @@ import {
   rows,
   scrollScreens,
   searchBox,
+  suggestions,
 } from './support/explore-page';
 import {
   addButton,
@@ -188,6 +189,15 @@ test.describe('touch targets on a phone', () => {
       /^Change to “class:”$/,
       /^Add the missing “\)”$/,
     ]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+  });
+
+  test('has every suggestion at least 44 × 44 px, without making the page wider', async ({ page }) => {
+    await openExplore(page);
+    await searchBox(page).pressSequentially('wea');
+    await expect(suggestions(page).nth(2)).toBeVisible();
+
+    await expectTargetsLargeEnough(page.locator('body'), [/^Search traits$/, /^Debuff/, /^Trait/]);
     expect(await widerThanTheWindow(page)).toBe(false);
   });
 

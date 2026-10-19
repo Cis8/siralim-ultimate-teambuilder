@@ -23,8 +23,20 @@ function replaceSelection({ ownerDocument: document }: EditableField, text: stri
   }
 }
 
+/** The fields an `applyFieldEdit` is changing at this moment. */
+const editing = new WeakSet<object>();
+
 /**
- * Makes one `TextEdit` in the field (a fix, later an accepted suggestion) and leaves the caret where a person expects it
+ * Whether `field` is being changed by `applyFieldEdit` right now, so that the `input` event the page hears is an edit made for
+ * the person (a fix, an accepted suggestion) and not their typing: typing opens the list of suggestions, an edit does not. The
+ * events are raised inside the call, by the browser's command or by the function itself, so this is true for exactly those.
+ */
+export function isBeingEdited(field: object): boolean {
+  return editing.has(field);
+}
+
+/**
+ * Makes one `TextEdit` in the field (a fix or an accepted suggestion) and leaves the caret where a person expects it
  * (`caretAfterEdit`: the same text lies after it as before). The field takes the focus, without scrolling the page to it.
  *
  * The edit goes through the browser's own editing command, as typing does: the page hears an `input` event as for a key press,
@@ -43,11 +55,16 @@ export function applyFieldEdit(field: EditableField, edit: TextEdit): void {
 
   field.focus({ preventScroll: true });
   field.setSelectionRange(start, end);
-  if (!replaceSelection(field, text) || field.value !== expected) {
-    // What a command left other than expected is put back first, so that the edit is made on the text it was computed for.
-    if (field.value !== before) field.value = before;
-    field.setRangeText(text, start, end, 'end');
-    field.dispatchEvent(new Event('input', { bubbles: true }));
+  editing.add(field);
+  try {
+    if (!replaceSelection(field, text) || field.value !== expected) {
+      // What a command left other than expected is put back first, so that the edit is made on the text it was computed for.
+      if (field.value !== before) field.value = before;
+      field.setRangeText(text, start, end, 'end');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  } finally {
+    editing.delete(field);
   }
   field.setSelectionRange(caret, caret);
   // A framework that writes the value back once it has flushed moves the caret to the end: after its turn it is put back.

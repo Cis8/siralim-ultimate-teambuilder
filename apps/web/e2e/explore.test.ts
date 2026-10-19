@@ -56,7 +56,7 @@ test.describe('explore', () => {
     await openExplore(page);
     await expect(announcedCount(page)).toContainText(`of ${total.toLocaleString('en-US')} traits`);
 
-    await page.getByRole('textbox', { name: 'Search traits' }).fill('class:death');
+    await searchBox(page).fill('class:death');
 
     await expect(announcedCount(page)).not.toContainText(`${total.toLocaleString('en-US')} of`);
     const origins = await rows(page).locator('.origin').allTextContents();
@@ -67,7 +67,7 @@ test.describe('explore', () => {
   test('says so when no trait matches, and comes back when the query is cleared', async ({ page }) => {
     const total = await publishedCount(page);
     await openExplore(page);
-    const search = page.getByRole('textbox', { name: 'Search traits' });
+    const search = searchBox(page);
 
     await search.fill('zzzqxj');
     await expect(announcedCount(page)).toHaveText(`0 of ${total.toLocaleString('en-US')} traits`);
@@ -177,7 +177,7 @@ test.describe('explore', () => {
 
       // With marks and keywords drawn into the text, a row still says what some trait of the dataset says.
       const descriptions = new Set(traits.map((trait) => trait.description));
-      await page.getByRole('textbox', { name: 'Search traits' }).fill('vulnerable OR "start of battle"');
+      await searchBox(page).fill('vulnerable OR "start of battle"');
       await expect(page.locator('mark').first()).toBeVisible();
       const marked = await drawnDescriptions(page);
       expect(marked.length).toBeGreaterThan(0);
@@ -186,7 +186,7 @@ test.describe('explore', () => {
 
     test('styles a keyword by its kind and, by shape and not by colour alone, by its role', async ({ page }) => {
       await openExplore(page);
-      const search = page.getByRole('textbox', { name: 'Search traits' });
+      const search = searchBox(page);
       const style = (token: Locator) =>
         token.evaluate((element) => {
           const { textDecorationLine, outlineStyle } = getComputedStyle(element);
@@ -211,7 +211,7 @@ test.describe('explore', () => {
 
     test('marks the text the query looks for, inside a keyword too, and nothing else', async ({ page }) => {
       await openExplore(page);
-      const search = page.getByRole('textbox', { name: 'Search traits' });
+      const search = searchBox(page);
       const marks = page.locator('mark');
 
       await search.fill('vulnerable');
@@ -646,6 +646,8 @@ test.describe('explore', () => {
     }) => {
       await openExplore(page);
       await searchBox(page).fill('vulnerable OR weak');
+      // The list of suggestions is drawn over the chips while it is open: a pointer needs it put away first.
+      await searchBox(page).press('Escape');
       await expect(chips(page).getByRole('button', { name: 'vulnerable — exclude it' })).toBeVisible();
       await expect(chips(page).getByRole('button', { name: 'weak — exclude it' })).toBeVisible();
 
@@ -756,6 +758,7 @@ test.describe('explore', () => {
       await flag(page, 'Artifact-eligible (has material)').check();
       await closeFilters(page);
       await searchBox(page).fill('weak OR snared');
+      await searchBox(page).press('Escape');
       await chips(page).getByRole('button', { name: 'weak — exclude it' }).click();
       await expect(page.getByRole('button', { name: 'Copy query' })).toBeVisible();
 
@@ -767,7 +770,7 @@ test.describe('explore', () => {
     await openExplore(page);
     expect(await axeViolations(page)).toEqual([]);
 
-    await page.getByRole('textbox', { name: 'Search traits' }).fill('(vulnerable OR weak) -stack:no');
+    await searchBox(page).fill('(vulnerable OR weak) -stack:no');
     await expect(rows(page).first()).toBeVisible();
     expect(await axeViolations(page)).toEqual([]);
   });

@@ -1,6 +1,16 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { accepted, comboboxView, moved, pressKey, shut, typed, type ComboboxState } from '../combobox-state';
+  import { isBeingEdited } from '../apply-field-edit';
+  import {
+    accepted,
+    comboboxView,
+    keyPressOf,
+    moved,
+    pressKey,
+    shut,
+    typed,
+    type ComboboxState,
+  } from '../combobox-state';
   import type { ComboboxOption } from '../combobox-option';
   import { createListAnnouncer } from '../list-announcer';
   import { keepFieldFocus } from '../keep-field-focus';
@@ -12,8 +22,9 @@
    * not take it either. Nothing is active until the person types or uses the arrows, so a Tab on a plain focus is the field's own.
    *
    * The host decides what the options are, from the text and the caret, and what accepting one does (`onaccept`: one edit of the
-   * text). The `input` event that edit raises is not a keystroke and does not bring the list back. The list is drawn against the
-   * nearest positioned ancestor, under it: the host makes the frame of the field one.
+   * text, made with `applyFieldEdit`). The `input` event of an edit made that way, this one or a fix, is not a keystroke and does
+   * not bring the list back. The list is drawn against the nearest positioned ancestor, under it: the host makes the box that holds
+   * the field (and whatever else sits under it) one.
    */
   const {
     input,
@@ -28,14 +39,13 @@
     id: string;
     /** The name of the list for a screen reader. */
     label: string;
-    onaccept: (option: ComboboxOption) => void;
+    /** The option taken, and its place in `options`. */
+    onaccept: (option: ComboboxOption, index: number) => void;
   } = $props();
 
   let status = $state.raw<ComboboxState>(shut);
   let announced = $state('');
   let list = $state<HTMLElement>();
-  /** Set while the host makes the edit of an accepted option: the field's own `input` event for it is not typing. */
-  let accepting = false;
 
   const view = $derived(comboboxView(status, options.length));
   const optionId = (index: number): string => `${id}-option-${String(index)}`;
@@ -54,12 +64,7 @@
   function accept(index: number): void {
     const option = options[index];
     if (option === undefined) return;
-    accepting = true;
-    try {
-      onaccept(option);
-    } finally {
-      accepting = false;
-    }
+    onaccept(option, index);
     status = accepted(option.continues);
   }
 
@@ -73,14 +78,14 @@
     field.setAttribute('aria-controls', id);
 
     const onKeydown = (event: KeyboardEvent): void => {
-      const outcome = pressKey(status, event, options.length);
+      const outcome = pressKey(status, keyPressOf(event), options.length);
       if (!outcome.handled) return;
       event.preventDefault();
       status = outcome.state;
       if (outcome.accept !== undefined) accept(outcome.accept);
     };
     const onInput = (): void => {
-      if (!accepting) status = typed();
+      if (!isBeingEdited(field)) status = typed();
     };
     // The caret moved without typing, by a press in the text or by the keys that move it.
     const onKeyup = (event: KeyboardEvent): void => {
@@ -145,7 +150,9 @@
           <span class="detail">{option.detail}</span>
         </span>
         {#if option.trailing !== undefined}
-          <span class="trailing">{option.trailing}<span class="visually-hidden">{option.trailingUnit ?? ''}</span></span
+          <!-- The space is a text of its own, so that the number and the unit are two words in whatever reads the name. -->
+          <span class="trailing"
+            >{option.trailing} <span class="visually-hidden">{option.trailingUnit ?? ''}</span></span
           >
         {/if}
       </li>
@@ -155,13 +162,17 @@
 <p class="visually-hidden" aria-live="polite">{announced}</p>
 
 <style>
-  /* Over the page, under the field. It has no `display` of its own, so `hidden` shuts it. */
+  /*
+   * Over the page, under the field, and under the bars fixed to the foot of the window (z-index 5 and 6): on a phone nine rows reach
+   * down to them, and the Filters button and the tabs must stay in reach. The page scrolls to the active option, clear of the bars
+   * (`scroll-padding-bottom`). It has no `display` of its own, so `hidden` shuts it.
+   */
   .popup {
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
     left: 0;
-    z-index: 20;
+    z-index: 4;
     padding: 6px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
@@ -180,7 +191,8 @@
 
   li {
     display: grid;
-    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    /* The count has a column of its own, held while it is not there yet: the counts follow the list by a moment. */
+    grid-template-columns: 5.5rem minmax(0, 1fr) 3.5rem;
     align-items: center;
     gap: 12px;
     min-height: 38px;
@@ -252,9 +264,11 @@
   }
 
   .trailing {
+    grid-column: 3;
     color: var(--text-faint);
     font-family: var(--font-mono);
     font-size: 11.5px;
+    text-align: right;
   }
 
   li.active .trailing {

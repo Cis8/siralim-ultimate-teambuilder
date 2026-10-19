@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   accepted,
   comboboxView,
+  keyPressOf,
   moved,
   pressKey,
   shut,
   typed,
+  type ComboboxKeyEvent,
   type ComboboxKeyPress,
   type ComboboxState,
 } from './combobox-state';
@@ -157,6 +159,34 @@ describe('Tab and Enter', () => {
   it('does not take a key that ends an IME composition', () => {
     expect(pressKey(open(1), key('Enter', { isComposing: true }), 4).handled).toBe(false);
     expect(pressKey(open(1), key('ArrowDown', { isComposing: true }), 4).handled).toBe(false);
+  });
+});
+
+describe('what of a keyboard event the combobox reads', () => {
+  const event = (overrides: Partial<ComboboxKeyEvent> = {}): ComboboxKeyEvent => ({
+    key: 'Enter',
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+    isComposing: false,
+    keyCode: 13,
+    ...overrides,
+  });
+
+  it('is the key and the modifiers held', () => {
+    expect(keyPressOf(event({ key: 'Tab', shiftKey: true, keyCode: 9 }))).toEqual(key('Tab', { shiftKey: true }));
+  });
+
+  it('is a composition when the browser says so', () => {
+    expect(keyPressOf(event({ isComposing: true })).isComposing).toBe(true);
+  });
+
+  it('is a composition for the key code 229 too: Safari reports the Enter that ends one after the composition has ended', () => {
+    const ending = keyPressOf(event({ keyCode: 229 }));
+
+    expect(ending.isComposing).toBe(true);
+    expect(pressKey(open(1), ending, 4).handled).toBe(false);
   });
 });
 

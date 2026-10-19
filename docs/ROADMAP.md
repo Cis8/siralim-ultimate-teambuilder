@@ -68,8 +68,9 @@ Build order (PLAN D15): **M9 → M10 → M12 → M13 → M11**. The numbers do n
 riskiest and needs the owner's iPhone.
 - [x] **M9 Diagnostics.** Lint-rule registry with all rules in QUERY_LANGUAGE §5 (errors and warnings), fixes as text edits,
       closest-match helper, field value domains, issues shown inside the search field with a one-click fix and the caret kept.
-- [ ] **M10 Autocomplete.** Context detection, providers per field, result-count preview, ghost text, keyboard + ARIA combobox
-      (Tab never captured on a plain focus), the assist layer lazy-loaded over the same `<input>`.
+- [x] **M10 Autocomplete.** Context detection, providers per field, result-count preview, ghost text, keyboard + ARIA combobox
+      (Tab never captured on a plain focus), the assist layer lazy-loaded over the same `<input>`. (The ghost text is written in
+      `core` and drawn with the mirror of M11.2.)
 - [ ] **M12 Relations engine (core).** `enabledBy`, `enables`, link scores, alternatives, shared triggers, same family,
       random-debuff sources (GAME_RULES R5), conditional sources (R10), keyword view stats + verdicts. Buffs, debuffs and effects
       only: no event is a dependency (R12; PLAN D16). Unit-tested on the real sheet.

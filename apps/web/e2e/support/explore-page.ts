@@ -15,6 +15,9 @@ export const rows = (page: Page) => results(page).getByRole('listitem');
 export async function openExplore(page: Page, address = './'): Promise<void> {
   await page.goto(address);
   await expect(rows(page).first()).toBeVisible();
+  // A pointer arriving at the search field brings the assist layer in at once; left alone, the page fetches it half a second after
+  // the traits (`query-suggestions.test.ts` holds that to account), which every test would wait for.
+  await page.locator('#query').hover();
 }
 
 /** The total the build published: the tests read it so that a data refresh does not break them. */
@@ -39,7 +42,18 @@ export const backToTopButton = (page: Page) => page.getByRole('button', { name: 
 /** The heading of the page, where the focus goes when the page is taken back to its top. */
 export const pageHeading = (page: Page) => page.getByRole('heading', { level: 1, name: 'Explore traits' });
 
-export const searchBox = (page: Page) => page.getByRole('textbox', { name: 'Search traits' });
+/**
+ * The search field. It is a plain text field until the assist layer is fetched (when the page is idle, or the focus or a pointer
+ * arrives) and a combobox after: asking for the combobox waits for the layer, so a test never types in a field that is about to
+ * change under it.
+ */
+export const searchBox = (page: Page) => page.getByRole('combobox', { name: 'Search traits' });
+
+/** The list of suggestions under the search field, while it is showing; its rows are `suggestions`. */
+export const suggestionList = (page: Page) => page.getByRole('listbox', { name: 'Suggestions' });
+export const suggestions = (page: Page) => suggestionList(page).getByRole('option');
+/** The polite line that tells a screen reader how many suggestions the list has. It sits inside the frame of the field. */
+export const suggestionsAnnouncement = (page: Page) => page.locator('.query .field [aria-live="polite"]');
 
 /** The badge inside the search field that says how many issues the query has (“2 issues”), and opens and shuts their list. */
 export const issuesBadge = (page: Page) => page.getByRole('button', { name: /^[\d,]+ issues?$/ });
@@ -49,7 +63,7 @@ export const issueRows = (page: Page) => issuesList(page).getByRole('listitem');
 /** The button of the list that mends one issue; `label` is what it says (“Change to “class:””). */
 export const fixButton = (page: Page, label: string | RegExp) => issuesList(page).getByRole('button', { name: label });
 /** The polite line that tells a screen reader how many issues there are and what a fix did. It has no role: a live region needs none. */
-export const issuesAnnouncement = (page: Page) => page.locator('.query [aria-live="polite"]');
+export const issuesAnnouncement = (page: Page) => page.locator('.query > [aria-live="polite"]');
 /** Where the caret of the search field is. */
 export const caretOf = (page: Page): Promise<number | null> =>
   searchBox(page).evaluate((field: HTMLInputElement) => field.selectionStart);

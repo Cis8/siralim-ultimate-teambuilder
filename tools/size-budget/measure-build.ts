@@ -1,5 +1,5 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { join, posix } from 'node:path';
+import { join, posix, relative, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 export interface FileSize {
@@ -12,11 +12,15 @@ export interface FileSize {
 export interface BuildSizes {
   /** The scripts the page preloads: what a first visit downloads before the app can run. */
   readonly initialJs: readonly FileSize[];
+  /** The other scripts of the app: what it fetches later, as the query assist or a route that is visited (ADR-0010). */
+  readonly lazyJs: readonly FileSize[];
   /** Every file under `data/`: the manifest and the dataset the app loads. */
   readonly data: readonly FileSize[];
 }
 
 const DATA_DIRECTORY = 'data';
+/** Where SvelteKit puts the scripts of the app. */
+const APP_DIRECTORY = '_app';
 
 const isMissing = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
@@ -51,6 +55,20 @@ async function dataFiles(buildDir: string): Promise<string[]> {
   }
 }
 
+/** Every script of the app, as paths relative to the build directory with forward slashes, sorted. */
+async function appScripts(buildDir: string): Promise<string[]> {
+  try {
+    const entries = await readdir(join(buildDir, APP_DIRECTORY), { withFileTypes: true, recursive: true });
+    return entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+      .map((entry) => posix.join(...relative(buildDir, join(entry.parentPath, entry.name)).split(sep)))
+      .toSorted();
+  } catch (cause) {
+    if (isMissing(cause)) return [];
+    throw cause;
+  }
+}
+
 /** Measures the output of `pnpm build` (the static site in `buildDir`). Fails rather than measure nothing. */
 export async function measureBuild(buildDir: string): Promise<BuildSizes> {
   let html: string;
@@ -71,9 +89,13 @@ export async function measureBuild(buildDir: string): Promise<BuildSizes> {
     scripts.map((path) => gzipSizeOf(buildDir, path, `The page preloads ${path}, which the build does not contain.`)),
   );
 
+  const preloaded = new Set(scripts);
+  const lazyPaths = (await appScripts(buildDir)).filter((path) => !preloaded.has(path));
+  const lazyJs = await Promise.all(lazyPaths.map((path) => gzipSizeOf(buildDir, path, `${path} has gone.`)));
+
   const dataPaths = await dataFiles(buildDir);
   if (dataPaths.length === 0) throw new Error(`The build has no data to measure under ${DATA_DIRECTORY}/.`);
   const data = await Promise.all(dataPaths.map((path) => gzipSizeOf(buildDir, path, `${path} has gone.`)));
 
-  return { initialJs, data };
+  return { initialJs, lazyJs, data };
 }

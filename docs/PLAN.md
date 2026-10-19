@@ -13,19 +13,20 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 is done, 10.1–10.4 are done and the next slice is 10.5** (wire the
-  `Combobox` into the field, lazily: `query-input.svelte` already exposes its `<input>` as `bind:input`; the assist chunk is `import()`ed
-  on first idle, focus or pointer and attaches the `Combobox` to that element; `suggestQuery` → `withCounts` → an adapter to
-  `ComboboxOption` → `onaccept` → `acceptSuggestion` → `applyFieldEdit`; the size budget gains `lazyJs` / `totalJs`), in the order
-  M10 → M12 → M13 → M11 (D15). The assist's first part (issues, `applyFieldEdit`, `atlas:assist`) is still eager in the initial chunk
-  (81 kB of 150). The `/` shortcut works already; the `Combobox` has no consumer until 10.5.
+- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 and M10 are done and the next slice is 12.1** (the relation index of
+  `core`), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+  arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
+  lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
+  fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
 - For the owner to veto, none blocking: D18–D26 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
-  the shortcut. Until then it ships as QUERY_LANGUAGE §6 says.
+  the shortcut. Until then it ships as QUERY_LANGUAGE §6 says. **D26 is live now:** after typing, Tab and Enter take the first suggestion, so
+  leaving the field with text in it takes Esc first (Shift+Tab always leaves). If that feels wrong in use, the alternative is no active
+  option until ↓ (a one-line change in `combobox-state.ts`' `typed()`), at the price of Tab not taking what the ghost text will show.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
   iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
   of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); when 11.5 lands, the
@@ -143,10 +144,22 @@ slice that builds it then follows.
   typing run (and failed the 16 ms e2e once under load), so they are built once at load. Compare `pnpm bench` before and after.
 - `typing-latency` and `assist-latency` (p95 of `atlas:search` / `atlas:assist` at 4× CPU) can fail when the whole e2e suite runs on
   many workers at once: rerun them alone (`playwright test typing-latency assist-latency --workers=1`) before suspecting the code.
-  Alone: search p95 4.7–5.4 ms; assist p95 1.5–2 ms on a text with eight faults of every kind (the budget is 16 ms).
+  Alone: search p95 4.5–5.4 ms; assist p95 6.4 ms with the suggestions and their counts, on a text with eight faults of every kind (the budget
+  is 16 ms: 40% of it, under the 60% that the slower runner of CI allows). With the nine counts made in the key it was 16–17 ms, a count being 0.3 ms
+  here: see M10.
   The assist sat at 13–14 ms here before `lint-term.ts` (2026-10-18) and went red on CI at 20–23 ms, on two runs in a row: the Linux
   runner is ~1.5× slower than this machine, so **a budget used past ~60% locally will fail there** (no Windows run can show it).
   The cost was the offer for a finished word that no trait has (a search of the vocabulary, 1.5 ms), paid again by every later key.
+- e2e and the assist layer: `searchBox` is `getByRole('combobox', …)` and so waits for the layer; the sort `<select>` is a combobox too, so
+  never ask for a bare `combobox`. `openExplore` hovers the field to bring the layer in at once (left alone, it comes 500 ms after the data:
+  the one test that does not is in `query-suggestions.test.ts`). The list of suggestions covers the chips and the first results while it
+  is open, so a test that goes on to click there puts it away first (`Escape`), as a pointer user would have to.
+- `pnpm lint` runs dependency-cruiser over `apps/web/src` as well. The rule `assist-stays-lazy` lets only `query-assist-loader.ts` import
+  `query-assist.ts`, with `import()`; what the loaded layer needs goes through `query-assist.ts`. Anything that `query-input.svelte` or the
+  page imports statically is in the first script, which the rule cannot see: after touching imports run `pnpm build && pnpm size-budget`
+  (lazy JS 9.2 kB now, initial 79.5) or look for `aria-autocomplete` in the chunks.
+- Lighthouse: fetching the assist chunk while the first results were being drawn cost 150 ms of LCP (0.92 → 0.90): Lantern counts a
+  request that starts before the LCP paint. `FETCH_AFTER_DATA_MS` (500) in `query-input.svelte` keeps it out (back to 0.91–0.92).
 - On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
   with one stop instead of more than ten, also on a tree without the Phase 2 work (checked 2026-10-18). CI (Linux) is green: if it
   is the only failure, it is this.
@@ -306,60 +319,22 @@ unchanged); `aria-invalid` for errors only; the list shows five issues, errors f
 `typing` flag and context (`lint-term.ts`; a text that stands elsewhere gets them moved). If suggestions push `atlas:assist` up,
 defer the counts (ADR-0010).
 
-### M10 Autocomplete — Tab accepts, the count is shown, screen readers hear it
-- [x] **10.1** Context. `suggest/context.ts`: from `(source, caret)` the token at the caret (else an empty virtual one), the typed prefix,
-      the leading `-` (kept on every insert) and the previous token → `operator-or-field | field | field-value | actor | unknown-field |
-      free`. *T:* a table of (text, caret) cases: caret mid-token, quotes, `field:"two wo|`, `uses:attack/|`, after `(` or an operator.
-      Deviations: the lexer makes `-` a token of its own, so the context needs no field for it: `replace` leaves it out and every
-      insert keeps it. Each kind carries `replace`, the span an accept takes the place of: the word whole, or an empty span at the
-      caret; for `unknown-field` only the name and its colon, so the value survives the fix. A word operator (`or`, `|`) at the caret is
-      `free`, a word not finished. 10.3 replaces `context.replace`, not "the token".
-- [x] **10.2** Providers. `suggest/`: `suggestQuery(source, caret, environment)` → at most nine `Suggestion`s; one provider per kind of
-      context (`suggestionProvider(kind, handler)`, `createSuggestionRegistry`, `suggestionRegistry`), a candidate carries its `tier`
-      (prefix, word start, substring, fallback), `rankCandidates` lists by tier, stably, once per text, cut at nine; `bestFits` keeps
-      the first nine of a long list before anything is written out. *T:* every row of QUERY_LANGUAGE §6; soundness (each accepted
-      suggestion is one token, of a field that takes its kind, and lints clean) in core on a fixture and in `assist-acceptance` on the
-      real sheet (every entry of the dataset is offered once its start is typed; every key and actor; 5,400 suggestions find a trait and
-      lint clean); `weak/` offers no actor, `attack/` four. Worst case on v2.0 (`a`, `e`): 0.2 ms.
-      Deviations: an event is offered as `applies:` and `uses:` like a buff (it has a role), not as a form of its own; the free partial
-      has no `class:` or `creature:` (the text itself finds a class); `detail` is `describe(value)`, so there is no separate label;
-      `suggestionContext` gains `valued` on `unknown-field` (the fix is `complete` only with a value after the colon) and `operator`
-      on `free` (an operator typed whole offers nothing: Tab on `weak OR` must not turn it into a trait); the choices offer their
-      canonical value (`none` is accepted, not offered). A generic `SuggestionProvider<K>` was not assignable to a
-      list of them (the variance of `K` is unmeasurable through `Extract`), hence the constructor that narrows with a type guard.
-- [x] **10.3** Accept, ghost, counts. `acceptSuggestion(source, suggestion) → TextEdit` over `suggestion.replace`; `ghostText(source, caret,
-      suggestion?) → string` (empty = none); `withCounts(source, suggestions, count) → CountedSuggestion[]` (`count` only on the `complete`
-      ones, over the text after accepting; D18). Rules in QUERY_LANGUAGE §6. *T:* a table of (text, caret) → (text, caret) cases through
-      the real `suggestQuery`, mutation-checked; on the real sheet, every accepted suggestion finds traits and lints clean, the ghost is
-      what Tab writes, and each count equals `search(...)` within filters (`assist-acceptance`).
-      Deviations: the result is a `TextEdit`, not `{text, caret}`, so a fix and an accept reach the field the same way (`applyFieldEdit`
-      already takes one; the caret is `caretAfterEdit`'s). A blank that follows is not skipped over: the caret stays where the word ended
-      (the cost: an operator accepted before an existing blank has the caret before it). An operator before `)` gets its blank, a finished
-      term does not. A bare field takes the word that follows it as its value.
-- [x] **10.4** Combobox. `combobox-state.ts` (pure: `typed`, `accepted`, `moved`, `pressKey`, `comboboxView`; the key table is a table of
-      tests), `combobox.svelte` (APG editable combobox with list, attached to the host's `<input>`: sets `role`, `aria-expanded` /
-      `-controls` / `-activedescendant`, listens to keydown, input, keyup, click and blur, draws the listbox, a pointer pick keeps the
-      focus; its size is told by `list-announcer.ts`, a polite line after 500 ms), `combobox-option.ts` (the row: badge, label,
-      detail, count with a spoken unit). `search-shortcut.ts` (with `shortcut-event.ts`, shared with `undo-shortcut`) is wired in the
-      page, and so is `query-input`'s `bind:input`. Rules in QUERY_LANGUAGE §6 (D26). *T:* the state table, the announcer, the shortcut
-      guards (Shift allowed: an Italian keyboard types `/` with it), e2e `search-shortcut.test.ts` on the three projects.
-      Deviations: the `Combobox` takes the `input` as a prop instead of owning one, which is what 10.5's lazy attach needs and what the
-      Synergy picker (13.2) can do as well; an option that `continues` (a field, an operator) keeps the list open after an accept;
-      the list does not scroll (a scroll area failed axe's `scrollable-region-focusable`, and nine rows fit): the page scrolls to the
-      active option; no footer of key hints; `--shadow-popup` is a new token. **Checked on a throwaway page** (focus, Tab, ↑ / ↓ and
-      wrap, Enter, Esc, a pointer pick keeps the focus, Shift+Tab, a continuing option, axe with the list open) in the three e2e
-      projects, then removed: nothing renders the `Combobox` until 10.5, which carries its e2e.
-- [ ] **10.5** Wired in, lazy. `query-input.svelte` keeps the plain `<input>`; the assist chunk (lint, suggest, dropdown, issues) is
-      `import()`ed on first idle, focus or pointer and attaches to that same element: nothing swaps, so no focus is lost and nothing
-      shifts. The `<Combobox>` goes inside `.field` (the popup is positioned against it). The size budget gains `lazyJs` (the limit is
-      set from the first measurement) and `totalJs`. Traps found while building 10.4: a **fix raises an `input` event too** (as an accept
-      does, which `onaccept` already shields) and must not open the list nor make an option active; Safari reports the Enter that ends an
-      IME composition with `isComposing` false and `keyCode` 229 (`pressKey` reads `isComposing` only); `[role=option]` and
-      `[role=combobox]` go into `support/keyboard.ts` `CONTROLS`, the options' 44 px into `touch-targets.test.ts`, and `searchBox` (a
-      `textbox` by role) becomes a `combobox`.
-      Keyboard walk: Tab leaves the field after a plain focus; type, ArrowDown, Tab accepts. *T:* e2e criteria 2 and 3 (the active
-      option's name has the count and the live line says it), axe with the popup open, option targets 44 px under coarse, Lighthouse
-      CLS ≤ 0.1, typing latency unchanged. *Docs:* DESIGN (suggestion list), checklist rows.
+### M10 Autocomplete — done
+`core`: `suggestionContext` (six kinds, each with the `replace` span an accept takes the place of), `suggestQuery` over a registry of providers
+(one per kind; `rankCandidates` by tier, cut at nine; `bestFits` before anything is written out), `acceptSuggestion` (a `TextEdit`, like a fix),
+`ghostText`, `withCounts` (within the filters, D18); soundness tested on the real sheet (`assist-acceptance`). `web`: `combobox-state.ts` (the
+key table is a table of tests), `Combobox` (APG editable combobox attached to the host's `<input>`; `keyPressOf` reads key code 229 as an IME,
+Safari), `list-announcer`, `search-shortcut` (`/`), and the wiring of 10.5: `query-input.svelte` keeps the plain `<input>` and fetches
+`query-assist.ts` (`import()` in `query-assist-loader.ts`, on first idle, focus or pointer) which brings `analyseQuery` (issues and suggestions of a key
+in one call, timed `atlas:assist`), `Combobox`, `IssueBadge`, `QueryIssues`. Deviations worth knowing: the ghost text is written but drawn with the
+mirror of 11.2 (until then the active option in the list is what Tab takes); the `Combobox` takes the `input` as a prop; an option that continues
+keeps the list open; the list does not scroll (axe: a scroll area is a tab stop); **the counts are not all made with the key**: nine searches at 4×
+CPU took 16–17 ms, so the first suggestion is counted with the list (it is the active one, read at once) and the rest three at a time, each step in
+a task of its own after a paint (`countNext`, `afterNextPaint`): assist p95 6.4 ms; **the list sits under the list of issues** (over it, it covered
+the fixes) **and under the fixed bars** (z-index 4; on a phone the Filters button was covered); `applyFieldEdit` marks its own `input` events
+(`isBeingEdited`) so a fix or an accept neither opens the list nor makes an option active. The size budget has `lazyJs` (50 kB; 9.2 now) and `totalJs`
+(200 kB), and dependency-cruiser runs over `apps/web/src` with the rule `assist-stays-lazy`. e2e: `searchBox` is a combobox (it waits for the layer),
+`query-suggestions.test.ts`, the option targets in `touch-targets.test.ts`.
 
 ### M12 Relations engine (core) — pure, tested on the real sheet
 Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97 cause, 370
