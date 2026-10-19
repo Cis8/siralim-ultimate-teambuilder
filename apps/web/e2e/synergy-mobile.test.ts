@@ -186,6 +186,26 @@ test.describe('the page of a trait on a phone', () => {
     await expect(selectedTab('Related')).toHaveAttribute('tabindex', '-1');
   });
 
+  test('goes along from the tab a key was pressed on, also when keys come faster than the address follows', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    await openTrait(page, richTrait(index, traits));
+    await sectionTab(page, 'Enabled by').focus();
+
+    // Three arrows in one task, before the page can have read the address the first one asked for: a key held down repeats this fast.
+    await page.evaluate(() => {
+      for (let press = 0; press < 3; press += 1) {
+        document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      }
+    });
+
+    await expect(sectionTab(page, 'Related')).toBeFocused();
+    await expect(sectionTab(page, 'Related')).toHaveAttribute('aria-selected', 'true');
+    await expect.poll(() => paramOf(page, 'section')).toBe('related');
+  });
+
   test('is read from the address, and a section the page does not have is the first', async ({ page, request }) => {
     const { traits, index } = await dataset(request);
     const focus = richTrait(index, traits);

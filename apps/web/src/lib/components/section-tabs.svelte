@@ -32,8 +32,12 @@
   const buttons: Partial<Record<SynergySection, HTMLButtonElement>> = {};
   const sections = $derived(tabs.map((tab) => tab.section));
 
-  function onkeydown(event: KeyboardEvent): void {
-    const next = tabForKey(event.key, selected, sections);
+  /**
+   * A key goes along from the tab it was pressed on, which is where the focus is, and not from `selected`: that follows the address,
+   * a navigation behind the key, so a key that repeats would start again from the tab it left (a tab list may be crossed in a blink).
+   */
+  function keydown(event: KeyboardEvent, from: SynergySection): void {
+    const next = tabForKey(event.key, from, sections);
     if (next === undefined) return;
     event.preventDefault();
     buttons[next]?.focus();
@@ -51,7 +55,9 @@
       aria-controls={sectionPanelId(tab.section)}
       tabindex={tab.section === selected ? 0 : -1}
       bind:this={buttons[tab.section]}
-      {onkeydown}
+      onkeydown={(event) => {
+        keydown(event, tab.section);
+      }}
       onclick={() => {
         onselect(tab.section);
       }}
