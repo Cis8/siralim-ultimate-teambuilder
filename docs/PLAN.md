@@ -13,20 +13,21 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D35, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.3 are done and the next slice is
-  13.4** (Alternatives, Same trigger and Same family under the three columns), in the order M13 → M11 (D15). What 13.3 leaves for it:
-  `routes/synergy/[traitId]/+page.svelte` holds the `.explorer` grid (focus · Enabled by · Enables) and reads `sides` from
-  `relations.relationsOf(id, { artifactOnly })`; the artifact filter is `synergy.view.matOnly` / `synergy.choose({ matOnly })` (the layout's
-  writer) and a link is `synergyLinkSearch(matOnly)` (party and `mat`, never `section`). `TraitCard` (name link, `badge`, `tier`, `detail`, add
-  button, notes) is dumb: `detail` is where Alternatives puts its reason line; `TraitCardList` is the list of `RelatedTrait`s only. A card has
-  its own id for the note under its button (`$props.id()`): a trait is on the page in several places. `AddButton` and `PartyNotes` serve
-  `ResultRow` too. Sizes now: initial JS 87.7 kB of 150 (85.3 before 13.3: the add button, the notes and the copy are in the first script),
-  lazy 23.9 of 50; Lighthouse passes its assertions.
+- **Phase 2 is under way (D14–D38, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.4 are done and the next slice is
+  13.5** (the keyword view), in the order M13 → M11 (D15). What 13.4 leaves for it: `routes/synergy/kw/[slug]/+page.svelte` is still the
+  picker of 13.2, and `relations.keywordView(key, { artifactOnly })` / `keywordStats` give it the lists and the verdict. Appliers and Rely on
+  it are lists of `TraitCard`s (`badge`, `tier`, `detail`; `TraitCardList` takes `RelatedTrait`s, `RelatedSection` takes `RelatedCard`s, a
+  heading, a count, a button in the heading row and the cap of 200: the pattern for a list that can be long); the one name of a key is
+  `keyLabel` (`lib/key-label.ts`); the artifact filter is `synergy.view.matOnly` / `synergy.choose({ matOnly })` and a link is
+  `synergyLinkSearch(matOnly)`. A card has its own id for the note under its button (`$props.id()`). Sizes now: initial JS 88.2 kB of 150,
+  lazy 25.0 of 50 (13.4 touched nothing the first script loads but the copy); no Lighthouse URL reaches `/synergy` until 13.8.
   **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D35 (chosen by Claude; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
+- For the owner to veto, none blocking: D18–D38 (chosen by Claude; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
+  families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D37: the three lists under the sides show
+  6 cards and a button, up to 200; D38: the filter's polite line counts every list; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
   header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
@@ -75,9 +76,12 @@ session (after `CLAUDE.md`), update it before ending one.
 | D33 | (default) On the trait page a card and a step of the trail are *links* named “Re-centre on X” (an address: middle-click, Back and Forward work); they carry the party and `mat`, never `section`. After a move to another trait the focus is on the new `h1`. No polite “Now centred on X” (the plan had one): SvelteKit's announcer says the new title and the focus says the name, a third line would be noise; checklist row 29 asks the owner to confirm | DESIGN § Synergy pages |
 | D34 | (default) The trail is session memory: empty when the app opens (so a deep link has none), emptied by the picker page, cut back by a step, not drawn for one step | DESIGN § Synergy pages |
 | D35 | (default) Random sources are a group at the end of their lane, folded behind a button above 3 (v2.0 has 26–27 in every lane that has any); the focus card's rows are the by-name mentions of D27, plus *Guards against* when there is one; the artifact filter says the new counts in a polite line | DESIGN § Synergy pages |
+| D36 | (default) A name that files several traits together and has no mastery trait (Exotic, Backer, Avatar and Zantai in v2.0; every real family has exactly one mastery) is a *grouping*, not a family: `SameFamily.grouping` (core, whatever the filter), and the page's *Same family* has no count and no card there, only the reason. A trait alone under its name (six) is no grouping: it says nobody else is in its family. If one of the four is a real family, `grouping` becomes a list of names | DESIGN § Synergy pages |
+| D37 | (default) *Alternatives*, *Same trigger* and *Same family* show 6 cards; a longer list has a button in its heading row, before the cards (the focus stays on it and Tab goes into what opened), "Show all N", or "Show the first 200" above 200 with a note; plain DOM (200 cards: 23 ms, 118 ms at 4× CPU); each trait starts with them shut; a card says what it shares ("Also applies … · relies on …", "Also reacts to …", "×N in common") | DESIGN § Synergy pages |
+| D38 | (default) The polite line of the artifact filter says the count of every list the page counts (the two sides and the lists under them), not only the two sides | DESIGN § Synergy pages |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D35 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
+D18–D38 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -423,12 +427,18 @@ cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-sou
       chooser, Back and Forward, the filter, a trail of 6, the keyboard alone, axe), the trait page in the walks of `keyboard.test.ts` and
       `touch-targets.test.ts`. *Docs:* DESIGN § Synergy pages, § Keyword tokens, § Party panel; checklist rows 27–32. Deviations on purpose:
       D33–D35; the page of a trait is 1280 px wide from 1100 px (the layout's `wide` class).
-- [ ] **13.4** Secondary sections. Alternatives (with the reason line), Same trigger, Same family: `h2` and a count, 6 cards and "Show all
-      N" (capped at 200 with a message; plain DOM, measure before reaching for the virtual list). **Data:** the biggest lists in v2.0
-      are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same family (Numerical Nightmare), so the
-      cap bites on Same trigger only; Exotic (148 creatures), Backer (135) and Avatar (31) are *families* of the sheet, not real ones, so
-      their lists are long and not meaningful: the page decides whether to show Same family for them; 531 of 1,780 traits rely on no
-      event (`triggers: []`, the "no trigger" state). *T:* e2e counts equal core's; "Show all" keeps the focus.
+- [x] **13.4** The lists under the sides. `related-sections.ts` words *Alternatives*, *Same trigger* and *Same family* (the reason lines, the
+      ×N tag, the empty states, the cut: `shownCards`), `RelatedSection` draws one (an `h2` with the count, a sentence, 6 cards, a button in
+      the heading row that opens up to 200 and keeps the focus), `keyLabel` is the one name of a key (it was two copies). `core`:
+      `SameFamily.grouping` (D36: Exotic, Backer, Avatar and Zantai have no mastery; the acceptance test on the real sheet pins the four).
+      The filter's polite line counts every list (D38). *T:* unit tests and fast-check, mutation-checked (12 mutants of the logic, and the
+      `{#key}` that shuts the lists for the next trait); `synergy-trait.test.ts` (+12 × 3 projects: counts and order equal core's, the keys
+      and events each card says, Show all by keyboard keeps the focus, the cut at 200, no trigger, a grouping, a lone family, the filter, a
+      card re-centres and the lists start shut, add from a card, axe with 200 cards); the new button in `touch-targets.test.ts`; the walks of
+      `keyboard.test.ts` reach the new controls. *Docs:* DESIGN § Synergy pages, checklist rows 27, 32–34. Deviations on purpose: D36–D38;
+      the button is in the heading row, not under the cards (the APG order: the button, then what it opens); the phone's tabs are 13.6.
+      **Data:** the biggest lists in v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same
+      family (Numerical Nightmare): the cut bites on Same trigger only; 531 of 1,780 traits rely on no event (the "no trigger" state).
 - [ ] **13.5** Keyword view. A chip picker (counts spoken as "N appliers, M users", not glyphs), the summary (pill, counts, the verdict
       with icon and text, co-applied as links), Appliers and Rely on it lists (random and conditional labelled, last), "See in Explore"
       (`?kw=a:key`, `u:key`), `/synergy/kw/<slug>`; the verdict goes to the live line. **Data:** the counts are for display, the

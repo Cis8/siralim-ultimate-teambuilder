@@ -52,12 +52,13 @@ describe('sameFamilyOf: who is listed', () => {
       trait('another-stranger', { family: 'Alemental' }),
     ];
 
-    expect(sameFamilyOf(traits, 'focus')).toEqual({ family: 'Abomination', entries: [traits[1]] });
+    expect(sameFamilyOf(traits, 'focus')).toEqual({ family: 'Abomination', grouping: true, entries: [traits[1]] });
   });
 
   it('has nobody to list for a trait that is alone in its family, and still names it', () => {
     expect(sameFamilyOf([trait('focus'), trait('stranger', { family: 'Alemental' })], 'focus')).toEqual({
       family: 'Abomination',
+      grouping: false,
       entries: [],
     });
   });
@@ -79,9 +80,51 @@ describe('sameFamilyOf: who is listed', () => {
       trait('creature-of-master', { family: 'Master of Everything' }),
     ];
 
-    expect(sameFamilyOf(traits, 'the-mastery')).toEqual({ family: 'Abomination', entries: [traits[1]] });
+    expect(sameFamilyOf(traits, 'the-mastery')).toEqual({
+      family: 'Abomination',
+      grouping: false,
+      entries: [traits[1]],
+    });
     expect(ids(sameFamilyOf(traits, 'creature-of-abomination'))).toEqual(['the-mastery']);
     expect(sameFamilyOf(traits, 'creature-of-master').entries).toEqual([]);
+  });
+});
+
+describe('sameFamilyOf: a family or a grouping of the sheet', () => {
+  // The sheet files Exotic, Backer, Avatar and Zantai traits under a name too, though no mastery trait is theirs: those are
+  // groupings, and a list of "the same family" would say nothing (PLAN D36).
+  it('is no grouping when a mastery trait is the family’s, whether the focus is that mastery or a trait of the family', () => {
+    const traits = [trait('focus'), trait('sibling'), mastery('the-mastery', 'Abomination')];
+
+    expect(sameFamilyOf(traits, 'focus').grouping).toBe(false);
+    expect(sameFamilyOf(traits, 'the-mastery').grouping).toBe(false);
+  });
+
+  it('is a grouping when several traits share a name that no mastery is named for, however many they are', () => {
+    const traits = [trait('focus'), trait('one'), trait('two'), mastery('elsewhere', 'Alemental')];
+
+    expect(sameFamilyOf(traits, 'focus').grouping).toBe(true);
+    expect(sameFamilyOf(traits, 'one').grouping).toBe(true);
+  });
+
+  it('is no grouping for a trait alone under its name: nobody is grouped with it', () => {
+    expect(sameFamilyOf([trait('focus'), trait('stranger', { family: 'Alemental' })], 'focus').grouping).toBe(false);
+  });
+
+  it('does not depend on the artifact filter: what the filter leaves out still makes the name a grouping or a family', () => {
+    const grouped = [trait('focus', { material: null }), trait('other', { material: null })];
+    const family = [trait('focus'), mastery('the-mastery', 'Abomination', { material: null })];
+
+    expect(sameFamilyOf(grouped, 'focus', { artifactOnly: true })).toEqual({
+      family: 'Abomination',
+      grouping: true,
+      entries: [],
+    });
+    expect(sameFamilyOf(family, 'focus', { artifactOnly: true })).toEqual({
+      family: 'Abomination',
+      grouping: false,
+      entries: [],
+    });
   });
 });
 
@@ -128,6 +171,7 @@ describe('sameFamilyOf: only artifact-eligible traits', () => {
   it('drops a trait without material, and still reads a focus that has none', () => {
     expect(sameFamilyOf(traits, 'focus', { artifactOnly: true })).toEqual({
       family: 'Abomination',
+      grouping: true,
       entries: [traits[1]],
     });
   });
@@ -169,6 +213,22 @@ describe('sameFamilyOf: invariants', () => {
 
           expect(found.family).toBe(focus.family);
           expect(ids(found).toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+        }
+      }),
+    );
+  });
+
+  it('is a grouping exactly when several traits share the name and none of them is a mastery, whatever the filter', () => {
+    fc.assert(
+      fc.property(shapesArbitrary, (shapes) => {
+        const traits = build(shapes);
+        for (const focus of traits) {
+          const members = traits.filter((other) => other.family === focus.family);
+          const expected = members.length > 1 && !members.some(({ kind }) => kind === 'mastery');
+
+          for (const options of [{}, { artifactOnly: true }]) {
+            expect(sameFamilyOf(traits, focus.id, options).grouping).toBe(expected);
+          }
         }
       }),
     );

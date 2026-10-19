@@ -22,6 +22,10 @@ import type { SlotChoice } from './slot-choices';
 const numberFormat = new Intl.NumberFormat('en-US');
 const formatCount = (count: number): string => numberFormat.format(count);
 
+/** Where a list was looked in: the filter that leaves it empty says so, or it would read as a gap in the compendium. */
+const scopeOf = (artifactOnly: boolean): string =>
+  artifactOnly ? 'among artifact-eligible traits' : 'in the compendium';
+
 const issueCount = (count: number): string => `${formatCount(count)} ${count === 1 ? 'issue' : 'issues'}`;
 
 const creatureLabel = (member: MemberIndex): string => `Creature ${String(member + 1)}`;
@@ -193,8 +197,10 @@ export const copy = {
     `${role === undefined ? '' : `${keywordRole[role]} `}${text} — see who applies it and who relies on it`,
   artifactOnly: 'Artifact-eligible only',
   /** What a screen reader is told when the filter is turned on or off, since the counts are all that changes in front of it. */
-  artifactFilterNow: (on: boolean, enabledBy: number, enables: number) =>
-    `${on ? 'Only traits with a material are listed.' : 'Every trait is listed.'} Enabled by ${formatCount(enabledBy)} ${enabledBy === 1 ? 'trait' : 'traits'}. Enables ${formatCount(enables)} ${enables === 1 ? 'trait' : 'traits'}.`,
+  artifactFilterNow: (on: boolean, counts: readonly { readonly name: string; readonly count: number }[]) =>
+    `${on ? 'Only traits with a material are listed.' : 'Every trait is listed.'} ${counts
+      .map(({ name, count }) => `${name} ${formatCount(count)} ${count === 1 ? 'trait' : 'traits'}.`)
+      .join(' ')}`,
   enabledBy: 'Enabled by',
   enabledByHint: (name: string) => `Traits that apply what ${name} relies on`,
   enables: 'Enables',
@@ -223,10 +229,45 @@ export const copy = {
   appliesNothingByName: (name: string) =>
     `${name} applies no buff, debuff or effect by name, so no trait is listed as relying on it.`,
   /** A key of the focus that nobody gives (or nobody relies on): the artifact filter says it is the filter that leaves it so. */
-  noApplier: (label: string, artifactOnly: boolean) =>
-    `No trait applies ${label} ${artifactOnly ? 'among artifact-eligible traits' : 'in the compendium'}.`,
-  noUser: (label: string, artifactOnly: boolean) =>
-    `Nothing relies on ${label} yet ${artifactOnly ? 'among artifact-eligible traits' : 'in the compendium'}.`,
+  noApplier: (label: string, artifactOnly: boolean) => `No trait applies ${label} ${scopeOf(artifactOnly)}.`,
+  noUser: (label: string, artifactOnly: boolean) => `Nothing relies on ${label} yet ${scopeOf(artifactOnly)}.`,
+
+  /** The three lists under the sides (SPEC §8.4): each has a heading, a sentence under it and its own words for an empty list. */
+  alternatives: 'Alternatives',
+  alternativesHint: (name: string) => `Traits that apply or rely on the same keys as ${name}`,
+  /** What an alternative does with the keys it has in common with the focus: "Also applies Weak · relies on Burning". */
+  alsoShares: (applies: readonly string[], relies: readonly string[]) =>
+    `Also ${[
+      ...(applies.length > 0 ? [`applies ${applies.join(', ')}`] : []),
+      ...(relies.length > 0 ? [`relies on ${relies.join(', ')}`] : []),
+    ].join(' · ')}`,
+  /** The tag of a trait that has several keys or events in common with the focus. */
+  inCommon: (count: number) => `×${String(count)} in common`,
+  noAlternatives: (name: string, artifactOnly: boolean) =>
+    `No other trait applies or relies on the same keys as ${name} ${scopeOf(artifactOnly)}.`,
+  alternativesWithoutKeys: (name: string) =>
+    `${name} applies and relies on no buff, debuff or effect by name, so nothing is listed as an alternative.`,
+  sameTrigger: 'Same trigger',
+  sameTriggerHint: (events: string) => `Traits that also react to ${events}`,
+  sameTriggerHintNone: (name: string) => `Traits that react to the same events as ${name}`,
+  alsoReacts: (events: string) => `Also reacts to ${events}`,
+  noTrigger: (name: string) => `${name} reacts to no event, so no trait is listed with it.`,
+  noSameTrigger: (artifactOnly: boolean) => `No other trait reacts to the same events ${scopeOf(artifactOnly)}.`,
+  sameFamily: 'Same family',
+  sameFamilyHint: (family: string) => `Other ${family} traits, the mastery first`,
+  noSameFamily: (family: string, artifactOnly: boolean) =>
+    `No other trait of the ${family} family ${scopeOf(artifactOnly)}.`,
+  /** A name the sheet files traits under that is no family (PLAN D36): the section says so instead of listing them. */
+  groupingHint: (family: string) => `${family} is a grouping in the compendium, not a family`,
+  groupingNote: 'No mastery trait is named for it, so its traits are not listed together.',
+  /** The button of a list longer than its first few cards: the words, and the name that tells the three lists apart. */
+  showAll: (count: number) => `Show all ${formatCount(count)}`,
+  showFirst: (count: number) => `Show the first ${formatCount(count)}`,
+  showFewer: 'Show fewer',
+  showName: (label: string, title: string) => `${label} — ${title}`,
+  /** Under a list cut at the most the page draws; the artifact filter is the one thing that shortens it. */
+  cappedNote: (listed: number, total: number, artifactOnly: boolean) =>
+    `Showing the first ${formatCount(listed)} of ${formatCount(total)}.${artifactOnly ? '' : ' The artifact filter above narrows the list.'}`,
 
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',

@@ -226,9 +226,10 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   the version, the traits with a similar name as links (at most 8, "No trait has a similar name." when none), and the picker with the
   name the id kept already typed in. An unknown keyword slug says so and lists the keywords.
 - **A trait page** (`/synergy/<id>`): the picker and the *Artifact-eligible only* checkbox in a row (`ArtifactFilter`: `mat=yes`, a step of the
-  history; a polite line says the counts it leaves, "Only traits with a material are listed. Enabled by 6 traits. Enables 12 traits."), the
-  trail, then three parts: from 1100 px in one row (Enabled by · the focus · Enables, the page up to 1280 px wide), below it in one column in
-  the order of the page, the focus first, which is the order of the keyboard too.
+  history; a polite line says the counts it leaves, in every list that has one: "Only traits with a material are listed. Enabled by 6 traits.
+  Enables 12 traits. Alternatives 5 traits. Same trigger 40 traits. Same family 3 traits."), the trail, then three parts: from 1100 px in one
+  row (Enabled by · the focus · Enables, the page up to 1280 px wide), below it in one column in the order of the page, the focus first,
+  which is the order of the keyboard too; and under them, past a rule, the three lists of *The lists under the sides* below.
   - **The focus card** (`FocusCard`, a region named "Focused trait"): the caption "Focus", the `h1` with the class dot (`tabindex="-1"`: it
     takes the focus when the page moves to another trait), "creature · family · class", the description, a `dl` of *Relies on*, *Applies*,
     *Guards against* (only when the trait has one), *Triggers* (an event, with who acts where the text says: "Attack (this creature)") and
@@ -253,6 +254,22 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
     carries the party and the filter), "creature · class" (a mastery, backer or avatar trait: its kind and family), tags in mono (×N links on
     `--accent-surface`, *conditional*, *random*, "no material" with the cube in `--status-crit`), the compact add button, and the notes under
     the text. A trait is a card at most once on each side.
+  - **The lists under the sides** (`RelatedSection`; the wording is `related-sections.ts`): *Alternatives*, *Same trigger* and *Same family*, in
+    that order, side by side from 1100 px and in one column below it (the phone's tabs are 13.6). Each is a region named by its `h2` and the
+    count ("Alternatives 6 traits"), with a sentence under it ("Traits that apply or rely on the same keys as X"), and **cards** of the same
+    `TraitCard` as the lanes: an alternative says what it shares, "Also applies Weak, Vulnerable · relies on Burning" (the focus's keys, by
+    what the trait does with them), a trait of the same trigger "Also reacts to Attack, Start of battle", and both carry "×2 in common" once
+    they share more than one; a trait of the same family has no line of its own (its origin says the rest: the mastery first, "Mastery
+    trait · Family"). Six cards show; a longer list has a button **in the heading row, before the cards** ("Show all 67", named "Show all
+    67 — Alternatives"; `aria-expanded`, `aria-controls` the list, and "Show fewer" when open) so that it does not move when the list
+    grows, the focus stays on it and the tab key goes on into the cards. Plain DOM: 200 cards cost 23 ms to open (118 ms at 4× CPU), so
+    no virtual list. Above 200 (Same trigger has up to 548) the button says "Show the first 200" and a note under the list says "Showing the
+    first 200 of 548. The artifact filter above narrows the list." A trait starts with every list shut. A list with nothing says why, in a
+    dashed note: no key by name to compare ("X applies and relies on no buff, debuff or effect by name…"), no event ("X reacts to no
+    event, so no trait is listed with it."), nobody else, in the words of the filter ("… in the compendium" / "… among artifact-eligible
+    traits"). **A grouping is not a family** (PLAN D36): Exotic, Backer, Avatar and Zantai file traits together in the sheet but no mastery
+    trait is named for them (every real family has exactly one), so their *Same family* has no count and no card, only "Exotic is a
+    grouping in the compendium, not a family" and "No mastery trait is named for it, so its traits are not listed together."
   - **The trail** (`ExplorationTrail`, a `nav` named "Exploration trail", not drawn for one step): the last six traits centred on, oldest first,
     chevrons between (decoration); the steps before the last are links, the last is text with `aria-current="location"`. It is the memory of
     a session of exploring: a visit that opens the app (a deep link, a reload) starts it empty, the picker page empties it, a step cuts it

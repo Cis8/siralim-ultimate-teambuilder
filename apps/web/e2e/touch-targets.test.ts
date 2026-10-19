@@ -370,8 +370,18 @@ test.describe('touch targets on a phone', () => {
       /^Re-centre on /,
       /^Open in Explore$/,
       /^Random sources · /,
+      // The lists under the sides: the button of a long one, shut and then open.
+      /^Show (all|the first) \d+ — /,
       /^Synergies$/,
     ]);
+    await page
+      .getByRole('button', { name: /^Show (all|the first) \d+ — / })
+      .first()
+      .click();
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await expectTargetsLargeEnough(page.locator('body'), [/^Show fewer — /]);
     await expectFieldsNotZoomedIn(page.locator('body'), [/^Find a trait$/]);
     expect(await widerThanTheWindow(page)).toBe(false);
 

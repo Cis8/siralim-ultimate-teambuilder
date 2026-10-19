@@ -16,6 +16,14 @@ export const side = (page: Page, name: 'Enabled by' | 'Enables'): Locator =>
 export const lane = (scope: Locator, heading: string): Locator =>
   scope.getByRole('region', { name: new RegExp(`^${heading} \\d`) });
 
+/** A list under the sides. Its heading holds the count after the name, except for a grouping that is no family. */
+export const listing = (page: Page, title: 'Alternatives' | 'Same trigger' | 'Same family'): Locator =>
+  page.getByRole('region', { name: new RegExp(`^${title}( \\d|$)`) });
+
+/** The button of a list that has more than its first cards: "Show all 67", "Show the first 200" or "Show fewer". */
+export const showMore = (scope: Locator): Locator =>
+  scope.getByRole('button', { name: /^Show (all \d|the first \d|fewer)/ });
+
 /** The card in `scope` for this trait: its name is a link that says "Re-centre on …". */
 export const cardOf = (scope: Locator, name: string): Locator =>
   scope

@@ -5,6 +5,12 @@ import { compareTraitsByName } from './trait-order';
 export interface SameFamily {
   /** The family the focus belongs to. */
   readonly family: string;
+  /**
+   * The name files several traits together, and no mastery trait is named for it: Exotic, Backer, Avatar and Zantai in v2.0, where
+   * every other family has exactly one. Such a name is a grouping of the sheet and not a family (PLAN D36), so a list of "the same
+   * family" would say nothing. Whatever the filter.
+   */
+  readonly grouping: boolean;
   /** The other traits of it: masteries first, then creatures, avatars, backers and the rest, each kind by name. */
   readonly entries: readonly Trait[];
 }
@@ -25,11 +31,11 @@ export function sameFamilyOfTrait(
 ): SameFamily {
   const eligible = eligibleTraits(options);
   const family = familyOf(focus);
+  const members = membersOf(family);
   return {
     family,
-    entries: membersOf(family)
-      .filter((trait) => trait.id !== focus.id && eligible(trait))
-      .toSorted(byKindThenName),
+    grouping: members.length > 1 && !members.some((trait) => trait.kind === 'mastery'),
+    entries: members.filter((trait) => trait.id !== focus.id && eligible(trait)).toSorted(byKindThenName),
   };
 }
 

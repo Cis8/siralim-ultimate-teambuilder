@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { ResolvedPathname } from '$app/types';
-  import { taxonomy, traitFacts, type KeywordKey, type Trait, type Trigger } from '@atlas/core';
+  import { traitFacts, type KeywordKey, type Trait, type Trigger } from '@atlas/core';
   import { classColour } from '../class-colour';
   import { copy } from '../copy';
+  import { keyLabel } from '../key-label';
   import type { PartyActions } from '../party-actions';
   import AddButton from './add-button.svelte';
   import FocusDescription from './focus-description.svelte';
@@ -31,11 +32,10 @@
   const reasonId = $derived(`${uid}-reason`);
   const facts = $derived(traitFacts(trait));
 
-  const labelOf = (key: KeywordKey): string => taxonomy.get(key)?.label ?? key;
   const keysText = (keys: readonly KeywordKey[]): string =>
-    keys.length === 0 ? copy.factNone : keys.map(labelOf).join(', ');
+    keys.length === 0 ? copy.factNone : keys.map(keyLabel).join(', ');
   const triggerText = ({ event, actor }: Trigger): string =>
-    actor === undefined ? labelOf(event) : copy.triggerWithActor(labelOf(event), actor);
+    actor === undefined ? keyLabel(event) : copy.triggerWithActor(keyLabel(event), actor);
   const triggersText = $derived(
     facts.triggers.length === 0 ? copy.factNone : facts.triggers.map(triggerText).join(', '),
   );

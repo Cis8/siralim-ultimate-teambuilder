@@ -5,6 +5,7 @@ import {
   taxonomy,
   traitFacts,
   type RelatedTrait,
+  type RelationIndex,
   type RelationSide,
   type Trait,
 } from '@atlas/core';
@@ -23,18 +24,50 @@ import {
   firstUnique,
   focusCard,
   lane,
+  listing,
   randomToggle,
   relationsOfDataset,
+  showMore,
   side,
   synergyAnnouncement,
   trail,
 } from './support/trait-page';
 
-// Phase 2, M13.3: the page of a trait. The focus card, the two sides of lanes, the trail, the artifact filter and the party, held to
-// what core says of the published dataset (the relation index), as Explore's counts are held to the search.
+// Phase 2, M13.3 and M13.4: the page of a trait. The focus card, the two sides of lanes, the lists under them, the trail, the artifact
+// filter and the party, held to what core says of the published dataset (the relation index), as Explore's counts are held to the search.
+
+/** Cards a list under the sides draws before the person opens it, and the most it draws after (DESIGN § Synergy pages). */
+const PREVIEW = 6;
+const LISTED_AT_MOST = 200;
 
 const labelOf = (key: string): string => taxonomy.get(key)?.label ?? key;
 const plural = (count: number): string => `${String(count)} ${count === 1 ? 'trait' : 'traits'}`;
+
+/** What core says of the three lists under the sides of a trait, with or without the artifact filter. */
+function listsOf(index: RelationIndex, trait: Trait, artifactOnly = false) {
+  const options = { artifactOnly };
+  const alternatives = index.alternativesOf(trait.id, options);
+  const sameTrigger = index.sameTriggerOf(trait.id, options);
+  const sameFamily = index.sameFamilyOf(trait.id, options);
+  const sides = index.relationsOf(trait.id, options);
+  if (alternatives === undefined || sameTrigger === undefined || sameFamily === undefined || sides === undefined) {
+    throw new Error(`the index has no trait ${trait.id}`);
+  }
+  return { alternatives, sameTrigger, sameFamily, sides };
+}
+
+/** What the polite line says when the filter is turned on or off: the count of every list the page counts. */
+function filterNote(index: RelationIndex, trait: Trait, on: boolean): string {
+  const { alternatives, sameTrigger, sameFamily, sides } = listsOf(index, trait, on);
+  const counts = [
+    `Enabled by ${plural(sides.enabledBy.count)}.`,
+    `Enables ${plural(sides.enables.count)}.`,
+    `Alternatives ${plural(alternatives.length)}.`,
+    `Same trigger ${plural(sameTrigger.entries.length)}.`,
+    ...(sameFamily.grouping ? [] : [`Same family ${plural(sameFamily.entries.length)}.`]),
+  ];
+  return `${on ? 'Only traits with a material are listed.' : 'Every trait is listed.'} ${counts.join(' ')}`;
+}
 const isRandom = ({ strength }: RelatedTrait): boolean => strength === 'random';
 const entriesOf = (relationSide: RelationSide): RelatedTrait[] => [
   ...relationSide.several,
@@ -328,7 +361,6 @@ test.describe('the artifact filter', () => {
     );
     const all = relationsOf(focus).enabledBy;
     const kept = index.relationsOf(focus.id, { artifactOnly: true })?.enabledBy;
-    const keptEnables = index.relationsOf(focus.id, { artifactOnly: true })?.enables.count ?? 0;
     if (kept === undefined) throw new Error('the index has no trait for the focus');
     await openTrait(page, focus);
     const enabledBy = side(page, 'Enabled by');
@@ -342,9 +374,7 @@ test.describe('the artifact filter', () => {
     await expect(page.getByRole('heading', { level: 2, name: `Enabled by ${plural(kept.count)}` })).toBeVisible();
     await expect(enabledBy.getByText('no material', { exact: true })).toHaveCount(0);
     // A screen reader is told what changed, which is only the counts.
-    await expect(filterAnnouncement(page)).toHaveText(
-      `Only traits with a material are listed. Enabled by ${plural(kept.count)}. Enables ${plural(keptEnables)}.`,
-    );
+    await expect(filterAnnouncement(page)).toHaveText(filterNote(index, focus, true));
     // The focus itself stays, whatever its material.
     await expect(synergyHeading(page)).toHaveText(focus.name);
 
@@ -364,9 +394,7 @@ test.describe('the artifact filter', () => {
     await expect.poll(() => paramOf(page, 'mat')).toBeNull();
     await expect(artifactFilter(page)).not.toBeChecked();
     await expect(page.getByRole('heading', { level: 2, name: `Enabled by ${plural(all.count)}` })).toBeVisible();
-    await expect(filterAnnouncement(page)).toHaveText(
-      `Every trait is listed. Enabled by ${plural(all.count)}. Enables ${plural(relationsOf(focus).enables.count)}.`,
-    );
+    await expect(filterAnnouncement(page)).toHaveText(filterNote(index, focus, false));
   });
 
   test('is read from the address: a page opened with mat=yes has the box checked and lists only traits with a material', async ({
@@ -516,6 +544,326 @@ test.describe('moving the focus', () => {
   });
 });
 
+test.describe('the lists under the sides: Alternatives, Same trigger, Same family', () => {
+  /** What an alternative says it shares: the keys the focus applies and relies on, in the order the focus names them. */
+  const sharedLine = (shared: readonly { key: string; role: string }[]): string => {
+    const of = (role: string) => shared.filter((tie) => tie.role === role).map(({ key }) => labelOf(key));
+    const parts = [
+      ...(of('applies').length > 0 ? [`applies ${of('applies').join(', ')}`] : []),
+      ...(of('uses').length > 0 ? [`relies on ${of('uses').join(', ')}`] : []),
+    ];
+    return `Also ${parts.join(' · ')}`;
+  };
+
+  test('Alternatives lists the traits that do what the focus does, best first, each with what it shares', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.alternativesOf(each.id) ?? [];
+        return found.length >= 2 && found.length <= PREVIEW && (found[0]?.shared.length ?? 0) >= 2;
+      },
+      'with a few alternatives, the best of which shares two keys',
+    );
+    const { alternatives } = listsOf(index, focus);
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Alternatives');
+    await expect(list.getByRole('heading', { level: 2 })).toHaveText(
+      new RegExp(`^Alternatives\\s*${String(alternatives.length)}`),
+    );
+    await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(alternatives.length));
+    await expect(list).toContainText(`Traits that apply or rely on the same keys as ${focus.name}`);
+    // Every one is there, in core's order, and a list this short has no button.
+    await expect(cards(list)).toHaveCount(alternatives.length);
+    for (const [at, found] of alternatives.entries()) {
+      await expect(
+        cards(list)
+          .nth(at)
+          .getByRole('link', { name: /^Re-centre on / }),
+      ).toHaveAccessibleName(`Re-centre on ${found.trait.name}`);
+    }
+    await expect(showMore(list)).toHaveCount(0);
+    // What the best one shares is said in words, and a trait with several keys in common says how many.
+    const [best] = alternatives;
+    if (best === undefined) throw new Error('no alternative');
+    await expect(cards(list).first()).toContainText(sharedLine(best.shared));
+    await expect(cards(list).first()).toContainText(`×${String(best.shared.length)} in common`);
+  });
+
+  test('opens the rest of a long list with a button that keeps the focus, and closes it again', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.alternativesOf(each.id)?.length ?? 0;
+        return found > PREVIEW && found <= LISTED_AT_MOST;
+      },
+      'with more alternatives than the first cards, and not more than the page lists',
+    );
+    const total = listsOf(index, focus).alternatives.length;
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Alternatives');
+    await expect(cards(list)).toHaveCount(PREVIEW);
+    const more = showMore(list);
+    await expect(more).toHaveText(`Show all ${String(total)}`);
+    await expect(more).toHaveAccessibleName(`Show all ${String(total)} — Alternatives`);
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+
+    // By the keyboard, as a person who cannot point does it: the button does not move out from under the focus.
+    await more.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(cards(list)).toHaveCount(total);
+    await expect(more).toBeFocused();
+    await expect(more).toHaveText('Show fewer');
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    // The button comes before the cards it opens, so the tab key goes on into them.
+    await expect(more).toHaveAttribute('aria-controls', (await list.getByRole('list').getAttribute('id')) ?? '');
+
+    await page.keyboard.press('Enter');
+
+    await expect(cards(list)).toHaveCount(PREVIEW);
+    await expect(more).toBeFocused();
+    await expect(more).toHaveText(`Show all ${String(total)}`);
+  });
+
+  test('cuts a very long list at 200 and says so, and the artifact filter is the way to shorten it', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => (index.sameTriggerOf(each.id)?.entries.length ?? 0) > LISTED_AT_MOST,
+      'that more than 200 traits share a trigger with',
+    );
+    const total = listsOf(index, focus).sameTrigger.entries.length;
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Same trigger');
+    await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(total));
+    await expect(cards(list)).toHaveCount(PREVIEW);
+    await expect(list.getByText(/^Showing the first/u)).toHaveCount(0);
+    await expect(showMore(list)).toHaveText(`Show the first ${String(LISTED_AT_MOST)}`);
+
+    await showMore(list).click();
+
+    await expect(cards(list)).toHaveCount(LISTED_AT_MOST);
+    await expect(list.getByText(/^Showing the first/u)).toHaveText(
+      `Showing the first ${String(LISTED_AT_MOST)} of ${String(total)}. The artifact filter above narrows the list.`,
+    );
+    await expect(showMore(list)).toHaveText('Show fewer');
+
+    await showMore(list).click();
+    await expect(cards(list)).toHaveCount(PREVIEW);
+    await expect(list.getByText(/^Showing the first/u)).toHaveCount(0);
+  });
+
+  test('Same trigger names the events the focus waits for, and which of them each trait waits for too', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.sameTriggerOf(each.id);
+        return found !== undefined && found.triggers.length >= 2 && (found.entries[0]?.shared.length ?? 0) >= 2;
+      },
+      'that waits for two events, and a trait that waits for both',
+    );
+    const { sameTrigger } = listsOf(index, focus);
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Same trigger');
+    await expect(list).toContainText(`Traits that also react to ${sameTrigger.triggers.map(labelOf).join(', ')}`);
+    await expect(cards(list)).toHaveCount(Math.min(PREVIEW, sameTrigger.entries.length));
+    // The best come first, each with the events it shares, and a trait that shares more than one says how many.
+    for (const [at, match] of sameTrigger.entries.slice(0, PREVIEW).entries()) {
+      const card = cards(list).nth(at);
+      await expect(card.getByRole('link', { name: /^Re-centre on / })).toHaveAccessibleName(
+        `Re-centre on ${match.trait.name}`,
+      );
+      await expect(card).toContainText(`Also reacts to ${match.shared.map(labelOf).join(', ')}`);
+      if (match.shared.length > 1) await expect(card).toContainText(`×${String(match.shared.length)} in common`);
+    }
+  });
+
+  test('Same trigger says that a trait which waits for no event has none to share', async ({ page, request }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => index.sameTriggerOf(each.id)?.triggers.length === 0,
+      'that waits for no event',
+    );
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Same trigger');
+    await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(0));
+    await expect(list).toContainText(`${focus.name} reacts to no event, so no trait is listed with it.`);
+    await expect(cards(list)).toHaveCount(0);
+    await expect(showMore(list)).toHaveCount(0);
+  });
+
+  test('Same family puts the mastery of the family first, and counts what core counts', async ({ page, request }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.sameFamilyOf(each.id);
+        return (
+          found !== undefined && !found.grouping && found.entries[0]?.kind === 'mastery' && found.entries.length >= 3
+        );
+      },
+      'in a family with its mastery and other traits',
+    );
+    const { sameFamily } = listsOf(index, focus);
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Same family');
+    await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(sameFamily.entries.length));
+    await expect(list).toContainText(`Other ${sameFamily.family} traits, the mastery first`);
+    await expect(cards(list)).toHaveCount(Math.min(PREVIEW, sameFamily.entries.length));
+    await expect(cards(list).first()).toContainText('Mastery trait');
+    await expect(
+      cards(list)
+        .first()
+        .getByRole('link', { name: /^Re-centre on / }),
+    ).toHaveAccessibleName(`Re-centre on ${sameFamily.entries[0]?.name ?? ''}`);
+  });
+
+  test('Same family does not list a grouping of the sheet as if it were a family, and says why (PLAN D36)', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(traits, (each) => index.sameFamilyOf(each.id)?.grouping === true, 'in a grouping');
+    const { sameFamily } = listsOf(index, focus);
+    await openTrait(page, focus);
+
+    const list = listing(page, 'Same family');
+    await expect(list.getByRole('heading', { level: 2, name: 'Same family' })).toBeVisible();
+    await expect(list).toContainText(`${sameFamily.family} is a grouping in the compendium, not a family`);
+    await expect(list).toContainText('No mastery trait is named for it, so its traits are not listed together.');
+    await expect(cards(list)).toHaveCount(0);
+    await expect(showMore(list)).toHaveCount(0);
+  });
+
+  test('Same family says that a trait is alone in its family, where it is', async ({ page, request }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const found = index.sameFamilyOf(each.id);
+        return found !== undefined && !found.grouping && found.entries.length === 0;
+      },
+      'alone in its family',
+    );
+    await openTrait(page, focus);
+
+    await expect(listing(page, 'Same family')).toContainText(
+      `No other trait of the ${listsOf(index, focus).sameFamily.family} family in the compendium.`,
+    );
+  });
+
+  test('keeps only the traits with a material once the artifact filter is on, in every list', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const all = listsOf(index, each);
+        const kept = listsOf(index, each, true);
+        return (
+          kept.alternatives.length > 0 &&
+          kept.alternatives.length < all.alternatives.length &&
+          kept.sameTrigger.entries.length > 0 &&
+          kept.sameTrigger.entries.length < all.sameTrigger.entries.length
+        );
+      },
+      'whose alternatives and same trigger both lose a trait without a material',
+    );
+    const kept = listsOf(index, focus, true);
+    await openTrait(page, focus, '?mat=yes');
+
+    await expect(listing(page, 'Alternatives').getByRole('heading', { level: 2 })).toContainText(
+      plural(kept.alternatives.length),
+    );
+    await expect(listing(page, 'Same trigger').getByRole('heading', { level: 2 })).toContainText(
+      plural(kept.sameTrigger.entries.length),
+    );
+    await expect(listing(page, 'Alternatives').getByText('no material', { exact: true })).toHaveCount(0);
+    await expect(listing(page, 'Same trigger').getByText('no material', { exact: true })).toHaveCount(0);
+  });
+
+  test('starts every trait with its lists shut, and a card re-centres the page like the lanes do', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => {
+        const [best] = index.alternativesOf(each.id) ?? [];
+        return (
+          (index.alternativesOf(each.id)?.length ?? 0) > PREVIEW &&
+          (best === undefined ? 0 : (index.alternativesOf(best.trait.id)?.length ?? 0)) > PREVIEW
+        );
+      },
+      'with more alternatives than the first cards, the best of which has as many',
+    );
+    const [first] = listsOf(index, focus).alternatives;
+    if (first === undefined) throw new Error('no alternative');
+    const total = listsOf(index, first.trait).alternatives.length;
+    await openTrait(page, focus);
+    const list = listing(page, 'Alternatives');
+    await showMore(list).click();
+    await expect(showMore(list)).toHaveText('Show fewer');
+
+    await cards(list)
+      .first()
+      .getByRole('link', { name: /^Re-centre on / })
+      .click();
+
+    await expect.poll(() => pathOf(page)).toBe(`/synergy/${first.trait.id}`);
+    await expect(synergyHeading(page)).toBeFocused();
+    // Nothing the last trait had opened stays open for this one: its list is shut, with the button to open it.
+    await expect(cards(list)).toHaveCount(PREVIEW);
+    await expect(showMore(list)).toHaveText(`Show all ${String(total)}`);
+    await expect(showMore(list)).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('adds the trait of a card to the party like any other card of the page', async ({ page, request }) => {
+    const { traits, plain, index } = await dataset(request);
+    const focus = firstUnique(
+      traits,
+      (each) => (index.sameFamilyOf(each.id)?.entries.slice(0, PREVIEW) ?? []).some((trait) => plain.has(trait.id)),
+      'with a plain trait among the first of its family',
+    );
+    const neighbour = listsOf(index, focus)
+      .sameFamily.entries.slice(0, PREVIEW)
+      .find((trait) => plain.has(trait.id));
+    if (neighbour === undefined) throw new Error('no plain trait in the family');
+    await openTrait(page, focus);
+    const card = cardOf(listing(page, 'Same family'), neighbour.name);
+
+    await addOf(card).click();
+
+    await expect(card).toContainText('In party: Creature 1 · Innate');
+    await expect.poll(() => paramOf(page, 'party')).toContain(neighbour.id);
+  });
+});
+
 test.describe('the party, from the page of a trait', () => {
   /** A trait that a card of the page shows and that any slot of a creature takes. */
   async function plainNeighbour(request: Parameters<typeof publishedDataset>[0]) {
@@ -634,6 +982,28 @@ test.describe('accessibility of the page of a trait', () => {
     expect(await axeViolations(page)).toEqual([]);
 
     await randomToggle(side(page, 'Enabled by')).first().click();
+    expect(await axeViolations(page)).toEqual([]);
+  });
+
+  test('has none with the three lists under the sides, one of them opened to 200 cards, and with a grouping that is no family', async ({
+    page,
+    request,
+  }) => {
+    const { traits, index } = await dataset(request);
+    const long = firstUnique(
+      traits,
+      (each) => (index.sameTriggerOf(each.id)?.entries.length ?? 0) > LISTED_AT_MOST,
+      'that more than 200 traits share a trigger with',
+    );
+    await openTrait(page, long);
+    expect(await axeViolations(page)).toEqual([]);
+
+    await showMore(listing(page, 'Same trigger')).click();
+    await expect(cards(listing(page, 'Same trigger'))).toHaveCount(LISTED_AT_MOST);
+    expect(await axeViolations(page)).toEqual([]);
+
+    const grouped = firstUnique(traits, (each) => index.sameFamilyOf(each.id)?.grouping === true, 'in a grouping');
+    await openTrait(page, grouped);
     expect(await axeViolations(page)).toEqual([]);
   });
 

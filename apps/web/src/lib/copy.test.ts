@@ -71,10 +71,42 @@ describe('the page of a trait', () => {
   });
 
   it('tells a screen reader what the filter did, since only the counts change', () => {
-    expect(copy.artifactFilterNow(true, 6, 12)).toBe(
-      'Only traits with a material are listed. Enabled by 6 traits. Enables 12 traits.',
+    const counts = (...each: readonly number[]) =>
+      ['Enabled by', 'Enables', 'Same trigger'].map((name, at) => ({ name, count: each[at] ?? 0 }));
+
+    expect(copy.artifactFilterNow(true, counts(6, 12, 1))).toBe(
+      'Only traits with a material are listed. Enabled by 6 traits. Enables 12 traits. Same trigger 1 trait.',
     );
-    expect(copy.artifactFilterNow(false, 1, 0)).toBe('Every trait is listed. Enabled by 1 trait. Enables 0 traits.');
+    expect(copy.artifactFilterNow(false, counts(1, 0, 1200))).toBe(
+      'Every trait is listed. Enabled by 1 trait. Enables 0 traits. Same trigger 1,200 traits.',
+    );
+  });
+
+  it('words a list of the page of a trait that is empty, in the words of the filter that left it so', () => {
+    expect(copy.noAlternatives('Flesh Rot', false)).toBe(
+      'No other trait applies or relies on the same keys as Flesh Rot in the compendium.',
+    );
+    expect(copy.noSameTrigger(true)).toBe('No other trait reacts to the same events among artifact-eligible traits.');
+    expect(copy.noSameFamily('Golem', true)).toBe('No other trait of the Golem family among artifact-eligible traits.');
+  });
+
+  it('names the button of a longer list by what it does and which list it is, and says when a list is cut', () => {
+    expect(copy.showAll(67)).toBe('Show all 67');
+    expect(copy.showFirst(200)).toBe('Show the first 200');
+    expect(copy.showName(copy.showAll(548), 'Same trigger')).toBe('Show all 548 — Same trigger');
+    expect(copy.cappedNote(200, 1200, true)).toBe('Showing the first 200 of 1,200.');
+    expect(copy.cappedNote(200, 548, false)).toBe(
+      'Showing the first 200 of 548. The artifact filter above narrows the list.',
+    );
+  });
+
+  it('writes what a trait shares with the focus, by what it does with each key', () => {
+    expect(copy.alsoShares(['Weak', 'Vulnerable'], ['Burning'])).toBe(
+      'Also applies Weak, Vulnerable · relies on Burning',
+    );
+    expect(copy.alsoShares([], ['Burning'])).toBe('Also relies on Burning');
+    expect(copy.alsoShares(['Weak'], [])).toBe('Also applies Weak');
+    expect(copy.inCommon(3)).toBe('×3 in common');
   });
 
   it('writes who acts where an event has an actor', () => {

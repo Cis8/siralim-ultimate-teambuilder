@@ -2,6 +2,7 @@
   import type { ResolvedPathname } from '$app/types';
   import { taxonomy, type KeywordKey, type RelationSide, type Trait, type TraitId } from '@atlas/core';
   import { copy } from '../copy';
+  import { keyLabel } from '../key-label';
   import type { PartyActions } from '../party-actions';
   import KeyPill from './key-pill.svelte';
   import TraitLane from './trait-lane.svelte';
@@ -29,7 +30,6 @@
 
   const uid = $props.id();
   const enabledBy = $derived(direction === 'enabledBy');
-  const keyLabel = (key: KeywordKey): string => taxonomy.get(key)?.label ?? key;
   /** Only a buff, a debuff or an effect can be a lane's key; anything else would be a fault of the dataset, drawn as an effect. */
   const kindOf = (key: KeywordKey): 'debuff' | 'buff' | 'effect' => {
     const kind = taxonomy.get(key)?.kind;

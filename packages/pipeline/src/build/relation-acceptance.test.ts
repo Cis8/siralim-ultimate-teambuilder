@@ -732,6 +732,14 @@ describe('the relation index on the compendium v2.0', () => {
           'Photomorphogenesis',
         ]);
       });
+
+      it('calls four names of the sheet groupings, the only ones with several traits and no mastery (PLAN D36)', () => {
+        const groupings = new Set(
+          traits.map((trait) => sameFamilyOf(trait)).flatMap(({ family, grouping }) => (grouping ? [family] : [])),
+        );
+
+        expect([...groupings].toSorted()).toEqual(['Avatar', 'Backer', 'Exotic', 'Zantai']);
+      });
     });
 
     describe('all three', () => {

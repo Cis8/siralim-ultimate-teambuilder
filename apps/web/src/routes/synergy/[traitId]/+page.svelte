@@ -6,11 +6,14 @@
   import ExplorationTrail from '../../../lib/components/exploration-trail.svelte';
   import FocusCard from '../../../lib/components/focus-card.svelte';
   import LoadStatus from '../../../lib/components/load-status.svelte';
+  import RelatedSection from '../../../lib/components/related-section.svelte';
   import RelationSide from '../../../lib/components/relation-side.svelte';
   import TraitPicker from '../../../lib/components/trait-picker.svelte';
   import { carriedSearch } from '../../../lib/carried-search';
   import { partySession } from '../../../lib/composition-root';
   import { copy } from '../../../lib/copy';
+  import { keyLabel } from '../../../lib/key-label';
+  import { relatedSections } from '../../../lib/related-sections';
   import { decodeSynergyView } from '../../../lib/synergy-address';
   import { useSynergy } from '../../../lib/synergy-context';
   import { carriedNow, exploreTraitHref, openTrait, synergyHref, synergyLinkSearch } from '../../../lib/synergy-links';
@@ -30,6 +33,16 @@
 
   const artifactOnly = $derived(synergy.view.matOnly);
   const sides = $derived(trait === undefined ? undefined : relations?.relationsOf(trait.id, { artifactOnly }));
+  /** Alternatives, Same trigger and Same family, worded; the relation service remembers each answer, so the filter's two states are cheap. */
+  const related = $derived.by(() => {
+    if (trait === undefined || relations === undefined) return undefined;
+    const options = { artifactOnly };
+    const alternatives = relations.alternativesOf(trait.id, options);
+    const sameTrigger = relations.sameTriggerOf(trait.id, options);
+    const sameFamily = relations.sameFamilyOf(trait.id, options);
+    if (alternatives === undefined || sameTrigger === undefined || sameFamily === undefined) return undefined;
+    return relatedSections({ trait, alternatives, sameTrigger, sameFamily, artifactOnly }, keyLabel);
+  });
   // The links of a trait page carry the party and the artifact filter: the person keeps both as they go from trait to trait.
   const linkSearch = $derived(synergyLinkSearch(artifactOnly));
   const traitHref = (id: TraitId) => synergyHref({ page: 'trait', traitId: id }, linkSearch);
@@ -59,7 +72,15 @@
     } else if (decodeSynergyView(from.url.searchParams).matOnly !== decodeSynergyView(to.url.searchParams).matOnly) {
       void tick().then(() => {
         filterNote =
-          sides === undefined ? '' : copy.artifactFilterNow(artifactOnly, sides.enabledBy.count, sides.enables.count);
+          sides === undefined
+            ? ''
+            : copy.artifactFilterNow(artifactOnly, [
+                { name: copy.enabledBy, count: sides.enabledBy.count },
+                { name: copy.enables, count: sides.enables.count },
+                ...(related ?? []).flatMap(({ title, cards, counted }) =>
+                  counted ? [{ name: title, count: cards.length }] : [],
+                ),
+              ]);
       });
     }
   });
@@ -158,6 +179,17 @@
       />
     </div>
   </div>
+
+  {#if related !== undefined}
+    <!-- A trait starts with its lists shut: the key forgets what the last one had opened. -->
+    {#key trait.id}
+      <div class="related">
+        {#each related as section (section.id)}
+          <RelatedSection {section} {artifactOnly} party={partySession.actions} hrefOf={traitHref} />
+        {/each}
+      </div>
+    {/key}
+  {/if}
 {/if}
 
 <style>
@@ -207,7 +239,21 @@
     gap: 28px 24px;
   }
 
+  /* Under the sides: the three lists that are not a side, in one column in the order of the page, side by side from 1100 px. */
+  .related {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+  }
+
   @media (width >= 1100px) {
+    .related {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+    }
+
     .explorer {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
       grid-template-areas: 'enabled-by focus enables';
