@@ -3,6 +3,7 @@ import type { KeywordKey, Trait, TraitId } from '../model/trait';
 import type { Taxonomy } from '../taxonomy/registry';
 import { alternativesOfTrait, type Alternative } from './alternatives';
 import type { KeyRelations } from './key-relations';
+import { keywordStatsOf, keywordViewOf, type KeywordStats, type KeywordView } from './keyword-view';
 import type { RelationOptions } from './relation-options';
 import { familyOf, sameFamilyOfTrait, type SameFamily } from './same-family';
 import { sameTriggerOfTrait, type SameTrigger } from './same-trigger';
@@ -18,6 +19,10 @@ export interface RelationIndex {
   readonly keys: readonly KeywordKey[];
   /** `undefined` for a key that cannot be a dependency or that the taxonomy does not have. */
   get(key: KeywordKey): KeyRelations | undefined;
+  /** Who gives the key and who relies on it, whether that is enough, and what its appliers also give; `undefined` as `get`. */
+  keywordView(key: KeywordKey, options?: RelationOptions): KeywordView | undefined;
+  /** The counts of every key in `keys`, in its order, under the same filter as `keywordView`: what the chips of the keys say. */
+  keywordStats(options?: RelationOptions): ReadonlyMap<KeywordKey, KeywordStats>;
   /** What enables the trait and what it enables; `undefined` for an id the dataset does not have. */
   relationsOf(id: TraitId, options?: RelationOptions): TraitRelations | undefined;
   /** Traits that give or rely on the same keys as the trait, best substitute first; `undefined` for an id the dataset does not have. */
@@ -73,9 +78,16 @@ export function createRelationIndex(traits: readonly Trait[], taxonomy: Taxonomy
     const focus = byId.get(id);
     return focus === undefined ? undefined : read(focus);
   };
+  const keys = dependencies.map(({ key }) => key);
   return {
-    keys: dependencies.map(({ key }) => key),
+    keys,
     get,
+    keywordView: (key, options = {}) => {
+      const found = relations.get(key);
+      return found === undefined ? undefined : keywordViewOf(found, keys, options);
+    },
+    keywordStats: (options = {}) =>
+      new Map([...relations].map(([key, found]) => [key, keywordStatsOf(found, options)])),
     relationsOf: (id, options = {}) => ofFocus(id, (focus) => relationsOfTrait(focus, get, options)),
     alternativesOf: (id, options = {}) => ofFocus(id, (focus) => alternativesOfTrait(focus, get, options)),
     sameTriggerOf: (id, options = {}) => ofFocus(id, (focus) => sameTriggerOfTrait(focus, waitingFor, options)),

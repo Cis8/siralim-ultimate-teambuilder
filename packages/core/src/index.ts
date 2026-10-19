@@ -101,6 +101,7 @@ export { createMemoryTraitRepository } from './repository/memory-trait-repositor
 export { readDataset, readManifest } from './repository/read-dataset';
 export type { Alternative, SharedKey, SharedRole } from './relations/alternatives';
 export type { KeyRelations } from './relations/key-relations';
+export type { CoApplied, KeywordStats, KeywordVerdict, KeywordView } from './relations/keyword-view';
 export { createRelationIndex, type RelationIndex } from './relations/relation-index';
 export type { RelationOptions } from './relations/relation-options';
 export type { SameFamily } from './relations/same-family';

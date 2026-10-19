@@ -13,14 +13,15 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D28, *Phase 2 — slices* below): M9 and M10 are done, 12.1–12.3 are done and the next slice is 12.4**
-  (the keyword view: `keywordView`, its verdicts, `coApplied`, stats, from `index.get(key)`), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9 and M10 are done, 12.1–12.4 are done and the next slice is 12.5**
+  (wiring: `createRelationService` with an LRU, the composition root loading the dataset once, keyword slugs, `findTraits`, the bench
+  of the relations), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
   lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D28 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
+- For the owner to veto, none blocking: D18–D29 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
@@ -61,9 +62,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D26 | (default) Typing makes the first suggestion active, so Tab and Enter accept it (what the ghost text shows); after an accept, a caret move, Esc or a blur nothing is active and Tab leaves the field. A hover does not activate | QUERY_LANGUAGE §6 |
 | D27 | (default) The Enables side lists only what the focus applies **by name**: a random or conditional source appears in Enabled by (SPEC §8.4) but enables nobody, so Pandemic has an empty Enables. The other way is one table in `trait-relations.ts` and 18 lanes for Pandemic | here |
 | D28 | (default) Alternatives compare what traits say by name, as D27 does: a random or conditional source is nobody's alternative for *applies*, and a mention that only guards (`resists`) makes no tie. Same trigger compares `self` with `ally` as different actors (the plan's rule: equal, or one side says none or `any`) | here |
+| D29 | (default) The keyword verdict asks about the sources first, in GAME_RULES' order (*Dependency statuses*: random before conditional): no applier by name → `only-random` if a random source exists (a conditional one beside it changes nothing), else `only-conditional`, else `no-source`; then the payoff: `no-payoff`, `scarce` (appliers × 2 < users), `supported`. `scarce` and the co-applied keys count the specific appliers only, and the artifact filter acts on all four lists. SPEC §8.4 lists four verdicts (rewritten in 13.8) | here |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D28 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
+D18–D29 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -386,12 +388,20 @@ conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing 
       exactly who is listed, rank, symmetry, shuffled input, filter; the tests were mutation-checked) and `relation-acceptance.test.ts`
       on v2.0 (Sin and Sentence's six alternatives, Culmination's 17, Extra Padding's 208, the Abomination and Apocalypse families, and a
       full-pair oracle for all three sections).
-- [ ] **12.4** Keyword view. `keywordView(key, {artifactOnly})`: appliers (specific), conditional, random (debuffs), users, `verdict`
-      (`no-source` | `only-random` | `only-conditional` | `no-payoff` | `scarce` when appliers × 2 < users | `supported`; D22: the order
-      and the mixed case are settled in the slice, tested), `coApplied` (the keys the specific appliers also apply, count desc, ties by
-      taxonomy order) and `stats`; the artifact filter acts on counts, verdict and chip counts alike (the prototype's chips ignored it).
-      *T:* verdict boundaries (2 appliers × 2 < 5 users is scarce, < 4 is not), a committed snapshot of every key's verdict (reviewed
-      once), and **agreement with Explore**: the `appliers` / `users` counts equal the facet panel's `applies` / `uses` counts.
+- [x] **12.4** Keyword view. Two more methods of the index, each taking `artifactOnly`: `keywordView(key)` → `KeywordView` (`undefined` as
+      `get`: the four lists of `KeyRelations`, already filtered, + `stats {appliers, conditional, random, users}` + `verdict` + `coApplied
+      {key, count}[]`) and `keywordStats()` → a `Map` of the same `stats` for all 42 keys in taxonomy order (the chips of 13.5: one source
+      for the chip and the summary, so the filter cannot move one without the other). The verdict is `verdictOf(stats)`: **D29**.
+      `coApplied` = the other keys among the 42 that the **specific** appliers also apply, once per trait, count desc, ties by taxonomy
+      order (no event or mechanic: they have no keyword view); it is symmetric (the traits that apply both are the same). Real data: every
+      key of v2.0 has an applier, so `no-source`, `only-random` and `only-conditional` never show on the real sheet (unit-tested only);
+      `scarce`: Blighted, Bomb, Burning, Feared, Mania; `no-payoff`: Inverted and seven buffs (Agile, Defensive, Immune, Protected,
+      Savage, Taunting, Warded); the filter moves no verdict on v2.0, only counts. All 42 views cost 0.22 ms, `keywordStats` 17 µs.
+      **For 13.5:** the counts are for display, the lists are the traits; "Often applied together" can be empty (Barrier, Zombies, Inverted).
+      *T:* `keyword-view.test.ts` (a table for `verdictOf` at every boundary, hand-made traits, fast-check against a brute-force oracle
+      for lists, counts and co-applied; mutation-checked: 12 of 12 killed) and `keyword-view-acceptance.test.ts` on v2.0: **agreement
+      with Explore** (appliers / users equal the facet panel's `applies` / `uses` for all 42 keys, with and without `mat:yes`; the
+      chips too; the lists equal what `applies:` / `uses:` find) and the committed `snapshots/keyword-verdicts-v2.0.txt`.
 - [ ] **12.5** Wiring, slugs, speed. `createRelationService` (memoised `relationsOf`, LRU 32); the composition root loads the dataset once
       for both services; `keywordSlug(key)` / `keywordFromSlug(slug)` for `/synergy/kw/<slug>` (unique across the taxonomy, tested like
       the key-prefix rule); `findTraits(text, limit)` for the focus picker (name prefix, name substring, creature or family). `pnpm bench`
