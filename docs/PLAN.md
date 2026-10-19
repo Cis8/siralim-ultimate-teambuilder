@@ -13,22 +13,19 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D50, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.7 are done and the next slice is
-  13.8** (close M13: budgets, SPEC §8.4 rewritten, DESIGN, checklist, ROADMAP tick, PLAN collapse), in the order M13 → M11 (D15).
-  What 13.7 leaves for it: sizes now initial JS 89.6 kB of 150, lazy 32.2 of 50, total 121.7 of 200 (`pnpm build && pnpm size-budget`:
-  the Synergy route is among the lazy chunks, so `lazyJs` already counts it; 13.8 only has to decide whether it needs a budget of its
-  own); no Lighthouse URL reaches `/synergy` yet (GitHub Pages serves `404.html` there; `lighthouserc.cjs` needs a static server that
-  falls back to it). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which
-  stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are
-  rows 9–14, the new links row 15).
-  Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
+- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done; the next slice is 11.1 (Explain), then M11 to its end**
+  (D15). 13.8 closed M13: SPEC §8.4 is what shipped, and Lighthouse CI now browses `/`, `/synergy`, a trait and a keyword through
+  `tools/serve-build`; its first run found a layout shift of 0.07–0.12 on the Synergy pages, fixed in `LoadStatus` (D51). Sizes: initial
+  JS 89.6 kB of 150, lazy 32.1 of 50, total 121.7 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
+  11.6.** **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
+  the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14, the
+  links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D50 (chosen by Claude; **D49–D50, the link of a result and of a slot to a trait's Synergies, and
-  what happens to a search typed a moment before it is followed**; **D44–D48, the phone: a tab press is a history step so Back flips tabs, the focus card keeps its facts and only the description folds, and "Find a trait" / "Other keywords" are sheets**; D39: on a keyword's page the picker of the other keywords is the last section, with counts there only; D40: *Appliers* lists the traits that apply by name, and the conditional and random sources are groups after it; D41–D43: the wording, the live line and the Explore links of that page; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
-  families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D37: the three lists under the sides show
-  6 cards and a button, up to 200; D38: the filter's polite line counts every list; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
-  header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
-  that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
+- For the owner to veto, none blocking: D18–D51 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
+  the sheet, not families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D44–D48 (the phone:
+  a tab press is a history step, the focus card folds only its description, the pickers are sheets); D49–D50 (the Synergies link of a
+  result and of a slot; a search typed a moment before a link is followed is dropped); 8b.10 made "immune to debuffs" a mention (SPEC
+  §4); 8b.11 chose that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
   the shortcut. Until then it ships as QUERY_LANGUAGE §6 says. **D26 is live now:** after typing, Tab and Enter take the first suggestion, so
@@ -90,9 +87,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D48 | (default) Under 700 px the picker of a trait page is a button "Find a trait" that opens a sheet with the focus in its field, and a keyword page's picker is a button "Other keywords" that opens the sheet of the 42 chips (the page has no Keywords section then). A pick closes the sheet and the page puts the focus on its `h1`; put away by hand it gives the focus to its button. The picker page and the pages of what is not found keep theirs inline | DESIGN § Synergy pages |
 | D49 | (default) The Synergies link of a result is the last stop of its card (after the description's keywords), drawn in words in the foot beside the material; it wraps under it on a narrow card. A slot's link is an icon square with the words as its name and its `title`. Neither carries the search, only the party: Back returns to the Explore entry, which has the search | DESIGN § Result list |
 | D50 | (default) Leaving Explore for another route drops the text waiting to be written to the address (`abandon`), it does not flush it into the entry: a flush would be a second navigation racing the link's. So a link followed within 400 ms of the last key leaves Back with the search as the address last had it. A person takes longer to reach a link; the e2e waits for the address | SPEC §7 |
+| D51 | (default) The Synergy route has no size budget of its own: `lazyJs` (50 kB) and `totalJs` (200 kB) bound it, and a first visit to any page fetches at most the total, under the 150 kB of the first page; a route's chunks cannot be told apart without SvelteKit's internals. Lighthouse CI measures four URLs (`/`, `/synergy`, a trait, a keyword) behind `tools/serve-build`; the trait and the keyword page, drawn after the dataset arrives, need performance 0.8 where the others need 0.85 (measured 0.87 and 0.89, a slower runner would fall under 0.85 for no fault of the code); all four hold to a layout shift of 0.1 | `budgets.ts`, `lighthouserc.cjs`, SPEC §9 |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D50 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D51 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -203,11 +201,16 @@ slice that builds it then follows.
 - On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
   with one stop instead of more than ten, also on a tree without the Phase 2 work (checked 2026-10-18). CI (Linux) is green: if it
   is the only failure, it is this.
-- Lighthouse (`pnpm lighthouse`, phone profile, simulated slow 4G): serves `apps/web/build` from the root with gzip, so the
-  build must not have a `BASE_PATH`; Chromium comes from Playwright (`playwright install chromium`). What is left to gain:
-  the LCP (3.0 s, score 0.77) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and 0.035 of
-  layout shift is the meta line, 32 px before the traits and 71 px after on a phone (the sort wraps). To see what moves, record
-  `layout-shift` entries (`sources` has the rects before and after) under a throttled Playwright page.
+- Lighthouse (`pnpm lighthouse`, phone profile, simulated slow 4G, 4 URLs × 3 runs, ~3 min): `tools/serve-build` serves
+  `apps/web/build` from the root with gzip, so the build must not have a `BASE_PATH`; Chromium comes from Playwright
+  (`playwright install chromium`). Lighthouse CI's own static server cannot be used: it falls back to `index.html` and has no
+  `/synergy` for `synergy.html`. The server answers a missing *page* with `404.html` and status 200 (Lighthouse refuses a 404
+  document) but a missing *file* with 404: a 200 for `/robots.txt` made SEO 0.91 ("46 errors found"). A report is in
+  `apps/web/.lighthouseci/lhr-*.json`; `audits['layout-shifts']` names the element that moved. What is left to gain: the LCP
+  (3.3 s on `/`, 3.5 s on the Synergy pages) is the waterfall HTML → scripts → manifest → dataset, which starts in `onMount`; and
+  0.035 of layout shift on Explore is the meta line, 32 px before the traits and 71 px after on a phone (the sort wraps). A page
+  that fills in after the data arrives must hold the height of the window meanwhile, or the footer (visible at first) jumps
+  out of view and counts: that was 0.07–0.12 on the Synergy pages until `LoadStatus` (13.8).
 - Keyboard e2e (`support/keyboard.ts`): Safari's tab key skips links (a setting), so WebKit does not count a link as missed;
   WebKit scrolls a focused control into view after the key press, so the walk waits two frames before it measures; start
   a walk on a page that was only opened (a field filled earlier is where the tab key starts from).
@@ -414,100 +417,28 @@ trigger) and 7 µs (Same family) a trait on average, 0.3 ms at worst for all fou
 focus picker 0.25 ms. Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97
 cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-source traits exist.
 
-### M13 Synergy UI — a new page, the party shared
-- [x] **13.1** Shared party session (a refactor, no behaviour change; the whole Phase 1 e2e suite passed untouched, 519 tests).
-      `party-session.ts`: `createPartySession({ store, rendered })` holds the planner (undo history included), the announcement, the
-      chooser, the last-party persistence and the party's side of an arrival (`arrive`); `syncAddress(sink)` tells the page in front
-      what a change asks of the address (`'chosen'` | `'refined'`); fields are reactive through `createSubscriber`; one instance,
-      `partySession`, in `composition-root.ts`. `createPageUrlWriter` became the generic `createAddressWriter<State>(bar, addressOf)`
-      (`address-writer.ts`). `+page.svelte` went from 800 to 593 lines; initial JS 79.5 → 80.1 kB. Deviations, on purpose: plain
-      `.ts`, not `.svelte.ts` (Vitest has no Svelte compiler and D24 allows no new dependency; `createSubscriber` needs no runes);
-      `go()` still takes a URL: the one route there is is `/`, so the bar of each page resolves its own (13.2, where the lint rule
-      `no-navigation-without-resolve` meets a second route); the live `<p>` stays in the page (`partyAnnouncement` in e2e finds it
-      beside the views; 13.3 decides where both pages get it); a page that goes away drops an open sheet (`forgetChooser`), or the
-      next one would reopen it. *T:* `party-session.test.ts` (mutation-checked) and the writer's tests, moved.
-- [x] **13.2** Routes, deep links, navigation. `routes/synergy/+page.svelte` (the picker: a trait by name, "Start from your party", a
-      keyword), `[traitId]/+page.ts` and `kw/[slug]/+page.ts` with `prerender = false; ssr = false` (404.html boots them on Pages; the
-      route parameter is `slug`, not `key`), one layout for the three (`+layout.svelte`: relations loaded once, `partySession` arrival and
-      `syncAddress`, a writer over `synergyAddress`, the bottom bar). `synergy-address.ts` (`mat=yes`, `section=`, the party),
-      `carried-search.ts` (every link carries the party), `synergy-place.ts` (route id → page), `synergy-links.ts` (every address made
-      by `resolve`, typed `ResolvedPathname`, which the lint rule accepts), `relation-composition.ts` (see Notes). Header `SiteNav` from
-      1100 px; under it `BottomBar` (`TabBar` is its tab list plus the Synergies link; the Synergy routes have a `nav` of three
-      links). `TraitPicker` is the `Combobox` of 10.4 over `relations.findTraits`; `KeywordPicker` is links, grouped; an unknown id
-      is "Trait not found" with similar names and a pre-filled search, an unknown slug the keyword picker. *T:* the address codec,
-      the carried search and the place (mutation-checked); e2e `synergy.test.ts` (both URL shapes opened by address, Back and Forward,
-      the party carried both ways, the restore of the last party, the places, axe), `fallback-page.test.ts` (404.html names its files
-      under the base path), the walks and the targets of the Synergy pages in `keyboard.test.ts` and `touch-targets.test.ts`. *Docs:*
-      SPEC §7, DESIGN (§ Synergy pages, § Layout), ADR-0011. Deviations on purpose: D30–D32; the writer ignores a write whose page has
-      gone; the layout does not call `partySession.arrive` for a `goto` that changes page (it carries the party it holds).
-- [x] **13.3** Trait view. `FocusCard` (class dot, `h1`, origin, the description with its buffs, debuffs and effects as links to their keyword
-      pages and its events and mechanics as plain text, the rows Relies on / Applies / Guards against / Triggers / Material, the add button
-      and “Open in Explore”, a search for `trait:"Name" family:Family`), `RelationSide` + `TraitLane` (Several keys first, a lane per key headed
-      by a `KeyPill`, the random group last and folded above 3, dashed notes for a key nobody gives or relies on, the prototype's empty copy
-      reworded after D27), `TraitCard`, `ExplorationTrail`, `ArtifactFilter` (a step of the history, a polite line with the new counts).
-      `core`: `traitFacts`. `web`: `synergy-trail`, `lane-groups`, `party-add`, `synergySearch`, `traitSearch`; `AddButton` and `PartyNotes`
-      now serve `ResultRow` as well, `styles/keyword.css` is global (the token has a link and a plain variant), `SessionSlotChooser` stands on
-      Explore and on the Synergy layout (which has the polite line of the party too). *T:* unit tests, mutation-checked, and
-      `synergy-trait.test.ts` (23 tests × 3 projects: ROADMAP criteria 4 and 5 on screen, add from a card, from the focus and through the
-      chooser, Back and Forward, the filter, a trail of 6, the keyboard alone, axe), the trait page in the walks of `keyboard.test.ts` and
-      `touch-targets.test.ts`. *Docs:* DESIGN § Synergy pages, § Keyword tokens, § Party panel; checklist rows 27–32. Deviations on purpose:
-      D33–D35; the page of a trait is 1280 px wide from 1100 px (the layout's `wide` class).
-- [x] **13.4** The lists under the sides. `related-sections.ts` words *Alternatives*, *Same trigger* and *Same family* (the reason lines, the
-      ×N tag, the empty states, the cut: `shownCards`), `RelatedSection` draws one (an `h2` with the count, a sentence, 6 cards, a button in
-      the heading row that opens up to 200 and keeps the focus), `keyLabel` is the one name of a key (it was two copies). `core`:
-      `SameFamily.grouping` (D36: Exotic, Backer, Avatar and Zantai have no mastery; the acceptance test on the real sheet pins the four).
-      The filter's polite line counts every list (D38). *T:* unit tests and fast-check, mutation-checked (12 mutants of the logic, and the
-      `{#key}` that shuts the lists for the next trait); `synergy-trait.test.ts` (+12 × 3 projects: counts and order equal core's, the keys
-      and events each card says, Show all by keyboard keeps the focus, the cut at 200, no trigger, a grouping, a lone family, the filter, a
-      card re-centres and the lists start shut, add from a card, axe with 200 cards); the new button in `touch-targets.test.ts`; the walks of
-      `keyboard.test.ts` reach the new controls. *Docs:* DESIGN § Synergy pages, checklist rows 27, 32–34. Deviations on purpose: D36–D38;
-      the button is in the heading row, not under the cards (the APG order: the button, then what it opens); the phone's tabs are 13.6.
-      **Data:** the biggest lists in v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same
-      family (Numerical Nightmare): the cut bites on Same trigger only; 531 of 1,780 traits rely on no event (the "no trigger" state).
-- [x] **13.5** The keyword view. `KeywordSummary` (the name as a `KeyPill` in the `h1`, the kind, “8 apply it · 6 rely on it”, the other sources
-      in a sentence, the verdict with `VerdictIcon`, “Often applied together with” as links), two `RelatedSection`s (*Appliers*, *Rely on it*;
-      the section model gained `groups`, a card gained `tier`, the section a link “See in Explore”), `CardGroup` (the folded group of the
-      lanes, extracted and shared), `KeywordPicker` with the counts (`CountMark` arrows, spoken as “Weak, 2 appliers, 3 users”) and the
-      artifact filter. `keyword-summary.ts` (verdict words and tones, counts, the live line, the keywords in common), `keyword-sections.ts`
-      (the lists and their groups), `keywordSearch` (the Explore link). The verdict goes to the polite line on a move to another keyword.
-      *T:* unit tests, mutation-checked (20 mutants, the one survivor killed by a new test); `synergy-keyword.test.ts` (25 × 3 projects:
-      counts and verdict words per key, the lists equal core's, the groups, “See in Explore” lists as many traits as the page counts with
-      and without `mat=yes` (criterion 11), the chips in words under the same filter, a move says the verdict and lands on the name, the
-      filter, the party, axe); the walks and targets of `keyboard.test.ts` and `touch-targets.test.ts`. *Docs:* DESIGN § Synergy pages,
-      checklist rows 35–40. Deviations on purpose: D39–D43; the picker is last, not first as in the prototype. **Data:** the lists are short
-      (at most 18 appliers and 26 users; 27 random sources for 20 debuffs and at most 1 conditional), a key's keywords in common are at
-      most 9, so nothing is cut; the artifact filter moves the count of one side only for Poisoned, Barrier, Leeching, Mending (appliers)
-      and Frozen (users) and no verdict. SPEC §8.4 is rewritten in 13.8.
-- [x] **13.6** Mobile. Under 700 px (`MediaQuery('width < 700px')` in the two pages, which are not prerendered; the stylesheet asks for the
-      same width): `SectionTabs` (a `tablist`; roving tabindex; `tabForKey` is now generic over the list of tabs), `panelAttributes` (the
-      box of a list is a `tabpanel` named by its tab, the others `hidden`), `shownSection` / `sectionInAddress` (`section=` in the address,
-      none for the first tab), the trail as a row of 44 px pills that scrolls sideways and sits at its end, the compact `FocusCard`
-      (3 lines, "Show more"), `PickerSheet` (a button and a `BottomSheet`: "Find a trait", "Other keywords"), `titleHidden` on `RelationSide`
-      and `RelatedSection`; `.related` moved inside `.explorer` (one grid, one gap; a row of its own from 1100 px). *T:* unit tests
-      (`synergy-sections`, `page-tab`); `synergy-mobile.test.ts` (tabs, counts equal core's, keys, address, history, the sheets, the fold,
-      the trail, 320 px, axe, and what from 700 px must not change); the Synergy e2e adapted with helpers (`showSection`, `shownListing`,
-      `shownSide`, `openTraitPicker`, `shownKeywordList`, `openKeywordChips`); `touch-targets.test.ts` measures each tab of both pages and the
-      sheet's field; `keyboard.test.ts` walks every tab (a page opened with `?section=`). *Docs:* DESIGN § On a phone, checklist iPhone rows
-      9–14. Deviations on purpose: D44–D48; four tabs and a picker sheet and the artifact filter (the prototype has none), no fixed top block
-      (the page scrolls). **Found by the e2e:** `bind:this` hands back `null`, not `undefined`, when the element goes: the trail's effect read
-      `scrollWidth` of null on Back, on every width (a 500 page), until `instanceof`.
-- [x] **13.7** Explore ↔ Synergy. `SynergiesLink` (two variants): in the foot of a result card, beside the material, the icon and “Synergies of
-      X” (28 px, 44 under a coarse pointer); in a filled slot of the party, an icon square between the slot and its clear button (none for an
-      empty slot or a lost id). `synergiesOfHref` (in `synergy-links.ts`) carries the party and not the search: Explore's own entry holds the
-      search, and Back returns to it. `BarIcon` gained `size`; `results-list.svelte` estimates a row at 175 px (200 under 700 px) from the
-      means measured on the sheet, since the old 150 left the jump to the end of the list on a phone at 6 s instead of 0.5 s (the
-      virtualiser measures again by itself: a `ResizeObserver` is on every row). **Found by the e2e (a bug that was already there):** the
-      address follows the typing 400 ms late, and a link followed in that window was lost, because the pending write (`goto('/?q=…')`) took
-      the place of the move in flight or called the person back from the Synergy page. `AddressWriter.abandon()` and a `beforeNavigate` on
-      Explore drop it when the page is left for another route. *T:* `explore-synergies.test.ts` (8 tests × 3 projects: the link of a result
-      carries the party and follows it, the keyboard reaches it after the description's keywords and Enter opens the page, rows do not overlap
-      near the top and 20 screens down, a link followed right after typing, with the route chunks slowed to 900 ms, still leads there, Back
-      finds the search and the party, a slot's link and none for an empty or lost one, axe on Explore and the Party tab), the writer's
-      two new tests, both links in `touch-targets.test.ts`. The unit test and the e2e of the bug failed first (mutation-checked: the link
-      without the party fails three). *Docs:* DESIGN § Result list, § Party panel; SPEC §7; checklist rows 41 (desktop) and 15 (iPhone).
-      Deviations on purpose: D49–D50.
-- [ ] **13.8** Close M13. `lazyJs` and route-chunk budgets, a Lighthouse URL for `/synergy/<id>` if the static server can fall back to
-      `404.html`, SPEC §8.4 rewritten to what shipped, DESIGN (TraitCard, lanes, trail, verdict), checklist, ROADMAP tick, PLAN collapse.
+### M13 Synergy UI — done
+Three routes under `/synergy` (ADR-0011; `ssr = false` for a trait and a keyword, which 404.html boots on Pages) that share the party with
+Explore through `partySession` (`party-session.ts`; the Phase 1 e2e passed untouched through the refactor of 13.1) and write it to the address
+with a writer of their own (`synergy-address.ts`: `mat=yes`, `section=`, the party). `web`: the picker (`TraitPicker` is the `Combobox` of 10.4
+over `relations.findTraits`; `KeywordPicker`; "Start from your party"), the trait page (`FocusCard`, `RelationSide` and `TraitLane` with the
+random group folded above 3, `TraitCard`, `RelatedSection` for Alternatives, Same trigger and Same family, `ExplorationTrail`,
+`ArtifactFilter`), the keyword page (`KeywordSummary` with the six verdicts, `RelatedSection` for Appliers and Rely on it with the conditional
+and random groups, "See in Explore"), the phone under 700 px (`SectionTabs` with `section=` as a history step, the folding focus card, the
+trail as a row of pills, `PickerSheet`), and the links from Explore (`SynergiesLink` in a result's foot and in a filled slot). `core`:
+`traitFacts`, `SameFamily.grouping`. Docs: SPEC §7 and §8.4, DESIGN § Synergy pages, § Result list, § Party panel, § Layout, checklist rows
+27–41 and iPhone 9–15. Deviations worth knowing: D23 and D30–D31 (the Synergies link sits beside the tab list, Party in the header goes to
+Explore); D33–D35 (a card and a step are links, no "Now centred" line, the trail is session memory); D36 (Exotic, Backer, Avatar and Zantai
+are groupings, not families); D37–D38 (6 cards and a button, up to 200); D39–D43 (a keyword's page); D44–D48 (the phone); D49–D50 (the links
+from Explore; a search typed a moment before a link is followed is dropped, `AddressWriter.abandon()`, a bug that was already there).
+Found by the e2e: `bind:this` hands back `null` when an element goes, not `undefined`; and (13.8) `SectionTabs` went along from `selected`,
+which follows the address, so keys that outran the navigation (a held arrow) landed on the wrong tab: a key now goes from the tab it
+was pressed on, with a test that sends three arrows in one task. Found by Lighthouse (13.8): a layout shift of
+0.07–0.12 on the three pages (the footer, jumping out of view when the lists arrived), prevented by `LoadStatus` holding the height of the
+window, and a `/robots.txt` answered with a page. 13.8 also added `tools/serve-build` and the three Synergy URLs to `lighthouserc.cjs`
+(D51). **Data:** the biggest lists in v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same
+family (Numerical Nightmare); 531 of 1,780 traits rely on no event; a keyword has at most 18 appliers and 26 users and 27 random sources,
+so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the Synergy routes about 23), total 121.7.
 
 ### M11 Editor — colours, explanation, saved searches, mobile sheet (last, D15)
 - [ ] **11.1** Explain. `explainQuery(ast, registry)`, a visitor shaped like `serialise`: `FieldDefinition.describe` per field,

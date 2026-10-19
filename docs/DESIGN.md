@@ -221,7 +221,9 @@ size of the window are watched once for it and for `trackViewportOffset` (`page-
 ### Synergy pages (M13)
 The pages under `/synergy` (ADR-0011) are a column of sections as wide as a line of text reads well (880 px at most, 16 px gutters on a
 phone): the `h1` (24 px), then sections with an `h2` (15 px). The layout of the routes holds the relations and the party; a page that
-waits for the dataset shows "Loading the traits…" (`role="status"`), or for good the alert of the failure (`LoadStatus`).
+waits for the dataset shows "Loading the traits…" (`role="status"`), or for good the alert of the failure (`LoadStatus`). The status
+holds the height of the window while it waits, so that the footer is below the fold and does not jump out of view when the lists
+arrive (a layout shift of 0.07–0.12 on a phone before; Lighthouse CI now holds all three pages to 0.1).
 - **Trait picker** (`TraitPicker`): the frame of the search field (accent border, 44 px, the focus ring around the whole bar, 16 px
   text under coarse) and the same list under it (`Combobox`): a *Trait* badge, the name in the mono face, then "creature · family ·
   class" beside it, which tells two traits of one name apart. An empty field lists nothing; Enter takes the first match (it is

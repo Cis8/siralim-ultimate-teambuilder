@@ -16,9 +16,11 @@ export interface Verdict {
 }
 
 // SPEC § Performance. A kB is 1000 bytes, as in the network panel of a browser: the stricter reading of "KB".
-// The two JavaScript budgets that follow the first are Phase 2's (ROADMAP criterion 8): the query assist is the one lazy feature so
-// far (9.2 kB of lazy JS when it was first measured, in 10.5, 8.3 of them its chunk), and the limits leave room for the Synergy
-// route and the editor, which are still to come. Revisit them when those land (PLAN 11.6, 13.8).
+// The two JavaScript budgets that follow the first are Phase 2's (ROADMAP criterion 8). Measured when the Synergy routes closed
+// (13.8): 89.6 kB initial, 32.1 lazy (the query assist about 9 and the Synergy routes about 23) and 121.7 in all. A route has no budget
+// of its own: a first visit to any page fetches no more than the total (121.7 kB, under the 150 kB the first page may weigh), and a
+// route's chunks cannot be told from the build's files without reading SvelteKit's internals. The total's limit of 200 kB is room, not
+// a promise about a first visit: when the editor (M11) has spent what is left of the lazy 50 kB, revisit the limits (PLAN 11.6).
 export const SIZE_BUDGETS: readonly SizeBudget[] = [
   { name: 'initial JavaScript', limitBytes: 150_000, files: (sizes) => sizes.initialJs },
   { name: 'lazy JavaScript', limitBytes: 50_000, files: (sizes) => sizes.lazyJs },

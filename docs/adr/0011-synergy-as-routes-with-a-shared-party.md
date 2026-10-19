@@ -51,9 +51,13 @@ an unknown path.
   `404.html` carry the base path.
 - The lint rule `no-navigation-without-resolve` accepts few forms (`resolve('/')` and a few template strings): a small helper builds
   the Synergy links.
-- A Lighthouse URL for `/synergy/<id>` is added only if the static server used by CI can fall back to `404.html`.
-- SPEC §7 (the `tab=` parameter), SPEC §8.4 and DESIGN (the `TabBar` line, `TraitCard`, lanes, trail, verdict) change in the slices
-  that ship them (13.2, 13.8).
+- A Lighthouse URL for `/synergy/<id>` needed a static server that falls back to `404.html`. The one Lighthouse CI brings falls back
+  to `index.html` and does not find `/synergy` (`synergy.html`), so `tools/serve-build` serves the build as Pages does and
+  `lighthouserc.cjs` measures `/`, `/synergy`, a trait and a keyword (13.8). Its first run found a layout shift of 0.07–0.12 on the
+  three Synergy pages (the footer, pushed out of the window when the lists arrived), which `LoadStatus` now prevents by holding the
+  window's height.
+- SPEC §7 (the `tab=` parameter), SPEC §8.4 and DESIGN (the `TabBar` line, `TraitCard`, lanes, trail, verdict) changed in the slices
+  that shipped them (13.2–13.8).
 - The relation code is a few kilobytes that only the Synergy routes need, and a module that the first script imports anywhere
   brings what it exports along: the relation service is therefore built in `relation-composition.ts`, apart from the composition
   root that Explore imports, and a dependency-cruiser rule (`relations-stay-lazy`) lets only `routes/synergy/` import it. It was

@@ -545,12 +545,54 @@ Syntax highlighting in the input, autocomplete by context, inline diagnostics wi
 "reads as", ghost completion, recent and saved searches, mobile syntax toolbar. Full rules in `QUERY_LANGUAGE.md`.
 
 ### 8.4 Synergy explorer (Phase 2)
-- *By trait*: **Enabled by** (traits applying any key the focus uses, grouped by key), **Enables** (traits using any key
-  the focus applies), link score = number of distinct keys linking two traits, **Alternatives** (same role overlap),
-  **Same trigger**, **Same family** (mastery first). Random-debuff traits appear in Enabled-by lanes for debuffs, ranked last
-  and labelled "random". Breadcrumb trail; click to re-centre.
-- *By keyword*: appliers vs users, verdict (`No source` if 0 appliers; `No payoff yet` if 0 users;
-  `Scarce enabler` if appliers × 2 < users; else `Well supported`), keywords often applied together.
+Three routes under `/synergy` (§7, ADR-0011) that share the party with Explore: the picker (`/synergy`), a trait
+(`/synergy/<traitId>`) and a keyword (`/synergy/kw/<slug>`). The relations come from `createRelationService` in `core`
+(M12); the pages draw what it returns and decide nothing. **A dependency is a buff, debuff or effect** (42 keys in v2.0): an event
+is no dependency (GAME_RULES R12), so it ties traits together only in *Same trigger*. Everything a trait says counts **by name**:
+a source that is random (R5) or conditional (R10) is listed among the sources but enables nobody (PLAN D27). Every trait is listed
+unless *Artifact-eligible only* (`mat=yes`) is ticked: it leaves the traits that cannot be a material (R1) out of every list and
+every count of the page.
+
+- **By trait.** The focus card gives the description (its buffs, debuffs and effects are links to their keyword's page), *Relies on*,
+  *Applies*, *Guards against* (the role `resists`, R9), *Triggers* and *Material*, the add button and a link that opens Explore on
+  that trait.
+  - **Enabled by** is the traits that apply a key the focus relies on, **Enables** the traits that rely on a key the focus applies.
+    A trait is on a side **once** (PLAN D17): when it ties through two keys or more it is in the first lane, *Several keys*, marked
+    "×N links" and naming the keys; otherwise it is in the lane of its key, and the lanes follow in the order the focus names its
+    keys. In a lane the traits that give the key by name come first, then those that give it under a condition, then the random
+    sources (labelled "random", folded above 3); within each, more links first, then by name. A key that nobody gives (or relies on) is
+    a note, not a lane.
+  - **Alternatives** are the traits that apply a key the focus applies or rely on a key it relies on, ranked by how many keys they
+    share, then by name; protection makes no tie. **Same trigger** is the traits that rely on an event the focus relies on with an
+    actor that can be the same (equal, or one side names none or says any creature; *this creature* and *an ally* are different
+    actors, D28), ranked by the events shared. A trait that waits for no event has no *Same trigger* and says so. **Same family**
+    is the others of the focus's family, the mastery first, then creatures, avatars, backers and the rest, each by name. A name that
+    files several traits together and has no mastery trait (Exotic, Backer, Avatar and Zantai in v2.0) is a *grouping*, not a family,
+    and lists nobody (D36).
+  - Each of those three shows 6 cards and a button for the rest, up to 200. The trail is the last six traits the person centred on in
+    this session; a card or a step re-centres the page on its trait (a link, so Back and Forward work).
+- **By keyword.** The summary counts the traits that apply the key by name (*Appliers*) and those that rely on it (*Rely on it*), says
+  how many more give it under a condition or at random, gives the **verdict** and lists the keys its appliers also apply
+  ("Often applied together with"). These counts are the ones of Explore's facet panel for the same key, with or without
+  `mat:yes` (ROADMAP criterion 11), and each list has a link that opens Explore on exactly its traits. The verdict asks about the
+  sources first, then the payoff (D22, D29):
+
+  | Verdict | When |
+  |---|---|
+  | *No source* | nothing applies the key by name, at random or under a condition |
+  | *Only by chance* | nothing applies it by name, and a trait afflicts a random debuff on enemies (a conditional source beside it changes nothing) |
+  | *Only under a condition* | nothing applies it by name or at random, and a trait gives it under a condition |
+  | *No payoff yet* | something applies it, and nothing relies on it |
+  | *Scarce enabler* | appliers × 2 < users |
+  | *Well supported* | anything else |
+
+  Only *Well supported* is good and only *No source* bad; the other four ask for care, and each verdict has an icon so that colour
+  is never alone. The picker of the other keywords shows the two counts of each.
+- **The picker** (`/synergy`) finds a trait by name (the name begins with the text, then a word, then anywhere; then the creature or the
+  family), starts from the filled slots of the party, and lists the keywords. A trait id or keyword slug the dataset does not
+  know is a page that says so and offers similar names, not an error (ROADMAP criterion 9).
+- **Under 700 px** the lists are tabs (`section=` in the address, a history step), the focus card folds its description to 3 lines, and
+  the pickers are sheets (DESIGN § Synergy pages, *On a phone*).
 
 ### 8.5 Party analysis (Phase 3)
 - Health tiles: dependencies covered, mastery state, conflicts, open slots.
@@ -567,7 +609,7 @@ Syntax highlighting in the input, autocomplete by context, inline diagnostics wi
 
 | Area | Target |
 |---|---|
-| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised. The search is timed by the page (`timeSearches`, a User Timing measure) and checked by an e2e on the production build with the CPU slowed down 4×: p95 of a typed query under 16 ms. Redrawing the list is not in the budget: virtualisation bounds it. The sizes are checked by `pnpm size-budget` on the production build (KB = 1000 bytes; initial JS is the scripts the page preloads, data is every file under `data/`, both gzipped as GitHub Pages serves them). Lighthouse CI, on a phone profile, fails the build below performance 0.85, accessibility 1, best practices 0.95 or SEO 0.95, or above a cumulative layout shift of 0.1 (`apps/web/lighthouserc.cjs`) |
+| Performance | Initial JS ≤ 150 KB gzip; data ≤ 300 KB gzip; search + facet recount ≤ 16 ms per keystroke on the full dataset on a mid-range phone; result list virtualised. The search is timed by the page (`timeSearches`, a User Timing measure) and checked by an e2e on the production build with the CPU slowed down 4×: p95 of a typed query under 16 ms. Redrawing the list is not in the budget: virtualisation bounds it. The sizes are checked by `pnpm size-budget` on the production build (KB = 1000 bytes; initial JS is the scripts the page preloads, data is every file under `data/`, both gzipped as GitHub Pages serves them; the lazy and the total JS have budgets of their own, 50 and 200 KB, and no route has one: a first visit to any page fetches at most the total). Lighthouse CI, on a phone profile, browses Explore, the Synergy picker, a trait's page and a keyword's page (`tools/serve-build` serves the build as Pages does) and fails the build below performance 0.85 (0.8 for the last two, which are drawn after the dataset is there), accessibility 1, best practices 0.95 or SEO 0.95, or above a cumulative layout shift of 0.1 (`apps/web/lighthouserc.cjs`) |
 | Accessibility | WCAG 2.2 AA; axe clean; full keyboard use; see DESIGN § Accessibility |
 | Browsers | Last 2 versions of Chrome, Firefox, Safari, Edge; iOS Safari 16+ |
 | Offline | Phase 1: none required. By end of Phase 3: PWA, data cached, works offline |

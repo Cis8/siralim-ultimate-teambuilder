@@ -74,7 +74,7 @@ riskiest and needs the owner's iPhone.
 - [x] **M12 Relations engine (core).** `enabledBy`, `enables`, link scores, alternatives, shared triggers, same family,
       random-debuff sources (GAME_RULES R5), conditional sources (R10), keyword view stats + verdicts. Buffs, debuffs and effects
       only: no event is a dependency (R12; PLAN D16). Unit-tested on the real sheet.
-- [ ] **M13 Synergy UI.** By trait (lanes, trail, re-centre, add to party, artifact-eligible filter), by keyword
+- [x] **M13 Synergy UI.** By trait (lanes, trail, re-centre, add to party, artifact-eligible filter), by keyword
       (appliers/users, verdict, co-applied), deep links (`/synergy/<traitId>`, `/synergy/kw/<slug>`), mobile tabs; routes with a
       shared party session (ADR-0011).
 - [ ] **M11 Editor.** Syntax-coloured input with error underlines, caret preserved after edits, explain line ("Reads as"),

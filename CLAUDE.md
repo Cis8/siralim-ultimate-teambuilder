@@ -52,7 +52,7 @@ packages/core      Pure TypeScript domain: model, keyword extraction, query lang
 packages/pipeline  Node scripts: fetch the sheet → validate → normalise → enrich → emit versioned JSON.
 apps/web           The UI only (SvelteKit 3, ADR-0002). Depends on core through small service interfaces.
                    Never re-implements domain logic.
-tools/             Repo tooling (ESLint boundary rules and their tests).
+tools/             Repo tooling and its tests: the ESLint boundary rules, the size budgets, the static server Lighthouse CI browses.
 ```
 
 Hard boundaries, enforced by `tools/eslint/boundaries.js` (tested), `.dependency-cruiser.cjs` and tsconfig `lib`/`types`:
@@ -84,7 +84,8 @@ pnpm test                # all unit tests (Vitest projects: core, pipeline, web,
 pnpm test:e2e            # Playwright: desktop Chromium, Pixel 7, iPhone 14 WebKit; builds first
 pnpm bench               # Vitest bench: times the search on the pinned snapshot (no budget; the e2e holds it)
 pnpm size-budget         # after pnpm build: fails if initial JS > 150 kB, lazy JS > 50 kB, total JS > 200 kB or data > 300 kB gzip (tools/size-budget)
-pnpm lighthouse          # after pnpm build (without BASE_PATH): Lighthouse CI, phone profile, thresholds in apps/web/lighthouserc.cjs
+pnpm lighthouse          # after pnpm build (without BASE_PATH): Lighthouse CI on Explore, the Synergy picker, a trait and a keyword
+                         # (served by tools/serve-build, which falls back to 404.html as Pages does), thresholds in apps/web/lighthouserc.cjs
 pnpm lint                # ESLint + Prettier check + dependency-cruiser (packages and apps/web/src)
 pnpm typecheck
 pnpm check               # lint + typecheck + test — the gate before every commit (also the pre-push hook)

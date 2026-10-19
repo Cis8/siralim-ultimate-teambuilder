@@ -23,6 +23,14 @@
     color: var(--text-faint);
   }
 
+  /*
+   * The page that takes its place is longer than the window, nearly always. Holding the window's height meanwhile keeps the footer
+   * below the fold, so that it does not jump out of view when the lists arrive (cumulative layout shift, as on Explore).
+   */
+  .status:not(.failed) {
+    min-height: 100dvh;
+  }
+
   .failed {
     display: flex;
     align-items: center;
