@@ -318,8 +318,19 @@ test.describe('touch targets on a phone', () => {
     // The pages that have no party to show: a trait, a keyword, a keyword that is none, a trait that is none.
     for (const [address, including] of [
       [`./synergy/${trait.id}`, [/^Find a trait$/]],
-      ['./synergy/kw/vulnerable', [/^Vulnerable$/]],
-      ['./synergy/kw/not-a-keyword', [/^Weak$/]],
+      // A keyword: the chips, the links of the summary, the two lists with their buttons and links, the cards and the filter.
+      [
+        './synergy/kw/vulnerable',
+        [
+          /^Vulnerable\b/,
+          /^Artifact-eligible only$/,
+          /^See in Explore — Appliers$/,
+          /^Show all \d+ — Appliers$/,
+          /^Open /,
+          /^Add to/,
+        ],
+      ],
+      ['./synergy/kw/not-a-keyword', [/^Weak\b/]],
       [`./synergy/retired--${trait.id.split('--')[1] ?? 'x'}`, [/^Find a trait$/]],
     ] as const) {
       await page.goto(address);

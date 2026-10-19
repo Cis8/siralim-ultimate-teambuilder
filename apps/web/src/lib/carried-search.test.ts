@@ -8,7 +8,7 @@ import {
   type PartyState,
 } from '@atlas/core';
 import { describe, expect, it } from 'vitest';
-import { carriedSearch, traitSearch } from './carried-search';
+import { carriedSearch, keywordSearch, traitSearch } from './carried-search';
 
 const party = (target: PartyState['target']): PartyState => ({
   party: withTraitAt(
@@ -91,5 +91,37 @@ describe('traitSearch', () => {
 
     expect(decodePartyState(params)).toEqual({ ...carried.party, datasetVersion: '2.0' });
     expect(decodeExploreState(params).query).toBe('trait:"Sin and Sentence" family:Abomination');
+  });
+});
+
+describe('keywordSearch', () => {
+  const empty = { party: initialPartyState, datasetVersion: '2.0' };
+
+  it('is the filter that lists in Explore the traits which apply a keyword, or those which rely on it', () => {
+    const applies = decodeExploreState(new URLSearchParams(keywordSearch('vulnerable', 'applies', false, empty)));
+    const uses = decodeExploreState(new URLSearchParams(keywordSearch('vulnerable', 'uses', false, empty)));
+
+    expect(applies).toEqual({ ...initialExploreState, keywords: [{ field: 'applies', key: 'vulnerable' }] });
+    expect(uses).toEqual({ ...initialExploreState, keywords: [{ field: 'uses', key: 'vulnerable' }] });
+    expect(keywordSearch('vulnerable', 'applies', false, empty)).toBe('kw=a:vulnerable');
+  });
+
+  it('keeps the artifact filter, so that Explore lists the traits the page does', () => {
+    const search = keywordSearch('weak', 'uses', true, empty);
+
+    expect(decodeExploreState(new URLSearchParams(search))).toEqual({
+      ...initialExploreState,
+      keywords: [{ field: 'uses', key: 'weak' }],
+      artifactEligible: true,
+    });
+  });
+
+  it('carries the party, and reads back a key of two words', () => {
+    const carried = { party: party({ member: 1, slot: 'fused' }), datasetVersion: '2.0' };
+    const search = keywordSearch('mega magic', 'applies', false, carried);
+
+    expect(search.startsWith('party=2.0,life--mender,,,death--plague&target=2-fused&')).toBe(true);
+    expect(decodePartyState(new URLSearchParams(search)).party).toEqual(carried.party.party);
+    expect(decodeExploreState(new URLSearchParams(search)).keywords).toEqual([{ field: 'applies', key: 'mega magic' }]);
   });
 });

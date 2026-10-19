@@ -1,18 +1,26 @@
 <script lang="ts">
   import type { ResolvedPathname } from '$app/types';
-  import { taxonomy, type KeywordKey } from '@atlas/core';
+  import { taxonomy, type KeywordKey, type KeywordStats } from '@atlas/core';
   import { copy } from '../copy';
+  import { chipCounts } from '../keyword-summary';
+  import CountMark from './count-mark.svelte';
 
   /**
    * The keywords that traits give and rely on, as links to their pages, a group for each kind of them. The page that shows it
-   * names the list (a heading above); `current` is the keyword whose page this is, if any.
+   * names the list (a heading above); `current` is the keyword whose page this is, if any. With `stats` each link also says how many
+   * traits apply the keyword and how many rely on it: two numbers with an arrow each, which are spoken as words.
    */
   const {
     keys,
     current,
     hrefOf,
-  }: { keys: readonly KeywordKey[]; current?: KeywordKey | undefined; hrefOf: (key: KeywordKey) => ResolvedPathname } =
-    $props();
+    stats,
+  }: {
+    keys: readonly KeywordKey[];
+    current?: KeywordKey | undefined;
+    hrefOf: (key: KeywordKey) => ResolvedPathname;
+    stats?: ReadonlyMap<KeywordKey, KeywordStats> | undefined;
+  } = $props();
 
   const KINDS = ['debuff', 'buff', 'effect'] as const;
 
@@ -27,13 +35,31 @@
   );
 </script>
 
+{#if stats !== undefined}
+  <!-- For the eye: a screen reader is told the numbers in words, link by link. -->
+  <p class="legend" aria-hidden="true">
+    <span><CountMark side="applies" /> {copy.chipLegend.applies}</span>
+    <span><CountMark side="uses" /> {copy.chipLegend.uses}</span>
+  </p>
+{/if}
+
 {#each groups as { kind, entries } (kind)}
   <section class="group" data-kind={kind}>
     <h3>{copy.keywordGroups[kind]}</h3>
     <ul>
       {#each entries as { key, label } (key)}
+        {@const counts = stats?.get(key)}
         <li>
-          <a href={hrefOf(key)} aria-current={key === current ? 'page' : undefined}>{label}</a>
+          <a href={hrefOf(key)} aria-current={key === current ? 'page' : undefined}>
+            {label}
+            {#if counts !== undefined}
+              <span class="visually-hidden">, {chipCounts(counts)}</span>
+              <span class="counts" aria-hidden="true">
+                <span><CountMark side="applies" />{counts.appliers}</span>
+                <span><CountMark side="uses" />{counts.users}</span>
+              </span>
+            {/if}
+          </a>
         </li>
       {/each}
     </ul>
@@ -63,6 +89,32 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .legend span,
+  .counts span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .counts {
+    display: inline-flex;
+    gap: 8px;
+    margin-left: 8px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
   }
 
   a {

@@ -1,8 +1,8 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import type { ResolvedPathname } from '$app/types';
-import type { Trait, TraitId } from '@atlas/core';
-import { carriedSearch, traitSearch, type CarriedParty } from './carried-search';
+import type { KeywordKey, Trait, TraitId } from '@atlas/core';
+import { carriedSearch, keywordSearch, traitSearch, type CarriedParty } from './carried-search';
 import { partySession } from './composition-root';
 import { encodeTab } from './page-tab';
 import { synergySearch } from './synergy-address';
@@ -56,6 +56,13 @@ export const carriedNow = (): CarriedParty => ({
 /** The address of Explore searching for exactly this trait, carrying the party. */
 export const exploreTraitHref = (trait: Pick<Trait, 'name' | 'family'>): ResolvedPathname =>
   exploreHref(traitSearch(trait, carriedNow()));
+
+/** The address of Explore listing the traits that apply a keyword or rely on it, carrying the party and the artifact filter. */
+export const exploreKeywordHref = (
+  key: KeywordKey,
+  side: 'applies' | 'uses',
+  artifactOnly: boolean,
+): ResolvedPathname => exploreHref(keywordSearch(key, side, artifactOnly, carriedNow()));
 
 /** What a link from one Synergy page to another carries: the party, and the artifact filter, which the person keeps as they go. */
 export const synergyLinkSearch = (matOnly: boolean): string =>

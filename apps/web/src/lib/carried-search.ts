@@ -3,6 +3,7 @@ import {
   encodePartyState,
   initialExploreState,
   serialiseTerm,
+  type KeywordKey,
   type PartyState,
   type Trait,
   type UrlParams,
@@ -33,4 +34,20 @@ export function carriedSearch({ party, datasetVersion }: CarriedParty, extra: Ur
 export function traitSearch({ name, family }: Pick<Trait, 'name' | 'family'>, carried: CarriedParty): string {
   const query = `${serialiseTerm('trait', name)} ${serialiseTerm('family', family)}`;
   return carriedSearch(carried, encodeExploreState({ ...initialExploreState, query }));
+}
+
+/**
+ * The query string of a link to Explore that lists the traits which apply a keyword, or which rely on it (`kw=a:key`, `kw=u:key`):
+ * the list a page of that keyword draws. The artifact filter goes with it when it is on, so that both say the same traits.
+ */
+export function keywordSearch(
+  key: KeywordKey,
+  side: 'applies' | 'uses',
+  artifactOnly: boolean,
+  carried: CarriedParty,
+): string {
+  return carriedSearch(
+    carried,
+    encodeExploreState({ ...initialExploreState, keywords: [{ field: side, key }], artifactEligible: artifactOnly }),
+  );
 }

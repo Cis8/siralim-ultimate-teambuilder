@@ -3,6 +3,7 @@ import { keywordSlug, slugify, taxonomy, type Trait } from '@atlas/core';
 import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
 import { isTabbed, openExplore } from './support/explore-page';
+import { chipOf, keywordChips } from './support/keyword-page';
 import { addToParty, plainTraits, showParty, slot, toolbarButton, withUniqueName } from './support/party-page';
 import {
   fromKeyword,
@@ -75,10 +76,7 @@ test.describe('the Synergy pages, opened from their address', () => {
     await expect(synergyHeading(page)).toHaveText(entry.label);
     await expect(page).toHaveTitle(`${entry.label} — Synergies — Trait Atlas`);
     await expect(page.getByText('Effect', { exact: true })).toBeVisible();
-    await expect(fromKeyword(page).getByRole('link', { name: entry.label, exact: true })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    await expect(chipOf(keywordChips(page), entry.label)).toHaveAttribute('aria-current', 'page');
   });
 
   test('an id the dataset does not know is a state of the page: it says so, and offers a way on', async ({
@@ -121,7 +119,7 @@ test.describe('the Synergy pages, opened from their address', () => {
     await expect(synergyHeading(page)).toHaveText('Keyword not found');
     await expect(page).toHaveTitle('Keyword not found — Synergies — Trait Atlas');
     await expect(page.getByText('“not-a-keyword” is not a buff, debuff or effect')).toBeVisible();
-    await expect(fromKeyword(page).getByRole('link', { name: 'Vulnerable', exact: true })).toBeVisible();
+    await expect(chipOf(fromKeyword(page), 'Vulnerable')).toBeVisible();
     // An event is a keyword, and has no page of its own (GAME_RULES R12).
     await page.goto('./synergy/kw/start-of-battle');
     await expect(synergyHeading(page)).toHaveText('Keyword not found');

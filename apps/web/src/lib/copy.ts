@@ -269,6 +269,59 @@ export const copy = {
   cappedNote: (listed: number, total: number, artifactOnly: boolean) =>
     `Showing the first ${formatCount(listed)} of ${formatCount(total)}.${artifactOnly ? '' : ' The artifact filter above narrows the list.'}`,
 
+  /** The page of a keyword (13.5): who gives it, who relies on it, and whether that is enough (SPEC §8.4). */
+  appliers: 'Appliers',
+  appliersHint: (label: string) => `Traits that apply ${label} by name`,
+  /** Nobody applies the key by name, though a conditional or random source may give it: the list says which is missing. */
+  noApplierByName: (label: string, artifactOnly: boolean) =>
+    `No trait applies ${label} by name ${scopeOf(artifactOnly)}.`,
+  users: 'Rely on it',
+  usersHint: (label: string) => `Traits that rely on ${label} being there`,
+  conditionalSources: (count: number) => `Under a condition · ${formatCount(count)}`,
+  conditionalSourcesHint: 'They give it once the other debuff of their pair is there.',
+  seeInExplore: 'See in Explore',
+  seeInExploreName: (title: string) => `See in Explore — ${title}`,
+  /** The name of the link of a card on the page of a keyword, where no trait is at the centre to re-centre on. */
+  openTrait: (name: string) => `Open ${name}`,
+  keywordPickerHeading: 'Keywords',
+  /** The key to the two numbers of a keyword's chip (the numbers are spoken as words, so this is for the eye). */
+  chipLegend: { applies: 'Traits that apply it', uses: 'Traits that rely on it' } as const,
+  /** The arrows beside the number of a chip say which list it counts; a screen reader hears this instead. */
+  chipCounts: (appliers: number, users: number) =>
+    `${formatCount(appliers)} ${appliers === 1 ? 'applier' : 'appliers'}, ${formatCount(users)} ${users === 1 ? 'user' : 'users'}`,
+  /** The two counts of the summary of a keyword: the number in bold, then the words that go with it. */
+  countPhrases: {
+    appliers: (count: number) => (count === 1 ? 'applies it' : 'apply it'),
+    users: (count: number) => (count === 1 ? 'relies on it' : 'rely on it'),
+  },
+  /** The sources that are not appliers by name, in words (the lists have a group for each). */
+  conditionalOthers: (count: number) =>
+    `${formatCount(count)} more ${count === 1 ? 'gives' : 'give'} it once another debuff is there.`,
+  randomOthers: (count: number) =>
+    `${formatCount(count)} more ${count === 1 ? 'afflicts' : 'afflict'} a random debuff, which may be this one.`,
+  oftenTogether: 'Often applied together with',
+  /** After a keyword that its appliers also apply: the number beside it is for the eye, this is for the ear. */
+  togetherSpoken: (count: number) => `, applied by ${formatCount(count)} of its appliers`,
+  verdicts: {
+    supported: { title: 'Well supported', detail: 'Enough traits apply it for the ones that rely on it.' },
+    scarce: { title: 'Scarce enabler', detail: 'Many traits rely on it and few apply it.' },
+    'no-payoff': { title: 'No payoff yet', detail: 'Traits apply it, but none relies on it.' },
+    'only-random': {
+      title: 'Only by chance',
+      detail: 'No trait applies it by name: it comes only from traits that afflict a random debuff.',
+    },
+    'only-conditional': {
+      title: 'Only under a condition',
+      detail: 'No trait applies it by name: it comes only from traits that give it once another debuff is there.',
+    },
+    'no-source': { title: 'No source' },
+  },
+  /** Nothing gives the keyword. With nobody relying on it either, there is no more to say; otherwise what that costs them. */
+  noSourceDetail: (relied: boolean, artifactOnly: boolean) =>
+    relied
+      ? `No trait gives it ${scopeOf(artifactOnly)}, so the traits that rely on it cannot count on it.`
+      : `No trait gives or relies on it ${scopeOf(artifactOnly)}.`,
+
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',

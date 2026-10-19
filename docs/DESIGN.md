@@ -219,7 +219,10 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   active as the person types), a press takes any; taking one opens the trait's page as a step of the history and empties the field.
 - **Keyword picker** (`KeywordPicker`): links, a group for each of Debuffs, Buffs and Effects (an `h3` in small capitals), each a 32 px
   pill (44 under coarse) with the name in the colour of its kind; the page's own keyword has the accent fill and ring and
-  `aria-current="page"`.
+  `aria-current="page"`. Given the counts of the keywords (`stats`: the page of a keyword gives them, the picker page does not), each pill
+  also shows two numbers in mono, each after a small arrow (up and to the right: traits that apply it; down and to the right: traits that
+  rely on it), and a line above the groups says what the arrows mean. The arrows and numbers are `aria-hidden`: the link's name carries
+  the counts in words, "Weak, 2 appliers, 3 users".
 - **Start from your party**: the filled slots in reading order, the slot in mono and the trait as a link; a slot whose id the dataset
   lacks shows the id in `--status-warn` and "Not found in vX". With an empty party it says so and links to Explore.
 - **Not found**: a trait id the dataset does not know is a page, not an error: "Trait not found", the sentence that names the id and
@@ -277,6 +280,30 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   - **Moving the focus**: after a move to another trait (a card, a step, the picker, Back or Forward) the focus is on the new `h1`; a deep link
     and the writing of the party or the filter leave it alone. The document title follows the trait, and SvelteKit’s own announcer says it:
     no polite line of ours repeats it (a “Now centred on X” was left out on purpose, PLAN 13.3).
+- **A keyword page** (`/synergy/kw/<slug>`, PLAN 13.5): the *Artifact-eligible only* box, the summary, two lists side by side from
+  700 px (one column below it; the phone's tabs are 13.6), and the picker of the other keywords last (D39). The party and the filter go
+  with every link of the page.
+  - **The summary** (`KeywordSummary`, a card on `--surface-1` with the accent border): the `h1` is the name as a pill in the colour of
+    the kind (`KeyPill` at the size of the heading; `tabindex="-1"`, it takes the focus when the page moves to another keyword) and the
+    kind in words beside it; the counts, "**8** apply it · **6** rely on it" (the verb agrees with the number: "1 applies it"); in muted
+    text, when there are any, how many more give the key under a condition or at random ("27 more afflict a random debuff, which may
+    be this one."), which the two counts leave out (D40); the verdict, an icon (a check in a circle, a warning triangle, a crossed
+    circle: good, caution, bad), its title in the colour of that tone and its reason in muted text; and “Often applied together with”,
+    the keywords its appliers also apply (at most 9 on v2.0, so none is cut) as pills in the colour of their kind, each followed by the
+    number of appliers that apply it too (spoken “, applied by 4 of its appliers”). The verdicts (`copy.verdicts`): *Well supported*
+    (good), *Scarce enabler*, *No payoff yet*, *Only by chance*, *Only under a condition* (caution), *No source* (bad). Only
+    *supported*, *scarce* and *no-payoff* show on v2.0; the other three are held by unit tests.
+  - **The lists** (`RelatedSection`, which the three lists under a trait's sides use too): *Appliers* and *Rely on it*, each an `h2` with
+    the count, a sentence (“Traits that apply Weak by name”), 6 cards and the button that opens the rest (D37), and in the heading row,
+    after the button, a link “See in Explore” (named “See in Explore — Appliers”) to Explore with `kw=a:key` or `kw=u:key`, the artifact
+    filter (`mat=yes`) and the party: Explore then lists exactly the traits of the list (ROADMAP criterion 11). The card is a trait card
+    whose link is named “Open X” (no trait is at the centre of the page to re-centre on). After the cards of *Appliers*, groups of the
+    traits that give the key in a weaker way, each with its own count and sentence, whose cards say the same in a tag: *Under a
+    condition · N* (R10), then *Random sources · N* (R5), folded behind a button above 3 as in the lanes (`CardGroup`, shared with
+    them). A list with nothing says why in a dashed note (“No trait applies X by name …” when a weaker source gives it).
+  - **Moving and saying** (D41): a move to another keyword (a chip, a keyword of the summary, Back) puts the focus on the new `h1` and
+    says once, politely, the keyword, its counts, the verdict and its reason; a turn of the artifact filter says the counts of the two
+    lists and the verdict's title; a page opened by its address says nothing and leaves the focus alone.
 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that

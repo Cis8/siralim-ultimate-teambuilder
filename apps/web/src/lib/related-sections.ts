@@ -14,18 +14,30 @@ export const PREVIEW_CARDS = 6;
 /** The most a list draws, plain DOM: Same trigger of the longest trait is 548 and nobody reads that far (PLAN 13.4). */
 export const LISTED_AT_MOST = 200;
 
-/** A trait of one of the three lists, with what ties it to the focus. */
+/** A trait of one of the lists, with what ties it to the focus. */
 export interface RelatedCard {
   readonly trait: Trait;
   /** "×2 in common", once the trait shares more than one key or event. */
   readonly badge?: string | undefined;
   /** The line under its origin: the keys or events it shares. */
   readonly detail?: string | undefined;
+  /** How the trait gives the key, when that is not by name. */
+  readonly tier?: 'conditional' | 'random' | undefined;
 }
 
-/** One of the lists under the sides of the page of a trait, worded and ready to draw. */
+/** Traits that give a key in a weaker way than the rest of their list, under a heading of their own (GAME_RULES R5, R10). */
+export interface CardGroup {
+  readonly id: 'conditional' | 'random';
+  readonly title: string;
+  readonly hint: string;
+  readonly cards: readonly RelatedCard[];
+  /** There are too many to list at once: the cards are behind a button (`FOLD_ABOVE`). */
+  readonly folded: boolean;
+}
+
+/** One of the lists of the Synergy pages (the three under the sides of a trait, the two of a keyword), worded and ready to draw. */
 export interface RelatedSectionModel {
-  readonly id: 'alternatives' | 'same-trigger' | 'same-family';
+  readonly id: 'alternatives' | 'same-trigger' | 'same-family' | 'appliers' | 'users';
   readonly title: string;
   /** The sentence under the heading. */
   readonly hint: string;
@@ -35,6 +47,8 @@ export interface RelatedSectionModel {
   readonly empty: string;
   /** Whether the number of cards is a fact worth a heading: a grouping that is no family has none. */
   readonly counted: boolean;
+  /** Lists that follow the cards, each with its own count: the traits that give the key under a condition or at random. */
+  readonly groups?: readonly CardGroup[];
 }
 
 /** What core says about the focus, for the three lists. */

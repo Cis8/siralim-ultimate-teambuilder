@@ -11,7 +11,7 @@
    * A trait beside the one in focus, small enough for a long list (DESIGN § Synergy pages): its name, which is a link that moves
    * the focus to it, where it comes from, what ties it to the focus, and the "add" button with what the party says. `badge` is
    * "×2 links", `tier` how it gives the key when that is not by name, `detail` a line of its own (the keys, the reason for an
-   * alternative).
+   * alternative). The link is named "Re-centre on X" unless `linkName` says what else it does: a keyword has no trait at its centre.
    */
   const {
     trait,
@@ -20,6 +20,7 @@
     badge,
     tier,
     detail,
+    linkName,
   }: {
     trait: Trait;
     party: PartyActions;
@@ -27,6 +28,7 @@
     badge?: string | undefined;
     tier?: 'conditional' | 'random' | undefined;
     detail?: string | undefined;
+    linkName?: string | undefined;
   } = $props();
 
   // A trait can be in two lists of the page, so the id of the note that gives a refusal is the card's, not the trait's.
@@ -37,7 +39,7 @@
 <li class="card">
   <span class="dot" style:background={classColour(trait.class)} aria-hidden="true"></span>
   <div class="body">
-    <a class="name" {href} aria-label={copy.recentre(trait.name)}>{trait.name}</a>
+    <a class="name" {href} aria-label={linkName ?? copy.recentre(trait.name)}>{trait.name}</a>
     <p class="origin">
       {trait.creature === null
         ? `${copy.traitKind[trait.kind]} · ${trait.family}`

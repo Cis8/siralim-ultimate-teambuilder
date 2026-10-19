@@ -5,7 +5,7 @@
   import { copy } from '../copy';
   import { groupLane } from '../lane-groups';
   import type { PartyActions } from '../party-actions';
-  import SectionToggle from './section-toggle.svelte';
+  import CardGroup from './card-group.svelte';
   import TraitCardList from './trait-card-list.svelte';
 
   /**
@@ -35,7 +35,6 @@
 
   const uid = $props.id();
   const { certain, random, folded } = $derived(groupLane(entries));
-  let showRandom = $state(false);
 </script>
 
 <section class="lane" aria-labelledby="{uid}-heading">
@@ -50,29 +49,9 @@
   {/if}
 
   {#if random.length > 0}
-    <div class="random">
-      <h4>
-        {#if folded}
-          <SectionToggle
-            controls="{uid}-random"
-            open={showRandom}
-            active={0}
-            ontoggle={() => {
-              showRandom = !showRandom;
-            }}>{copy.randomSources(random.length)}</SectionToggle
-          >
-        {:else}
-          {copy.randomSources(random.length)}
-        {/if}
-      </h4>
-      <p class="hint">{copy.randomSourcesHint}</p>
-      <!-- A folded group is not drawn at all (a trait that afflicts a random debuff is one of dozens); its wrapper is what the button controls. -->
-      <div id="{uid}-random">
-        {#if !folded || showRandom}
-          <TraitCardList entries={random} {party} {hrefOf} {keyLabel} {namesKeys} />
-        {/if}
-      </div>
-    </div>
+    <CardGroup title={copy.randomSources(random.length)} hint={copy.randomSourcesHint} {folded} level={4}>
+      <TraitCardList entries={random} {party} {hrefOf} {keyLabel} {namesKeys} />
+    </CardGroup>
   {/if}
 </section>
 
@@ -97,19 +76,6 @@
     font-family: var(--font-mono);
     font-size: 12px;
     font-weight: 400;
-  }
-
-  .random {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  h4 {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 600;
   }
 
   .hint {

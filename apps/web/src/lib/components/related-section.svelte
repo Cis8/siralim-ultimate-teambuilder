@@ -4,24 +4,30 @@
   import { copy } from '../copy';
   import type { PartyActions } from '../party-actions';
   import { LISTED_AT_MOST, PREVIEW_CARDS, shownCards, type RelatedSectionModel } from '../related-sections';
-  import TraitCard from './trait-card.svelte';
+  import CardGroup from './card-group.svelte';
+  import RelatedCardList from './related-card-list.svelte';
 
   /**
-   * One of the lists under the sides of the page of a trait (DESIGN § Synergy pages): a heading with the count, a sentence, the
-   * first few cards and, when there are more, a button that opens the rest. The button comes before the cards and stays where it
-   * is when the list grows, so the focus stays on it and the tab key goes on into the cards that appeared; plain DOM, up to
-   * `LISTED_AT_MOST` cards. A list with nothing to show says why instead.
+   * One of the lists of the Synergy pages (DESIGN § Synergy pages): a heading with the count, a sentence, the first few cards and,
+   * when there are more, a button that opens the rest. The button comes before the cards and stays where it is when the list grows,
+   * so the focus stays on it and the tab key goes on into the cards that appeared; plain DOM, up to `LISTED_AT_MOST` cards. A list
+   * with nothing to show says why instead. A list of a keyword also has a link to the same traits in Explore (`exploreHref`), and
+   * groups of traits that give the key in a weaker way after its cards.
    */
   const {
     section,
     artifactOnly,
     party,
     hrefOf,
+    exploreHref,
+    linkNameOf,
   }: {
     section: RelatedSectionModel;
     artifactOnly: boolean;
     party: PartyActions;
     hrefOf: (id: TraitId) => ResolvedPathname;
+    exploreHref?: ResolvedPathname | undefined;
+    linkNameOf?: ((name: string) => string) | undefined;
   } = $props();
 
   const uid = $props.id();
@@ -56,6 +62,9 @@
           }}>{toggleLabel}</button
         >
       {/if}
+      {#if exploreHref !== undefined}
+        <a class="explore" href={exploreHref} aria-label={copy.seeInExploreName(section.title)}>{copy.seeInExplore}</a>
+      {/if}
     </div>
     <p class="hint">{section.hint}</p>
   </header>
@@ -63,15 +72,17 @@
   {#if section.cards.length === 0}
     <p class="note">{section.empty}</p>
   {:else}
-    <ul id="{uid}-list">
-      {#each shown.cards as card (card.trait.id)}
-        <TraitCard trait={card.trait} {party} href={hrefOf(card.trait.id)} badge={card.badge} detail={card.detail} />
-      {/each}
-    </ul>
+    <RelatedCardList id="{uid}-list" cards={shown.cards} {party} {hrefOf} {linkNameOf} />
     {#if shown.capped}
       <p class="note">{copy.cappedNote(LISTED_AT_MOST, shown.total, artifactOnly)}</p>
     {/if}
   {/if}
+
+  {#each section.groups ?? [] as group (group.id)}
+    <CardGroup title={group.title} hint={group.hint} folded={group.folded} level={3}>
+      <RelatedCardList cards={group.cards} {party} {hrefOf} {linkNameOf} />
+    </CardGroup>
+  {/each}
 </section>
 
 <style>
@@ -117,15 +128,6 @@
     font-size: 12.5px;
   }
 
-  ul {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
   .note {
     margin: 0;
     padding: 12px 14px;
@@ -135,7 +137,10 @@
     font-size: 13px;
   }
 
-  .toggle {
+  .toggle,
+  .explore {
+    display: inline-flex;
+    align-items: center;
     min-height: 28px;
     padding: 0 10px;
     border: 1px solid var(--border-strong);
@@ -144,15 +149,24 @@
     color: var(--text);
     font: inherit;
     font-size: 12.5px;
+  }
+
+  .toggle {
     cursor: pointer;
   }
 
-  .toggle:hover {
+  .explore {
+    text-decoration: none;
+  }
+
+  .toggle:hover,
+  .explore:hover {
     border-color: var(--accent-border);
   }
 
   @media (pointer: coarse) {
-    .toggle {
+    .toggle,
+    .explore {
       min-height: var(--target-min);
     }
   }
