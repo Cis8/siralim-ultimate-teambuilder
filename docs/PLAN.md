@@ -13,8 +13,9 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 and M10 are done and the next slice is 12.1** (the relation index of
-  `core`), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 and M10 are done, 12.1 is done and the next slice is 12.2**
+  (`relationsOf`, on the `RelationIndex` of 12.1: it must leave the focus out of its own lists, see 12.1), in the order
+  M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
   lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
@@ -338,12 +339,18 @@ the fixes) **and under the fixed bars** (z-index 4; on a phone the Filters butto
 
 ### M12 Relations engine (core) — pure, tested on the real sheet
 Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97 cause, 370
-react), hence D16. 28 enemy-only random sources and 4 conditional-source traits exist; nothing reads `randomDebuff`,
-`conditionalSources` or `canBeRandomlyApplied` outside enrichment yet: M12 is their first reader.
-- [ ] **12.1** Relation index. `createRelationIndex(traits, taxonomy)`, built beside the search index: keys limited to `canBeDependency`
-      kinds; per key `appliers` (role applies), `conditional` (`conditionalSources`, R10), `random` (R5: `target === 'enemy'`, only
-      keys with `canBeRandomlyApplied`, R8) and `users` (role uses); `resists` in none (R9); events in none (R12). *T:* v2.0 counts
-      (28 random sources; Inverted and Mania never; `self_or_allies` and `both` never; the 4 pair traits), invariants (no self-links).
+react), hence D16. 27 enemy-only random sources (30 traits afflict a random debuff, minus Going Mad, Dusty Struggle and Glitch) and 4
+conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing read `randomDebuff`, `conditionalSources` or
+`canBeRandomlyApplied` outside enrichment.
+- [x] **12.1** Relation index. `createRelationIndex(traits, taxonomy)` (`core/src/relations/relation-index.ts`): `keys` (the 42 buffs, debuffs
+      and effects, taxonomy order) and `get(key)` → `KeyRelations {key, appliers, conditional, random, users}` of `Trait`s in dataset order;
+      `resists` in none (R9), events, mechanics and flags in none (R12), the taxonomy decides what a key is. Deviations: a trait is listed
+      **once per key among the sources, under the strongest** (applies > conditional > random), so those three never overlap (no real trait
+      is in two; it is defended in the unit tests); the index is not built beside the search index yet (12.5 wires it). **Not an invariant of
+      the index:** a trait that gives what it relies on (the 4 pair traits, and any that applies and uses one key) is in `users` and in a
+      source list of that key: `relationsOf` of 12.2 leaves the focus out. *T:* `relation-index.test.ts` (hand-made traits, fast-check
+      invariants) and `pipeline/src/build/relation-acceptance.test.ts` (v2.0: 27 random sources in all 18 randomizable debuffs, never in
+      Inverted, Mania, buffs or effects; the 4 pairs; `applies:` / `uses:` find as many traits as `appliers` / `users` for all 42 keys).
 - [ ] **12.2** Enabled by / Enables. `relationsOf(id, {artifactOnly})`: `RelatedTrait {trait, links: {key, strength}[], score, strength}`,
       **one per trait per side** (D17); tier `specific < conditional < random`, then score desc, then `compareText`, then id; the focus
       is excluded; `artifactOnly` drops candidates without material, never the focus. A side = `{several (score ≥ 2), single: {key,
