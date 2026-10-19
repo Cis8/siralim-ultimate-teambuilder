@@ -1,6 +1,7 @@
 import { encodeExploreState, encodePartyState, EXPLORE_PARAMS, PARTY_PARAMS } from '@atlas/core';
 import type { PageState } from './page-state';
 import { encodeTab, TAB_PARAMS } from './page-tab';
+import { readableSearch } from './readable-search';
 
 /**
  * The address that stands for `state` on the page `current` is at. The parameters of the search, of the party and of the
@@ -14,13 +15,6 @@ export function pageAddress(current: URL, { explore, party, tab, datasetVersion 
   for (const [name, value] of encodeTab(tab)) params.append(name, value);
 
   const address = new URL(current);
-  address.search = readable(params.toString());
+  address.search = readableSearch(params.toString());
   return address;
 }
-
-/**
- * The colon of `a:vulnerable` and the comma between two items are legal in a query and are what SPEC §7 shows: left as
- * they are, a link pasted into a chat can be read. A comma that belongs to a name is `%2C` in the value, so it is `%252C`
- * here and keeps its escape.
- */
-const readable = (search: string): string => search.replaceAll('%3A', ':').replaceAll('%2C', ',');

@@ -255,6 +255,7 @@ PRs at the start of a session (ADR-0007). Never deploy data that has not been th
 Every view is reproducible from its URL (query string for search, compact party encoding):
 - Search: `?q=<query>&class=life,nature&kw=a:vulnerable,u:weak,k:start of battle&mode=any&mat=yes&stack=no&sort=az`
 - Party: `?party=2.0,abomination--sin-and-sentence,,life--mender&target=3-fused` (ADR-0008)
+- Synergies: `/synergy`, `/synergy/<traitId>` and `/synergy/kw/<slug>`, with `?mat=yes&section=enables` and the party (ADR-0011)
 
 The search codec (`ExploreState`, `decodeExploreState` / `encodeExploreState`) writes only what differs from the initial
 state, so that state has no parameter at all, and reads any address: what is missing or says nothing usable is the initial
@@ -271,7 +272,22 @@ dataset: by family, then trait name; default), `class` (class, then family) or `
 
 **The tab codec** (`decodeTab` / `encodeTab`, `page-tab.ts` in `web`: the tabs are a layout, not a domain concept) follows
 the same rules. `tab` is the view a narrow screen shows, `explore` (default, never written) or `party`; reading ignores case
-and the blanks around the name, and a name that is no tab is `explore`. The Synergies tab of Phase 2 adds a value here.
+and the blanks around the name, and a name that is no tab is `explore`. Synergies is no tab: it is a page of its own (ADR-0011,
+PLAN D23), reached by a link beside the tabs.
+
+**The Synergy codec** (`decodeSynergyView` / `encodeSynergyView` / `synergyAddress`, `synergy-address.ts` in `web`) follows the same
+rules. The page is the path: `/synergy` (the picker), `/synergy/<traitId>` (the trait ids of §5) and `/synergy/kw/<slug>`
+(`keywordSlug` of a key that can be a dependency: a buff, a debuff or an effect; an event has no page). What is left in the query
+is `mat=yes` (only traits with a material, as the search's flag: read whatever the case and the blanks around it) and `section=`
+(the part a narrow screen shows: `enabled-by`, `enables`, `alternatives`, `related` for a trait, `appliers`, `users` for a keyword;
+a name that is none is no section), then the party and the target of §8.2. Both are written only when they differ from the initial
+state, and what else the address carries stays. An id or a slug that nothing answers to is a state of the page, not an error:
+a trait page says "Trait not found" with the traits whose name is like the id's (`lostTraitSearch`) and a search, a keyword page
+the list of keywords. A link from one page to another carries the party (`carriedSearch`): the address is the source of truth, and
+a page that arrives at an address with no party takes that for an empty one, except for a visit that opens the app (a typed address,
+a reload), which starts from the party of the last visit and writes it into the address, as Explore does. GitHub Pages has no file
+for `/synergy/<id>` and answers with `404.html`, which boots the app from any depth of the path (an e2e checks that every file it
+names is under the base path).
 
 **The party codec** (`decodePartyState` / `encodePartyState`, `party-url.ts`) follows the same rules and shares the list
 helpers (`url/url-params.ts`). `party` is a list: the dataset version, then the trait id of each of the 18 slots in reading
@@ -298,7 +314,10 @@ the parameters that are none of theirs stay:
 - a link is written to be read: the colon of `a:vulnerable` and the comma between two items are not escaped;
 - a party is written under the version of the dataset in use, or while the data loads under the one the address stated, so
   that a link opened before the data arrives is written back as it was; arriving at an address with the same party keeps
-  what can be undone, another party starts a new history.
+  what can be undone, another party starts a new history;
+- the Synergy pages have a writer of their own (`createAddressWriter` over `synergyAddress`, in the layout of the routes): a change
+  of the party made there is written to the page in front, in the place it is, and one that finds the person gone to another
+  page is dropped.
 
 Back and forward bring back the state and start the list over; they do not restore the scroll position (the list is another
 one). Going back to a tab with the same search finds the page where that tab was left (§ 8.2, *The tabs*).

@@ -44,6 +44,7 @@
   import { isSearchShortcut } from '../lib/search-shortcut';
   import type { ShortcutEvent } from '../lib/shortcut-event';
   import { decodeTab, initialTab, panelId, tabId, type PageTab } from '../lib/page-tab';
+  import { appLinks, carriedNow } from '../lib/synergy-links';
   import { undoShortcut } from '../lib/undo-shortcut';
   import { trackViewportOffset } from '../lib/viewport-offset';
 
@@ -469,7 +470,12 @@
 />
 
 {#if tabbed.current}
-  <TabBar selected={tab} partyFilled={filledSlots(partySession.planner.history.party)} onselect={selectTab} />
+  <TabBar
+    selected={tab}
+    partyFilled={filledSlots(partySession.planner.history.party)}
+    synergiesHref={appLinks(carriedNow()).synergies}
+    onselect={selectTab}
+  />
 {/if}
 
 <style>

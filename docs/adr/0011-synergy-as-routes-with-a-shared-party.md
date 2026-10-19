@@ -54,3 +54,9 @@ an unknown path.
 - A Lighthouse URL for `/synergy/<id>` is added only if the static server used by CI can fall back to `404.html`.
 - SPEC §7 (the `tab=` parameter), SPEC §8.4 and DESIGN (the `TabBar` line, `TraitCard`, lanes, trail, verdict) change in the slices
   that ship them (13.2, 13.8).
+- The relation code is a few kilobytes that only the Synergy routes need, and a module that the first script imports anywhere
+  brings what it exports along: the relation service is therefore built in `relation-composition.ts`, apart from the composition
+  root that Explore imports, and a dependency-cruiser rule (`relations-stay-lazy`) lets only `routes/synergy/` import it. It was
+  2 kB of initial JS when it sat in the composition root, because the header (in the first script) imports that module.
+- The link helpers (`synergy-links.ts`) return the type `resolve()` returns, which is what the lint rule that asks for `resolve` on
+  every link and every `goto` accepts of a value it cannot follow: a helper may be used where a `resolve()` call would stand.

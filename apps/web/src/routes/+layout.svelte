@@ -4,6 +4,7 @@
   import '../lib/styles/base.css';
   import type { Snippet } from 'svelte';
   import ExternalLink from '../lib/components/external-link.svelte';
+  import SiteNav from '../lib/components/site-nav.svelte';
   import { copy } from '../lib/copy';
 
   const { children }: { children: Snippet } = $props();
@@ -14,6 +15,7 @@
 <header class="app-header">
   <span class="brand">{copy.appName}</span>
   <span class="tagline">{copy.appTagline}</span>
+  <SiteNav />
 </header>
 
 <main id="main" tabindex="-1">

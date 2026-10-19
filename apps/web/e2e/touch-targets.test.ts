@@ -25,10 +25,11 @@ import {
   slotChooser,
   withUniqueName,
 } from './support/party-page';
+import { fromParty, synergyHeading, traitPicker, traitSuggestions, whenLoaded } from './support/synergy-page';
 
 // On a phone every control is a target for a finger (DESIGN § Accessibility): at least 44 × 44 px, where WCAG 2.5.8 asks for
-// 24. The tests measure what the page draws, in the Pixel 7 and iPhone 14 projects, for the three places a phone shows:
-// Explore, the filters sheet and the Party tab. The result card (DESIGN § Result list) is checked for its shape as well.
+// 24. The tests measure what the page draws, in the Pixel 7 and iPhone 14 projects, for the places a phone shows: Explore,
+// the filters sheet, the Party tab and the Synergy pages. The result card (DESIGN § Result list) is checked for its shape as well.
 
 /** What a finger needs. */
 const MIN_TARGET = 44;
@@ -285,6 +286,47 @@ test.describe('touch targets on a phone', () => {
       /^Explore/,
       /^Party/,
     ]);
+  });
+
+  test('has every control of the Synergy pages at least 44 × 44 px, and no field with text under 16 px', async ({
+    page,
+    request,
+  }) => {
+    const { traits, datasetVersion } = await publishedDataset(request);
+    const [trait] = plainTraits(traits);
+    if (trait === undefined) throw new Error('the dataset has no plain trait');
+    const named = new RegExp(`^${trait.name.replace(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`)}$`, 'u');
+
+    // The picker, with a party that has a trait and a lost one, and the list of matches open.
+    await page.goto(`./synergy?party=${datasetVersion},${trait.id},gone--from-the-sheet`);
+    await expect(fromParty(page).getByRole('link', { name: trait.name, exact: true })).toBeVisible();
+    await traitPicker(page).fill(trait.name.slice(0, 3));
+    await expect(traitSuggestions(page).first()).toBeVisible();
+    await expectTargetsLargeEnough(page.locator('body'), [
+      /^Find a trait$/,
+      /^Trait/,
+      named,
+      /^Vulnerable$/,
+      /^Explore$/,
+      /^Party/,
+      /^Synergies$/,
+    ]);
+    await expectFieldsNotZoomedIn(page.locator('body'), [/^Find a trait$/]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+
+    // The pages that have no party to show: a trait, a keyword, a keyword that is none, a trait that is none.
+    for (const [address, including] of [
+      [`./synergy/${trait.id}`, [/^Find a trait$/]],
+      ['./synergy/kw/vulnerable', [/^Vulnerable$/]],
+      ['./synergy/kw/not-a-keyword', [/^Weak$/]],
+      [`./synergy/retired--${trait.id.split('--')[1] ?? 'x'}`, [/^Find a trait$/]],
+    ] as const) {
+      await page.goto(address);
+      await expect(synergyHeading(page)).toBeVisible();
+      await whenLoaded(page);
+      await expectTargetsLargeEnough(page.locator('body'), [...including, /^Synergies$/]);
+      expect(await widerThanTheWindow(page), address).toBe(false);
+    }
   });
 
   test('does not make the page wider than the window, on Explore or on the Party tab', async ({ page }) => {

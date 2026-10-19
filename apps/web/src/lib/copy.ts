@@ -134,6 +134,42 @@ export const copy = {
   /** The count beside the Party tab: written short for the eye, in words for a screen reader. */
   partyTabCount: (filled: number) => `${String(filled)}/18`,
   partyTabCountSpoken: (filled: number) => `${String(filled)} of 18 slots filled`,
+  /** The header of a wide screen, and the foot of a narrow one on the Synergy pages: the same three places (ADR-0011). */
+  pagesLabel: 'Pages',
+  pages: { explore: 'Explore', synergies: 'Synergies', party: 'Party' } as const,
+
+  /** The Synergy explorer (M13). */
+  synergyPageTitle: 'Synergies — Trait Atlas',
+  synergyHeading: 'Synergies',
+  synergyIntro:
+    'Pick a trait to see what it relies on and which traits can supply it, or start from a keyword to see who applies it and who relies on it.',
+  loadingSynergies: 'Loading the traits…',
+  /** The field that picks the trait to look at (the list under it is a combobox, like the search's). */
+  findTraitLabel: 'Find a trait',
+  findTraitPlaceholder: 'A trait, a creature or a family',
+  findTraitSuggestions: 'Matching traits',
+  /** The detail beside a trait in that list: what tells two traits of one name apart. */
+  traitOrigin: (creature: string | null, family: string, className: string, kind: TraitKind): string =>
+    `${creature ?? copy.traitKind[kind]} · ${family} · ${className}`,
+  startFromParty: 'Start from your party',
+  partyForSynergy: 'Pick a trait of your party:',
+  emptyPartyForSynergy: 'Your party is empty. Add traits in Explore, and they are listed here.',
+  goToExplore: 'Go to Explore',
+  startFromKeyword: 'Start from a keyword',
+  keywordPickerIntro: 'The buffs, debuffs and effects that traits give and rely on:',
+  keywordGroups: { debuff: 'Debuffs', buff: 'Buffs', effect: 'Effects' } as const,
+  traitNotFoundTitle: 'Trait not found',
+  traitNotFound: (id: string, version: string) =>
+    `Compendium v${version} has no trait with the id “${id}”. It may have been renamed or removed since this link was made.`,
+  similarTraits: 'Traits with a similar name',
+  noSimilarTraits: 'No trait has a similar name.',
+  searchAgain: 'Search again',
+  keywordNotFoundTitle: 'Keyword not found',
+  keywordNotFound: (slug: string) =>
+    `“${slug}” is not a buff, debuff or effect that traits give or rely on. Pick one from the list.`,
+  /** The title of a page under Synergies, which a screen reader hears when the page changes. */
+  synergyDocument: (title: string) => `${title} — Synergies — Trait Atlas`,
+  keywordKindName: { debuff: 'Debuff', buff: 'Buff', effect: 'Effect' } as const,
   noResultsTitle: 'No trait matches.',
   noResultsHint: 'Check the spelling, swap an AND for an OR, or remove a chip.',
   noResultsMatchAny: 'Or switch the keywords to “Match any”.',

@@ -32,6 +32,7 @@ import {
   toolbarButton,
   withUniqueName,
 } from './support/party-page';
+import { pathOf, placeLink, synergyHeading, whenLoaded } from './support/synergy-page';
 
 // Criterion 8: with the keyboard alone every action is reachable and the focus can be seen (DESIGN § Accessibility). The walks
 // press Tab through a page the way a person does, and stop at every control; the flows do what a person does with the keys.
@@ -177,7 +178,58 @@ test.describe('the tab key', () => {
   });
 });
 
+test.describe('the tab key on the Synergy pages', () => {
+  test('reaches every control of each of them, and each shows a ring in sight', async ({
+    page,
+    request,
+    browserName,
+  }) => {
+    const { traits, datasetVersion } = await publishedDataset(request);
+    const [trait] = plainTraits(traits);
+    if (trait === undefined) throw new Error('the dataset has no plain trait');
+    const addresses = [
+      // The picker with a party in it, the page of a trait, of a keyword, and the two pages of what was not found.
+      `./synergy?party=${datasetVersion},${trait.id},gone--from-the-sheet`,
+      `./synergy/${trait.id}`,
+      './synergy/kw/vulnerable',
+      './synergy/retired--some-trait',
+      './synergy/kw/not-a-keyword',
+    ];
+
+    for (const address of addresses) {
+      await page.goto(address);
+      await expect(synergyHeading(page)).toBeVisible();
+      await whenLoaded(page);
+
+      const walk = await walkTabOrder(page);
+
+      // Most of what these pages hold is links, which Safari's tab key passes by.
+      if (browserName !== 'webkit') expect(walk.stops.length, address).toBeGreaterThan(3);
+      expect(problemsOf(walk), address).toEqual([]);
+      expect(missed(walk, browserName), address).toEqual([]);
+    }
+  });
+});
+
 test.describe('the keyboard alone', () => {
+  test('goes from Explore to the Synergies by the link in the header or at the foot, and back', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName === 'webkit', 'Safari’s tab key does not stop at links unless the person asks it to.');
+    await openExplore(page);
+
+    // The bar at the foot of a narrow screen is the last of the page: Shift+Tab from the top finds it first.
+    await tabTo(page, placeLink(page, 'Synergies'), { backwards: isTabbed(page), limit: 10 });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => pathOf(page)).toBe('/synergy');
+    await expect(placeLink(page, 'Synergies')).toHaveAttribute('aria-current', 'page');
+
+    await tabTo(page, placeLink(page, 'Explore'), { backwards: isTabbed(page), limit: 10 });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => pathOf(page)).toBe('/');
+  });
+
   test('searches, adds a trait to the party and takes it back, without a pointer', async ({
     page,
     request,

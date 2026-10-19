@@ -13,16 +13,21 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D29, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1 is done and the next slice is 13.2**
-  (routes, deep links, navigation), in the order M13 → M11 (D15). The party now lives in `partySession` (`composition-root.ts`): 13.2's
-  pages read it and register `syncAddress` while they are in front, as `+page.svelte` does. Nothing calls `loadRelationService()` yet;
-  13.2 does. The search field is a plain `<input>` until the page is idle, or the focus or a pointer
-  arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
-  lazy JS; initial JS 80.1 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
+- **Phase 2 is under way (D14–D32, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1 and 13.2 are done and the next slice is
+  13.3** (the trait view), in the order M13 → M11 (D15). What 13.2 leaves for it: `routes/synergy/+layout.svelte` holds the relations
+  (`useSynergy()`, `synergy-context.ts`), the party's place in the address (a writer over `synergyAddress`) and the bar at the foot; a
+  page reads `mat` and `section` from `page.url` with `decodeSynergyView`. `routes/synergy/[traitId]/+page.svelte` is a bare head (dot,
+  `h1`, origin, the description as plain text) and `TraitPicker`: 13.3 puts the focus card and the lanes in its place. It will need to
+  *write* `mat` (the artifact checkbox) and the party (Add to): the layout's writer is not reachable from a page yet, so either put it in
+  the context (`chosen`, `refined`) or navigate with `goto(synergyHref(place, search))`. The search field is a plain `<input>` until the
+  page is idle, or the focus or a pointer arrives; then the assist layer (`query-assist.ts`) is fetched and attaches to it. Sizes now:
+  initial JS 85.3 kB of 150 (80.1 before 13.2: the header, the bars, the links and the copy), lazy 19.3 of 50; Lighthouse 0.89–0.91 (LCP 3.3 s).
+  **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D29 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
+- For the owner to veto, none blocking: D18–D32 (chosen by Claude; D30: the Synergies link sits after the tab list; D31: Party in the
+  header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
@@ -57,16 +62,19 @@ session (after `CLAUDE.md`), update it before ending one.
 | D20 | (default) Warnings and unknown-value errors are hidden for the term still being typed (caret inside it, no blank after it); syntax errors are not | here |
 | D21 | (default) A `family:`, `creature:` or `trait:` value that matches nothing is a warning. QUERY_LANGUAGE §5 lists only the class (an error) | here |
 | D22 | (default) The keyword verdict gains `only-random` and `only-conditional` (R5, R10: such a source never fully covers a dependency). SPEC §8.4 lists four verdicts | here |
-| D23 | (default) The bottom bar keeps its ARIA tablist (Explore, Party) and gets a *Synergies link* beside it, not a third tab; the Synergy pages are routes (`/synergy/…`) with a shared party session. DESIGN and SPEC §7 speak of a third tab: they are changed in 13.2 | ADR-0011 |
+| D23 | (default) The bottom bar keeps its ARIA tablist (Explore, Party) and gets a *Synergies link* beside it, not a third tab; the Synergy pages are routes (`/synergy/…`) with a shared party session. DESIGN and SPEC §7 speak of a third tab: they were changed in 13.2 | ADR-0011 |
 | D24 | (default) No new dependency in Phase 2: own Levenshtein, own narrowing of the imported JSON | here |
 | D25 | (default) Slice 8.4 stays open while Phase 2 starts early on the owner's go-ahead; Phase 1 closes when 8.4 lands | here |
 | D26 | (default) Typing makes the first suggestion active, so Tab and Enter accept it (what the ghost text shows); after an accept, a caret move, Esc or a blur nothing is active and Tab leaves the field. A hover does not activate | QUERY_LANGUAGE §6 |
 | D27 | (default) The Enables side lists only what the focus applies **by name**: a random or conditional source appears in Enabled by (SPEC §8.4) but enables nobody, so Pandemic has an empty Enables. The other way is one table in `trait-relations.ts` and 18 lanes for Pandemic | here |
 | D28 | (default) Alternatives compare what traits say by name, as D27 does: a random or conditional source is nobody's alternative for *applies*, and a mention that only guards (`resists`) makes no tie. Same trigger compares `self` with `ally` as different actors (the plan's rule: equal, or one side says none or `any`) | here |
 | D29 | (default) The keyword verdict asks about the sources first, in GAME_RULES' order (*Dependency statuses*: random before conditional): no applier by name → `only-random` if a random source exists (a conditional one beside it changes nothing), else `only-conditional`, else `no-source`; then the payoff: `no-payoff`, `scarce` (appliers × 2 < users), `supported`. `scarce` and the co-applied keys count the specific appliers only, and the artifact filter acts on all four lists. SPEC §8.4 lists four verdicts (rewritten in 13.8) | here |
+| D30 | (default) The bar at the foot of a narrow screen is Explore · Party · Synergies: the link comes after the tab list (a tab list may hold only tabs), on Explore and on the Synergy pages alike, so that the items do not move when the page changes | DESIGN § Layout |
+| D31 | (default) "Party n/18" in the header (wide screens) is a link to Explore with `tab=party`: the party is a column of Explore there, so it is the place the party is | DESIGN § Layout |
+| D32 | (default) 13.2's trait page shows the description as plain text under the head, and the "not found" page offers up to 8 traits whose name is like the id's (`lostTraitSearch`) with the picker pre-filled; 13.3 replaces the first by the focus card | DESIGN § Synergy pages |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D29 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
+D18–D32 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -165,7 +173,9 @@ slice that builds it then follows.
 - `pnpm lint` runs dependency-cruiser over `apps/web/src` as well. The rule `assist-stays-lazy` lets only `query-assist-loader.ts` import
   `query-assist.ts`, with `import()`; what the loaded layer needs goes through `query-assist.ts`. Anything that `query-input.svelte` or the
   page imports statically is in the first script, which the rule cannot see: after touching imports run `pnpm build && pnpm size-budget`
-  (lazy JS 9.2 kB now, initial 80.1) or look for `aria-autocomplete` in the chunks.
+  (lazy JS 19.3 kB now, initial 85.4) or look for `aria-autocomplete` in the chunks. The relation code is the same kind of thing: a
+  module the first script imports (the header does, through `composition-root.ts`) brings along everything it exports, so the relation
+  service is built in `relation-composition.ts` and the rule `relations-stay-lazy` lets only `routes/synergy/` import it (2 kB otherwise).
 - Lighthouse: fetching the assist chunk while the first results were being drawn cost 150 ms of LCP (0.92 → 0.90): Lantern counts a
   request that starts before the LCP paint. `FETCH_AFTER_DATA_MS` (500) in `query-input.svelte` keeps it out (back to 0.91–0.92).
 - On this Windows machine `keyboard.test.ts` › "reaches every control of the Party tab" fails about half the time on `mobile-webkit`
@@ -355,8 +365,8 @@ sections of a trait are remembered for the last 32 questions (`memoiseRecent`), 
 limit)` for the focus picker (the name begins with the text, has a word that does, has it inside; then the creature or the family). `keywordSlug` /
 `keywordFromSlug(slug, keys)` write and read `/synergy/kw/<slug>` (`createTaxonomy` refuses two keys with one slug or none, as it does a key
 that starts another; the slug is read exactly, and the caller gives `index.keys`, because an event's key has no page). `loadOnce(repository)`:
-the composition root fetches the dataset once for both services; `loadRelationService()` is there and no page calls it before 13.2, so the
-relation code is tree-shaken out (initial JS 79.7 kB). Tested on the real sheet (`relation-acceptance`, `keyword-view-acceptance`: the counts
+the composition root fetches the dataset once for both services; the relation service is built in `relation-composition.ts` (13.2), so that
+its code stays out of the first script. Tested on the real sheet (`relation-acceptance`, `keyword-view-acceptance`: the counts
 equal Explore's facet panel for all 42 keys, with and without `mat:yes`, and the committed `keyword-verdicts-v2.0.txt`;
 `relation-service-acceptance`) and with hand-made traits and fast-check oracles, all mutation-checked. `pnpm bench` (`relations.bench.ts`):
 the index builds in 0.55 ms; the four sections of all 1,780 traits cost 2 µs (Enabled by / Enables), 1 µs (Alternatives), 44 µs (Same
@@ -376,17 +386,20 @@ cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-sou
       `no-navigation-without-resolve` meets a second route); the live `<p>` stays in the page (`partyAnnouncement` in e2e finds it
       beside the views; 13.3 decides where both pages get it); a page that goes away drops an open sheet (`forgetChooser`), or the
       next one would reopen it. *T:* `party-session.test.ts` (mutation-checked) and the writer's tests, moved.
-- [ ] **13.2** Routes, deep links, navigation. `routes/synergy/+page.svelte` (picker and "start from your party"),
-      `synergy/[traitId]/+page.ts` and `synergy/kw/[key]/+page.ts` with `prerender = false; ssr = false` (adapter-static's `404.html` boots
-      them on Pages; 1,780 prerendered copies of one shell would be pointless); `synergy-address.ts` (`mat=yes`, `section=`, `party` /
-      `target` carried); links through `resolve()` (the lint rule `no-navigation-without-resolve` accepts few forms: a helper may be
-      needed). Header nav on wide screens (Explore · Synergies · Party n/18); the bottom bar keeps its tablist and gains a Synergies link
-      beside it (D23); on the Synergy routes the bar is a `nav` of three links with `aria-current`. An unknown id is "not found in vX"
-      with a name search; an unknown slug opens the keyword picker (`keywordFromSlug(slug, relations.keys)`). The focus picker is the
-      `Combobox` of 10.4 over `relations.findTraits(text, limit)`; the page gets `relations` from `loadRelationService()`. *T:*
-      address codec table, garbage included; e2e: a direct visit of both URL shapes, Back / Forward, a built-output smoke test that
-      the assets in `404.html` carry the base path; axe; keyboard walk and touch-target block for Synergy. *Docs:* SPEC §7 and DESIGN
-      (the tab becomes a link, D23).
+- [x] **13.2** Routes, deep links, navigation. `routes/synergy/+page.svelte` (the picker: a trait by name, "Start from your party", a
+      keyword), `[traitId]/+page.ts` and `kw/[slug]/+page.ts` with `prerender = false; ssr = false` (404.html boots them on Pages; the
+      route parameter is `slug`, not `key`), one layout for the three (`+layout.svelte`: relations loaded once, `partySession` arrival and
+      `syncAddress`, a writer over `synergyAddress`, the bottom bar). `synergy-address.ts` (`mat=yes`, `section=`, the party),
+      `carried-search.ts` (every link carries the party), `synergy-place.ts` (route id → page), `synergy-links.ts` (every address made
+      by `resolve`, typed `ResolvedPathname`, which the lint rule accepts), `relation-composition.ts` (see Notes). Header `SiteNav` from
+      1100 px; under it `BottomBar` (`TabBar` is its tab list plus the Synergies link; the Synergy routes have a `nav` of three
+      links). `TraitPicker` is the `Combobox` of 10.4 over `relations.findTraits`; `KeywordPicker` is links, grouped; an unknown id
+      is "Trait not found" with similar names and a pre-filled search, an unknown slug the keyword picker. *T:* the address codec,
+      the carried search and the place (mutation-checked); e2e `synergy.test.ts` (both URL shapes opened by address, Back and Forward,
+      the party carried both ways, the restore of the last party, the places, axe), `fallback-page.test.ts` (404.html names its files
+      under the base path), the walks and the targets of the Synergy pages in `keyboard.test.ts` and `touch-targets.test.ts`. *Docs:*
+      SPEC §7, DESIGN (§ Synergy pages, § Layout), ADR-0011. Deviations on purpose: D30–D32; the writer ignores a write whose page has
+      gone; the layout does not call `partySession.arrive` for a `goto` that changes page (it carries the party it holds).
 - [ ] **13.3** Trait view. The focus card (class dot, `h1`, meta, description with tokens: buff, debuff and effect tokens open the keyword
       view, events and mechanics are plain kind-coloured text; rows Relies on / Applies / Triggers / Material with the no-material
       icon), "Add to <target>" through the shared session (the same sentence, "Add to…" chooser, "In party" marker as Explore), "Open in

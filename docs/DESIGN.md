@@ -204,13 +204,39 @@ page's content in the document (the list is endless to a tab key going forward, 
 and would scroll it away): Shift+Tab from the foot finds it, and the Home key is the quick way for a keyboard. The scroll and
 size of the window are watched once for it and for `trackViewportOffset` (`page-scroll.ts`).
 
+### Synergy pages (M13)
+The pages under `/synergy` (ADR-0011) are a column of sections as wide as a line of text reads well (880 px at most, 16 px gutters on a
+phone): the `h1` (24 px), then sections with an `h2` (15 px). The layout of the routes holds the relations and the party; a page that
+waits for the dataset shows "Loading the traits…" (`role="status"`), or for good the alert of the failure (`LoadStatus`).
+- **Trait picker** (`TraitPicker`): the frame of the search field (accent border, 44 px, the focus ring around the whole bar, 16 px
+  text under coarse) and the same list under it (`Combobox`): a *Trait* badge, the name in the mono face, then "creature · family ·
+  class" beside it, which tells two traits of one name apart. An empty field lists nothing; Enter takes the first match (it is
+  active as the person types), a press takes any; taking one opens the trait's page as a step of the history and empties the field.
+- **Keyword picker** (`KeywordPicker`): links, a group for each of Debuffs, Buffs and Effects (an `h3` in small capitals), each a 32 px
+  pill (44 under coarse) with the name in the colour of its kind; the page's own keyword has the accent fill and ring and
+  `aria-current="page"`.
+- **Start from your party**: the filled slots in reading order, the slot in mono and the trait as a link; a slot whose id the dataset
+  lacks shows the id in `--status-warn` and "Not found in vX". With an empty party it says so and links to Explore.
+- **Not found**: a trait id the dataset does not know is a page, not an error: "Trait not found", the sentence that names the id and
+  the version, the traits with a similar name as links (at most 8, "No trait has a similar name." when none), and the picker with the
+  name the id kept already typed in. An unknown keyword slug says so and lists the keywords.
+- **A trait page** begins with the class dot, the name (`h1`), the origin line and the description as plain text; the focus card with
+  its tokens and the two sides of lanes are 13.3.
+
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
   wrap on narrow widths.
 - Narrow (under 1100 px, where the party has no room beside the list): one view at a time, picked by a bottom tab bar
-  (`TabBar`: Explore · Party, with Synergies in Phase 2; 64 px, icon over name, the selected tab has a rule above it and an
-  accent colour; the Party tab carries the count of filled slots). Explore is the header, search, chip row, facets (a
-  column from 700 px) and results; Party is the planner alone, at most 520 px wide and centred.
+  (`TabBar`: the Explore and Party tabs, and beside the tab list, not in it, the link to Synergies, a page of its own; 64 px, icon
+  over name, the selected tab has a rule above it and an accent colour; the Party tab carries the count of filled slots). Explore
+  is the header, search, chip row, facets (a column from 700 px) and results; Party is the planner alone, at most 520 px wide
+  and centred.
+- **Places of the app** (ADR-0011, PLAN D23). From 1100 px the header carries Explore · Synergies · Party n/18 (`SiteNav`, a `nav`
+  named Pages); under 1100 px the same three are at the foot of the window (`BottomBar`, which is not there from 1100 px): on Explore
+  the two tabs and the Synergies link, on the Synergy pages a `nav` named Sections of three links in the same places, so that the
+  items do not move when the person changes page. Every link carries the party (the address is the source of truth), the page the
+  person is on has `aria-current="page"` (a fill in the header, the rule and the heavier name at the foot), and Party goes to Explore
+  with `tab=party`, where a wide screen has the party as a column. Tabs and links look alike (`.bar-item`).
 - Mobile (under 700 px): header + search + chip row; results; the tab bar. Filters and fixes open as bottom sheets (§ Facet
   panel and chips), the Filters button in a bar of its own above the tab bar, on Explore only. No fake status bars or keyboards
   in mockups; the syntax toolbar docks above the system keyboard.
@@ -222,22 +248,25 @@ size of the window are watched once for it and for `trackViewportOffset` (`page-
   a keyword token) must put the ring back for `:focus-visible`, or its outline stands in for it.
 - **Keyboard** (criterion 8). `keyboard.test.ts` presses Tab through Explore, the Party tab and the open filters sheet, and fails
   for a control the tab key never reaches (arrow keys reach the unselected tabs), one that shows no 2 px ring, or one under a
-  fixed bar; and it does a search, an add, Undo / Redo / Clear and a filter without a pointer. The filters are over a hundred
+  fixed bar; and it does a search, an add, Undo / Redo / Clear and a filter without a pointer. It walks the Synergy pages too (the
+  picker with a party, a trait, a keyword, and the two pages of what is not found), and goes from Explore to the Synergies and back by
+  the keyboard. The filters are over a hundred
   buttons, so a link after the query, "Skip filters" (visible on focus, from 700 px), moves to the head of the results. A sheet
   puts the focus on its title when it opens. Safari's tab key skips links unless its settings say otherwise: the test does not
   count a link as missed there.
 - **Screen reader**: a person's check, `SCREEN_READER_CHECKLIST.md`.
 - **Touch targets** (`pointer: coarse`, which the Pixel 7 and iPhone 14 e2e projects match): every `button`, `a`, `input`,
   `select` and tab is at least 44 × 44 px (WCAG 2.5.8 asks 24), a checkbox counting with its label. `touch-targets.test.ts`
-  measures them on Explore (with a query and a filter on, and with the issues list and the list of suggestions open), in the open filters sheet and on the Party
-  tab, and names the controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
+  measures them on Explore (with a query and a filter on, and with the issues list and the list of suggestions open), in the open filters sheet, on the Party
+  tab and on the Synergy pages (the picker with its list open, a trait, a keyword, the two pages of what is not found), and names the
+  controls that must have been measured. A bordered control is as large as its *inner* button: the chip is 2 px taller than the
   target, the segmented frame 6 px. The one exception is a control **in a sentence** (the keywords of a description, the link of
   the footer's credit): it is as tall as its line, which WCAG 2.5.8 allows (Inline), and a taller hit area would cover the
   line beside it.
-- **Text fields and selects** (the search field, the sort) are 16 px under `pointer: coarse`: iOS zooms the page in when a field
+- **Text fields and selects** (the search field, the sort, the trait picker) are 16 px under `pointer: coarse`: iOS zooms the page in when a field
   with less takes the focus, and leaves it zoomed. The viewport meta stays as it is (`initial-scale=1`, no `maximum-scale`):
   stopping the zoom would stop a person from zooming (WCAG 1.4.4). `touch-targets.test.ts` reads the computed size of every text
-  field and select on Explore, in the open sheet and on the Party tab.
+  field and select on Explore, in the open sheet, on the Party tab and on the Synergy pages.
 - Contrast: text ≥ 4.5:1 (≥ 3:1 at 24 px+). `contrast.test.ts` reads `tokens.css` and checks every text colour on every surface
   (`--bg`, `--bg-bar`, `--surface-1…3`, `--accent-surface`), the text of a description under the match highlight (on `--bg`, where
   the descriptions are: a text colour that passes there can fail on a lighter surface, as `--text-muted` does on `--surface-2`),

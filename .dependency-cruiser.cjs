@@ -36,6 +36,15 @@ module.exports = {
       to: { path: '^apps/web/src/lib/query-assist\\.ts$', dependencyTypesNot: ['dynamic-import', 'type-only'] },
     },
     {
+      name: 'relations-stay-lazy',
+      severity: 'error',
+      comment:
+        'ADR-0011: the relation code (the index of the Synergy pages) belongs to the Synergy route. Only that route builds the ' +
+        'relation service (relation-composition.ts): imported from a page of the first script, it would grow it by 2 kB.',
+      from: { pathNot: ['^apps/web/src/routes/synergy/', '\\.test\\.ts$'] },
+      to: { path: '^apps/web/src/lib/relation-composition\\.ts$' },
+    },
+    {
       name: 'core-stays-pure',
       severity: 'error',
       comment: 'ADR-0003: core depends on nothing outside itself.',
