@@ -99,7 +99,17 @@ export { taxonomy } from './taxonomy/taxonomy';
 export { DatasetLoadError, type TraitRepository } from './repository/trait-repository';
 export { createMemoryTraitRepository } from './repository/memory-trait-repository';
 export { readDataset, readManifest } from './repository/read-dataset';
-export { createRelationIndex, type KeyRelations, type RelationIndex } from './relations/relation-index';
+export type { KeyRelations } from './relations/key-relations';
+export { createRelationIndex, type RelationIndex } from './relations/relation-index';
+export type {
+  KeyLane,
+  KeyLink,
+  RelatedTrait,
+  RelationOptions,
+  RelationSide,
+  SourceStrength,
+  TraitRelations,
+} from './relations/trait-relations';
 export { createSearchService, type SearchOutcome, type SearchService } from './search/search-service';
 export { createLintContext, type LintSource } from './search/lint-context';
 export {

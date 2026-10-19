@@ -13,15 +13,15 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D26, *Phase 2 — slices* below): M9 and M10 are done, 12.1 is done and the next slice is 12.2**
-  (`relationsOf`, on the `RelationIndex` of 12.1: it must leave the focus out of its own lists, see 12.1), in the order
-  M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
+- **Phase 2 is under way (D14–D27, *Phase 2 — slices* below): M9 and M10 are done, 12.1 and 12.2 are done and the next slice is 12.3**
+  (Alternatives, Same trigger, Same family; the events Same trigger needs are not in the `RelationIndex`: they are the hits of
+  `trait.keywords` with `kind: 'event'`, role `uses`, actor optional), in the order M12 → M13 → M11 (D15). The search field is a plain `<input>` until the page is idle, or the focus or a pointer
   arrives; then the assist layer (`query-assist.ts`: lint, suggestions, `Combobox`, the issues) is fetched and attaches to it (9.2 kB of
   lazy JS; initial JS 79.5 kB of 150). **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the
   fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8).
   Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D26 (chosen by Claude); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
+- For the owner to veto, none blocking: D18–D27 (chosen by Claude; D27: a random or conditional source enables nobody on the Enables side); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
   that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR (also in Match all) and that each is a chip.
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
@@ -60,9 +60,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D24 | (default) No new dependency in Phase 2: own Levenshtein, own narrowing of the imported JSON | here |
 | D25 | (default) Slice 8.4 stays open while Phase 2 starts early on the owner's go-ahead; Phase 1 closes when 8.4 lands | here |
 | D26 | (default) Typing makes the first suggestion active, so Tab and Enter accept it (what the ghost text shows); after an accept, a caret move, Esc or a blur nothing is active and Tab leaves the field. A hover does not activate | QUERY_LANGUAGE §6 |
+| D27 | (default) The Enables side lists only what the focus applies **by name**: a random or conditional source appears in Enabled by (SPEC §8.4) but enables nobody, so Pandemic has an empty Enables. The other way is one table in `trait-relations.ts` and 18 lanes for Pandemic | here |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D26 are defaults Claude chose while building Phase 2 (2026-10-18). None blocks; the owner may veto or change any, and the
+D18–D27 are defaults Claude chose while building Phase 2 (2026-10-18/19). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -354,13 +355,21 @@ conditional-source traits (8 sources: Bleeding twice) exist; until 12.1 nothing 
       source list of that key: `relationsOf` of 12.2 leaves the focus out. *T:* `relation-index.test.ts` (hand-made traits, fast-check
       invariants) and `pipeline/src/build/relation-acceptance.test.ts` (v2.0: 27 random sources in all 18 randomizable debuffs, never in
       Inverted, Mania, buffs or effects; the 4 pairs; `applies:` / `uses:` find as many traits as `appliers` / `users` for all 42 keys).
-- [ ] **12.2** Enabled by / Enables. `relationsOf(id, {artifactOnly})`: `RelatedTrait {trait, links: {key, strength}[], score, strength}`,
-      **one per trait per side** (D17); tier `specific < conditional < random`, then score desc, then `compareText`, then id; the focus
-      is excluded; `artifactOnly` drops candidates without material, never the focus. A side = `{several (score ≥ 2), single: {key,
-      entries}[] in the focus's key order, unmet, count}`; a trait that applies and relies on one keyword is on both sides. *T:*
-      criteria 4 and 5 on the real sheet (Pandemic in every randomizable debuff lane, last, tier random; Going Mad, Dusty Struggle and
-      Glitch never; Flesh Rot's siblings conditional); symmetry (A enables B ⇔ B is enabled by A, specific tier); the same output for
-      shuffled input.
+- [x] **12.2** Enabled by / Enables. `index.relationsOf(id, {artifactOnly})` → `{enabledBy, enables}` (`undefined` for an unknown id; the
+      algorithm is `relationsOfTrait` in `trait-relations.ts`). A side = `RelationSide {several (score ≥ 2), single: {key, entries}[], unmet,
+      count}` of `RelatedTrait {trait, links: {key, strength}[], score, strength}`: **one per trait per side** (D17); `strength` is the
+      strongest link (`specific < conditional < random`), so a mixed trait ranks by its best; ranked by tier, score desc, name ignoring
+      case, id. A lane exists only for a key with a trait of its own, in the focus's key order; `unmet` = keys no trait is tied through (a
+      key whose traits all sit in `several` is not unmet); `artifactOnly` drops candidates without material before ranking, never the
+      focus. Deviations: **the Enables side lists only what the focus applies by name (D27)**, so Pandemic and the four pair traits have
+      an empty Enables side; names are compared with `compareTextIgnoringCase` (as Explore's A–Z), not `compareText`; `KeyRelations`
+      moved to `key-relations.ts` (the index calls the algorithm and a cycle is forbidden). **For 13.3:** a trait relying on two
+      debuffs that can be random gets all 27 random sources in `several`, `×2`, after the specific and conditional ones (Flesh Rot:
+      36 enabled by, 8 outside the random group), so the random group needs the collapsed disclosure; Zantai's Envy is the one real
+      mixed trait (random for the debuffs, specific for Mega Magic). The whole sheet costs 5.5 ms (3 µs a trait). *T:*
+      `trait-relations.test.ts` (hand-made, fast-check on a dense generator: once per side, order, symmetry, shuffled input, filter) and
+      `relation-acceptance.test.ts` (criteria 4 and 5 on v2.0; the party-side random traits never; Here to Die ⇄ Kindling conditional;
+      Flesh Rot between the specific and the random; symmetry over all 1,780 traits; reversed dataset gives the same lists).
 - [ ] **12.3** Alternatives, Same trigger, Same family. Alternatives: other traits sharing ≥ 1 key in the same role, with the shared keys and
       roles for the reason line, ranked by overlap. Same trigger: the events the focus *relies on*; others relying on at least one of
       them with a compatible actor (equal, or either names none or any; moments by key), ranked by shared count; "no trigger" is a
