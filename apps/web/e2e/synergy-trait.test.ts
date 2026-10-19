@@ -14,7 +14,15 @@ import { publishedDataset } from './support/dataset';
 import { openExplore, rows } from './support/explore-page';
 import { tabTo } from './support/keyboard';
 import { addToParty, plainTraits, showParty, slot, slotChoice, slotChooser, toolbarButton } from './support/party-page';
-import { paramOf, pathOf, placeLink, suggestionFor, synergyHeading, traitPicker } from './support/synergy-page';
+import {
+  openTraitPicker,
+  paramOf,
+  pathOf,
+  placeLink,
+  suggestionFor,
+  synergyHeading,
+  traitPicker,
+} from './support/synergy-page';
 import {
   addOf,
   artifactFilter,
@@ -24,10 +32,12 @@ import {
   firstUnique,
   focusCard,
   lane,
-  listing,
   randomToggle,
   relationsOfDataset,
   showMore,
+  showSection,
+  shownListing,
+  shownSide,
   side,
   synergyAnnouncement,
   trail,
@@ -254,7 +264,6 @@ test.describe('what enables the trait, and what it enables', () => {
     await openTrait(page, focus);
 
     await expect(page.getByRole('heading', { level: 2, name: `Enabled by ${plural(enabledBy.count)}` })).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: `Enables ${plural(enables.count)}` })).toBeVisible();
     for (const { key, entries } of enabledBy.single) {
       const keyLane = lane(side(page, 'Enabled by'), `Applies ${labelOf(key)}`);
       await expect(keyLane.getByRole('heading', { level: 3 })).toContainText(plural(entries.length));
@@ -262,6 +271,8 @@ test.describe('what enables the trait, and what it enables', () => {
       // The lanes are in the order the trait names its keys, and each is a real list.
       await expect(keyLane.getByRole('list')).toHaveCount(1);
     }
+    await showSection(page, 'Enables');
+    await expect(page.getByRole('heading', { level: 2, name: `Enables ${plural(enables.count)}` })).toBeVisible();
   });
 
   test('puts the random sources last, labelled, and folded away behind a button when there are many', async ({
@@ -327,7 +338,7 @@ test.describe('what enables the trait, and what it enables', () => {
     await expect(side(page, 'Enabled by')).toContainText(
       `Self-sufficient: ${bare.name} doesn’t rely on any buff, debuff or effect.`,
     );
-    await expect(side(page, 'Enables')).toContainText(
+    await expect(await shownSide(page, 'Enables')).toContainText(
       `${bare.name} applies no buff, debuff or effect by name, so no trait is listed as relying on it.`,
     );
 
@@ -339,7 +350,9 @@ test.describe('what enables the trait, and what it enables', () => {
     const [key] = relationsOf(ignored).enables.unmet;
     if (key === undefined) throw new Error('no key is unmet');
     await openTrait(page, ignored);
-    await expect(side(page, 'Enables')).toContainText(`Nothing relies on ${labelOf(key)} yet in the compendium.`);
+    await expect(await shownSide(page, 'Enables')).toContainText(
+      `Nothing relies on ${labelOf(key)} yet in the compendium.`,
+    );
   });
 });
 
@@ -480,7 +493,8 @@ test.describe('moving the focus', () => {
     await expect(trail(page)).toHaveCount(0);
 
     for (const trait of rest) {
-      await traitPicker(page).fill(trait.name);
+      // On a phone the field is in a sheet that a button opens, and that a pick closes.
+      await (await openTraitPicker(page)).fill(trait.name);
       await suggestionFor(page, trait.name).click();
       await expect.poll(() => pathOf(page)).toBe(`/synergy/${trait.id}`);
       await expect(synergyHeading(page)).toHaveText(trait.name);
@@ -571,7 +585,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const { alternatives } = listsOf(index, focus);
     await openTrait(page, focus);
 
-    const list = listing(page, 'Alternatives');
+    const list = await shownListing(page, 'Alternatives');
     await expect(list.getByRole('heading', { level: 2 })).toHaveText(
       new RegExp(`^Alternatives\\s*${String(alternatives.length)}`),
     );
@@ -610,7 +624,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const total = listsOf(index, focus).alternatives.length;
     await openTrait(page, focus);
 
-    const list = listing(page, 'Alternatives');
+    const list = await shownListing(page, 'Alternatives');
     await expect(cards(list)).toHaveCount(PREVIEW);
     const more = showMore(list);
     await expect(more).toHaveText(`Show all ${String(total)}`);
@@ -648,7 +662,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const total = listsOf(index, focus).sameTrigger.entries.length;
     await openTrait(page, focus);
 
-    const list = listing(page, 'Same trigger');
+    const list = await shownListing(page, 'Same trigger');
     await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(total));
     await expect(cards(list)).toHaveCount(PREVIEW);
     await expect(list.getByText(/^Showing the first/u)).toHaveCount(0);
@@ -683,7 +697,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const { sameTrigger } = listsOf(index, focus);
     await openTrait(page, focus);
 
-    const list = listing(page, 'Same trigger');
+    const list = await shownListing(page, 'Same trigger');
     await expect(list).toContainText(`Traits that also react to ${sameTrigger.triggers.map(labelOf).join(', ')}`);
     await expect(cards(list)).toHaveCount(Math.min(PREVIEW, sameTrigger.entries.length));
     // The best come first, each with the events it shares, and a trait that shares more than one says how many.
@@ -706,7 +720,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     );
     await openTrait(page, focus);
 
-    const list = listing(page, 'Same trigger');
+    const list = await shownListing(page, 'Same trigger');
     await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(0));
     await expect(list).toContainText(`${focus.name} reacts to no event, so no trait is listed with it.`);
     await expect(cards(list)).toHaveCount(0);
@@ -728,7 +742,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const { sameFamily } = listsOf(index, focus);
     await openTrait(page, focus);
 
-    const list = listing(page, 'Same family');
+    const list = await shownListing(page, 'Same family');
     await expect(list.getByRole('heading', { level: 2 })).toContainText(plural(sameFamily.entries.length));
     await expect(list).toContainText(`Other ${sameFamily.family} traits, the mastery first`);
     await expect(cards(list)).toHaveCount(Math.min(PREVIEW, sameFamily.entries.length));
@@ -749,7 +763,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const { sameFamily } = listsOf(index, focus);
     await openTrait(page, focus);
 
-    const list = listing(page, 'Same family');
+    const list = await shownListing(page, 'Same family');
     await expect(list.getByRole('heading', { level: 2, name: 'Same family' })).toBeVisible();
     await expect(list).toContainText(`${sameFamily.family} is a grouping in the compendium, not a family`);
     await expect(list).toContainText('No mastery trait is named for it, so its traits are not listed together.');
@@ -769,7 +783,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     );
     await openTrait(page, focus);
 
-    await expect(listing(page, 'Same family')).toContainText(
+    await expect(await shownListing(page, 'Same family')).toContainText(
       `No other trait of the ${listsOf(index, focus).sameFamily.family} family in the compendium.`,
     );
   });
@@ -796,14 +810,12 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     const kept = listsOf(index, focus, true);
     await openTrait(page, focus, '?mat=yes');
 
-    await expect(listing(page, 'Alternatives').getByRole('heading', { level: 2 })).toContainText(
-      plural(kept.alternatives.length),
-    );
-    await expect(listing(page, 'Same trigger').getByRole('heading', { level: 2 })).toContainText(
-      plural(kept.sameTrigger.entries.length),
-    );
-    await expect(listing(page, 'Alternatives').getByText('no material', { exact: true })).toHaveCount(0);
-    await expect(listing(page, 'Same trigger').getByText('no material', { exact: true })).toHaveCount(0);
+    const alternatives = await shownListing(page, 'Alternatives');
+    await expect(alternatives.getByRole('heading', { level: 2 })).toContainText(plural(kept.alternatives.length));
+    await expect(alternatives.getByText('no material', { exact: true })).toHaveCount(0);
+    const sameTrigger = await shownListing(page, 'Same trigger');
+    await expect(sameTrigger.getByRole('heading', { level: 2 })).toContainText(plural(kept.sameTrigger.entries.length));
+    await expect(sameTrigger.getByText('no material', { exact: true })).toHaveCount(0);
   });
 
   test('starts every trait with its lists shut, and a card re-centres the page like the lanes do', async ({
@@ -826,7 +838,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
     if (first === undefined) throw new Error('no alternative');
     const total = listsOf(index, first.trait).alternatives.length;
     await openTrait(page, focus);
-    const list = listing(page, 'Alternatives');
+    const list = await shownListing(page, 'Alternatives');
     await showMore(list).click();
     await expect(showMore(list)).toHaveText('Show fewer');
 
@@ -837,7 +849,9 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
 
     await expect.poll(() => pathOf(page)).toBe(`/synergy/${first.trait.id}`);
     await expect(synergyHeading(page)).toBeFocused();
-    // Nothing the last trait had opened stays open for this one: its list is shut, with the button to open it.
+    // Nothing the last trait had opened stays open for this one: its list is shut, with the button to open it. (A phone starts the
+    // new trait on its first tab, as a wide screen shows the lists all at once.)
+    await showSection(page, 'Alternatives');
     await expect(cards(list)).toHaveCount(PREVIEW);
     await expect(showMore(list)).toHaveText(`Show all ${String(total)}`);
     await expect(showMore(list)).toHaveAttribute('aria-expanded', 'false');
@@ -855,7 +869,7 @@ test.describe('the lists under the sides: Alternatives, Same trigger, Same famil
       .find((trait) => plain.has(trait.id));
     if (neighbour === undefined) throw new Error('no plain trait in the family');
     await openTrait(page, focus);
-    const card = cardOf(listing(page, 'Same family'), neighbour.name);
+    const card = cardOf(await shownListing(page, 'Same family'), neighbour.name);
 
     await addOf(card).click();
 
@@ -998,8 +1012,9 @@ test.describe('accessibility of the page of a trait', () => {
     await openTrait(page, long);
     expect(await axeViolations(page)).toEqual([]);
 
-    await showMore(listing(page, 'Same trigger')).click();
-    await expect(cards(listing(page, 'Same trigger'))).toHaveCount(LISTED_AT_MOST);
+    const sameTrigger = await shownListing(page, 'Same trigger');
+    await showMore(sameTrigger).click();
+    await expect(cards(sameTrigger)).toHaveCount(LISTED_AT_MOST);
     expect(await axeViolations(page)).toEqual([]);
 
     const grouped = firstUnique(traits, (each) => index.sameFamilyOf(each.id)?.grouping === true, 'in a grouping');

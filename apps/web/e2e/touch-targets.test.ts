@@ -25,8 +25,23 @@ import {
   slotChooser,
   withUniqueName,
 } from './support/party-page';
-import { fromParty, synergyHeading, traitPicker, traitSuggestions, whenLoaded } from './support/synergy-page';
-import { cardOf, firstUnique, randomToggle, relationsOfDataset, side } from './support/trait-page';
+import {
+  fromParty,
+  openTraitPicker,
+  synergyHeading,
+  traitPicker,
+  traitSuggestions,
+  whenLoaded,
+} from './support/synergy-page';
+import {
+  cardOf,
+  firstUnique,
+  randomToggle,
+  relationsOfDataset,
+  showSection,
+  shownSide,
+  side,
+} from './support/trait-page';
 
 // On a phone every control is a target for a finger (DESIGN § Accessibility): at least 44 × 44 px, where WCAG 2.5.8 asks for
 // 24. The tests measure what the page draws, in the Pixel 7 and iPhone 14 projects, for the places a phone shows: Explore,
@@ -318,11 +333,14 @@ test.describe('touch targets on a phone', () => {
     // The pages that have no party to show: a trait, a keyword, a keyword that is none, a trait that is none.
     for (const [address, including] of [
       [`./synergy/${trait.id}`, [/^Find a trait$/]],
-      // A keyword: the chips, the links of the summary, the two lists with their buttons and links, the cards and the filter.
+      // A keyword: the button of the sheet of chips, the links of the summary, the tabs, the first list with its buttons and links, the
+      // cards and the filter.
       [
         './synergy/kw/vulnerable',
         [
-          /^Vulnerable\b/,
+          /^Other keywords$/,
+          /^Appliers \d/,
+          /^Rely on it \d/,
           /^Artifact-eligible only$/,
           /^See in Explore — Appliers$/,
           /^Show all \d+ — Appliers$/,
@@ -341,7 +359,7 @@ test.describe('touch targets on a phone', () => {
     }
   });
 
-  test('has every control of the page of a trait at least 44 × 44 px: the lanes, the cards, the filter, the trail', async ({
+  test('has every control of the page of a trait at least 44 × 44 px: the tabs, the lanes, the cards, the filter, the trail', async ({
     page,
     request,
   }) => {
@@ -369,37 +387,66 @@ test.describe('touch targets on a phone', () => {
     await whenLoaded(page);
 
     await randomToggle(side(page, 'Enabled by')).first().click();
-    // A control scrolled above the window is not measured: the page is taken back to its top, and the cards are all below it.
-    await page.evaluate(() => {
-      window.scrollTo(0, 0);
-    });
-    await expectTargetsLargeEnough(page.locator('body'), [
+    // The four lists are tabs on a phone, one on show at a time: each is brought forward and measured, and what they hold is among
+    // what was measured. A control scrolled above the window is not measured, so the page goes back to its top first: the cards are
+    // all below it.
+    const names: string[] = [];
+    const tooSmall: string[] = [];
+    for (const section of ['Enabled by', 'Enables', 'Alternatives', 'Related'] as const) {
+      await showSection(page, section);
+      await page.evaluate(() => {
+        window.scrollTo(0, 0);
+      });
+      const measured = await measureControls(page.locator('body'));
+      names.push(...measured.names);
+      tooSmall.push(...measured.tooSmall);
+    }
+    for (const wanted of [
       /^Find a trait$/,
       /^Artifact-eligible only$/,
+      /^Enabled by \d/,
+      /^Related \d/,
       /^Add to Creature 1 · Fused — /,
       /^Add to… — /,
       /^Re-centre on /,
       /^Open in Explore$/,
       /^Random sources · /,
-      // The lists under the sides: the button of a long one, shut and then open.
+      // The lists under the sides: the button of a long one, shut.
       /^Show (all|the first) \d+ — /,
       /^Synergies$/,
-    ]);
-    await page
-      .getByRole('button', { name: /^Show (all|the first) \d+ — / })
-      .first()
-      .click();
+    ]) {
+      expect(
+        names.some((name) => wanted.test(name)),
+        `a control named ${String(wanted)} was measured`,
+      ).toBe(true);
+    }
+    expect(tooSmall).toEqual([]);
+
+    // The button of a long list, open: the tab that has one is brought forward.
+    const opening = page.getByRole('button', { name: /^Show (all|the first) \d+ — / });
+    for (const section of ['Alternatives', 'Related'] as const) {
+      await showSection(page, section);
+      if ((await opening.count()) > 0) break;
+    }
+    await opening.first().click();
     await page.evaluate(() => {
       window.scrollTo(0, 0);
     });
     await expectTargetsLargeEnough(page.locator('body'), [/^Show fewer — /]);
-    await expectFieldsNotZoomedIn(page.locator('body'), [/^Find a trait$/]);
     expect(await widerThanTheWindow(page)).toBe(false);
+
+    // The field is in the sheet that the button opens, and its text is 16 px.
+    await openTraitPicker(page);
+    await expectFieldsNotZoomedIn(page.locator('body'), [/^Find a trait$/]);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Find a trait' })).toBeHidden();
 
     // A step on the way adds the trail, whose links are targets too.
     const [first] = index.relationsOf(focus.id)?.enabledBy.several ?? [];
     if (first === undefined) throw new Error('no trait ties through several keys');
-    await cardOf(side(page, 'Enabled by'), first.trait.name).getByRole('link').click();
+    await cardOf(await shownSide(page, 'Enabled by'), first.trait.name)
+      .getByRole('link')
+      .click();
     await expect(synergyHeading(page)).toHaveText(first.trait.name);
     await expectTargetsLargeEnough(page.locator('body'), [new RegExp(`^Re-centre on ${focus.name}$`, 'u')]);
     expect(await widerThanTheWindow(page)).toBe(false);

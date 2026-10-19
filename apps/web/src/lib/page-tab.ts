@@ -26,18 +26,21 @@ export function encodeTab(tab: PageTab): UrlParams {
   return tab === initialTab ? [] : [['tab', tab]];
 }
 
-/** The tab a key of the tab list moves to (ARIA tabs pattern): the arrows go round, Home and End to the ends. */
-export function tabForKey(key: string, current: PageTab): PageTab | undefined {
-  const at = PAGE_TABS.indexOf(current);
+/**
+ * The tab of `tabs` (a list of them, in order) that a key of the tab list moves to from `current` (ARIA tabs pattern): the arrows
+ * go round, Home and End to the ends. It serves the tabs of the page and the sections of a Synergy page alike.
+ */
+export function tabForKey<Tab>(key: string, current: Tab, tabs: readonly Tab[]): Tab | undefined {
+  const at = tabs.indexOf(current);
   switch (key) {
     case 'ArrowRight':
-      return PAGE_TABS[(at + 1) % PAGE_TABS.length];
+      return tabs[(at + 1) % tabs.length];
     case 'ArrowLeft':
-      return PAGE_TABS[(at - 1 + PAGE_TABS.length) % PAGE_TABS.length];
+      return tabs[(at - 1 + tabs.length) % tabs.length];
     case 'Home':
-      return PAGE_TABS[0];
+      return tabs[0];
     case 'End':
-      return PAGE_TABS.at(-1);
+      return tabs.at(-1);
     default:
       return undefined;
   }

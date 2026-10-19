@@ -21,6 +21,7 @@
     hrefOf,
     exploreHref,
     linkNameOf,
+    titleHidden = false,
   }: {
     section: RelatedSectionModel;
     artifactOnly: boolean;
@@ -28,6 +29,8 @@
     hrefOf: (id: TraitId) => ResolvedPathname;
     exploreHref?: ResolvedPathname | undefined;
     linkNameOf?: ((name: string) => string) | undefined;
+    /** The tab above says what the list is called: the heading stays for a screen reader and is not drawn. */
+    titleHidden?: boolean;
   } = $props();
 
   const uid = $props.id();
@@ -41,8 +44,8 @@
 
 <section class="related" aria-labelledby="{uid}-title">
   <header>
-    <div class="title-row">
-      <h2 id="{uid}-title">
+    <div class="title-row" class:bare={titleHidden && !hasMore && exploreHref === undefined}>
+      <h2 id="{uid}-title" class:visually-hidden={titleHidden}>
         {section.title}
         {#if section.counted}
           <span class="count">
@@ -107,6 +110,11 @@
     justify-content: space-between;
     gap: 4px 12px;
     min-height: 28px;
+  }
+
+  /* No heading drawn and no button: nothing to hold the row up. */
+  .title-row.bare {
+    min-height: 0;
   }
 
   h2 {

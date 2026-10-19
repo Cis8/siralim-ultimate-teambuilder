@@ -2,21 +2,31 @@
   import { afterNavigate } from '$app/navigation';
   import { keywordSlug, lostTraitSearch, type KeywordKey, type Trait, type TraitId } from '@atlas/core';
   import { tick } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import ArtifactFilter from '../../../lib/components/artifact-filter.svelte';
   import ExplorationTrail from '../../../lib/components/exploration-trail.svelte';
   import FocusCard from '../../../lib/components/focus-card.svelte';
   import LoadStatus from '../../../lib/components/load-status.svelte';
+  import PickerSheet from '../../../lib/components/picker-sheet.svelte';
   import RelatedSection from '../../../lib/components/related-section.svelte';
   import RelationSide from '../../../lib/components/relation-side.svelte';
+  import SectionTabs from '../../../lib/components/section-tabs.svelte';
   import TraitPicker from '../../../lib/components/trait-picker.svelte';
   import { carriedSearch } from '../../../lib/carried-search';
   import { partySession } from '../../../lib/composition-root';
   import { copy } from '../../../lib/copy';
   import { keyLabel } from '../../../lib/key-label';
   import { relatedSections } from '../../../lib/related-sections';
-  import { decodeSynergyView } from '../../../lib/synergy-address';
+  import { decodeSynergyView, type SynergySection } from '../../../lib/synergy-address';
   import { useSynergy } from '../../../lib/synergy-context';
   import { carriedNow, exploreTraitHref, openTrait, synergyHref, synergyLinkSearch } from '../../../lib/synergy-links';
+  import {
+    distinctTraits,
+    panelAttributes,
+    sectionInAddress,
+    shownSection,
+    TRAIT_SECTIONS,
+  } from '../../../lib/synergy-sections';
   import type { PageData } from './$types';
 
   /** How many traits with a name like the one in a dead link are offered. */
@@ -25,6 +35,8 @@
   const { data }: { data: PageData } = $props();
 
   const synergy = useSynergy();
+  /** Where the lists are tabs and the pickers are sheets. The stylesheet of the page asks for the opposite (`width >= 700px`). */
+  const narrow = new MediaQuery('width < 700px');
   const relations = $derived(synergy.relations);
   const trait = $derived(relations?.trait(data.traitId));
   const lost = $derived(lostTraitSearch(data.traitId));
@@ -43,6 +55,21 @@
     if (alternatives === undefined || sameTrigger === undefined || sameFamily === undefined) return undefined;
     return relatedSections({ trait, alternatives, sameTrigger, sameFamily, artifactOnly }, keyLabel);
   });
+  /** The list a narrow screen has on show, and the tabs that bring the others forward. */
+  const section = $derived(shownSection(synergy.view.section, TRAIT_SECTIONS));
+  const alternatives = $derived((related ?? []).filter(({ id }) => id === 'alternatives'));
+  const triggerAndFamily = $derived((related ?? []).filter(({ id }) => id !== 'alternatives'));
+  const tabs = $derived(
+    sides === undefined
+      ? []
+      : ([
+          { section: 'enabled-by', label: copy.enabledBy, count: sides.enabledBy.count },
+          { section: 'enables', label: copy.enables, count: sides.enables.count },
+          { section: 'alternatives', label: copy.alternatives, count: distinctTraits(alternatives) },
+          { section: 'related', label: copy.related, count: distinctTraits(triggerAndFamily) },
+        ] as const),
+  );
+  const panel = (of: SynergySection) => panelAttributes(of, narrow.current, section);
   // The links of a trait page carry the party and the artifact filter: the person keeps both as they go from trait to trait.
   const linkSearch = $derived(synergyLinkSearch(artifactOnly));
   const traitHref = (id: TraitId) => synergyHref({ page: 'trait', traitId: id }, linkSearch);
@@ -129,12 +156,30 @@
   </section>
 {:else if sides !== undefined}
   <div class="toolbar">
-    <TraitPicker
-      {relations}
-      onpick={(picked: Trait) => {
-        void openTrait(picked.id, artifactOnly);
-      }}
-    />
+    {#if narrow.current}
+      <!-- On a phone the list of matches wants the room the keyboard leaves, which a sheet gives it. -->
+      <PickerSheet
+        label={copy.findTraitLabel}
+        title={copy.findTraitLabel}
+        closeLabel={copy.closePicker}
+        icon="search"
+        focusField
+      >
+        <TraitPicker
+          {relations}
+          onpick={(picked: Trait) => {
+            void openTrait(picked.id, artifactOnly);
+          }}
+        />
+      </PickerSheet>
+    {:else}
+      <TraitPicker
+        {relations}
+        onpick={(picked: Trait) => {
+          void openTrait(picked.id, artifactOnly);
+        }}
+      />
+    {/if}
     <ArtifactFilter
       checked={artifactOnly}
       onchange={(matOnly: boolean) => {
@@ -147,7 +192,10 @@
 
   <ExplorationTrail {steps} hrefOf={traitHref} />
 
-  <!-- The focus comes first in the page; from 1100 px it stands between the two sides, which the grid places. -->
+  <!--
+    The focus comes first in the page; from 1100 px it stands between the two sides, which the grid places. Under 700 px the four
+    lists are tabs under the focus, and the page scrolls: one list at a time, never a list within the page.
+  -->
   <div class="explorer">
     <div class="focus-cell">
       <FocusCard
@@ -155,10 +203,21 @@
         party={partySession.actions}
         {keywordHref}
         exploreHref={exploreTraitHref(trait)}
+        compact={narrow.current}
         bind:heading
       />
     </div>
-    <div class="enabled-by-cell">
+    {#if narrow.current}
+      <SectionTabs
+        label={copy.traitTabsLabel}
+        {tabs}
+        selected={section}
+        onselect={(next: SynergySection) => {
+          synergy.choose({ section: sectionInAddress(next, TRAIT_SECTIONS) });
+        }}
+      />
+    {/if}
+    <div class="enabled-by-cell" {...panel('enabled-by')}>
       <RelationSide
         side={sides.enabledBy}
         direction="enabledBy"
@@ -166,9 +225,10 @@
         {artifactOnly}
         party={partySession.actions}
         hrefOf={traitHref}
+        titleHidden={narrow.current}
       />
     </div>
-    <div class="enables-cell">
+    <div class="enables-cell" {...panel('enables')}>
       <RelationSide
         side={sides.enables}
         direction="enables"
@@ -176,20 +236,35 @@
         {artifactOnly}
         party={partySession.actions}
         hrefOf={traitHref}
+        titleHidden={narrow.current}
       />
     </div>
-  </div>
 
-  {#if related !== undefined}
-    <!-- A trait starts with its lists shut: the key forgets what the last one had opened. -->
-    {#key trait.id}
-      <div class="related">
-        {#each related as section (section.id)}
-          <RelatedSection {section} {artifactOnly} party={partySession.actions} hrefOf={traitHref} />
-        {/each}
-      </div>
-    {/key}
-  {/if}
+    {#if related !== undefined}
+      <!-- A trait starts with its lists shut: the key forgets what the last one had opened. -->
+      {#key trait.id}
+        <div class="related">
+          <!-- Alternatives is a tab of its own; Same trigger and Same family share the last one, one above the other. -->
+          <div class="alternatives-panel" {...panel('alternatives')}>
+            {#each alternatives as list (list.id)}
+              <RelatedSection
+                section={list}
+                {artifactOnly}
+                party={partySession.actions}
+                hrefOf={traitHref}
+                titleHidden={narrow.current}
+              />
+            {/each}
+          </div>
+          <div class="related-panel" {...panel('related')}>
+            {#each triggerAndFamily as list (list.id)}
+              <RelatedSection section={list} {artifactOnly} party={partySession.actions} hrefOf={traitHref} />
+            {/each}
+          </div>
+        </div>
+      {/key}
+    {/if}
+  </div>
 {/if}
 
 <style>
@@ -232,7 +307,10 @@
     gap: 8px 20px;
   }
 
-  /* One column in the order of the page (the focus, what enables it, what it enables); from 1100 px the focus stands between the sides. */
+  /*
+   * One column in the order of the page (the focus, what enables it, what it enables, the three lists under them); from 1100 px the
+   * focus stands between the sides and the lists have a row of their own. Under 700 px the lists are tabs: one is on show.
+   */
   .explorer {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -248,15 +326,44 @@
     border-top: 1px solid var(--border);
   }
 
+  /* From 700 px the boxes of the lists are only a way to name them (the tab panels of a phone): the lists are the grid's items. */
+  @media (width >= 700px) {
+    .alternatives-panel,
+    .related-panel {
+      display: contents;
+    }
+  }
+
+  @media (width < 700px) {
+    .explorer {
+      gap: 12px;
+    }
+
+    /* The panels are the grid's items, and the rule and the room above the lists have no place between tabs. */
+    .related {
+      display: contents;
+    }
+
+    /* `:not([hidden])`: a rule that sets `display` would otherwise show the panel of a tab that is not selected. */
+    .related-panel:not([hidden]) {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+  }
+
   @media (width >= 1100px) {
     .related {
+      grid-area: related;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: start;
     }
 
     .explorer {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
-      grid-template-areas: 'enabled-by focus enables';
+      grid-template-areas:
+        'enabled-by focus enables'
+        'related related related';
       align-items: start;
     }
 

@@ -19,18 +19,59 @@
     party,
     keywordHref,
     exploreHref,
+    compact = false,
     heading = $bindable(),
   }: {
     trait: Trait;
     party: PartyActions;
     keywordHref: (key: KeywordKey) => ResolvedPathname;
     exploreHref: ResolvedPathname;
+    /** A narrow screen: the card is tighter and the description folds to three lines, with a button that opens it. */
+    compact?: boolean;
     heading?: HTMLHeadingElement | undefined;
   } = $props();
 
   const uid = $props.id();
   const reasonId = $derived(`${uid}-reason`);
+  const descriptionId = $derived(`${uid}-description`);
   const facts = $derived(traitFacts(trait));
+
+  /** The trait whose description the person opened: another trait starts folded again, with no state to reset. */
+  let unfoldedFor = $state<Trait['id']>();
+  let description = $state<HTMLElement>();
+  /** Whether the folded description is cut: a short one has nothing to open. It keeps its last answer while the text is open. */
+  let cut = $state(false);
+  const unfolded = $derived(unfoldedFor === trait.id);
+  const folds = $derived(compact && cut);
+
+  /**
+   * A keyword in the cut part of the text takes the focus: the text opens, so that the focus is never on something the person cannot
+   * see. Chrome scrolls the folded box to the keyword (the box is scrolled), Safari leaves the box alone and the keyword lies below
+   * it; a keyword in the lines that show is neither, and is left as it is.
+   */
+  function revealFocus(event: FocusEvent): void {
+    if (!compact || !(description instanceof HTMLElement) || !(event.target instanceof Element)) return;
+    const below = event.target.getBoundingClientRect().bottom > description.getBoundingClientRect().bottom + 1;
+    if (description.scrollTop > 0 || below) unfoldedFor = trait.id;
+  }
+
+  $effect(() => {
+    if (!compact || !(description instanceof HTMLElement) || unfolded) return;
+    const text = description;
+    const measure = (): void => {
+      cut = text.scrollHeight > text.clientHeight + 1;
+    };
+    measure();
+    // The width changes what is cut, and so does another trait's text (the box may stay the same size: three lines of either).
+    const resized = new ResizeObserver(measure);
+    resized.observe(text);
+    const rewritten = new MutationObserver(measure);
+    rewritten.observe(text, { childList: true, subtree: true, characterData: true });
+    return () => {
+      resized.disconnect();
+      rewritten.disconnect();
+    };
+  });
 
   const keysText = (keys: readonly KeywordKey[]): string =>
     keys.length === 0 ? copy.factNone : keys.map(keyLabel).join(', ');
@@ -41,7 +82,7 @@
   );
 </script>
 
-<section class="focus" aria-label={copy.focusLabel}>
+<section class="focus" class:compact aria-label={copy.focusLabel}>
   <p class="caption" aria-hidden="true">{copy.focusCaption}</p>
   <header>
     <h1 tabindex="-1" bind:this={heading}>
@@ -51,7 +92,28 @@
     <p class="origin">{copy.traitOrigin(trait.creature, trait.family, trait.class, trait.kind)}</p>
   </header>
 
-  <p class="description"><FocusDescription {trait} hrefOf={keywordHref} /></p>
+  <div class="description-cell">
+    <p
+      id={descriptionId}
+      class="description"
+      class:folded={compact && !unfolded}
+      bind:this={description}
+      onfocusin={revealFocus}
+    >
+      <FocusDescription {trait} hrefOf={keywordHref} />
+    </p>
+    {#if folds}
+      <button
+        type="button"
+        class="unfold"
+        aria-expanded={unfolded}
+        aria-controls={descriptionId}
+        onclick={() => {
+          unfoldedFor = unfolded ? undefined : trait.id;
+        }}>{unfolded ? copy.showLess : copy.showMore}</button
+      >
+    {/if}
+  </div>
 
   <dl>
     <dt>{copy.factRelies}</dt>
@@ -134,6 +196,54 @@
     font-size: 14.5px;
     line-height: 1.65;
     text-wrap: pretty;
+  }
+
+  /* A narrow screen shows the first lines of the description; the button below opens the rest. */
+  .description.folded {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .description-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .unfold {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .unfold:hover {
+    border-color: var(--accent-border);
+  }
+
+  /* A phone: the card gives the room it takes to the lists below it, which are what the person came for. */
+  .compact {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .compact .caption {
+    display: none;
+  }
+
+  .compact dl {
+    gap: 4px 12px;
   }
 
   dl {

@@ -53,22 +53,32 @@ describe('encodeTab', () => {
 
 describe('tabForKey (the keys of the ARIA tab list)', () => {
   it('moves to the next tab on the right arrow, and goes round from the last', () => {
-    expect(tabForKey('ArrowRight', 'explore')).toBe('party');
-    expect(tabForKey('ArrowRight', 'party')).toBe('explore');
+    expect(tabForKey('ArrowRight', 'explore', PAGE_TABS)).toBe('party');
+    expect(tabForKey('ArrowRight', 'party', PAGE_TABS)).toBe('explore');
   });
 
   it('moves to the previous tab on the left arrow, and goes round from the first', () => {
-    expect(tabForKey('ArrowLeft', 'party')).toBe('explore');
-    expect(tabForKey('ArrowLeft', 'explore')).toBe('party');
+    expect(tabForKey('ArrowLeft', 'party', PAGE_TABS)).toBe('explore');
+    expect(tabForKey('ArrowLeft', 'explore', PAGE_TABS)).toBe('party');
   });
 
   it('goes to the first tab on Home and to the last on End', () => {
-    expect(tabForKey('Home', 'party')).toBe('explore');
-    expect(tabForKey('End', 'explore')).toBe('party');
+    expect(tabForKey('Home', 'party', PAGE_TABS)).toBe('explore');
+    expect(tabForKey('End', 'explore', PAGE_TABS)).toBe('party');
   });
 
   it.each(['Enter', ' ', 'Tab', 'ArrowDown', 'ArrowUp', 'a'])('leaves the key %j to the browser', (key) => {
-    expect(tabForKey(key, 'explore')).toBeUndefined();
+    expect(tabForKey(key, 'explore', PAGE_TABS)).toBeUndefined();
+  });
+
+  it('walks any list of tabs it is given, not only the page’s', () => {
+    const four = ['a', 'b', 'c', 'd'] as const;
+
+    expect(tabForKey('ArrowRight', 'b', four)).toBe('c');
+    expect(tabForKey('ArrowRight', 'd', four)).toBe('a');
+    expect(tabForKey('ArrowLeft', 'a', four)).toBe('d');
+    expect(tabForKey('Home', 'c', four)).toBe('a');
+    expect(tabForKey('End', 'b', four)).toBe('d');
   });
 });
 

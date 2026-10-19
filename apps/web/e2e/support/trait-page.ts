@@ -1,5 +1,6 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { createRelationIndex, taxonomy, type RelationIndex, type Trait } from '@atlas/core';
+import { isCompact } from './explore-page';
 import { withUniqueName } from './party-page';
 
 /** What core says about how the traits of the published dataset relate: the page is held to it, as Explore's counts are. */
@@ -19,6 +20,39 @@ export const lane = (scope: Locator, heading: string): Locator =>
 /** A list under the sides. Its heading holds the count after the name, except for a grouping that is no family. */
 export const listing = (page: Page, title: 'Alternatives' | 'Same trigger' | 'Same family'): Locator =>
   page.getByRole('region', { name: new RegExp(`^${title}( \\d|$)`) });
+
+/** The four lists of the page of a trait, as the tabs of a phone call them (the last holds Same trigger and Same family). */
+export type TraitSection = 'Enabled by' | 'Enables' | 'Alternatives' | 'Related';
+
+/** The tab list of a phone, and one tab of it: its name holds the count after the label ("Enabled by 36 traits"). */
+export const sectionTabs = (page: Page): Locator => page.getByRole('tablist', { name: 'Relations' });
+export const sectionTab = (page: Page, name: TraitSection): Locator =>
+  sectionTabs(page).getByRole('tab', { name: new RegExp(`^${name} \\d`) });
+
+/**
+ * Brings a list forward. Under 700 px the four lists are tabs, one on show, and the first is shown when a page opens; from there
+ * they are all on the page and this does nothing.
+ */
+export async function showSection(page: Page, name: TraitSection): Promise<void> {
+  if (!isCompact(page)) return;
+  await sectionTab(page, name).click();
+  await expect(sectionTab(page, name)).toHaveAttribute('aria-selected', 'true');
+}
+
+/** A side of the page, brought forward first. */
+export async function shownSide(page: Page, name: 'Enabled by' | 'Enables'): Promise<Locator> {
+  await showSection(page, name);
+  return side(page, name);
+}
+
+/** A list under the sides, brought forward first (on a phone Same trigger and Same family are both in the tab called Related). */
+export async function shownListing(
+  page: Page,
+  title: 'Alternatives' | 'Same trigger' | 'Same family',
+): Promise<Locator> {
+  await showSection(page, title === 'Alternatives' ? 'Alternatives' : 'Related');
+  return listing(page, title);
+}
 
 /** The button of a list that has more than its first cards: "Show all 67", "Show the first 200" or "Show fewer". */
 export const showMore = (scope: Locator): Locator =>

@@ -269,6 +269,15 @@ export const copy = {
   cappedNote: (listed: number, total: number, artifactOnly: boolean) =>
     `Showing the first ${formatCount(listed)} of ${formatCount(total)}.${artifactOnly ? '' : ' The artifact filter above narrows the list.'}`,
 
+  /** The narrow screen (13.6): the lists of a page are tabs, a long description is folded and the pickers are sheets. */
+  related: 'Related',
+  traitTabsLabel: 'Relations',
+  keywordTabsLabel: 'Keyword lists',
+  showMore: 'Show more',
+  showLess: 'Show less',
+  otherKeywords: 'Other keywords',
+  closePicker: 'Close',
+
   /** The page of a keyword (13.5): who gives it, who relies on it, and whether that is enough (SPEC §8.4). */
   appliers: 'Appliers',
   appliersHint: (label: string) => `Traits that apply ${label} by name`,

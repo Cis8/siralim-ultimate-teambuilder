@@ -13,17 +13,18 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 is under way (D14–D43, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.5 are done and the next slice is
-  13.6** (mobile), in the order M13 → M11 (D15). What 13.5 leaves for it: the keyword page is `routes/synergy/kw/[slug]/+page.svelte`
-  (the artifact filter, `KeywordSummary`, two `RelatedSection`s in a grid of two columns from 700 px, the picker last: D39);
-  `keywordSections(view, label, artifactOnly)` words the two lists and their groups (`CardGroup`, shared with the lanes) and
-  `keyword-summary.ts` the verdict, the counts and the live line; `SYNERGY_SECTIONS` already has `appliers` and `users` for the phone's
-  tabs; the picker's 42 chips are what the phone's sheet is for. Sizes now: initial JS 88.8 kB of 150, lazy 29.5 of 50, total 118.4 of
-  200; no Lighthouse URL reaches `/synergy` until 13.8. **On a phone the inline list of suggestions is all there is until 11.5** (nine
-  rows reach the fixed bars, which stay on top): the owner's check of it on a real iPhone is the first one that matters (checklist
-  iPhone 8). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
+- **Phase 2 is under way (D14–D48, *Phase 2 — slices* below): M9, M10 and M12 are done, 13.1–13.6 are done and the next slice is
+  13.7** (a "Synergies of X" link on every Explore result and every filled party slot), in the order M13 → M11 (D15). What 13.6 leaves
+  for it: the result card is `components/result-row.svelte` (under 700 px the add button is a 44 px square at the top right of the
+  card, and the DOM puts it before the description: the new link must keep that order and the touch target); the rows are in the
+  virtual list (`virtual-list.svelte`), so a row that grows needs the list to measure again; the party slot is `party-slot.svelte`;
+  the address of a Synergy page is `synergyHref` in `synergy-links.ts` (it carries the party), and `carried-search.ts` is how Explore
+  hands the party over. Sizes now: initial JS 89.2 kB of 150, lazy 32.2 of 50, total 121.4 of 200; no Lighthouse URL reaches `/synergy`
+  until 13.8. **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on
+  top): the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14).
+  Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D43 (chosen by Claude; D39: on a keyword's page the picker of the other keywords is the last section, with counts there only; D40: *Appliers* lists the traits that apply by name, and the conditional and random sources are groups after it; D41–D43: the wording, the live line and the Explore links of that page; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
+- For the owner to veto, none blocking: D18–D48 (chosen by Claude; **D44–D48, the phone: a tab press is a history step so Back flips tabs, the focus card keeps its facts and only the description folds, and "Find a trait" / "Other keywords" are sheets**; D39: on a keyword's page the picker of the other keywords is the last section, with counts there only; D40: *Appliers* lists the traits that apply by name, and the conditional and random sources are groups after it; D41–D43: the wording, the live line and the Explore links of that page; **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
   families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D37: the three lists under the sides show
   6 cards and a button, up to 200; D38: the filter's polite line counts every list; D33: a card and a step of the trail are links, and no “Now centred” line; D34: the trail is session memory; D35: random sources fold above 3; D30: the Synergies link sits after the tab list; D31: Party in the
   header goes to Explore with `tab=party`; D32: a trait page's description is plain text until 13.3; D27: a random or conditional source enables nobody on the Enables side; D28: the same for Alternatives; D29: with no applier by name a random source decides the verdict before a conditional one); 8b.10 made "immune to debuffs" a mention (SPEC §4); 8b.11 chose
@@ -82,9 +83,14 @@ session (after `CLAUDE.md`), update it before ending one.
 | D41 | (default) A card of a keyword's page is named “Open X” (no trait is at the centre to re-centre on). A move to another keyword puts the focus on the new `h1` and says the counts, the verdict and its reason in the polite line; a turn of the artifact filter says the two counts and the verdict's title; a page opened by its address says nothing | DESIGN § Synergy pages |
 | D42 | (default) The six verdicts are worded in `copy.verdicts` (Well supported · Scarce enabler · No payoff yet · Only by chance · Only under a condition · No source); only *supported* is good and only *no-source* bad, the rest ask for care; each has an icon (check, warning triangle, crossed circle) so that colour is never alone | DESIGN § Synergy pages |
 | D43 | (default) “See in Explore” is a link in the heading row of each list, `kw=a:key` or `kw=u:key` with `mat=yes` when the filter is on and the party carried: Explore then lists exactly the traits of the list (criterion 11) | DESIGN § Synergy pages |
+| D44 | (default) Under 700 px the lists of a Synergy page are tabs and the tab is in the address as `section=` (`enabled-by`, `enables`, `alternatives`, `related`, `appliers`, `users`): a history step like the tabs of Explore (Back goes to the tab before), nothing written for the first tab, never carried by a link to another page (the next trait starts on its first tab). From 700 px `section=` changes nothing | DESIGN § Synergy pages |
+| D45 | (default) The fourth tab, *Related*, holds Same trigger over Same family and counts the traits of both together, one that is in both once, and none of a grouping that is no family (D36). A tab's name says the count in words, as a heading does | DESIGN § Synergy pages |
+| D46 | (default) The heading of a list that has a tab to itself is not drawn on a phone (the tab says it) and stays for a screen reader; *Related* keeps both headings, since its tab is not their name | DESIGN § Synergy pages |
+| D47 | (default) The focus card of a phone folds the description to 3 lines with "Show more" and keeps the facts (*Relies on*, *Applies*, *Triggers*, *Material*) in view; a text that fits has no button; another trait starts folded; the focus on a keyword in the cut part opens the text (Chrome scrolls the folded box to it, Safari leaves it and the keyword lies below it: `revealFocus` reads both) | DESIGN § Synergy pages |
+| D48 | (default) Under 700 px the picker of a trait page is a button "Find a trait" that opens a sheet with the focus in its field, and a keyword page's picker is a button "Other keywords" that opens the sheet of the 42 chips (the page has no Keywords section then). A pick closes the sheet and the page puts the focus on its `h1`; put away by hand it gives the focus to its button. The picker page and the pages of what is not found keep theirs inline | DESIGN § Synergy pages |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D43 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D48 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -213,6 +219,13 @@ slice that builds it then follows.
   focus for which `mat=yes` leaves a key with nobody: those two branches are covered by `lane-groups.test.ts` and `copy.test.ts` only.
   `touch-targets.test.ts` skips a control scrolled above the window: take the page back to its top (`scrollTo(0, 0)`) after opening
   something that scrolls it.
+- e2e, the Synergy pages on a phone (under 700 px): the lists are tabs, so `getByRole` finds nothing in the lists that are not on show, nor in a
+  closed sheet. A test brings a list forward first (`showSection`, `shownSide`, `shownListing`, `shownKeywordList`: they do nothing from
+  700 px) and opens a picker through `openTraitPicker` / `openKeywordChips`. A tab press is a history step (Back goes to the tab before), so
+  a test that counts Backs reads the lists it is not on with `includeHidden`, or opens the page with `?section=`. A page opened on a
+  phone starts on its first tab, also after a card or a chip took the person to another trait.
+- `bind:this` hands back `null` (not `undefined`) when the element goes away, and an effect that read it again then crashed the page
+  (a 500 on Back): test an element with `instanceof HTMLElement`, not `!== undefined`.
 - A link whose name ends in a `.visually-hidden` span (position: absolute) gets a space before it in its accessible name: the chip of a keyword is
   “Bleeding , 10 appliers, 20 users”, so a test matches `\s*,` (`chipName` in `support/keyword-page.ts`). Run `vitest` from the repository root:
   from `apps/web` the contrast tests lack the CSS include of the root config and fail (93 tests) with nothing wrong in the code.
@@ -459,11 +472,19 @@ cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-sou
       (at most 18 appliers and 26 users; 27 random sources for 20 debuffs and at most 1 conditional), a key's keywords in common are at
       most 9, so nothing is cut; the artifact filter moves the count of one side only for Poisoned, Barrier, Leeching, Mending (appliers)
       and Frozen (users) and no verdict. SPEC §8.4 is rewritten in 13.8.
-- [ ] **13.6** Mobile. Under 700 px: the trail is a horizontally scrolling `nav` of 44 px pills; a compact focus card (the description
-      folds to 3 lines, "Show more"); a `tablist` Enabled by · Enables · Alternatives · Related (Same trigger and Same family stacked);
-      the page scrolls, not a nested list; the keyword view's tabs are Appliers · Rely on it; the picker opens as a sheet; a bottom
-      `nav`. Deviations from `MobileSynergy.dc.html`, on purpose: four tabs, the picker and the artifact filter exist, no fixed top
-      block (DESIGN: the page scrolls). *T:* touch-target blocks for both views on both phones, keyboard, axe, no horizontal overflow.
+- [x] **13.6** Mobile. Under 700 px (`MediaQuery('width < 700px')` in the two pages, which are not prerendered; the stylesheet asks for the
+      same width): `SectionTabs` (a `tablist`; roving tabindex; `tabForKey` is now generic over the list of tabs), `panelAttributes` (the
+      box of a list is a `tabpanel` named by its tab, the others `hidden`), `shownSection` / `sectionInAddress` (`section=` in the address,
+      none for the first tab), the trail as a row of 44 px pills that scrolls sideways and sits at its end, the compact `FocusCard`
+      (3 lines, "Show more"), `PickerSheet` (a button and a `BottomSheet`: "Find a trait", "Other keywords"), `titleHidden` on `RelationSide`
+      and `RelatedSection`; `.related` moved inside `.explorer` (one grid, one gap; a row of its own from 1100 px). *T:* unit tests
+      (`synergy-sections`, `page-tab`); `synergy-mobile.test.ts` (tabs, counts equal core's, keys, address, history, the sheets, the fold,
+      the trail, 320 px, axe, and what from 700 px must not change); the Synergy e2e adapted with helpers (`showSection`, `shownListing`,
+      `shownSide`, `openTraitPicker`, `shownKeywordList`, `openKeywordChips`); `touch-targets.test.ts` measures each tab of both pages and the
+      sheet's field; `keyboard.test.ts` walks every tab (a page opened with `?section=`). *Docs:* DESIGN § On a phone, checklist iPhone rows
+      9–14. Deviations on purpose: D44–D48; four tabs and a picker sheet and the artifact filter (the prototype has none), no fixed top block
+      (the page scrolls). **Found by the e2e:** `bind:this` hands back `null`, not `undefined`, when the element goes: the trail's effect read
+      `scrollWidth` of null on Back, on every width (a 500 page), until `instanceof`.
 - [ ] **13.7** Explore ↔ Synergy. A "Synergies of X" link on every result (44 px under coarse; the row height changes, so the virtual list
       is re-measured) and on every filled party slot. *T:* e2e: result → page → back keeps the search and the party.
 - [ ] **13.8** Close M13. `lazyJs` and route-chunk budgets, a Lighthouse URL for `/synergy/<id>` if the static server can fall back to

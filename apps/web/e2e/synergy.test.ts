@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { keywordSlug, slugify, taxonomy, type Trait } from '@atlas/core';
 import { axeViolations } from './support/axe';
 import { publishedDataset } from './support/dataset';
-import { isTabbed, openExplore } from './support/explore-page';
-import { chipOf, keywordChips } from './support/keyword-page';
+import { isCompact, isTabbed, openExplore } from './support/explore-page';
+import { chipOf, openKeywordChips } from './support/keyword-page';
 import { addToParty, plainTraits, showParty, slot, toolbarButton, withUniqueName } from './support/party-page';
 import {
   fromKeyword,
@@ -14,6 +14,7 @@ import {
   suggestionFor,
   synergyHeading,
   traitPicker,
+  traitPickerButton,
   traitSuggestions,
 } from './support/synergy-page';
 import { focusCard } from './support/trait-page';
@@ -62,7 +63,8 @@ test.describe('the Synergy pages, opened from their address', () => {
     // The card of the focus, and not the cards of the lanes, which say "creature · class" and could end the same way.
     await expect(focusCard(page).getByText(`${trait.family} · ${trait.class}`)).toBeVisible();
     await expect(focusCard(page).getByText(trait.description, { exact: true })).toBeVisible();
-    await expect(traitPicker(page)).toBeVisible();
+    // The search for another trait: the field in the toolbar, or on a phone the button that opens it in a sheet.
+    await expect(isCompact(page) ? traitPickerButton(page) : traitPicker(page)).toBeVisible();
   });
 
   test('a keyword page opens straight from the address of the slug of its key', async ({ page }) => {
@@ -76,7 +78,7 @@ test.describe('the Synergy pages, opened from their address', () => {
     await expect(synergyHeading(page)).toHaveText(entry.label);
     await expect(page).toHaveTitle(`${entry.label} — Synergies — Trait Atlas`);
     await expect(page.getByText('Effect', { exact: true })).toBeVisible();
-    await expect(chipOf(keywordChips(page), entry.label)).toHaveAttribute('aria-current', 'page');
+    await expect(chipOf(await openKeywordChips(page), entry.label)).toHaveAttribute('aria-current', 'page');
   });
 
   test('an id the dataset does not know is a state of the page: it says so, and offers a way on', async ({
@@ -165,8 +167,10 @@ test.describe('picking a trait', () => {
 
     await expect.poll(() => pathOf(page)).toMatch(/^\/synergy\/.+/u);
     await expect(synergyHeading(page)).toBeVisible();
-    // The field is empty again: the page is another one, and the person asked for it already.
-    await expect(traitPicker(page)).toHaveValue('');
+    // The field is empty again: the page is another one, and the person asked for it already. (On a phone the page has the button
+    // that opens the field, and the sheet is shut.)
+    if (isCompact(page)) await expect(traitPickerButton(page)).toBeVisible();
+    else await expect(traitPicker(page)).toHaveValue('');
   });
 
   test('lists nothing for a text no trait fits, and nothing for an empty field', async ({ page }) => {

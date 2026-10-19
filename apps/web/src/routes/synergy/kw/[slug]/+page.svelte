@@ -2,24 +2,30 @@
   import { afterNavigate } from '$app/navigation';
   import { keywordFromSlug, keywordSlug, taxonomy, type KeywordKey, type TraitId } from '@atlas/core';
   import { tick } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import ArtifactFilter from '../../../../lib/components/artifact-filter.svelte';
   import KeywordPicker from '../../../../lib/components/keyword-picker.svelte';
   import KeywordSummary from '../../../../lib/components/keyword-summary.svelte';
   import LoadStatus from '../../../../lib/components/load-status.svelte';
+  import PickerSheet from '../../../../lib/components/picker-sheet.svelte';
   import RelatedSection from '../../../../lib/components/related-section.svelte';
+  import SectionTabs from '../../../../lib/components/section-tabs.svelte';
   import { carriedSearch } from '../../../../lib/carried-search';
   import { partySession } from '../../../../lib/composition-root';
   import { copy } from '../../../../lib/copy';
   import { keywordSections } from '../../../../lib/keyword-sections';
   import { liveSummary, togetherWith, verdictLine } from '../../../../lib/keyword-summary';
-  import { decodeSynergyView } from '../../../../lib/synergy-address';
+  import { decodeSynergyView, type SynergySection } from '../../../../lib/synergy-address';
   import { useSynergy } from '../../../../lib/synergy-context';
   import { carriedNow, exploreKeywordHref, synergyHref, synergyLinkSearch } from '../../../../lib/synergy-links';
+  import { KEYWORD_SECTIONS, panelAttributes, sectionInAddress, shownSection } from '../../../../lib/synergy-sections';
   import type { PageData } from './$types';
 
   const { data }: { data: PageData } = $props();
 
   const synergy = useSynergy();
+  /** Where the two lists are tabs and the picker of the other keywords is a sheet. The stylesheet asks for the opposite (`width >= 700px`). */
+  const narrow = new MediaQuery('width < 700px');
   const relations = $derived(synergy.relations);
   // Only the keys that can be a dependency have a page (an event's key is a slug that opens nothing).
   const key = $derived(relations === undefined ? undefined : keywordFromSlug(data.slug, relations.keys));
@@ -37,6 +43,18 @@
   const sections = $derived(
     view === undefined || entry === undefined ? undefined : keywordSections(view, entry.label, artifactOnly),
   );
+
+  /** The list a narrow screen has on show, and the tabs that bring the other forward. */
+  const section = $derived(shownSection(synergy.view.section, KEYWORD_SECTIONS));
+  const tabs = $derived(
+    sections === undefined
+      ? []
+      : ([
+          { section: 'appliers', label: copy.appliers, count: sections[0].cards.length },
+          { section: 'users', label: copy.users, count: sections[1].cards.length },
+        ] as const),
+  );
+  const panel = (of: SynergySection) => panelAttributes(of, narrow.current, section);
 
   // The links of a keyword page carry the party and the artifact filter, as those of a trait page do.
   const linkSearch = $derived(synergyLinkSearch(artifactOnly));
@@ -96,6 +114,17 @@
   </section>
 {:else}
   <div class="toolbar">
+    {#if narrow.current}
+      <!-- 42 chips are a screen of their own on a phone: a sheet, not the foot of the page. -->
+      <PickerSheet
+        label={copy.otherKeywords}
+        title={copy.keywordPickerHeading}
+        closeLabel={copy.closePicker}
+        icon="keywords"
+      >
+        <KeywordPicker keys={relations.keys} current={key} hrefOf={keywordHref} {stats} />
+      </PickerSheet>
+    {/if}
     <ArtifactFilter
       checked={artifactOnly}
       onchange={(matOnly: boolean) => {
@@ -108,29 +137,48 @@
 
   <KeywordSummary label={entry.label} {kind} stats={view.stats} {verdict} {together} bind:heading />
 
+  <!-- Side by side from 700 px; under it two tabs, and the page scrolls (never a list within the page). -->
   <div class="lists">
-    <RelatedSection
-      section={sections[0]}
-      {artifactOnly}
-      party={partySession.actions}
-      hrefOf={traitHref}
-      exploreHref={exploreKeywordHref(key, 'applies', artifactOnly)}
-      linkNameOf={copy.openTrait}
-    />
-    <RelatedSection
-      section={sections[1]}
-      {artifactOnly}
-      party={partySession.actions}
-      hrefOf={traitHref}
-      exploreHref={exploreKeywordHref(key, 'uses', artifactOnly)}
-      linkNameOf={copy.openTrait}
-    />
+    {#if narrow.current}
+      <SectionTabs
+        label={copy.keywordTabsLabel}
+        {tabs}
+        selected={section}
+        onselect={(next: SynergySection) => {
+          synergy.choose({ section: sectionInAddress(next, KEYWORD_SECTIONS) });
+        }}
+      />
+    {/if}
+    <div class="appliers-panel" {...panel('appliers')}>
+      <RelatedSection
+        section={sections[0]}
+        {artifactOnly}
+        party={partySession.actions}
+        hrefOf={traitHref}
+        exploreHref={exploreKeywordHref(key, 'applies', artifactOnly)}
+        linkNameOf={copy.openTrait}
+        titleHidden={narrow.current}
+      />
+    </div>
+    <div class="users-panel" {...panel('users')}>
+      <RelatedSection
+        section={sections[1]}
+        {artifactOnly}
+        party={partySession.actions}
+        hrefOf={traitHref}
+        exploreHref={exploreKeywordHref(key, 'uses', artifactOnly)}
+        linkNameOf={copy.openTrait}
+        titleHidden={narrow.current}
+      />
+    </div>
   </div>
 
-  <section aria-labelledby="keywords">
-    <h2 id="keywords">{copy.keywordPickerHeading}</h2>
-    <KeywordPicker keys={relations.keys} current={key} hrefOf={keywordHref} {stats} />
-  </section>
+  {#if !narrow.current}
+    <section aria-labelledby="keywords">
+      <h2 id="keywords">{copy.keywordPickerHeading}</h2>
+      <KeywordPicker keys={relations.keys} current={key} hrefOf={keywordHref} {stats} />
+    </section>
+  {/if}
 {/if}
 
 <style>
@@ -153,17 +201,27 @@
     gap: 8px 20px;
   }
 
-  /* Who applies the keyword and who relies on it, side by side as soon as there is room for two columns of cards. */
+  /*
+   * Who applies the keyword and who relies on it, side by side as soon as there is room for two columns of cards. Under 700 px they
+   * are the two panels of a tab list, and the gap is the one between tabs and what they show.
+   */
   .lists {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px 24px;
+    gap: 12px;
   }
 
   @media (width >= 700px) {
     .lists {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 24px;
       align-items: start;
+    }
+
+    /* The boxes of the lists are only a way to name them here: the lists are the grid's items. */
+    .appliers-panel,
+    .users-panel {
+      display: contents;
     }
   }
 </style>

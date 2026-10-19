@@ -23,7 +23,7 @@
   const buttons: Partial<Record<PageTab, HTMLButtonElement>> = {};
 
   function onkeydown(event: KeyboardEvent): void {
-    const next = tabForKey(event.key, selected);
+    const next = tabForKey(event.key, selected, PAGE_TABS);
     if (next === undefined) return;
     event.preventDefault();
     buttons[next]?.focus();

@@ -200,18 +200,22 @@ test.describe('the tab key on the Synergy pages', () => {
       },
       'with lanes of several keys and of one',
     );
-    const addresses = [
+    // A phone shows one list of a page at a time, as a tab: the page is opened on each of them in turn, and the walk of each must reach
+    // every control it shows. From 700 px the lists are all on the page and `section=` changes nothing, so one walk does.
+    const traitSections = ['enabled-by', 'enables', 'alternatives', 'related'];
+    const keywordSections = ['appliers', 'users'];
+    const addresses: [string, readonly string[]][] = [
       // The picker with a party in it, the page of a trait (a plain one, and one with lanes and a party), of a keyword, and the two
       // pages of what was not found.
-      `./synergy?party=${datasetVersion},${trait.id},gone--from-the-sheet`,
-      `./synergy/${trait.id}`,
-      `./synergy/${crowded.id}?mat=yes&party=${datasetVersion},${trait.id}`,
-      './synergy/kw/vulnerable',
-      './synergy/retired--some-trait',
-      './synergy/kw/not-a-keyword',
+      [`./synergy?party=${datasetVersion},${trait.id},gone--from-the-sheet`, []],
+      [`./synergy/${trait.id}`, traitSections],
+      [`./synergy/${crowded.id}?mat=yes&party=${datasetVersion},${trait.id}`, traitSections],
+      ['./synergy/kw/vulnerable', keywordSections],
+      ['./synergy/retired--some-trait', []],
+      ['./synergy/kw/not-a-keyword', []],
     ];
 
-    for (const address of addresses) {
+    const walkSynergyPage = async (address: string): Promise<void> => {
       await page.goto(address);
       await expect(synergyHeading(page)).toBeVisible();
       await whenLoaded(page);
@@ -222,6 +226,13 @@ test.describe('the tab key on the Synergy pages', () => {
       if (browserName !== 'webkit') expect(walk.stops.length, address).toBeGreaterThan(3);
       expect(problemsOf(walk), address).toEqual([]);
       expect(missed(walk, browserName), address).toEqual([]);
+    };
+
+    for (const [address, sections] of addresses) {
+      for (const section of isCompact(page) ? sections : []) {
+        await walkSynergyPage(`${address}${address.includes('?') ? '&' : '?'}section=${section}`);
+      }
+      if (!isCompact(page) || sections.length === 0) await walkSynergyPage(address);
     }
   });
 });

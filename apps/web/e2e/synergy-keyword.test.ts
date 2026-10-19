@@ -14,12 +14,14 @@ import { announcedCount, countText, openExplore } from './support/explore-page';
 import {
   chipName,
   chipOf,
+  closeKeywordChips,
   keywordCardOf,
   keywordCards,
-  keywordChips,
   keywordList,
   keywordSummary,
+  openKeywordChips,
   seeInExplore,
+  shownKeywordList,
   togetherLinks,
   traitsText,
   VERDICT_TITLES,
@@ -166,7 +168,7 @@ test.describe('who applies it and who relies on it', () => {
       ['Appliers', view.appliers],
       ['Rely on it', view.users],
     ] as const) {
-      const list = keywordList(page, title);
+      const list = await shownKeywordList(page, title);
       await expect(
         page.getByRole('heading', { level: 2, name: `${title} ${traitsText(traits.length)}` }),
       ).toBeVisible();
@@ -245,7 +247,9 @@ test.describe('who applies it and who relies on it', () => {
     await openKeyword(page, key);
 
     await expect(
-      keywordList(page, 'Rely on it').getByText(`Nothing relies on ${labelOf(key)} yet in the compendium.`),
+      (await shownKeywordList(page, 'Rely on it')).getByText(
+        `Nothing relies on ${labelOf(key)} yet in the compendium.`,
+      ),
     ).toBeVisible();
     expect(viewOf(key).stats.users).toBe(0);
   });
@@ -266,7 +270,7 @@ test.describe('the same traits in Explore (criterion 11)', () => {
         ['Rely on it', stats.users, `kw=u:${key}`],
       ] as const) {
         await openKeyword(page, key);
-        await seeInExplore(keywordList(page, title)).click();
+        await seeInExplore(await shownKeywordList(page, title)).click();
 
         await expect.poll(() => paramOf(page, 'kw'), key).toBe(filter.slice('kw='.length));
         await expect(announcedCount(page), `${key} ${title}`).toContainText(countText(count, traits));
@@ -291,7 +295,7 @@ test.describe('the same traits in Explore (criterion 11)', () => {
       ['Rely on it', kept.users],
     ] as const) {
       await openKeyword(page, key, '?mat=yes');
-      await seeInExplore(keywordList(page, title)).click();
+      await seeInExplore(await shownKeywordList(page, title)).click();
 
       await expect.poll(() => paramOf(page, 'mat')).toBe('yes');
       await expect(announcedCount(page), title).toContainText(countText(count, traits));
@@ -307,7 +311,10 @@ test.describe('the same traits in Explore (criterion 11)', () => {
     const link = seeInExplore(keywordList(page, 'Appliers'));
 
     await expect(link).toHaveAccessibleName('See in Explore — Appliers');
-    await expect(seeInExplore(keywordList(page, 'Rely on it'))).toHaveAccessibleName('See in Explore — Rely on it');
+    await expect(seeInExplore(await shownKeywordList(page, 'Rely on it'))).toHaveAccessibleName(
+      'See in Explore — Rely on it',
+    );
+    await shownKeywordList(page, 'Appliers');
     await link.click();
     await expect.poll(() => pathOf(page)).toBe('/');
     expect(paramOf(page, 'party')).toContain(mine.id);
@@ -321,27 +328,31 @@ test.describe('the other keywords', () => {
   }) => {
     const { index } = await dataset(request);
     await openKeyword(page, 'vulnerable');
-    const chips = keywordChips(page);
 
     for (const filtered of [false, true]) {
       if (filtered) await artifactFilter(page).check();
+      // On a phone the chips are in a sheet, which is put away again: the page behind it is out of reach while it is open.
+      const chips = await openKeywordChips(page);
       const stats = index.keywordStats({ artifactOnly: filtered });
       for (const key of index.keys) {
         const counts = stats.get(key);
         if (counts === undefined) throw new Error(`no counts for ${key}`);
         await expect(chips.getByRole('link', { name: chipName(labelOf(key), counts) }), key).toBeVisible();
       }
+      await closeKeywordChips(page);
     }
   });
 
   test('mark the keyword of the page as the current one', async ({ page, request }) => {
     const { viewOf } = await dataset(request);
     await openKeyword(page, 'vulnerable');
+    const chips = await openKeywordChips(page);
 
-    await expect(
-      keywordChips(page).getByRole('link', { name: chipName('Vulnerable', viewOf('vulnerable').stats) }),
-    ).toHaveAttribute('aria-current', 'page');
-    await expect(keywordChips(page).locator('[aria-current="page"]')).toHaveCount(1);
+    await expect(chips.getByRole('link', { name: chipName('Vulnerable', viewOf('vulnerable').stats) })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(chips.locator('[aria-current="page"]')).toHaveCount(1);
   });
 
   test('lead to another keyword as a step of the history, with the focus on its name and the verdict said', async ({
@@ -406,9 +417,10 @@ test.describe('the artifact filter', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: `Appliers ${traitsText(kept.stats.appliers)}` }),
     ).toBeVisible();
+    // On a phone this list is the other tab and is not on show (a tab press would be a step of the history, which this test counts).
     await expect(
-      page.getByRole('heading', { level: 2, name: `Rely on it ${traitsText(kept.stats.users)}` }),
-    ).toBeVisible();
+      page.getByRole('heading', { level: 2, name: `Rely on it ${traitsText(kept.stats.users)}`, includeHidden: true }),
+    ).toHaveCount(1);
     await expect(keywordSummary(page)).toContainText(`${String(kept.stats.appliers)} `);
     await expect(filterAnnouncement(page)).toHaveText(
       `Only traits with a material are listed. Appliers ${traitsText(kept.stats.appliers)}. Rely on it ${traitsText(kept.stats.users)}. ${VERDICT_TITLES[kept.verdict]}.`,
@@ -418,7 +430,7 @@ test.describe('the artifact filter', () => {
     // The next keyword is opened with the filter on, and the box says so.
     const other = index.keys.find((each) => each !== key);
     if (other === undefined) throw new Error('the index has one key');
-    await chipOf(keywordChips(page), labelOf(other)).click();
+    await chipOf(await openKeywordChips(page), labelOf(other)).click();
     await expect.poll(() => pathOf(page)).toBe(`/synergy/kw/${keywordSlug(other)}`);
     expect(paramOf(page, 'mat')).toBe('yes');
     await expect(artifactFilter(page)).toBeChecked();
@@ -494,7 +506,7 @@ test.describe('the party, from the page of a keyword', () => {
     await expect.poll(() => paramOf(page, 'party')).toContain(neighbour.id);
 
     // The party goes with the person to another keyword, and to Explore, where it can be undone.
-    await chipOf(keywordChips(page), 'Weak').click();
+    await chipOf(await openKeywordChips(page), 'Weak').click();
     await expect.poll(() => pathOf(page)).toBe('/synergy/kw/weak');
     expect(paramOf(page, 'party')).toContain(neighbour.id);
     await placeLink(page, 'Explore').click();

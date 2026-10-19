@@ -19,6 +19,7 @@
     artifactOnly,
     party,
     hrefOf,
+    titleHidden = false,
   }: {
     side: RelationSide;
     direction: 'enabledBy' | 'enables';
@@ -26,6 +27,8 @@
     artifactOnly: boolean;
     party: PartyActions;
     hrefOf: (id: TraitId) => ResolvedPathname;
+    /** The tab above says what the side is called: the heading stays for a screen reader and is not drawn. */
+    titleHidden?: boolean;
   } = $props();
 
   const uid = $props.id();
@@ -41,7 +44,7 @@
 
 <section class="side" aria-labelledby="{uid}-title">
   <header>
-    <h2 id="{uid}-title">
+    <h2 id="{uid}-title" class:visually-hidden={titleHidden}>
       {enabledBy ? copy.enabledBy : copy.enables}
       <span class="count">{side.count}<span class="visually-hidden">{copy.countUnit(side.count)}</span></span>
     </h2>

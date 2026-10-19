@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { isCompact } from './explore-page';
 
 /** The heading of a Synergy page. */
 export const synergyHeading = (page: Page): Locator => page.getByRole('heading', { level: 1 });
@@ -8,6 +9,21 @@ export const synergyHeading = (page: Page): Locator => page.getByRole('heading',
  * asking for the combobox waits for it, so a test never types into a field that is about to change under it.
  */
 export const traitPicker = (page: Page): Locator => page.getByRole('combobox', { name: 'Find a trait' });
+
+/** The button that opens the picker of a trait page on a phone, where the field stands in a sheet (the picker page has the field itself). */
+export const traitPickerButton = (page: Page): Locator => page.getByRole('button', { name: 'Find a trait' });
+
+/**
+ * The picker of a trait page, opened: from 700 px it is the field in the toolbar, under it a button opens a sheet that holds it. The
+ * sheet puts the focus in the field, which is where a person types.
+ */
+export async function openTraitPicker(page: Page): Promise<Locator> {
+  if (isCompact(page)) {
+    await traitPickerButton(page).click();
+    await expect(traitPicker(page)).toBeFocused();
+  }
+  return traitPicker(page);
+}
 
 /** The list under that field while it is open. */
 export const traitSuggestions = (page: Page): Locator =>

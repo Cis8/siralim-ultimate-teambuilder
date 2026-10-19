@@ -232,7 +232,8 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   history; a polite line says the counts it leaves, in every list that has one: "Only traits with a material are listed. Enabled by 6 traits.
   Enables 12 traits. Alternatives 5 traits. Same trigger 40 traits. Same family 3 traits."), the trail, then three parts: from 1100 px in one
   row (Enabled by · the focus · Enables, the page up to 1280 px wide), below it in one column in the order of the page, the focus first,
-  which is the order of the keyboard too; and under them, past a rule, the three lists of *The lists under the sides* below.
+  which is the order of the keyboard too; and under them, past a rule, the three lists of *The lists under the sides* below. **Under 700 px
+  the page is another arrangement of the same parts** (*On a phone* below).
   - **The focus card** (`FocusCard`, a region named "Focused trait"): the caption "Focus", the `h1` with the class dot (`tabindex="-1"`: it
     takes the focus when the page moves to another trait), "creature · family · class", the description, a `dl` of *Relies on*, *Applies*,
     *Guards against* (only when the trait has one), *Triggers* (an event, with who acts where the text says: "Attack (this creature)") and
@@ -258,7 +259,7 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
     `--accent-surface`, *conditional*, *random*, "no material" with the cube in `--status-crit`), the compact add button, and the notes under
     the text. A trait is a card at most once on each side.
   - **The lists under the sides** (`RelatedSection`; the wording is `related-sections.ts`): *Alternatives*, *Same trigger* and *Same family*, in
-    that order, side by side from 1100 px and in one column below it (the phone's tabs are 13.6). Each is a region named by its `h2` and the
+    that order, side by side from 1100 px and in one column below it (the tabs of a phone are *On a phone* below). Each is a region named by its `h2` and the
     count ("Alternatives 6 traits"), with a sentence under it ("Traits that apply or rely on the same keys as X"), and **cards** of the same
     `TraitCard` as the lanes: an alternative says what it shares, "Also applies Weak, Vulnerable · relies on Burning" (the focus's keys, by
     what the trait does with them), a trait of the same trigger "Also reacts to Attack, Start of battle", and both carry "×2 in common" once
@@ -281,8 +282,8 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
     and the writing of the party or the filter leave it alone. The document title follows the trait, and SvelteKit’s own announcer says it:
     no polite line of ours repeats it (a “Now centred on X” was left out on purpose, PLAN 13.3).
 - **A keyword page** (`/synergy/kw/<slug>`, PLAN 13.5): the *Artifact-eligible only* box, the summary, two lists side by side from
-  700 px (one column below it; the phone's tabs are 13.6), and the picker of the other keywords last (D39). The party and the filter go
-  with every link of the page.
+  700 px (under it two tabs, *On a phone* below), and the picker of the other keywords last (D39; under 700 px a sheet). The party and the
+  filter go with every link of the page.
   - **The summary** (`KeywordSummary`, a card on `--surface-1` with the accent border): the `h1` is the name as a pill in the colour of
     the kind (`KeyPill` at the size of the heading; `tabindex="-1"`, it takes the focus when the page moves to another keyword) and the
     kind in words beside it; the counts, "**8** apply it · **6** rely on it" (the verb agrees with the number: "1 applies it"); in muted
@@ -304,6 +305,33 @@ waits for the dataset shows "Loading the traits…" (`role="status"`), or for go
   - **Moving and saying** (D41): a move to another keyword (a chip, a keyword of the summary, Back) puts the focus on the new `h1` and
     says once, politely, the keyword, its counts, the verdict and its reason; a turn of the artifact filter says the counts of the two
     lists and the verdict's title; a page opened by its address says nothing and leaves the focus alone.
+- **On a phone** (under 700 px, PLAN 13.6, D44–D48). The page scrolls, as a column of one list at a time: nothing is fixed at its top and no
+  list scrolls within the page. The arrangement is decided by `MediaQuery('width < 700px')` in the two pages (they are not prerendered)
+  and by the stylesheet's `width < 700px` for what only changes the look; the two meet at the same width.
+  - **Tabs** (`SectionTabs`, a `tablist` named "Relations" on a trait, "Keyword lists" on a keyword): the four lists of a trait (Enabled by ·
+    Enables · Alternatives · Related, the last holding Same trigger over Same family) and the two of a keyword (Appliers · Rely on it),
+    one tab to a list, each 44 px tall with the label above its count in mono, the selected tab in `--accent-surface` with
+    `--accent-border`. ARIA tabs pattern: the selected tab is the one stop of the tab key, ←/→ go round and select, Home and End go to the
+    ends. A tab's name says the count in words ("Enabled by 36 traits"); *Related* counts the traits of Same trigger and Same family
+    together, a trait in both once, and none of a grouping that is no family (D36). The panel of a tab is the box that holds its list
+    (`role="tabpanel"`, named by its tab); the others are `hidden`, so their controls are out of the tab order. A list's own heading
+    stays for a screen reader and is not drawn when the tab already says it (Related keeps both: its tab is not their name).
+  - **The address** keeps the tab: `section=enables` (`enabled-by`, `enables`, `alternatives`, `related`, `appliers`, `users`), a step of the
+    history like the tabs of Explore, nothing written for the first tab. A section the page does not have, or one named on a wide screen,
+    changes nothing. A link to another trait or keyword carries the party and the filter, never the section: the next page starts on its first tab.
+  - **The trail** is one row of 44 px pills that scrolls sideways (the one thing of the page that does), the chevrons and the caption left
+    out, scrolled to its end so that the pill of the trait the person is on is in sight.
+  - **The focus card** is tighter (no caption, less padding) and its description folds to 3 lines with a "Show more" button (`aria-expanded`,
+    `aria-controls`) that opens it ("Show less"); a description that fits has no button. Another trait starts folded. A keyword in the part
+    that is cut takes the focus → the text opens (Chrome scrolls the folded box to it, Safari does not: both are read), so that the focus
+    is never on what cannot be seen.
+  - **The pickers are sheets** (`PickerSheet`, the `panel` kind of `BottomSheet`): on a trait page a button "Find a trait" opens a sheet with
+    the focus in its field (the list of matches has the room the keyboard leaves), on a keyword page a button "Other keywords" opens the
+    42 chips with their counts, where from 700 px they are the last section of the page. A pick moves to the page and closes the sheet, and the
+    page puts the focus on its `h1`; put away by hand (Esc, Close, a tap on the page behind), the sheet gives the focus back to its button.
+    The picker page and the pages of what is not found keep their pickers in the page: they are what those pages are for.
+  - **Touch**: every control is 44 px (`touch-targets.test.ts` measures each tab of both pages and the open sheets); the page is never wider
+    than the window, at 320 px as at 390 (`synergy-mobile.test.ts`).
 
 ## Layout
 - Desktop Explore: header · query section · three columns (facets 250–300 px | results fluid | party 340–400 px) that
