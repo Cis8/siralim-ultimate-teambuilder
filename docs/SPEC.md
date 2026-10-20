@@ -547,6 +547,21 @@ among those the filters of `state` leave, which is what a search would list if `
 Syntax highlighting in the input, autocomplete by context, inline diagnostics with one-click fixes, plain-language
 "reads as", ghost completion, recent and saved searches, mobile syntax toolbar. Full rules in `QUERY_LANGUAGE.md`.
 
+**Search history** (`core/src/history/`; the field's use of it comes with PLAN 11.4). `SearchHistory { recent, saved }` is immutable data,
+and two searches are the same when their trimmed text is exactly the same, letter case included.
+- *Recent:* the newest 10, newest first; a search already there moves to the front. *Saved:* up to 50 `{name, query}` in the order they were
+  saved (the name is the query until a search can be renamed); toggling a saved search takes it off, and a 51st is refused (`full`), never
+  swapped for one the person chose to keep. A blank search is neither remembered nor saved, nor is one over 2,000 characters (a pasted text,
+  the length at which the lint stops too).
+- *The file* (`exportHistory`, `importHistory`) is JSON: `{ "app": "trait-atlas", "kind": "search-history", "version": 1, "recent": [query…],
+  "saved": [{ "name", "query" }…] }`. An import **merges by query**: what the history has stays first and in its place (a search that is there
+  keeps its name), the file adds the rest as far as the lists have room, so a second import adds nothing; it says how many it added and how many
+  it left out for want of room. It never throws: a text that is not JSON (`not-json`), not a file of this app (`foreign`), of another version
+  (`wrong-version`), with a list that is not a list of searches (`malformed`) or with more than the app keeps (`too-large`: over 10 recent or 50
+  saved searches, a search over 2,000 characters, a text over 2,000,000 characters) is refused whole and changes nothing. A file is read
+  leniently otherwise: a byte order mark, blanks around a search, a blank search, a search listed twice and properties it does not know are of
+  no matter.
+
 ### 8.4 Synergy explorer (Phase 2)
 Three routes under `/synergy` (§7, ADR-0011) that share the party with Explore: the picker (`/synergy`), a trait
 (`/synergy/<traitId>`) and a keyword (`/synergy/kw/<slug>`). The relations come from `createRelationService` in `core`

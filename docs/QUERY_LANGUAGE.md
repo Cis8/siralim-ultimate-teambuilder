@@ -460,5 +460,5 @@ moves when it arrives (the Lighthouse layout shift is the one it was).
 - **The selection** is a share of `--accent` (`--field-selection`, 25 %), so that the coloured text shows through it; `contrast.test.ts` holds every colour of a
   piece at 4.5:1 on the field and under the selection, the grey of the ghost at 4.5:1 on the field and the lines at 3:1.
 
-Still to come (PLAN 11.3–11.5): saved and recent searches, and on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`,
+Still to come (PLAN 11.4–11.5; the rules of the history are in SPEC §8.3): saved and recent searches in the field, and on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`,
 inserting at the caret.

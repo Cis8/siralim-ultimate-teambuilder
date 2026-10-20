@@ -207,3 +207,25 @@ export {
   type AddResult,
   type Planner,
 } from './party/planner';
+export {
+  emptySearchHistory,
+  isSaved,
+  MAX_RECENT,
+  MAX_SAVED,
+  MAX_SEARCH_LENGTH,
+  recordRecent,
+  removeRecent,
+  removeSaved,
+  toggleSaved,
+  type SavedSearch,
+  type SaveRefusal,
+  type SearchHistory,
+  type ToggleSavedResult,
+} from './history/search-history';
+export {
+  exportHistory,
+  importHistory,
+  type ImportCounts,
+  type ImportRefusal,
+  type ImportResult,
+} from './history/search-history-file';

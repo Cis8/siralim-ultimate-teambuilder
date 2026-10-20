@@ -13,15 +13,15 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain) and 11.2 (the mirror) of M11; the next
-  slice is 11.3 (search history in `core`), then M11 to its end** (D15). 11.2 draws the text of the field in colour, a line under what is
-  wrong and the grey ghost text (QUERY_LANGUAGE §8); Lighthouse rerun: `/` still 0.89–0.90 with a layout shift of 0.035. Sizes: initial
-  JS 90.1 kB of 150, lazy 33.0 of 50, total 123.1 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
-  11.6.** **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
+- **Phase 2 (D14–D52, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain), 11.2 (the mirror) and 11.3 (the history
+  in `core`) of M11; the next slice is 11.4 (the history in the field), then M11 to its end** (D15). 11.3 is `core` only, so nothing on a
+  page changed; the last Lighthouse rerun (11.2): `/` 0.89–0.90 with a layout shift of 0.035. Sizes: initial JS 90.1 kB of 150, lazy 33.0
+  of 50, total 123.1 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at 11.6.** **On a phone the inline
+  list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
   the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14, the
   links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D51 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
+- For the owner to veto, none blocking: D18–D52 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
   the sheet, not families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D44–D48 (the phone:
   a tab press is a history step, the focus card folds only its description, the pickers are sheets); D49–D50 (the Synergies link of a
   result and of a slot; a search typed a moment before a link is followed is dropped); 8b.10 made "immune to debuffs" a mention (SPEC
@@ -90,9 +90,10 @@ session (after `CLAUDE.md`), update it before ending one.
 | D49 | (default) The Synergies link of a result is the last stop of its card (after the description's keywords), drawn in words in the foot beside the material; it wraps under it on a narrow card. A slot's link is an icon square with the words as its name and its `title`. Neither carries the search, only the party: Back returns to the Explore entry, which has the search | DESIGN § Result list |
 | D50 | (default) Leaving Explore for another route drops the text waiting to be written to the address (`abandon`), it does not flush it into the entry: a flush would be a second navigation racing the link's. So a link followed within 400 ms of the last key leaves Back with the search as the address last had it. A person takes longer to reach a link; the e2e waits for the address | SPEC §7 |
 | D51 | (default) The Synergy route has no size budget of its own: `lazyJs` (50 kB) and `totalJs` (200 kB) bound it, and a first visit to any page fetches at most the total, under the 150 kB of the first page; a route's chunks cannot be told apart without SvelteKit's internals. Lighthouse CI measures four URLs (`/`, `/synergy`, a trait, a keyword) behind `tools/serve-build`; the trait and the keyword page, drawn after the dataset arrives, need performance 0.8 where the others need 0.85 (measured 0.87 and 0.89, a slower runner would fall under 0.85 for no fault of the code); all four hold to a layout shift of 0.1 | `budgets.ts`, `lighthouserc.cjs`, SPEC §9 |
+| D52 | (default) Saved searches: a 51st is **refused** (`full`), never swapped for one the person chose to keep, and the field will say so (11.4); recent searches are the opposite, the oldest of ten simply goes. An import **merges** with what is there (current first, a repeat keeps its name) and refuses a file that is not this app's whole, leaving everything as it was | SPEC §8.3 |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D51 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D52 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -249,6 +250,9 @@ slice that builds it then follows.
   `offsetBetween` in `query-mirror.test.ts`): no two pictures are pixel for pixel alike, since the copy is rasterised in grey, so
   count the best shift, not the differing pixels (that gave 5–8% on text that lined up).
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
+- The Write and Edit tools turn the escape for the byte order mark (backslash, u, F, E, F, F) in what they are given into the invisible
+  character itself: a regex or a string that looks right in the diff and is not. Write `String.fromCharCode(0xfeff)`. Other escapes
+  (`\u0001`, `\n`) arrive as written.
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 - The 8b.5 research lives in `packages/pipeline/.cache/research/events-v2.0/` (git-ignored, this machine only):
   `findings.records.json` (the sweep: 4,400 records of id, quote, span, use, actor, event, qualifier), `findings.md`, the
@@ -471,11 +475,18 @@ so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the
       of under half a CSS pixel each way (the field and the copy round to the screen on their own: CI found one pixel down on a Pixel 7,
       a PC one across); a mutant that moves the copy 2 px fails it. A text of 10,000 characters costs the mirror
       ~80 ms and 48,000 about a second, beside 1 s and 5.6 s for the rest of the keystroke: no cap.
-- [ ] **11.3** Search history (core). An immutable `SearchHistory {recent, saved}`: `recordRecent` (trim, no empty, a repeat moves to the
-      front, 10), `toggleSaved` (50; `{name, query}`, name = query), removals, `exportHistory` (`{app, kind: 'search-history',
-      version: 1, …}`), `importHistory(text, current)` → ok or a refusal reason, merge by query, never throws, no schema library
-      (D24). *T:* limits, dedupe, corrupt, foreign, oversized and wrong-version files, round trip, merge idempotent.
-- [ ] **11.4** History UI. `search-history-store.ts` (`localStorage`, lazy and throw-safe like `last-party-store`); recorded on Enter, on
+- [x] **11.3** Search history (core). `core/src/history/`: an immutable `SearchHistory {recent, saved}`, `recordRecent`, `toggleSaved`,
+      `isSaved`, `removeRecent`, `removeSaved`, `exportHistory`, `importHistory(text, current)`; the rules and the file are in SPEC §8.3,
+      D52. Deviations worth knowing: `exportHistory` gives the **text** of the file (not an object), so that the format stays in `core`;
+      `toggleSaved` gives `{ok, history}` or a refusal (`empty` | `too-long` | `full`), like `executeCommand`, because the field has to say
+      why a star did nothing; `importHistory` also says how many it `added` and how many it `leftOut` for want of room (the message
+      "Imported 3 saved, 5 recent" needs both); the limits are 2,000 characters a search (`MAX_SEARCH_LENGTH`, not the lint's constant,
+      so that tuning the lint never changes what a file may hold) and 2,000,000 for a file (a test writes the biggest one the app can and
+      reads it back). Mutation-checked (18 mutants, none survived) and property-tested (limits hold after any steps; any file imports
+      without throwing and idempotently; export then import is the identity).
+- [ ] **11.4** History UI. `search-history-store.ts` (`localStorage`, lazy and throw-safe like `last-party-store`; it can keep the text of
+      `exportHistory` and read it back with `importHistory(text, emptySearchHistory)`, so that a damaged storage is refused like a damaged
+      file); recorded on Enter, on
       blur after a change and on saving; an empty field lists Recent and Saved in the dropdown (no active option: Tab is not
       captured); a star button (`aria-pressed`, "Save this search"); a "Manage searches" panel (`BottomSheet`) with remove, **Export**
       (a download, `trait-atlas-searches.json`) and **Import** (a file input; "Imported 3 saved, 5 recent" or the refusal, nothing
