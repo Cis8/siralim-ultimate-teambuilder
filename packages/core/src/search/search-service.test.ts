@@ -362,6 +362,31 @@ describe('createSearchService', () => {
       );
     });
 
+    describe('read in words', () => {
+      it('is every trait for the initial state', async () => {
+        expect((await search({})).effectiveReading).toBe('every trait');
+      });
+
+      it('says the filters as well as the query: it explains the effective query (D19)', async () => {
+        const { effectiveReading } = await search({
+          query: 'weak OR heal',
+          classes: ['life'],
+          keywords: [{ field: 'uses', key: 'attack/self' }],
+          doesNotStack: true,
+        });
+
+        expect(effectiveReading).toBe(
+          'class contains “life” AND relies on “attack” by this creature AND does not stack AND (mentions “weak” OR mentions “heal”)',
+        );
+      });
+
+      it('says the query as it was repaired', async () => {
+        expect((await search({ query: 'class:life (', artifactEligible: true })).effectiveReading).toBe(
+          'has a material AND class contains “life”',
+        );
+      });
+    });
+
     describe('typed in the query bar, finds what the state finds', () => {
       const pools = {
         queries: ['', 'weak', 'weak OR heal', '-stack:no', 'class:life (', '(vulnerable OR weak) -stack:no', '"and"'],
@@ -400,6 +425,7 @@ describe('createSearchService', () => {
 
             expect(typed.query.diagnostics, outcome.effectiveQuery).toEqual([]);
             expect(new Set(ids(typed.traits)), outcome.effectiveQuery).toEqual(new Set(ids(outcome.traits)));
+            expect(typed.effectiveReading, outcome.effectiveQuery).toBe(outcome.effectiveReading);
           }),
         );
       });

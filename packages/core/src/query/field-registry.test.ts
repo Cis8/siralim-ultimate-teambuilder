@@ -177,6 +177,41 @@ describe('createFieldRegistry', () => {
     });
   });
 
+  describe('what a term says in words', () => {
+    const registry = createFieldRegistry([definition('class', ['c'])], () => () => true);
+
+    it('is what its field says of the value, in lower case and without quotes', () => {
+      const describe = vi.fn<FieldDefinition['describe']>(() => 'is described');
+      const field: FieldDefinition = { ...definition('class', ['c']), describe };
+      expect(createFieldRegistry([field], () => () => true).describeTerm(termOf('C:"Rodian Master"'))).toBe(
+        'is described',
+      );
+      expect(describe).toHaveBeenCalledExactlyOnceWith('rodian master');
+    });
+
+    it.each([
+      ['Vulnerable', 'mentions “vulnerable”'],
+      ['"Two Words"', 'mentions “two words”'],
+    ])('is, for %j with no field, that it mentions the text: %j', (source, words) => {
+      expect(registry.describeTerm(termOf(source))).toBe(words);
+    });
+
+    it.each([
+      ['clas:Life', 'mentions “clas:life”'],
+      ['clas:"Rodian Master"', 'mentions “clas:rodian master”'],
+      ['clas:', 'mentions “clas:”'],
+    ])('is, for %j, a field the registry does not know, that it mentions the whole token: %j', (source, words) => {
+      expect(registry.describeTerm(termOf(source))).toBe(words);
+    });
+
+    it.each(['class:', 'c:""', '""', '"'])('is that %j asks for nothing, asking no field', (source) => {
+      const describe = vi.fn<FieldDefinition['describe']>(() => 'is described');
+      const field: FieldDefinition = { ...definition('class', ['c']), describe };
+      expect(createFieldRegistry([field], () => () => true).describeTerm(termOf(source))).toBe('asks for nothing');
+      expect(describe).not.toHaveBeenCalled();
+    });
+  });
+
   describe('the fields it accepts', () => {
     it('accepts no field at all', () => {
       expect(createFieldRegistry([], () => () => true).fields).toEqual([]);

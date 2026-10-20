@@ -112,7 +112,9 @@ the token colours are only guaranteed on the page background. The look is one st
   `aria-pressed` toggle), an excluded one says NOT in words and is tinted with `--status-crit` at 9 % (axe measured 4.38:1 for `--text-faint` over a
   14 % tint: the tint stays light enough for `--text-muted` over it to keep 4.5:1); a filter chip is plain text. The remove button is an icon with an accessible name.
 - **Effective query**: `--text` mono, wrapping (no scroll area), a quiet *Copy query* button, and "Copied" in `--status-good`
-  for 2.5 s in a polite live region (not `role="status"`: the result count owns that).
+  for 2.5 s in a polite live region (not `role="status"`: the result count owns that). Under it, **Reads as**: the label in
+  `--text-faint` like the one of the query, then the words in `--text-muted`, 12.5 px, wrapping, in the page's own font (it is a
+  sentence, not code); the two lines are one block, 4 px apart, and appear and go together.
 
 ### Query issues
 What is wrong with the query (QUERY_LANGUAGE §5), in the search field and under it. Never colour alone: an icon and a word say the severity.

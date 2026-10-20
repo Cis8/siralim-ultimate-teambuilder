@@ -679,12 +679,16 @@ test.describe('explore', () => {
       if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       await openExplore(page);
       await expect(page.getByText('Effective query')).toBeHidden();
+      await expect(page.getByText('Reads as')).toBeHidden();
 
       await searchBox(page).fill('weak');
       await openFilters(page);
       await facet(page, 'Life').click();
       await closeFilters(page);
       await expect(page.getByRole('code')).toHaveText('class:life weak');
+      // The same query in words, filters included (QUERY_LANGUAGE §7).
+      await expect(page.getByText('Reads as')).toBeVisible();
+      await expect(page.getByText('class contains “life” AND mentions “weak”')).toBeVisible();
 
       await page.getByRole('button', { name: 'Copy query' }).click();
       await expect(page.getByText('Copied', { exact: true })).toBeVisible();
@@ -764,6 +768,7 @@ test.describe('explore', () => {
       await searchBox(page).press('Escape');
       await chips(page).getByRole('button', { name: 'weak — exclude it' }).click();
       await expect(page.getByRole('button', { name: 'Copy query' })).toBeVisible();
+      await expect(page.getByText('NOT mentions “weak” OR mentions “snared”')).toBeVisible();
 
       expect(await axeViolations(page)).toEqual([]);
     });

@@ -5,6 +5,7 @@ import { sortTraits } from '../explore/sort-traits';
 import type { Trait, TraitId } from '../model/trait';
 import type { QueryNode } from '../query/ast';
 import { compileQuery } from '../query/evaluate';
+import { explainQuery } from '../query/explain-query';
 import { createHighlighter, type Highlighter } from '../query/highlight';
 import { parseQuery, type ParseResult } from '../query/parser';
 import { createQueryVocabulary, type QueryVocabulary } from '../query/query-vocabulary';
@@ -23,6 +24,8 @@ export interface SearchOutcome {
   readonly highlight: Highlighter;
   /** The query the whole state stands for, which finds the same traits when typed in the query bar. */
   readonly effectiveQuery: string;
+  /** The effective query in plain language (QUERY_LANGUAGE §7): the filters count as well as what was typed. */
+  readonly effectiveReading: string;
   readonly facets: Facets;
 }
 
@@ -80,6 +83,7 @@ export async function createSearchService(
     search: (state) => {
       const query = parseQuery(state.query);
       const { filters, withoutClassFilter, found } = narrow(state, query.ast);
+      const effective = effectiveQuery(filters, query.ast);
       return {
         query,
         traits: sortTraits(
@@ -87,7 +91,8 @@ export async function createSearchService(
           state.sort,
         ),
         highlight: createHighlighter(query.ast),
-        effectiveQuery: effectiveQuery(filters, query.ast),
+        effectiveQuery: effective,
+        effectiveReading: explainQuery(parseQuery(effective).ast),
         facets: countFacets(facetWords, withoutClassFilter, found),
       };
     },

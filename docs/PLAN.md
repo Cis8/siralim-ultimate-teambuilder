@@ -13,10 +13,10 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done; the next slice is 11.1 (Explain), then M11 to its end**
-  (D15). 13.8 closed M13: SPEC §8.4 is what shipped, and Lighthouse CI now browses `/`, `/synergy`, a trait and a keyword through
-  `tools/serve-build`; its first run found a layout shift of 0.07–0.12 on the Synergy pages, fixed in `LoadStatus` (D51). Sizes: initial
-  JS 89.6 kB of 150, lazy 32.1 of 50, total 121.7 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
+- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain) of M11; the next slice is 11.2 (syntax
+  colours and the mirror), then M11 to its end** (D15). 11.1 added the "Reads as" line under the effective query (QUERY_LANGUAGE §7);
+  Lighthouse was not rerun for it (one more line only appears with a query or a filter, never on the pages it browses). Sizes: initial
+  JS 89.9 kB of 150, lazy 32.1 of 50, total 122.0 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
   11.6.** **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
   the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14, the
   links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
@@ -178,6 +178,9 @@ slice that builds it then follows.
   `measureElement` forces by reading `offsetHeight`). If that ever needs to come down, it is the cost of a row, not the search.
   `countFacets` runs inside every timed search: working out the keys of the 15 actor sets on each call cost +15% on `pnpm bench`'s
   typing run (and failed the 16 ms e2e once under load), so they are built once at load. Compare `pnpm bench` before and after.
+- `pnpm bench`'s "typing 30 keys" run is bimodal on this machine: 16 ms in one process, 20 ms in the next, whatever the code (an A/B
+  always run in the same order blamed 11.1 for +25% and was wrong; reversed, the sign flipped). To price a change, time the piece on
+  its own (a `tsx` loop of 200k calls) and run the A/B in both orders.
 - `typing-latency` and `assist-latency` (p95 of `atlas:search` / `atlas:assist` at 4× CPU) can fail when the whole e2e suite runs on
   many workers at once: rerun them alone (`playwright test typing-latency assist-latency --workers=1`) before suspecting the code.
   Alone: search p95 4.5–5.4 ms; assist p95 6.4 ms with the suggestions and their counts, on a text with eight faults of every kind (the budget
@@ -441,10 +444,11 @@ family (Numerical Nightmare); 531 of 1,780 traits rely on no event; a keyword ha
 so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the Synergy routes about 23), total 121.7.
 
 ### M11 Editor — colours, explanation, saved searches, mobile sheet (last, D15)
-- [ ] **11.1** Explain. `explainQuery(ast, registry)`, a visitor shaped like `serialise`: `FieldDefinition.describe` per field,
-      parentheses only where precedence needs them (same-kind nesting flattened), `-stack:no` reads "NOT does not stack", an unknown
-      field `mentions “clas:life”`, empty is "every trait". A "Reads as" line in the effective-query component (D19). *T:* a golden
-      table of about 30 queries, precedence, n-ary, `--weak`, consistent with `evaluate` on a sample.
+- [x] **11.1** Explain. `explainQuery(ast, registry)` (a visitor shaped like `serialise`; QUERY_LANGUAGE §7) and a "Reads as" line in the
+      effective-query component (D19). Deviations worth knowing: the reading of a term lives on the registry (`describeTerm`, beside
+      `matcherFor`, so that the two read an empty value, an unknown field and letter case the same way), not in the visitor; a term with no
+      value says "asks for nothing" (the words `describe` already used for `uses:/`); `SearchOutcome.effectiveReading` is worked out with
+      every search (a second `parseQuery` of the effective text: 14 µs for a long one, under the noise of `pnpm bench`).
 - [ ] **11.2** Syntax colours and the mirror. `syntaxSegments(source, tokens, diagnostics)` → contiguous segments (field, value, phrase,
       operator, paren, negation, text, blank; severity) whose concatenation is the source (property test). `QueryMirror` (`aria-hidden`)
       under a transparent input, in the lazy chunk: identical metrics (font, size, `font-variant-ligatures: none`, `white-space: pre`,

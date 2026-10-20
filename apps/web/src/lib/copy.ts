@@ -396,6 +396,8 @@ export const copy = {
   excludedTag: 'NOT',
 
   effectiveQueryLabel: 'Effective query',
+  /** Before the effective query in plain language (`SearchOutcome.effectiveReading`). */
+  readsAsLabel: 'Reads as',
   copyQuery: 'Copy query',
   copiedQuery: 'Copied',
   copyFailed: 'Could not copy — select the text instead',

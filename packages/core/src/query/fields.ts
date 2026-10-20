@@ -2,6 +2,7 @@ import { hasRole } from '../model/keyword-kind';
 import type { KeywordActor } from '../model/trait';
 import type { FieldDefinition, TraitMatcher, ValueChoice, ValueDomain, VocabularyColumn } from './field';
 import { createFieldRegistry } from './field-registry';
+import { quoted } from './finding-text';
 import type { ColumnName, KeywordList } from './indexed-trait';
 import { parseKeywordReference } from './keyword-reference';
 
@@ -56,8 +57,6 @@ function choiceField(name: string, help: string, choices: readonly ValueChoice[]
 
 const hasMaterial: TraitMatcher = ({ trait }) => trait.material !== null;
 const lacksMaterial: TraitMatcher = ({ trait }) => trait.material === null;
-
-const quoted = (text: string): string => `“${text}”`;
 
 /** For a field that looks inside a column: `class contains “life”`. */
 const contains =

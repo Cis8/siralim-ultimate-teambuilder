@@ -333,12 +333,13 @@ The URL is the source of truth; local storage keeps only conveniences (recent se
 Query bar (QUERY_LANGUAGE), facets (class: any-of; keywords: per keyword "applies"/"uses" toggles with match all/any;
 events; mechanics; flags: artifact-eligible, does-not-stack), result list with keyword tokens styled by kind and role,
 match highlighting, and click-a-keyword → counterpart jump (applies ↔ uses). Facet counts reflect the current results
-(class counts ignore the class filter itself). An "effective query" line shows the full query the UI state stands for.
+(class counts ignore the class filter itself). An "effective query" line shows the full query the UI state stands for, and a
+"Reads as" line under it says the same query in plain language (QUERY_LANGUAGE §7).
 The terms of the query bar are shown as chips, each with a toggle-NOT and a remove button that edit the text of the bar in
 place (QUERY_LANGUAGE §4, *Chips*).
 
-`SearchService.search(state)` gives, for an `ExploreState`, the traits in the order of the sort, the effective query and the
-facets (`Facets`); any state can be searched, since the parser repairs the query bar and a name nobody has finds nothing.
+`SearchService.search(state)` gives, for an `ExploreState`, the traits in the order of the sort, the effective query, its
+reading in words (`effectiveReading`) and the facets (`Facets`); any state can be searched, since the parser repairs the query bar and a name nobody has finds nothing.
 The service also lists what it loaded (`traits`, in the order of the dataset; `vocabulary`, the entries a person can type after
 `class:`, `family:`, `creature:` and `trait:`) and answers `countMatches(state, query)`, the number of traits that `query` finds
 among those the filters of `state` leave, which is what a search would list if `query` were in the bar (QUERY_LANGUAGE §3, §5).
@@ -438,7 +439,9 @@ among those the filters of `state` leave, which is what a search would list if `
   effective query line has the exact meaning. When a chip is removed the focus goes to the next chip's remove button, or to
   the row itself if none is left. The list starts over when a filter changes while the page is scrolled into it.
 - **The effective query line** shows `SearchOutcome.effectiveQuery` with a *Copy query* button (the clipboard; if the browser
-  refuses, the text is on the page to select), and is absent while there is no filter and no query.
+  refuses, the text is on the page to select), and is absent while there is no filter and no query. Under it, **Reads as** shows
+  `SearchOutcome.effectiveReading`: the effective query, filters included, in plain language (D19), as plain text of the page (no
+  live region: it follows the query, which the result count already announces).
 - **Empty state.** "No trait matches." with a hint; when several keywords must all be found, the hint says to try *Match any*.
 - **Back to top.** Once the page is scrolled more than a screen (`showsBackToTop`), a button fixed at the top right of the window
   takes it back to its top and moves the focus to the heading of the page, never to the search field (on a phone that raises

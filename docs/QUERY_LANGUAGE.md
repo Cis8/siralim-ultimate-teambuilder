@@ -400,9 +400,26 @@ list with none is not shown. An option's name is all its text: the kind, what is
   slash with it; Ctrl, Alt and Cmd are not). It is kept from being typed into the field it reaches, and from the Party tab it
   brings the Explore tab forward first. It is a character-key shortcut with no way to turn it off (WCAG 2.1.4): see PLAN.
 
-## 7. Explain (Phase 2)
-A Visitor renders the AST as plain language, with parentheses only where precedence needs them:
-`(mentions “vulnerable” OR mentions “weak”) AND NOT does not stack`.
+## 7. Explain (Phase 2, PLAN 11.1)
+`explainQuery(ast, registry?)` (`explain-query.ts`) renders a query as plain language: a visitor shaped like `serialise` (§4), reading the
+fields from `registry` (the one of the app by default). `(vulnerable OR weak) -stack:no` reads
+`(mentions “vulnerable” OR mentions “weak”) AND NOT does not stack`. It never throws, and a query with no term is `every trait`.
+- **A term** is worded by the registry, `describeTerm(term)`, which reads it as `matcherFor` does, so the two cannot disagree: the field's
+  `describe(value)` (§2) with the value in lower case and without its quotes (the search ignores letter case, so `Weak` is `“weak”`); a word
+  with no field is `mentions “weak”`; a field nobody knows is the word the search then looks for, colon included
+  (`clas:Life` is `mentions “clas:life”`, and `clas:` is `mentions “clas:”`); a term with no value yet is `asks for nothing`, since it finds
+  every trait (`applies:`, `class:""`, `""`, and `uses:/`, whose `describe` says the same).
+- **The operators** are written `AND`, `OR` and `NOT` whatever was typed (`&`, `|`, `-`, juxtaposition). A NOT is written once for each one
+  in the query: `--weak` is `NOT NOT mentions “weak”`, as the search takes it.
+- **The parentheses** are written only where precedence (NOT > AND > OR) needs them: around an `OR` inside an `AND`, and around an `AND`
+  or an `OR` after a `NOT`. `a OR b c` is `mentions “a” OR mentions “b” AND mentions “c”`. A group inside a group of its own kind says
+  what the operands side by side say, so it is **flattened**, unlike `serialise`, which keeps it as a node of its own: `a OR (b OR c)` and
+  `a OR b OR c` read the same, as they find the same traits.
+- **A query that was repaired** is read as repaired (the tree is the one of §1), so `a OR` reads `mentions “a”`.
+- **In the page** (`SearchOutcome.effectiveReading`, SPEC §8.1) it is the *effective* query that is read (D19): the filters of the panel are in
+  it (`class contains “life” AND does not stack AND (mentions “weak” OR mentions “heal”)`), and a text typed in the bar reads as it does
+  with no filter. The tests hold a golden table of queries, the registry's reading of a term, the same words for a query and its canonical
+  text (a property test) and different words for queries that find different traits on a sample of traits.
 
 ## 8. Editor (Phase 2)
 Syntax-coloured input = transparent `<input>` over a mirrored, coloured `<div>` with identical font metrics; errors get a

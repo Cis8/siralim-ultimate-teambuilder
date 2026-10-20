@@ -1,4 +1,5 @@
 import type { FieldDefinition, TraitMatcher } from './field';
+import { quoted } from './finding-text';
 import type { TermToken } from './token';
 
 /** The fields break a rule that would make a field name ambiguous or unreadable for the lexer. */
@@ -26,9 +27,18 @@ export interface FieldRegistry {
    * elsewhere (`class:life`), and for one with no value yet.
    */
   highlightedText(term: TermToken): string | undefined;
+  /**
+   * The term in words, read as `matcherFor` reads it: what its field says of the value (lower case, quotes stripped), that
+   * it mentions the text for a word with no field and for a field nobody knows (the whole token, colon included), and that
+   * it asks for nothing when it has no value yet.
+   */
+  describeTerm(term: TermToken): string;
 }
 
 const matchEveryTrait: TraitMatcher = () => true;
+
+/** What a term with no value yet is in words: it finds every trait, since it asks for nothing. */
+const ASKS_FOR_NOTHING = 'asks for nothing';
 
 /**
  * Checks the fields (their spellings, their line of help and their lists of choices) and wraps them. Adding a field is
@@ -66,6 +76,10 @@ export function createFieldRegistry(
       const text = field === undefined ? wordOf(term) : field.highlightsDescription === true ? term.value : '';
       return text === '' ? undefined : text.toLowerCase();
     },
+    describeTerm(term) {
+      const field = fieldOf(term);
+      return field === undefined ? wordsOf(mentions, wordOf(term)) : wordsOf(field.describe, term.value);
+    },
   };
 
   /** The field the term names, if the registry knows it. */
@@ -79,6 +93,12 @@ const wordOf = ({ field, value }: TermToken): string => (field === undefined ? v
 
 const matcherOf = (matcher: (value: string) => TraitMatcher, value: string): TraitMatcher =>
   value === '' ? matchEveryTrait : matcher(value.toLowerCase());
+
+/** The free-text search, in words: a word with no field is looked for in the columns of a trait. */
+const mentions = (text: string): string => `mentions ${quoted(text)}`;
+
+const wordsOf = (describe: (value: string) => string, value: string): string =>
+  value === '' ? ASKS_FOR_NOTHING : describe(value.toLowerCase());
 
 function spellingViolations(fields: readonly FieldDefinition[]): string[] {
   return fields

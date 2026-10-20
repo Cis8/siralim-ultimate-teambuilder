@@ -354,7 +354,9 @@
           </label>
         {/if}
       </div>
-      {#if loaded}<EffectiveQuery query={loaded.outcome.effectiveQuery} />{/if}
+      {#if loaded}
+        <EffectiveQuery query={loaded.outcome.effectiveQuery} reading={loaded.outcome.effectiveReading} />
+      {/if}
       <!-- Last of the query section, so that the tab key meets it before the filters (from 700 px: below it they are a sheet). -->
       {#if loaded}
         <a class="skip-filters" href="#results-heading" onclick={skipFilters}>{copy.skipFilters}</a>
