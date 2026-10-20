@@ -145,6 +145,9 @@ slice that builds it then follows.
 - `asset()` from `$app/paths` is typed with the names of the files in `static/`, and the dataset file is renamed whenever the
   data changes, so a literal name would break the typecheck of the next data-refresh: find the dataset next to
   `data/manifest.json` (`lib/composition-root.ts`). `base` is no longer exported.
+- CI: the e2e step is the slow one: 16 min 25 s at 3988d6a (4.5 minutes here), about 18 at the 11.5 commit, which hit the 20 minutes of the job and was
+  *cancelled* (not failed: `03e111e`'s first run, everything before the e2e step green). The limit of the `verify` job is 30 minutes now. A run that ends
+  `cancelled` after about 20 minutes is the timeout: read the duration of its steps (the API of the run's jobs) before suspecting the code.
 - Playwright browsers are not part of `pnpm install`: once per machine, `pnpm exec playwright install chromium webkit` (in
   `apps/web`), or every e2e fails with "Executable doesn't exist".
 - typescript-eslint cannot see the props of an imported `.svelte` component (svelte-check can): a callback passed to one

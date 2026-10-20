@@ -17,7 +17,8 @@ jobs:
   verify:
     name: Lint, typecheck, test, build, e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The e2e step alone takes 16 to 19 minutes on this runner (about 4.5 minutes on a developer machine), and grows with every slice.
+    timeout-minutes: 30
     env:
       # Build and e2e run under the same base path GitHub Pages serves the app from.
       BASE_PATH: /${{ github.event.repository.name }}
