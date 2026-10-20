@@ -300,9 +300,11 @@ test.describe('the mirror under the search field', () => {
         const { ink, shift, scale } = await offsetBetween(page, await pictures(page));
 
         expect(ink).toBeGreaterThan(0);
-        // Not a line off, and across not so much as half a CSS pixel (one pixel of a phone's screen is a third of one).
-        expect(shift[1]).toBe(0);
+        // Not a letter or a line off: at most half a CSS pixel either way. One pixel of a phone's screen is a third of one, and the field
+        // and the copy round their position to the screen on their own (the runner of CI found the copy one pixel down on a Pixel 7,
+        // where a PC found it one across), while a screen of 1× has no pixel to spare, so the tolerance is nothing there.
         expect(Math.abs(shift[0]) / scale).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(shift[1]) / scale).toBeLessThanOrEqual(0.5);
       });
     }
   });

@@ -467,8 +467,9 @@ so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the
       are not enough in every engine); the ghost text lies beyond the caret, so in a field that is full it is out of view (the list is
       what is left); the field's name had to be read without `aria-hidden` text in `touch-targets.test.ts`, since the mirror lies in
       its label. e2e: the text of the copy equals the field's, the pieces and the severities, the ghost, the scroll, forced colours
-      (Chromium), and **the alignment as a picture**: the field's own text in white against the copy in white must have the best shift
-      (0, 0) (under half a CSS pixel across); a mutant that moves the copy 2 px fails it. A text of 10,000 characters costs the mirror
+      (Chromium), and **the alignment as a picture**: the field's own text in white against the copy in white must have a best shift
+      of under half a CSS pixel each way (the field and the copy round to the screen on their own: CI found one pixel down on a Pixel 7,
+      a PC one across); a mutant that moves the copy 2 px fails it. A text of 10,000 characters costs the mirror
       ~80 ms and 48,000 about a second, beside 1 s and 5.6 s for the rest of the keystroke: no cap.
 - [ ] **11.3** Search history (core). An immutable `SearchHistory {recent, saved}`: `recordRecent` (trim, no empty, a repeat moves to the
       front, 10), `toggleSaved` (50; `{name, query}`, name = query), removals, `exportHistory` (`{app, kind: 'search-history',

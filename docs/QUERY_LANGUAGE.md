@@ -454,7 +454,7 @@ moves when it arrives (the Lighthouse layout shift is the one it was).
   scroll with a transform: it asks the field's `scrollLeft` on every frame while the field has the focus and for a few after (a field scrolls back to its start then), and on its
   `input` and `scroll` events. A line break in the value (an address can carry one) is not drawn, as the field drops it. The e2e checks the copy against the
   field in every engine: the text of the copy is the text of the field, and the two paint the same picture (the field's own text in white against the copy in white: the best
-  shift between them is none across a line, and under half a CSS pixel across: the pieces of the copy each begin on a pixel of the screen).
+  shift between them is under half a CSS pixel, across and down: the field and the copy each round their position to a pixel of the screen, which on a phone is a third of one).
 - **High contrast.** Under `forced-colors: active` the colours of the page are not the author's: the copy is not drawn and the field shows its own text
   (`FieldText`, the selection `Highlight`).
 - **The selection** is a share of `--accent` (`--field-selection`, 25 %), so that the coloured text shows through it; `contrast.test.ts` holds every colour of a
