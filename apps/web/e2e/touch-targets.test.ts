@@ -16,14 +16,15 @@ import {
   suggestions,
 } from './support/explore-page';
 import {
-  historyRows,
   keepSearches,
+  openHistoryList,
   openSearchesSheet,
   saveRefusal,
   saveSearchButton,
   savedAs,
   searchesSheet,
 } from './support/history-page';
+import { issueBanner, openSearchSheet, searchSheet, sheetField, sheetOptions } from './support/search-sheet-page';
 import {
   addButton,
   addElsewhereButton,
@@ -247,8 +248,7 @@ test.describe('touch targets on a phone', () => {
     const places = Array.from({ length: 50 }, (_, at) => `class:life ${String(at)}`);
     await keepSearches(page, { recent: ['applies:snared', 'weak'], saved: savedAs(...places) });
     await openExplore(page);
-    await searchBox(page).click();
-    await expect(historyRows(page).first()).toBeVisible();
+    await openHistoryList(page);
     await expectTargetsLargeEnough(page.locator('body'), [
       /^Search traits$/,
       /^Recent applies:snared$/,
@@ -272,6 +272,42 @@ test.describe('touch targets on a phone', () => {
       /^Import searches$/,
       /^Done$/,
     ]);
+  });
+
+  test('has every control of the search sheet at least 44 × 44 px, its text at 16 px, and no width of its own beyond the window', async ({
+    page,
+  }) => {
+    await openExplore(page);
+    await openSearchSheet(page);
+    await sheetField(page).pressSequentially('clas:life (wea');
+    await expect(issueBanner(page)).toBeVisible();
+    await expect(sheetOptions(page).nth(2)).toBeVisible();
+
+    await expectTargetsLargeEnough(searchSheet(page), [
+      /^Back to results$/,
+      /^Search traits$/,
+      /^Clear search$/,
+      /^Change to “class:”$/,
+      /^Save this search$/,
+      /^Manage searches$/,
+      /^Show /,
+      /^Open a group \($/,
+      /^Phrase in quotes "$/,
+      /^OR: either term$/,
+      /^NOT: leave out the next term$/,
+      /^mat:yes: traits with a material$/,
+      /^Debuff|^Trait/,
+    ]);
+    await expectFieldsNotZoomedIn(searchSheet(page), [/^Search traits$/]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+
+    // The narrowest phone there is: the toolbar scrolls sideways and nothing else may be wider than the window.
+    await page.setViewportSize({ width: 320, height: 568 });
+    expect(await widerThanTheWindow(page)).toBe(false);
+    const field = await boxOf(sheetField(page));
+    expect(field.right - field.left).toBeGreaterThan(150);
+    const foot = await boxOf(searchSheet(page).getByRole('button', { name: /^Show / }));
+    expect(foot.bottom).toBeLessThanOrEqual(568);
   });
 
   test('has text of 16 px or more in every text field and select, below which iOS zooms the page in on focus', async ({

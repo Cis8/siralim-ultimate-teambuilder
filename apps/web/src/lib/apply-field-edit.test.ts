@@ -152,6 +152,23 @@ describe('applyFieldEdit', () => {
     expect([field.selectionStart, field.selectionEnd]).toEqual([5, 5]);
   });
 
+  it('puts the caret where it is told when the edit knows better, between the two quotes it wrote', async () => {
+    const field = new FakeField('weak', 4);
+    field.onInput = () => {
+      queueMicrotask(() => {
+        field.selectionStart = field.selectionEnd = field.value.length;
+      });
+    };
+
+    applyFieldEdit(field, { span: [4, 4], text: ' ""' }, 6);
+    expect([field.selectionStart, field.selectionEnd]).toEqual([6, 6]);
+
+    await Promise.resolve();
+
+    expect(field.value).toBe('weak ""');
+    expect([field.selectionStart, field.selectionEnd]).toEqual([6, 6]);
+  });
+
   it('puts the caret back after the page has had its turn, if the page moved it', async () => {
     const field = new FakeField('weak clas:life', 0);
     // A framework that writes the value back once it has flushed leaves the caret at the end.

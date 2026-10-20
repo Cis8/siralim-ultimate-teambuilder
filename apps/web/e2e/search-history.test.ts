@@ -9,6 +9,7 @@ import {
   keepSearches,
   keptSearches,
   manageSearchesButton,
+  openHistoryList,
   openSearchesSheet,
   saveRefusal,
   saveSearchButton,
@@ -17,6 +18,7 @@ import {
   searchesSheet,
   sheetSearches,
 } from './support/history-page';
+import { sheetApplies } from './support/search-sheet-page';
 import { paramOf } from './support/synergy-page';
 
 // Acceptance criterion 10 (docs/ROADMAP.md), PLAN 11.4 and SPEC §8.3: recent searches are remembered, saved searches are kept with a
@@ -59,7 +61,7 @@ test.describe('recent searches', () => {
     page,
   }) => {
     await openExplore(page, './?q=weak');
-    await searchBox(page).click();
+    await searchBox(page).focus();
     await page.keyboard.press('Tab');
     await searchBox(page).fill('');
 
@@ -128,12 +130,15 @@ test.describe('the list of an empty field', () => {
     await searchBox(page).focus();
     await expect(historyList(page)).toBeHidden();
 
-    await searchBox(page).click();
-    await expect(historyList(page)).toBeVisible();
-    await expect(historyRows(page)).toHaveCount(3);
+    // A press on a touch screen opens the search sheet instead, whose list search-sheet.test.ts is about.
+    if (!(await sheetApplies(page))) {
+      await searchBox(page).click();
+      await expect(historyList(page)).toBeVisible();
+      await expect(historyRows(page)).toHaveCount(3);
 
-    await page.keyboard.press('Escape');
-    await expect(historyList(page)).toBeHidden();
+      await page.keyboard.press('Escape');
+      await expect(historyList(page)).toBeHidden();
+    }
     await page.keyboard.press('ArrowDown');
     await expect(historyList(page)).toBeVisible();
     await expect(searchBox(page)).toHaveAttribute('aria-expanded', 'true');
@@ -154,8 +159,7 @@ test.describe('the list of an empty field', () => {
 
   test('has nothing active, so that Tab leaves the field and Enter is its own (WCAG 2.1.2)', async ({ page }) => {
     await openExplore(page);
-    await searchBox(page).click();
-    await expect(historyList(page)).toBeVisible();
+    await openHistoryList(page);
     await expect(searchBox(page)).not.toHaveAttribute('aria-activedescendant', /.+/);
 
     await page.keyboard.press('Tab');
@@ -178,7 +182,7 @@ test.describe('the list of an empty field', () => {
 
   test('takes the search under the arrows, with Enter, and puts it in the field whole', async ({ page }) => {
     await openExplore(page);
-    await searchBox(page).click();
+    await openHistoryList(page);
 
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
@@ -193,7 +197,7 @@ test.describe('the list of an empty field', () => {
 
   test('takes the search that is pressed, and remembers it as the newest', async ({ page }) => {
     await openExplore(page);
-    await searchBox(page).click();
+    await openHistoryList(page);
 
     await historyRows(page).nth(1).click();
     await expect(searchBox(page)).toHaveValue('uses:weak');
@@ -204,8 +208,7 @@ test.describe('the list of an empty field', () => {
 
   test('gives way to the suggestions as soon as there is something to complete', async ({ page }) => {
     await openExplore(page);
-    await searchBox(page).click();
-    await expect(historyList(page)).toBeVisible();
+    await openHistoryList(page);
 
     await searchBox(page).pressSequentially('wea');
 
@@ -215,8 +218,7 @@ test.describe('the list of an empty field', () => {
 
   test('has no accessibility violation', async ({ page }) => {
     await openExplore(page);
-    await searchBox(page).click();
-    await expect(historyList(page)).toBeVisible();
+    await openHistoryList(page);
 
     expect(await axeViolations(page)).toEqual([]);
   });

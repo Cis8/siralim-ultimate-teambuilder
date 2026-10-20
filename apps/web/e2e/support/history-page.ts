@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { searchBox } from './explore-page';
 
 /** Where the browser keeps the recent and saved searches (`search-history-store.ts`). */
 const HISTORY_KEY = 'trait-atlas:search-history';
@@ -61,6 +62,17 @@ export const sheetSearches = (page: Page, list: 'Saved' | 'Recent'): Locator =>
 
 /** The buttons that forget a search, in either list. */
 export const forgetButtons = (page: Page): Locator => searchesSheet(page).getByRole('button', { name: /^Remove / });
+
+/**
+ * Shows the list a blank field offers, in the page, without a press: on a touch screen a press on the field opens the search sheet
+ * instead (its list is the subject of `search-sheet.test.ts`), so a test about the list of the page asks with Alt+Down, which opens
+ * the list without choosing and is the same on every screen.
+ */
+export async function openHistoryList(page: Page): Promise<void> {
+  await searchBox(page).focus();
+  await page.keyboard.press('Alt+ArrowDown');
+  await expect(historyList(page)).toBeVisible();
+}
 
 export async function openSearchesSheet(page: Page): Promise<void> {
   await manageSearchesButton(page).click();

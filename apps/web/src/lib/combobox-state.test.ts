@@ -225,6 +225,41 @@ describe('Escape', () => {
   });
 });
 
+describe('a list that is always showing (the search sheet of a phone)', () => {
+  it('shows whenever it has options, whether or not the person asked for it', () => {
+    expect(comboboxView(shut, 5, true)).toEqual({ expanded: true, active: undefined });
+    expect(comboboxView(shut, 0, true)).toEqual({ expanded: false, active: undefined });
+    expect(comboboxView({ open: false, active: 2 }, 5, true)).toEqual({ expanded: true, active: 2 });
+    expect(comboboxView({ open: false, active: 7 }, 5, true).active).toBeUndefined();
+  });
+
+  it('is moved through by the arrows from the start, like any other list', () => {
+    expect(pressKey(shut, key('ArrowDown'), 4, true).state).toEqual({ open: true, active: 0 });
+    expect(pressKey(shut, key('ArrowUp'), 4, true).state).toEqual({ open: true, active: 3 });
+  });
+
+  it('lets Tab and Enter take the option that is active, and leaves them to the field otherwise', () => {
+    expect(pressKey({ open: false, active: 1 }, key('Enter'), 4, true).accept).toBe(1);
+    expect(pressKey(shut, key('Enter'), 4, true).handled).toBe(false);
+    expect(pressKey(shut, key('Tab'), 4, true).handled).toBe(false);
+  });
+
+  it('is left to the sheet by Escape unless an option is active, which Escape then puts back to none', () => {
+    expect(pressKey(shut, key('Escape'), 4, true).handled).toBe(false);
+    expect(pressKey(open(), key('Escape'), 4, true).handled).toBe(false);
+    expect(pressKey(open(2), key('Escape'), 4, true)).toEqual({ handled: true, state: shut, accept: undefined });
+  });
+
+  it('has nothing to put away with Alt+ArrowUp, and nothing more to show with Alt+ArrowDown', () => {
+    expect(pressKey(shut, key('ArrowUp', { altKey: true }), 4, true).handled).toBe(false);
+    expect(pressKey(shut, key('ArrowDown', { altKey: true }), 4, true)).toEqual({
+      handled: true,
+      state: shut,
+      accept: undefined,
+    });
+  });
+});
+
 describe('the other keys', () => {
   it.each(['a', 'Backspace', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' ', 'PageDown'])(
     '%s is left to the field',

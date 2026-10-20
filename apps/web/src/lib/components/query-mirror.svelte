@@ -48,7 +48,8 @@
   // page hears. While it has the focus the copy asks it every frame, and a few frames after it loses it (it scrolls back to its start).
   $effect(() => {
     const field = input;
-    if (field === undefined) return;
+    // `bind:this` hands back null, not undefined, when the field goes away (the search sheet shuts).
+    if (!(field instanceof HTMLInputElement)) return;
     let frame = 0;
     let away = 0;
     const follow = (): void => {

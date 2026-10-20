@@ -173,6 +173,38 @@ describe('the colours of a query in the search field', () => {
   });
 });
 
+describe('the colours of a query in the search sheet of a phone', () => {
+  // The field of the sheet is on --surface-2, a little lighter than the field of the page, and the buttons of the toolbar under it are on
+  // --surface-3 with the colour of an operator or of a field on their face.
+  const FIELD = 'surface-2';
+  const BUTTON = 'surface-3';
+  const PIECES = [
+    'syntax-field',
+    'syntax-value',
+    'syntax-text',
+    'syntax-phrase',
+    'syntax-operator',
+    'syntax-paren',
+    'syntax-negation',
+    'syntax-ghost',
+  ] as const;
+
+  it.each(PIECES)('%s is at least 4.5:1 on the field of the sheet', (text) => {
+    expect(contrast(token(text), token(FIELD))).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+
+  it.each(['underline-error', 'underline-warning'] as const)('%s is at least 3:1 on the field of the sheet', (line) => {
+    expect(contrast(token(line), token(FIELD))).toBeGreaterThanOrEqual(UI_CONTRAST);
+  });
+
+  it.each(['syntax-operator', 'syntax-field', 'text-strong'] as const)(
+    '%s is at least 4.5:1 on a button of the toolbar',
+    (text) => {
+      expect(contrast(token(text), token(BUTTON))).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+    },
+  );
+});
+
 describe('the lines that show a state or frame a field', () => {
   // The focus ring is `--accent`; a pressed control and the frame of the search field are outlined in `--accent-border`.
   // `--border` and `--border-strong` are dividers and the frame of buttons that name themselves in words: not required.

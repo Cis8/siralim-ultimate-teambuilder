@@ -21,6 +21,7 @@ import {
 } from './support/explore-page';
 import { keepSearches, manageSearchesButton, saveSearchButton, savedAs, searchesSheet } from './support/history-page';
 import { problemsOf, tabTo, walkTabOrder, type TabWalk } from './support/keyboard';
+import { backButton, openSearchSheet, sheetApplies, sheetField } from './support/search-sheet-page';
 import {
   addButton,
   addElsewhereButton,
@@ -172,6 +173,28 @@ test.describe('the tab key', () => {
 
     // The three searches with the button that forgets each, Export, Import and Done.
     expect(walk.stops.length).toBeGreaterThanOrEqual(9);
+    expect(problemsOf(walk)).toEqual([]);
+    expect(missed(walk, browserName)).toEqual([]);
+    expect(await axeViolations(page)).toEqual([]);
+  });
+
+  test('reaches every control of the search sheet, and none of the page behind it', async ({ page, browserName }) => {
+    await openExplore(page);
+    test.skip(!(await sheetApplies(page)), 'Only a touch screen has the search sheet.');
+    await openSearchSheet(page);
+    await sheetField(page).pressSequentially('clas:life (wea');
+    // Typing makes the first suggestion active, and Tab would take it: the walk starts from a field with nothing chosen.
+    await page.keyboard.press('Escape');
+    await expect(sheetField(page)).not.toHaveAttribute('aria-activedescendant', /.+/);
+
+    // The walk starts from the first control of the sheet; the field, where the focus is, comes second.
+    await backButton(page).focus();
+
+    const walk = await walkTabOrder(page, { within: 'dialog[open]' });
+
+    // The way back, the field, the clear button, the fix, the star, the button of searches, the button that shows the traits and the ten
+    // of the toolbar.
+    expect(walk.stops.length).toBeGreaterThanOrEqual(17);
     expect(problemsOf(walk)).toEqual([]);
     expect(missed(walk, browserName)).toEqual([]);
     expect(await axeViolations(page)).toEqual([]);

@@ -66,8 +66,12 @@ export interface ComboboxView {
   readonly active: number | undefined;
 }
 
-export function comboboxView({ open, active }: ComboboxState, size: number): ComboboxView {
-  const expanded = open && size > 0;
+/**
+ * What is shown for `state`. A `permanent` list is the one the sheet of a phone draws in the flow of the page: it shows whenever
+ * it has options, whether or not the person asked, and what `open` holds is of no matter.
+ */
+export function comboboxView({ open, active }: ComboboxState, size: number, permanent = false): ComboboxView {
+  const expanded = (permanent || open) && size > 0;
   return { expanded, active: expanded && active !== undefined && active < size ? active : undefined };
 }
 
@@ -100,11 +104,14 @@ export function moved(state: ComboboxState): ComboboxState {
 
 const handled = (state: ComboboxState, accept?: number): KeyOutcome => ({ handled: true, state, accept });
 
-/** What a key press does to the list; unhandled keys are the field's own. */
-export function pressKey(state: ComboboxState, press: ComboboxKeyPress, size: number): KeyOutcome {
+/**
+ * What a key press does to the list; unhandled keys are the field's own. A `permanent` list has nothing to put away, so Escape is
+ * the sheet's own (it closes it) unless an option is active, which it then lets go of.
+ */
+export function pressKey(state: ComboboxState, press: ComboboxKeyPress, size: number, permanent = false): KeyOutcome {
   const unhandled: KeyOutcome = { handled: false, state, accept: undefined };
   if (press.isComposing) return unhandled;
-  const { expanded, active } = comboboxView(state, size);
+  const { expanded, active } = comboboxView(state, size, permanent);
   const plain = !(press.altKey || press.ctrlKey || press.metaKey || press.shiftKey);
 
   switch (press.key) {
@@ -115,7 +122,7 @@ export function pressKey(state: ComboboxState, press: ComboboxKeyPress, size: nu
       if (press.altKey && !(press.ctrlKey || press.metaKey || press.shiftKey)) {
         // Alt+Down shows the list without choosing, Alt+Up puts it away.
         if (down) return handled(expanded ? state : { open: true, active: undefined });
-        return expanded ? handled(shut) : unhandled;
+        return expanded && !permanent ? handled(shut) : unhandled;
       }
       if (!plain) return unhandled;
       if (!expanded) return handled({ open: true, active: down ? 0 : size - 1 });
@@ -126,7 +133,7 @@ export function pressKey(state: ComboboxState, press: ComboboxKeyPress, size: nu
     case 'Enter':
       return plain && expanded && active !== undefined ? handled(state, active) : unhandled;
     case 'Escape':
-      return expanded ? handled(shut) : unhandled;
+      return expanded && (!permanent || active !== undefined) ? handled(shut) : unhandled;
     default:
       return unhandled;
   }

@@ -197,6 +197,33 @@ sheet arrive with the assist layer, and take room from the text inside the field
   that importing adds and replaces nothing, two 44 px buttons (Export searches, Import searches: a button that opens the file chooser of a hidden input) and the sentence of what
   the last one did, which also goes to the polite line of the sheet.
 
+### Search sheet
+What a press on the search field opens on a phone (PLAN 11.5, D58–D65; SPEC §8.3 *The search sheet*): a screen under 700 px that is touched (`(max-width: 699px) and
+(pointer: coarse)`) edits the query in a full-screen dialog, in the room the keyboard leaves, and not in the field of the page, where nine rows of suggestions would run
+under the bars at the foot and the two buttons of the history leave about 150 px of text. It is the same editor: the same text, issues, suggestions, mirror, history and
+rules, in a field of its own (`SearchSheet`, in the assist layer, over the `QueryInput` that owns the state). A mouse, a keyboard and the `/` shortcut edit in the page at any width.
+- **Dialog.** A native `<dialog>` opened with `showModal()` (named “Search”; the page behind is inert, does not scroll, and Escape or the system's back close it), as wide and
+  as tall as the part of the window that is visible: `--sheet-top` and `--sheet-height` follow `visualViewport` (`fitToVisualViewport`), so that the foot is above the keyboard
+  whether the browser pans the page (Safari) or only shrinks the visual viewport (Chrome on Android). It is drawn only while open: a phone that never opens it pays for nothing.
+- **Head.** The back arrow (44 px, “Back to results”) and the field: 46 px high on `--surface-2` with the `--accent-border` line (`--issue-error-border` when the query has an
+  error) and the ring of the page's field while it has the focus; the text, in the mono face at 16 px, is the one of QUERY_LANGUAGE §8 (mirror and ghost text included); at its
+  right the clear button (44 px, “Clear search”, there while the field holds something) which empties the field and leaves the keyboard up.
+- **Banner.** Under the head, the first thing wrong with the query (errors before warnings): the icon and the word, the message, its fix as a 44 px quiet button and “+N more”.
+  It is the only one the room allows; the badge of the page counts them all. The field is described by its text and is `aria-invalid` for an error.
+- **Reads as.** The label in `--text-faint` and the effective reading of QUERY_LANGUAGE §7 (the filters of the panel included, D19), 12.5 px, always there while the traits are.
+- **List.** Takes the room that is left and scrolls inside it. Its heading row says “Suggestions”, or “Recent and saved searches” for a blank field that has a history, with the
+  star and *Manage searches* at its right (the buttons of the page's field; the sheet of searches opens over this one and gives the focus back to the button). The list is the
+  `Combobox` of §Suggestions drawn in the flow, **always showing** while it has options, with rows 54 px tall and a line between them; a press on a row takes it and the field
+  keeps the focus. A refusal to save is the line of §Recent and saved searches, under the banner.
+- **Foot.** The button *Show N traits* (46 px, `--accent`, the count within the filters, D18) closes the sheet, and under it the **toolbar**: `( ) " OR AND NOT applies: uses:
+  class: mat:yes`, 44 px each, in the colours of the query (operators `--syntax-operator`, fields `--syntax-field`), scrolling sideways when the screen is narrower than they are.
+  A press writes at the caret (QUERY_LANGUAGE §8 *The toolbar*) and takes no focus from the field. Each button has a name that holds its face when that is a word
+  (“OR: either term”, “NOT: leave out the next term”).
+- **Keys.** Escape lets go of the option that is active and, when none is, closes; Enter takes the active option and, when none is, closes the sheet as *Show N traits* does (and
+  remembers the search); Tab and Enter otherwise as in §Suggestions. Shift+Tab always leaves the field.
+- **Closing.** The search is remembered (SPEC §8.3) and the focus goes to the Results heading and not to the field of the page, which a phone would answer with its keyboard.
+- **Said aloud.** The polite line of the page's field (the issues, the star) and the count of traits after a pause of 400 ms are repeated in the sheet, since the page behind it is inert.
+
 ### Party panel
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
   the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a
@@ -403,8 +430,8 @@ arrive (a layout shift of 0.07–0.12 on a phone before; Lighthouse CI now holds
   person is on has `aria-current="page"` (a fill in the header, the rule and the heavier name at the foot), and Party goes to Explore
   with `tab=party`, where a wide screen has the party as a column. Tabs and links look alike (`.bar-item`).
 - Mobile (under 700 px): header + search + chip row; results; the tab bar. Filters and fixes open as bottom sheets (§ Facet
-  panel and chips), the Filters button in a bar of its own above the tab bar, on Explore only. No fake status bars or keyboards
-  in mockups; the syntax toolbar docks above the system keyboard.
+  panel and chips), the Filters button in a bar of its own above the tab bar, on Explore only. A press on the search field opens the
+  search sheet (§ Search sheet), whose syntax toolbar docks above the system keyboard. No fake status bars or keyboards in mockups.
 
 ## Accessibility (WCAG 2.2 AA)
 - Real elements: `button`, `a[href]`, `input` + `label`. No click handlers on `div`/`span`.

@@ -13,20 +13,21 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D57, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1–11.4 of M11 (Explain, the mirror, the history in
-  `core`, the history in the field); the next slice is 11.5 (the mobile search sheet), then 11.6 closes M11 and Phase 2** (D15). Lighthouse
-  after 11.4: `/` 0.90 with a layout shift of 0.035, as before. Sizes: initial JS 93.2 kB of 150, lazy 34.9 of 50, total 128.1 of 200:
-  **the editor spends what is left of the lazy 50 kB, so revisit the limits at 11.6.** **On a phone the inline field is all there is until
-  11.5**: its two new buttons leave about 150 px of text on a 320 px screen (46 with the issues badge) and nine rows of suggestions reach
-  the fixed bars (which stay on top); the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8 and 16–18;
-  the Synergy pages are rows 9–14, the links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
-  criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D57 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
+- **Phase 2 (D14–D65, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1–11.5 of M11 (Explain, the mirror, the history in
+  `core` and in the field, the search sheet of a phone); the next slice is 11.6, which closes M11 and Phase 2** (D15): budgets and
+  Lighthouse, QUERY_LANGUAGE §7–8 / SPEC §8.3 / DESIGN read once more against what shipped, the Phase 2 criteria-to-tests table, ROADMAP
+  ticks, this file collapsed; then ask the owner before Phase 3. Lighthouse after 11.5: `/` 0.90 with a layout shift of 0.035, as before. Sizes: initial JS 94.2 kB of 150, lazy 37.3 of 50, total 131.5
+  of 200 (**the lazy 50 kB has 12 kB left: revisit the limits at 11.6**). **On a phone a press on the search field now opens the sheet**
+  (D58); the owner's check on a real iPhone (Safari, Chrome) and an Android is the first thing that matters: keyboard docking and the
+  caret (checklist iPhone 17–22, Android 1–4), also that the first press after a cold load (the layer not there yet) edits in the page.
+  Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the criteria-to-tests
+  table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
+- For the owner to veto, none blocking: D18–D65 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
   the sheet, not families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D44–D48 (the phone:
   a tab press is a history step, the focus card folds only its description, the pickers are sheets); D49–D50 (the Synergies link of a
   result and of a slot; a search typed a moment before a link is followed is dropped); 8b.10 made "immune to debuffs" a mention (SPEC
   §4); 8b.11 chose that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR and that each is a chip;
-  D53–D57 (the history: what is remembered and when, the list of an empty field that has nothing active, the star only while the field
+  D58–D65 (the sheet: a press opens it, one editor in two fields, the focus after it, Enter and Escape, the toolbar); D53–D57 (the history: what is remembered and when, the list of an empty field that has nothing active, the star only while the field
   holds something, *Manage searches* always in the field, two tabs not erasing each other).
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
@@ -39,8 +40,8 @@ session (after `CLAUDE.md`), update it before ending one.
   of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); that on the same
   phone the coloured text of the field lies exactly under the caret and the selection, also once a long query has scrolled (11.2:
   checklist iPhone 16; desktop 42–43 for the reader and a Windows high-contrast theme); that the star, *Manage searches*, the list of an
-  empty field, Export and Import work on the phone too and leave room to type (11.4: checklist iPhone 17–18, desktop 44–49); when 11.5
-  lands, the mobile search sheet on iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
+  empty field, Export and Import work in the search sheet of the phone and leave room to type (11.4–11.5: checklist iPhone 17–22, desktop 44–49);
+  the search sheet itself on iOS Safari and Chrome Android (11.5: keyboard docking, caret, no zoom; checklist iPhone 17–22, Android 1–4). GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
   trigger; when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be
   green; `gh` may be missing, see Notes), `gh pr list` (read a data-refresh PR's report before merging it).
@@ -100,9 +101,17 @@ session (after `CLAUDE.md`), update it before ending one.
 | D55 | (default) The star is there only while the field holds something; its name is fixed and `aria-pressed` is the state; saving also remembers the search as recent; a refusal is a line under the field, said aloud, that goes when the text changes (for `full`, with a *Manage searches* button) | SPEC §8.3, DESIGN § Recent and saved searches |
 | D56 | (default) *Manage searches* is a button in the field, always there, that opens a `choice` `BottomSheet`: the two lists (use, forget), Export (a download) and Import (a merge; a file over 6 MB is refused unread). A search taken from it is set through the page and the focus goes back to the button, so that a phone's keyboard does not rise | SPEC §8.3 |
 | D57 | (default) A change is made to what the browser keeps now, not to what the page last saw, so that two tabs do not erase each other's saved searches; a browser that keeps nothing leaves the history of the visit in memory | SPEC §8.3 |
+| D58 | (default) **A press on the search field opens the sheet** on a screen under 700 px that is touched (`(max-width: 699px) and (pointer: coarse)`, `SEARCH_SHEET_MEDIA`); a keyboard (Tab, a hardware one), the `/` shortcut, a mouse, a field filled in and a press before the assist layer has arrived edit in the page, which stays a complete editor (its star, *Manage searches* and badge too: the page's field is not cut down on a phone). A press takes no focus in the page (the `mousedown` is held) and shows the sheet in the task of the press, with the content drawn first (`flushSync`), because an iPhone raises its keyboard only for a focus given while a press is handled | SPEC §8.3, DESIGN § Search sheet |
+| D59 | (default) The sheet is its own `<dialog>`, not a `BottomSheet` variant (the plan said `full`): that one is a title, a body and one button, and an `open` prop opened in an effect; the sheet is a head with a field, a banner, a list that scrolls and a foot. Its content exists only while it is open. It is as tall as `visualViewport` and starts at its top (`fitToVisualViewport`: `--sheet-top`, `--sheet-height`) | DESIGN § Search sheet |
+| D60 | (default) **One editor, two fields.** `QueryInput` still owns the state (caret, active option, counts, history) and works on `field`, the field in the sheet while it is open and the one in the page otherwise; the sheet is a view that raises the same events. Typing in the sheet opens no list of issues in the page behind; the text of the field is shared by `QueryTextInput`, and the list by the `Combobox` with `flow` | SPEC §8.3 |
+| D61 | (default) When the sheet shuts, whatever shut it, the search is remembered and the focus goes to the Results heading, not to the field of the page (a phone would raise its keyboard: as for the button of searches in D56 and Back to top) | SPEC §8.3 |
+| D62 | (default) In the sheet the list is permanent (`flow`: expanded whenever it has options). Escape lets go of an active option and otherwise closes the sheet; Enter takes the active option and otherwise closes the sheet, as *Show N traits* does. A phone's "search" key therefore takes the first suggestion before it sends | QUERY_LANGUAGE §6, DESIGN § Search sheet |
+| D63 | (default) The toolbar writes by `insertAtCaret` (core): a blank before where the word would run into the one before, a blank after an operator and a finished term, `NOT` is the dash, a quote is a pair with the caret between, wraps a selection, or closes an open phrase. The buttons are the ten of the plan, each a 44 px target with a name that holds its face (a word) | QUERY_LANGUAGE §8 |
+| D64 | (default) The banner shows the first issue only (errors first) with "+N more"; "Reads as" is the *effective* reading and the button's count the one within the filters (D18, D19), both from the page's outcome; the count is told politely 400 ms after the typing stops, in the sheet's own live line (the page behind is inert) | DESIGN § Search sheet |
+| D65 | (default) The star and *Manage searches* are in the heading row of the sheet's list; the sheet of searches opens over the search sheet and gives the focus back to its button | DESIGN § Search sheet |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D57 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D65 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -262,6 +271,12 @@ slice that builds it then follows.
   (as `touch-targets.test.ts` does), or the name becomes "Search traits wea". To check an alignment, compare pictures (`pictures` and
   `offsetBetween` in `query-mirror.test.ts`): no two pictures are pixel for pixel alike, since the copy is rasterised in grey, so
   count the best shift, not the differing pixels (that gave 5–8% on text that lined up).
+- e2e, the search sheet (11.5): on the phone projects (a touch screen under 700 px) a **click** on the page's field opens the sheet, while `fill`,
+  `focus`, `pressSequentially` and the keyboard edit in the page, so a test about the field of the page does not click it (`openHistoryList`: focus and Alt+Down).
+  A test of the sheet opens it with `openSearchSheet` (a tap) and looks only through `searchSheet(page)`: **Playwright does not leave out what is behind a modal
+  dialog** (`inert` is not hidden to it), so a role query on the whole page finds the field and the list of the page as well, and is a strict-mode failure. The first
+  Tab walk of a sheet starts from its first control (`backButton(page).focus()`): the field is the second, and the walk ends where the focus leaves the page.
+  `walkTabOrder` does not count the options of a combobox as missed (the arrows reach them).
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - The Write and Edit tools turn the escape for the byte order mark (backslash, u, F, E, F, F) in what they are given into the invisible
   character itself: a regex or a string that looks right in the diff and is not. Write `String.fromCharCode(0xfeff)`. Other escapes
@@ -511,13 +526,20 @@ so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the
       (no active option, Tab leaves), the star, the full refusal, the sheet, export → remove all → import restores, five refused files,
       a storage that throws; axe on the list, the star, the refusal and the sheet; the Tab walk of the sheet; the targets of the sheet.
       Mutation-checked: `typed(browsing())` made `typed()` fails "stays so when the typing has just emptied the field".
-- [ ] **11.5** Mobile search sheet. Under 700 px (coarse) the field opens a full-screen modal `<dialog>` (the `BottomSheet` `full`
-      variant) with the same editor: back, the field and clear, the first issue as a banner with its Fix and "+N more", "Reads as",
-      suggestion rows (kind badge, label, detail, count with unit), a docked footer with "Show N traits" and the syntax `toolbar` (`(`
-      `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`; 44 px; it inserts at the caret and keeps the keyboard; `NOT`
-      inserts `-` and its name contains "NOT"; `"` inserts a pair: the prototype's lone quote raised an error at once).
-      `visualViewport` keeps the footer above the keyboard. *T:* a pure `insertAtCaret`; e2e on Pixel 7 and iPhone 14 (open, insert, tap
-      a suggestion, close, 16 px, targets, overflow). **Owner device check** (iOS Safari and Chrome Android: keyboard docking, caret,
-      zoom).
+- [x] **11.5** Mobile search sheet. `core`: `insertAtCaret(source, selection, id)` and `SYNTAX_INSERTION_IDS` (QUERY_LANGUAGE §8 *The toolbar*; 31 tests with
+      property tests against the lexer, mutation-checked: 6 mutants, none survived). `web`: `SearchSheet` (a native `<dialog>` with the head, the issue banner, "Reads as",
+      the list, the star and *Manage searches*, the button *Show N traits* and `SyntaxToolbar`), `QueryTextInput` (the field and its mirror box, now shared by the page
+      and the sheet), `IssueBanner`, `SaveRefusal`, `fitToVisualViewport`, `search-sheet.ts`, and in `Combobox` two modes (`flow`: always showing, Escape is the
+      sheet's; `suspended`: the page's list stays shut behind the sheet). The rules are in SPEC §8.3 *The search sheet*, DESIGN § Search sheet, D58–D65. Deviations worth
+      knowing: **a press opens it, a focus does not** (D58: the plan said "the field opens"; a keyboard, `/`, `fill` and a press before the layer arrives edit in the page, so
+      the page's field stays complete and the 252 uses of `searchBox` in the e2e on the phone projects kept working); it is not a `BottomSheet` variant (D59); the
+      focus after it goes to the Results heading (D61); **Enter with nothing active closes it** and so a phone's "search" key takes the first suggestion before it sends (D62).
+      Found on the way: `bind:this` hands back `null` when the sheet's field goes, which crashed the mirror's effect and took the sheet with it (the mirror and the combobox
+      now test `instanceof HTMLInputElement`); the press that opens the sheet also reached the page's `Combobox`, which opened its list behind the sheet and left it open
+      after it (hence `suspended`). e2e (`search-sheet.test.ts`, 24 × 2 phone projects): open, text, count, closing and where the focus goes, Escape and Enter, a suggestion
+      pressed keeps the focus, the banner and its fix, the mirror, each button of the toolbar, history, star, Manage, axe, the visual viewport (Chromium, page scale 2),
+      and the mouse leaving the sheet shut; plus the Tab walk of the sheet (`keyboard.test.ts`), its 44 px targets, 16 px field and a 320 px window
+      (`touch-targets.test.ts`), contrast of the sheet's surfaces. Adapted: the tests of the page's list use `openHistoryList` (focus, Alt+Down) where a press would open the
+      sheet. **Owner device check** (iOS Safari and Chrome Android: keyboard docking, caret, zoom): not done, see *Resume here*.
 - [ ] **11.6** Close M11 and Phase 2. Budgets, Lighthouse, QUERY_LANGUAGE §7–8 and SPEC §8.3 rewritten to what shipped, DESIGN components,
       the Phase 2 criteria-to-tests table, ROADMAP ticks, PLAN collapse; ask the owner before Phase 3.

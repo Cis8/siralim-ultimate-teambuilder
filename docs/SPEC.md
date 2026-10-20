@@ -590,6 +590,20 @@ and two searches are the same when their trimmed text is exactly the same, lette
   recent." (and how many did not fit), "Nothing new in this file…" or why nothing was imported, in words that stay on the sheet and are said
   politely. A file over three times the limit in bytes is refused without being read.
 
+**The search sheet** (PLAN 11.5; `search-sheet.svelte`, `query-input.svelte`, `search-sheet.ts`; DESIGN § Search sheet). On a narrow screen that is touched
+(`(max-width: 699px) and (pointer: coarse)`) a **press** on the search field opens a full-screen dialog with the same editor in it, instead of the editor in the page.
+- *What opens it.* A click on the field, once the assist layer and the dataset are there: the press takes no focus in the page (the page behind would raise its keyboard) and the
+  sheet is shown, with the focus in its own field, in the task of the press itself (a phone raises its keyboard for no other focus). A press before the layer has arrived, the
+  keyboard (Tab, a hardware keyboard on a tablet), the `/` shortcut and a mouse edit in the page, at any width: that field is complete (the issues, the list, the star, *Manage searches*).
+- *One editor.* `QueryInput` owns the state (the caret, the active option, the counts, the history) and works on whichever of the two fields is being typed in; the sheet is a view
+  of it and raises the same events. Typing in the sheet opens no list of issues in the page behind. The text is the page's: the address follows it as it does when typing in the page.
+- *What it holds.* The back arrow, the field with its clear button, the first issue with its fix and “+N more”, “Reads as” (the effective reading), the list (suggestions, or the
+  recent and saved searches for a blank field), the star and *Manage searches*, the button *Show N traits* and the syntax toolbar (QUERY_LANGUAGE §8).
+- *Leaving.* The back arrow, *Show N traits*, Escape and the system's back close it. Enter closes it too when no option is active (Escape lets go of an active one first); the search
+  is remembered as it is on leaving the field, and the focus goes to the Results heading and not to the field of the page.
+- *Where the keyboard is.* The sheet is as tall as the visual viewport and starts at its top (`fitToVisualViewport`), so that the button and the toolbar stay above the keyboard of
+  Safari (which pans the page) and of Chrome on Android (which shrinks only the visual viewport). That can be judged only on the devices: the owner's check (PLAN).
+
 ### 8.4 Synergy explorer (Phase 2)
 Three routes under `/synergy` (§7, ADR-0011) that share the party with Explore: the picker (`/synergy`), a trait
 (`/synergy/<traitId>`) and a keyword (`/synergy/kw/<slug>`). The relations come from `createRelationService` in `core`

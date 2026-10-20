@@ -11,7 +11,9 @@ export { default as HistoryButtons } from './components/history-buttons.svelte';
 export { default as IssueBadge } from './components/issue-badge.svelte';
 export { default as QueryIssues } from './components/query-issues.svelte';
 export { default as QueryMirror } from './components/query-mirror.svelte';
+export { default as SaveRefusal } from './components/save-refusal.svelte';
 export { default as SearchesSheet } from './components/searches-sheet.svelte';
+export { default as SearchSheet } from './components/search-sheet.svelte';
 export { historyOptions, historyRows } from './history-options';
 
 // The work of a keystroke and each step of the counts that follow it are timed as `atlas:assist`: the e2e holds each to the

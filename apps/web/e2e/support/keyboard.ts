@@ -122,7 +122,9 @@ export async function walkTabOrder(page: Page, { within = 'body', limit = 800 } 
             control.checkVisibility({ checkVisibilityCSS: true }) &&
             !seen.has(control) &&
             // The tabs are one stop of the tab key, and the arrow keys go along them (ARIA tabs pattern).
-            !(control.getAttribute('role') === 'tab' && control.getAttribute('aria-selected') === 'false'),
+            !(control.getAttribute('role') === 'tab' && control.getAttribute('aria-selected') === 'false') &&
+            // The options of a combobox are reached with the arrow keys of its field, which keeps the focus (ARIA APG).
+            control.getAttribute('role') !== 'option',
         )
         .map(
           (control) =>

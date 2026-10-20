@@ -7,6 +7,7 @@
     type SearchService,
   } from '@atlas/core';
   import { onDestroy, onMount } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import { afterNextPaint } from '../after-paint';
   import { applyFieldEdit, isBeingEdited } from '../apply-field-edit';
   import { keyPressOf } from '../combobox-state';
@@ -18,6 +19,8 @@
   import { caretToLint } from '../lint-caret';
   import { loadQueryAssist, type QueryAssist } from '../query-assist-loader';
   import type { SearchHistorySession } from '../search-history-session';
+  import { SEARCH_SHEET_MEDIA, type FieldEvents, type SheetResults } from '../search-sheet';
+  import QueryTextInput from './query-text-input.svelte';
 
   /** The id of the list of issues: the badge controls it and the field is described by its texts. */
   const ISSUES_ID = 'query-issues';
@@ -41,6 +44,11 @@
    * remembered when Enter is pressed in the field, when the field is left with its text changed, and when it is saved or taken from
    * a list. What the layer adds is the use of them: a blank field offers them as a list to browse, a star keeps the search in the
    * field, and a sheet manages the lists.
+   *
+   * On a phone (a narrow screen that is touched) a press on the field opens the search sheet (PLAN 11.5), which the layer brings: the
+   * same editor in a full-screen dialog, with its own `<input>`. This component stays its owner. The editor works on whichever of
+   * the two fields is the one being typed in (`field`), and the sheet is a view of it. A keyboard, a mouse and the `/` shortcut edit
+   * in the page at any width, and so does a press before the layer has arrived.
    */
   let {
     value,
@@ -48,6 +56,8 @@
     service,
     filters,
     history,
+    results,
+    onreturn,
     input = $bindable(),
   }: {
     value: string;
@@ -58,6 +68,10 @@
     filters: ExploreState;
     /** The searches the person has made and kept. */
     history: SearchHistorySession;
+    /** What the search finds for `value` now, for the search sheet; none until the dataset is there. */
+    results: SheetResults | undefined;
+    /** Told when the search sheet has been shut: the page puts the focus where the person goes on from, which is not this field (a phone would raise its keyboard). */
+    onreturn: () => void;
     /** The `<input>`, for whoever needs to focus it or attach to it (the `/` shortcut, the assist layer). */
     input?: HTMLInputElement | undefined;
   } = $props();
@@ -69,6 +83,17 @@
   let caret = $state<number>();
   let open = $state(false);
   let announced = $state('');
+
+  const phone = new MediaQuery(SEARCH_SHEET_MEDIA, false);
+  /** The search sheet, the field in it, and the button in it that opens the sheet of searches. */
+  let sheet = $state<{ show: () => void }>();
+  let sheetInput = $state<HTMLInputElement>();
+  let sheetManageButton = $state<HTMLButtonElement>();
+  let sheetOpen = $state(false);
+  /** Whether a press on the field opens the sheet: on a phone, once the layer that has it is here and there is data to search. */
+  const sheetWanted = $derived(sheet !== undefined && service !== undefined && phone.current);
+  /** The field being typed in: the one in the sheet while it is open, the one in the page otherwise. */
+  const field = $derived(sheetOpen ? sheetInput : input);
 
   const analysis = $derived(
     assist === undefined || service === undefined ? undefined : assist.analyse(service, filters, value, caret),
@@ -173,7 +198,7 @@
   });
 
   function readCaret(): void {
-    caret = input === undefined ? undefined : caretToLint(input);
+    caret = field === undefined ? undefined : caretToLint(field);
   }
 
   /** Focus leaving the field for something outside it (the badge and the lists belong to it) takes the caret away. */
@@ -182,9 +207,9 @@
   }
 
   function fix(issue: QueryDiagnostic): void {
-    if (issue.fix === undefined || input === undefined) return;
+    if (issue.fix === undefined || field === undefined) return;
     announcer.fixed();
-    applyFieldEdit(input, issue.fix.edit);
+    applyFieldEdit(field, issue.fix.edit);
     readCaret();
   }
 
@@ -193,16 +218,16 @@
    * is the whole of the text, which it takes the place of; it is remembered again, as the newest.
    */
   function accept(_option: ComboboxOption, index: number): void {
-    if (assist === undefined || input === undefined) return;
+    if (assist === undefined || field === undefined) return;
     if (browsing) {
       const row = historyRows[index];
       if (row === undefined) return;
-      applyFieldEdit(input, { span: [0, value.length], text: row.query });
+      applyFieldEdit(field, { span: [0, value.length], text: row.query });
       history.record(row.query);
     } else {
       const suggestion = suggestions[index];
       if (suggestion === undefined) return;
-      applyFieldEdit(input, assist.acceptSuggestion(value, suggestion));
+      applyFieldEdit(field, assist.acceptSuggestion(value, suggestion));
     }
     readCaret();
   }
@@ -214,12 +239,51 @@
     readCaret();
   }
   function blurred(): void {
-    if (value !== valueOnFocus) history.record(value);
+    if (value === valueOnFocus) return;
+    history.record(value);
+    valueOnFocus = value;
   }
   /** The Enter that ends an IME composition is the IME's, and an Enter the list took (it accepted a suggestion) sent nothing. */
   function sent(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.defaultPrevented && !keyPressOf(event).isComposing) history.record(value);
   }
+
+  /** The press that opens the sheet takes no focus: the page behind would raise its keyboard, and the field of the sheet has to. */
+  function hold(event: MouseEvent): void {
+    if (sheetWanted) event.preventDefault();
+  }
+  function pressed(): void {
+    if (sheetWanted) sheet?.show();
+    else readCaret();
+  }
+  function sheetOpened(): void {
+    sheetOpen = true;
+  }
+  /** The sheet is shut, by whatever means: the search is remembered (the field of the sheet does not always say it was left). */
+  function sheetClosed(): void {
+    sheetOpen = false;
+    caret = undefined;
+    blurred();
+    onreturn();
+  }
+
+  /** What the field raises that the editor hears, in the sheet as in the page; the page's field adds what opens the sheet. */
+  const fieldEvents: FieldEvents = {
+    oninput: (event) => {
+      // An edit made for the person (a fix, a suggestion) raises this event too, and is not their typing. Typing in the sheet opens
+      // no list in the page behind it.
+      typed = !sheetOpen && !isBeingEdited(event.currentTarget);
+      readCaret();
+      onchange(event.currentTarget.value);
+    },
+    onfocus: focused,
+    onblur: blurred,
+    onkeydown: sent,
+    onkeyup: readCaret,
+    onselect: readCaret,
+    onclick: readCaret,
+  };
+  const pageEvents: FieldEvents = { ...fieldEvents, onclick: pressed, onmousedown: hold };
 
   const saved = $derived(isSaved(history.history, value));
   /** Why the star did nothing, for the text it was pressed on: it goes when the text changes. */
@@ -249,7 +313,7 @@
   /** The sheet is shut, however: the focus goes back to the button that opened it. */
   function managed(): void {
     managing = false;
-    manageButton?.focus();
+    (sheetOpen ? sheetManageButton : manageButton)?.focus();
   }
   /** A search taken from the sheet goes in the field and is remembered as the newest; the sheet shuts itself, and says so. */
   function useSearch(query: string): void {
@@ -269,39 +333,21 @@
         <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
         <path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" />
       </svg>
-      <span class="editor">
-        {#if assist !== undefined}
-          <assist.QueryMirror {input} {value} issues={analysis?.issues ?? NO_ISSUES} {ghost} />
-        {/if}
-        <input
-          id="query"
-          class="query-text"
-          class:mirrored={assist !== undefined}
-          type="text"
-          bind:this={input}
-          {value}
-          oninput={(event) => {
-            // An edit made for the person (a fix, a suggestion) raises this event too, and is not their typing.
-            typed = !isBeingEdited(event.currentTarget);
-            readCaret();
-            onchange(event.currentTarget.value);
-          }}
-          onfocus={focused}
-          onblur={blurred}
-          onkeydown={sent}
-          onclick={readCaret}
-          onkeyup={readCaret}
-          onselect={readCaret}
-          aria-invalid={summary.hasErrors ? 'true' : undefined}
-          aria-describedby={describedBy}
-          placeholder={copy.searchPlaceholder}
-          inputmode="search"
-          enterkeyhint="search"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-        />
-      </span>
+      <QueryTextInput
+        id="query"
+        {value}
+        mirrored={assist !== undefined}
+        invalid={summary.hasErrors}
+        {describedBy}
+        events={pageEvents}
+        bind:input
+      >
+        {#snippet mirror()}
+          {#if assist !== undefined}
+            <assist.QueryMirror {input} {value} issues={analysis?.issues ?? NO_ISSUES} {ghost} />
+          {/if}
+        {/snippet}
+      </QueryTextInput>
     </label>
     {#if assist !== undefined}
       {#if summary.count > 0}
@@ -322,10 +368,13 @@
         {browsable}
         id={SUGGESTIONS_ID}
         label={browsing ? copy.historyLabel : copy.suggestionsLabel}
+        suspended={sheetOpen}
         onaccept={accept}
-        onactive={(index: number | undefined) => {
-          active = index;
-        }}
+        onactive={sheetOpen
+          ? undefined
+          : (index: number | undefined) => {
+              active = index;
+            }}
       />
     {/if}
   </div>
@@ -333,14 +382,37 @@
     <assist.QueryIssues id={ISSUES_ID} {summary} {open} onfix={fix} />
     {#if shownRefusal !== undefined}
       <!-- Said aloud with the polite line below (`announced`), so that it is not a live region of its own. -->
-      <p class="refusal">
-        {shownRefusal.message}
-        {#if shownRefusal.full}
-          <button type="button" onclick={manage}>{copy.manageSearches}</button>
-        {/if}
-      </p>
+      <assist.SaveRefusal refusal={shownRefusal} onmanage={manage} />
     {/if}
     <assist.SearchesSheet open={managing} {history} onuse={useSearch} onclose={managed} />
+    <assist.SearchSheet
+      bind:this={sheet}
+      {value}
+      issues={analysis?.issues ?? NO_ISSUES}
+      {summary}
+      {ghost}
+      {options}
+      {browsable}
+      {browsing}
+      listLabel={browsing ? copy.historyLabel : copy.suggestionsLabel}
+      {results}
+      canSave={!blank}
+      {saved}
+      refusal={shownRefusal}
+      status={announced}
+      events={fieldEvents}
+      onaccept={accept}
+      onactive={(index: number | undefined) => {
+        active = index;
+      }}
+      onfix={fix}
+      onsave={toggleSaved}
+      onmanage={manage}
+      onopen={sheetOpened}
+      onclose={sheetClosed}
+      bind:input={sheetInput}
+      bind:manageButton={sheetManageButton}
+    />
   {/if}
   <p class="visually-hidden" aria-live="polite">{announced}</p>
 </div>
@@ -355,37 +427,6 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
-
-  /* Why the star did nothing (the fifty places are taken, say): plain words under the field, with the way out when there is one. */
-  .refusal {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 12px;
-    margin: 0;
-    padding: 8px 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    background: var(--surface-2);
-    color: var(--text);
-    font-size: 13px;
-  }
-
-  .refusal button {
-    min-height: var(--target-min);
-    padding: 0 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    background: var(--surface-3);
-    color: var(--text-strong);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .refusal button:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
   }
 
   .field {
@@ -413,60 +454,5 @@
     min-width: 0;
     margin-block: -1px;
     padding: 0 12px;
-  }
-
-  /* The input and the mirror under it fill this box together (the font, `.query-text`, is the same for both). */
-  .editor {
-    position: relative;
-    display: flex;
-    flex: 1;
-    align-self: stretch;
-    min-width: 0;
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--text-strong);
-  }
-
-  /* The field draws the focus ring around the whole bar, icon included. */
-  input:focus-visible {
-    outline: none;
-  }
-
-  input::placeholder {
-    color: var(--text-faint);
-    opacity: 1;
-  }
-
-  /*
-   * With the mirror under it the field keeps the caret, the selection and the typing, and gives the colours up: its own text is
-   * transparent. The selection is a share of the accent, so that the coloured text still shows through it.
-   */
-  input.mirrored {
-    color: transparent;
-    caret-color: var(--text-strong);
-  }
-
-  input.mirrored::selection {
-    background: var(--field-selection);
-    color: transparent;
-  }
-
-  /* A high-contrast mode forces its colours and the mirror is not drawn (query-mirror.svelte): the field shows its text itself. */
-  @media (forced-colors: active) {
-    input.mirrored {
-      color: FieldText;
-      caret-color: auto;
-    }
-
-    input.mirrored::selection {
-      background: Highlight;
-      color: HighlightText;
-    }
   }
 </style>

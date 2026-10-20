@@ -247,7 +247,8 @@ test.describe('the address of Explore', () => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
       };
     });
-    await search.click();
+    // A press would open the search sheet on a phone; the field of the page is what this is about.
+    await search.focus();
 
     await search.pressSequentially('weak');
 

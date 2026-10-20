@@ -396,6 +396,9 @@ list with none is not shown. An option's name is all its text: the kind, what is
 - **Where the list is.** Under the list of issues when that is open (not over it: the fixes stay in reach), and under the bars fixed to the
   foot of the window. An edit made for the person (a fix, an accept: `applyFieldEdit`) raises an `input` event that is not typing, so it
   neither brings the list back nor makes an option active. The Enter that ends an IME composition is never taken, in Safari too (key code 229).
+- **In the search sheet of a phone** (SPEC §8.3, PLAN 11.5) the same list is drawn in the flow of the sheet and is **always showing** while it has options (`flow`; the field
+  is `aria-expanded` as long as it has): there is no popup to open or put away. Typing makes the first option active as before; Escape then lets go of the active option, and
+  when none is active it is the sheet's own (it closes); Alt+↑ has nothing to put away.
 - **After an accept** a finished term shuts the list; a field or an operator (`complete` false) keeps it open for what comes next,
   with nothing active. **Esc** shuts a showing list (otherwise it is the page's: it may close a sheet). **Alt+↓** opens without
   choosing, **Alt+↑** shuts; ↑ / ↓ with Shift, Ctrl or Cmd are the field's (they select or jump in the text).
@@ -468,4 +471,16 @@ moves when it arrives (the Lighthouse layout shift is the one it was).
 **Recent and saved searches** (PLAN 11.4): a star and a *Manage searches* button inside the field, the list of a blank field (§6) and the sheet
 that manages them; the rules and what the field does are in SPEC §8.3.
 
-Still to come (PLAN 11.5): on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`, inserting at the caret.
+**The toolbar** (`insertAtCaret(source, selection, id)`, `insert-at-caret.ts`, PLAN 11.5). The syntax buttons at the foot of the search sheet of a phone (DESIGN § Search sheet): `(`
+`)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes` (`SYNTAX_INSERTION_IDS`, in that order). Each gives the `TextEdit` that writes it in the place of the selection (the
+caret when it is empty, as typing it would; the selection is clamped and put in order, so it never fails) and where the caret goes (`{ edit, caret }`, applied with `applyFieldEdit`
+and its `placeCaret`). The text outside the selection stays as typed.
+- **A blank before** where the text before would run into it: after anything but a blank, `(` or `-` (`weak|` + `OR` is `weak OR `). Never before `)`, and a quote may also follow a colon
+  (`class:|` + `"` is `class:"|"`; any other button after a colon is a new word, `class: mat:yes `).
+- **A blank after** an operator and a finished term (`OR`, `AND`, `mat:yes`), to start the next word from, unless a blank follows already, which the caret then steps over. A `(`,
+  `)`, a field and the dash of `NOT` have none: the word that follows belongs to them (`applies:` takes the next word as its value, `-` negates the next term).
+- **`NOT`** writes the dash of the negation, `-` (the word `NOT` reads the same, but the dash is how the page writes a negation); its button and its name say NOT.
+- **`"`** is never left alone, as the prototype's lone quote was, which raised an error at once: with nothing selected it writes the pair with the caret between; with a selection it
+  wraps it and leaves the caret after; and when a phrase is open before the caret (the lexer runs an open one to the end of the text) it writes the one quote that closes it.
+- Tested against the lexer: after any of ten starting texts the text holds the token the button stands for, and the words before it are still the words they were; for any text and
+  any selection the text outside the selection is byte for byte the same and the caret lies in the result.

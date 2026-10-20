@@ -5,7 +5,7 @@ keyboard e2e (`keyboard.test.ts`) already prove that every control has a name, c
 this list checks that what is *said* makes sense. Twenty minutes, once per release that touches the UI.
 
 **Set-up.** Desktop: NVDA (free) with Firefox or Chrome on the live site. Phone: VoiceOver on an iPhone, in Safari
-(Settings → Accessibility → VoiceOver; or triple-click the side button once it is a shortcut). TalkBack is not covered.
+(Settings → Accessibility → VoiceOver; or triple-click the side button once it is a shortcut). TalkBack is covered only for the search sheet (the last section).
 Open the site fresh each time, with no `?party=` in the address.
 
 **Reporting.** In the chat, give the step number and what you heard instead (or "nothing"). Claude turns each deviation into a
@@ -85,8 +85,23 @@ failing test and a fix. A step that sounds odd but is understandable is still wo
 | 14 | Open `/synergy/kw/vulnerable` | "Appliers 8 traits, tab, selected, 1 of 2" · "Rely on it 6 traits, tab, 2 of 2"; "Other keywords, button, has pop-up"; a double-tap opens "Keywords, dialog" with the chips read as in step 38 of the desktop list |
 | 15 | On Explore, swipe from a trait's plus button through its description, then on | after the material: “Synergies of *name*, link”, 44 px tall (a double-tap opens the page; the tab bar then shows Synergies as the current page). On the Party tab, a filled slot reads “Target slot: …, toggle button”, “Synergies of *name*, link”, “Clear …, button” |
 | 16 | With `clas:life (weak OR snared` in the field, swipe to the field | “Search traits, text field, clas:life (weak OR snared” once; the next swipe goes to “2 issues, button”, not to a second copy of the text. Also look: the text is coloured piece by piece, and the letters of the text are where you tap (select a word with a long press: the highlight is on the word, not beside it) |
-| 17 | Search for something and leave the field; tap the empty field | the keyboard rises and the list “Recent and saved searches” shows under it (the same list as 8: say what you hear); a double-tap on a row writes the whole search into the field. The text of the field has room left beside the two buttons at its right end: look at a narrow phone, and say if the field is too small to type in |
+| 17 | Search for something and leave the field; double-tap the empty field | “Search, dialog”, the keyboard rises with the focus in “Search traits, text field” and, under it, the heading “Recent and saved searches” and the list (the same list as 8: say what you hear); a double-tap on a row writes the whole search into the field and the sheet stays open; nothing of the page behind is reached. A press is what opens it: the field in the page is still there for a keyboard |
 | 18 | With text in the field swipe to “Save this search, toggle button” and double-tap, then to “Manage searches, button, has pop-up” and double-tap | “pressed”, the keyboard stays up; “Manage searches, dialog”, the searches as buttons with a Remove beside each; “Export searches” hands the file to Safari (it asks where to keep it), “Import searches” opens the file chooser; the two-finger scrub closes the sheet and the focus is on “Manage searches, button” |
+| 19 | In the sheet type `clas:life (weak`; swipe back from the field | the field as “Search traits, text field, invalid entry”; “Error”, the first issue and “+1 more” as one line; “Change to “class:”, button”. A double-tap on the fix mends it, the keyboard stays up and the caret is where it was |
+| 20 | Swipe on to the foot of the sheet | “Show N traits, button”, then “Insert query syntax, toolbar” with “Open a group (”, “Close a group )”, “Phrase in quotes "”, “OR: either term”, “AND: both terms”, “NOT: leave out the next term”, “applies: …”, “uses: …”, “class: …”, “mat:yes: …”. A double-tap on OR writes it at the caret with a blank on each side and **the keyboard stays up**; the quote writes two with the caret between them |
+| 21 | Type a few more letters and wait a moment | politely “N of M traits” (once the typing pauses); “Show N traits, button” has the same N. A double-tap on it closes the sheet and the focus is on “Results, heading level 2”, with no keyboard |
+| 22 | Open the sheet again and do the two-finger scrub | the sheet closes, the search stays in the field of the page, and the focus is on “Results” again |
+
+## Android (TalkBack, Chrome): the search sheet
+
+| # | Do | You should hear and see |
+|---|---|---|
+| 1 | Double-tap the search field on Explore | “Search, dialog”; the keyboard rises and the field is in the sheet, **not hidden by the keyboard**; the button “Show N traits” and the toolbar sit just above the keyboard, with nothing between them and it |
+| 2 | Type, then double-tap “OR: either term” and “"” in the toolbar | the text is written where the caret was, the keyboard stays up, and the quote leaves the caret between the two marks |
+| 3 | Press the system's back button (or gesture) | the sheet closes and does not leave the page; a second press leaves as it always did |
+| 4 | Rotate the phone with the sheet open | the sheet is still the size of what the keyboard leaves, the field, the button and the toolbar all in sight; scroll the list with the keyboard up |
+
+(On iPhone the same things are rows 17–22 above, and the keyboard docking is the one to look at: the foot of the sheet must be above the keyboard in Safari and in Chrome for iOS.)
 
 ## Anything, anywhere
 

@@ -19,6 +19,7 @@ import {
   type SlotPosition,
   type SortKey,
   type SuggestionKind,
+  type SyntaxInsertionId,
   type TraitKind,
 } from '@atlas/core';
 import type { WhoChoice } from './event-who';
@@ -178,6 +179,28 @@ export const copy = {
     malformed: 'This file is damaged: its searches are not in the form Trait Atlas writes. Nothing was imported.',
     'too-large': `This file holds more than Trait Atlas keeps (${String(MAX_SAVED)} saved and ${String(MAX_RECENT)} recent searches of ${formatCount(MAX_SEARCH_LENGTH)} characters at most). Nothing was imported.`,
   } as const satisfies Record<ImportRefusal, string>,
+  /**
+   * The search sheet of a phone (DESIGN § Search sheet): the full-screen dialog a press on the search field opens. Its name, the
+   * button that goes back to the results, the one that empties the field and the line that reads out the first issue.
+   */
+  searchSheetLabel: 'Search',
+  searchSheetBack: 'Back to results',
+  clearSearch: 'Clear search',
+  moreIssuesInBanner: (count: number) => `+${formatCount(count)} more`,
+  /** The toolbar docked at the foot of the sheet: what each button writes, on its face and in its name (it holds the face, when that is a word). */
+  syntaxToolbarLabel: 'Insert query syntax',
+  syntaxButtons: {
+    'open-group': { label: '(', name: 'Open a group (' },
+    'close-group': { label: ')', name: 'Close a group )' },
+    quote: { label: '"', name: 'Phrase in quotes "' },
+    or: { label: 'OR', name: 'OR: either term' },
+    and: { label: 'AND', name: 'AND: both terms' },
+    not: { label: 'NOT', name: 'NOT: leave out the next term' },
+    applies: { label: 'applies:', name: 'applies: traits that apply a keyword' },
+    uses: { label: 'uses:', name: 'uses: traits that rely on a keyword' },
+    class: { label: 'class:', name: 'class: the class of the creature' },
+    material: { label: 'mat:yes', name: 'mat:yes: traits with a material' },
+  } as const satisfies Record<SyntaxInsertionId, { label: string; name: string }>,
   resultCount: (shown: number, total: number) => `${formatCount(shown)} of ${formatCount(total)} traits`,
   datasetVersion: (version: string) => `Compendium v${version}`,
   sortLabel: 'Sort',

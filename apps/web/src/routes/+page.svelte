@@ -328,6 +328,12 @@
           {service}
           filters={explore}
           history={searchHistory}
+          results={loaded === undefined
+            ? undefined
+            : { found: loaded.outcome.traits.length, total: loaded.total, reading: loaded.outcome.effectiveReading }}
+          onreturn={() => {
+            resultsHeading?.focus({ preventScroll: true });
+          }}
           onchange={(query: string) => {
             explore = { ...explore, query };
             urlWriter.typed(pageState());

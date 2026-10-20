@@ -42,12 +42,15 @@ export function isBeingEdited(field: object): boolean {
  * The edit goes through the browser's own editing command, as typing does: the page hears an `input` event as for a key press,
  * and the person's undo (Ctrl+Z in the field) takes the edit back. A browser without the command, or one that does not leave
  * the text it was asked for, gets the text written directly and the same event; that edit cannot be undone.
+ *
+ * An edit that knows where the person goes on typing (a pair of quotes, with the caret between) says so in `placeCaret`, a place in
+ * the new text; otherwise the caret is placed as `caretAfterEdit` says.
  */
-export function applyFieldEdit(field: EditableField, edit: TextEdit): void {
+export function applyFieldEdit(field: EditableField, edit: TextEdit, placeCaret?: number): void {
   const before = field.value;
   const expected = applyEdit(before, edit);
   if (expected === before) return;
-  const caret = caretAfterEdit(field.selectionStart ?? before.length, edit);
+  const caret = placeCaret ?? caretAfterEdit(field.selectionStart ?? before.length, edit);
   const {
     span: [start, end],
     text,

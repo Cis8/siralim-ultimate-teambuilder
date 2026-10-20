@@ -30,6 +30,13 @@
    * A host that offers a list to browse while the field is blank (the recent and saved searches) says so with `browsable`: the
    * options then complete nothing, so a press in the blank field shows the list and typing into it, or emptying it, leaves
    * nothing active; the arrows choose, and Tab stays the field's own (WCAG 2.1.2).
+   *
+   * A host that draws the list in the flow of its own page (`flow`: the search sheet of a phone) has the list showing whenever it has
+   * options, and a field that is expanded as long as it does: there is no popup to open or put away. Escape is then the host's (it
+   * closes the sheet) unless an option is active, which it lets go of.
+   *
+   * A host that edits elsewhere for a while (the search sheet, which has a field and a list of its own) says so with `suspended`: the
+   * list is shut and stays so, whatever the field behind the sheet is pressed or told.
    */
   const {
     input,
@@ -37,6 +44,8 @@
     id,
     label,
     browsable = false,
+    flow = false,
+    suspended = false,
     onaccept,
     onactive,
   }: {
@@ -48,17 +57,23 @@
     label: string;
     /** Whether the options offered to a blank field are a list to browse and not completions of what is typed. */
     browsable?: boolean;
+    /** Whether the list is drawn in the flow of the host's page, always showing, and not as a popup under the field. */
+    flow?: boolean;
+    /** Whether the host is editing in another field for now: the list is shut, and does not open for this one. */
+    suspended?: boolean;
     /** The option taken, and its place in `options`. */
     onaccept: (option: ComboboxOption, index: number) => void;
     /** Told whenever the option that Tab would take changes, and which it is (none: Tab is the field's), so that the host can show what it adds. */
-    onactive?: (index: number | undefined) => void;
+    onactive?: ((index: number | undefined) => void) | undefined;
   } = $props();
 
   let status = $state.raw<ComboboxState>(shut);
   let announced = $state('');
   let list = $state<HTMLElement>();
 
-  const view = $derived(comboboxView(status, options.length));
+  const view = $derived(
+    suspended ? { expanded: false, active: undefined } : comboboxView(status, options.length, flow),
+  );
   const optionId = (index: number): string => `${id}-option-${String(index)}`;
 
   const announcer = createListAnnouncer((message) => {
@@ -72,6 +87,11 @@
     announcer.sized(view.expanded ? options.length : 0);
   });
 
+  // The press that opens the sheet raises this field's events too: whatever they left open is put away, and stays so.
+  $effect(() => {
+    if (suspended) status = shut;
+  });
+
   function accept(index: number): void {
     const option = options[index];
     if (option === undefined) return;
@@ -82,14 +102,15 @@
   // What the field does on its own: the role and the list it controls, and the keys and events that drive the state.
   $effect(() => {
     const field = input;
-    if (field === undefined) return;
+    // `bind:this` hands back null, not undefined, when the field goes away (the search sheet shuts).
+    if (!(field instanceof HTMLInputElement)) return;
 
     field.setAttribute('role', 'combobox');
     field.setAttribute('aria-autocomplete', 'list');
     field.setAttribute('aria-controls', id);
 
     const onKeydown = (event: KeyboardEvent): void => {
-      const outcome = pressKey(status, keyPressOf(event), options.length);
+      const outcome = pressKey(status, keyPressOf(event), options.length, flow);
       if (!outcome.handled) return;
       event.preventDefault();
       status = outcome.state;
@@ -146,7 +167,7 @@
   });
 </script>
 
-<div class="popup" hidden={!view.expanded}>
+<div class="popup" class:flow hidden={!view.expanded}>
   <ul {id} role="listbox" aria-label={label} bind:this={list} {@attach keepFieldFocus}>
     {#each options as option, index (index)}
       <!-- The keys act on the field, which keeps the focus (aria-activedescendant): a press is the pointer's way to the same accept. -->
@@ -195,6 +216,27 @@
     border-radius: var(--radius);
     background: var(--surface-2);
     box-shadow: var(--shadow-popup);
+  }
+
+  /* In the flow of the host's page: no popup, no frame, no room around the rows, which have lines between them. */
+  .popup.flow {
+    position: static;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .flow ul {
+    gap: 0;
+  }
+
+  .flow li {
+    min-height: 54px;
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
   }
 
   ul {
