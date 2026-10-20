@@ -53,7 +53,8 @@ use the fallback `#8fa1b3`.
 - Base 14 px desktop, 14–15 px mobile; trait names 15 px semibold; descriptions 13.5–14.5 px, line-height 1.6.
 
 ## Components (build once, reuse)
-`QueryInput` (combobox), `QueryMirror` (the coloured copy of its text), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
+`QueryInput` (combobox), `QueryMirror` (the coloured copy of its text), `Combobox`, `IssueBadge`, `QueryIssues`, `HistoryButtons` and `SearchesSheet` (the field's own parts),
+`SearchSheet`, `IssueBanner` and `SyntaxToolbar` (the editor of a phone), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
 `FacetButton`, `SectionToggle`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
 `AddButton` and `PartyNotes` (what a card does with the party), `FocusCard`, `RelationSide`, `TraitLane`, `KeyPill`,
 `ExplorationTrail`, `ArtifactFilter`, `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`,

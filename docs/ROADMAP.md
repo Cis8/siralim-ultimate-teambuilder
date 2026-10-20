@@ -3,7 +3,7 @@
 Three phases, each shippable on its own. A phase is done only when its exit criteria pass; then the next starts.
 Milestones ship as small commits on `main` (ADR-0007), sliced in `docs/PLAN.md`. Tick them off here when complete.
 
-**Current phase: 1 closing (only slice 8.4 is open, deferred by the owner) and 2 started on the owner's go-ahead (2026-10-18)**
+**Current phase: 2 is built (2026-10-20) and waits for the owner's device checks and for the go-ahead to Phase 3; 1 closes with slice 8.4, deferred by the owner**
 
 ---
 
@@ -77,7 +77,7 @@ riskiest and needs the owner's iPhone.
 - [x] **M13 Synergy UI.** By trait (lanes, trail, re-centre, add to party, artifact-eligible filter), by keyword
       (appliers/users, verdict, co-applied), deep links (`/synergy/<traitId>`, `/synergy/kw/<slug>`), mobile tabs; routes with a
       shared party session (ADR-0011).
-- [ ] **M11 Editor.** Syntax-coloured input with error underlines, caret preserved after edits, explain line ("Reads as"),
+- [x] **M11 Editor.** Syntax-coloured input with error underlines, caret preserved after edits, explain line ("Reads as"),
       recent + saved searches (local storage, export/import as JSON), mobile search sheet with a syntax toolbar.
 
 ### Acceptance criteria
@@ -94,6 +94,24 @@ riskiest and needs the owner's iPhone.
 9. Deep links: `/synergy/<traitId>` and `/synergy/kw/<slug>` open directly, Back and Forward work, an unknown id is a state, not an error.
 10. History: recent and saved searches survive a reload; export, clear, import restores them; a corrupt file changes nothing.
 11. Consistency: a keyword's appliers and users in Synergy equal the counts in the Explore facet panel.
+
+**Which tests hold each criterion** (`e2e/` is `apps/web/e2e/`; `acceptance` files run on the pinned real sheet in `packages/pipeline/src/build/`;
+the titles of the e2e say "criterion N" where one test is the criterion itself). An e2e runs on desktop Chromium, Pixel 7 and iPhone 14 WebKit; the two
+latency tests on the Chromium projects only, which can slow the CPU down.
+
+| # | Held by |
+|---|---|
+| 1 | `e2e/query-issues.test.ts` (two errors, both fixes, clean after); `lint-query.test.ts` (core); `assist-acceptance.test.ts` (every fix on the real sheet lints clean) |
+| 2 | `e2e/query-suggestions.test.ts` (the suggestion with its count, Tab, the caret after it); `accept-suggestion.test.ts` (core); `assist-acceptance.test.ts` |
+| 3 | `e2e/query-suggestions.test.ts` (the active option's name and count, `aria-activedescendant`, the polite "N suggestions"); the result count's live region in `e2e/explore.test.ts`; what a screen reader then *says* is the owner's check (`SCREEN_READER_CHECKLIST.md`) |
+| 4 | `relation-acceptance.test.ts` (once, first, two links, on the real sheet); `e2e/synergy-trait.test.ts` ("×2 links", in a lane of its own) |
+| 5 | `relation-acceptance.test.ts` (every random source in the lane of every randomizable debuff, after the others); `e2e/synergy-trait.test.ts` (labelled, last, folded above 3) |
+| 6 | `e2e/query-suggestions.test.ts` (Tab leaves a plain focus; arrows then Tab accepts); `e2e/keyboard.test.ts` (the Tab walks, the sheets, the search sheet); axe on Explore with the list and the issues open (`query-suggestions`, `query-issues`, `search-history`, `search-sheet`) and on every Synergy view (`synergy`, `synergy-trait`, `synergy-keyword`, `synergy-mobile`) |
+| 7 | `e2e/assist-latency.test.ts` (p95 of `atlas:assist` under 16 ms at 4× CPU, a text with eight faults of every kind) beside `e2e/typing-latency.test.ts` |
+| 8 | `pnpm size-budget` (`tools/size-budget`, tested in `budgets.test.ts` and `measure-build.test.ts`; a step of `ci.yml`) for the initial, lazy and total JS; Lighthouse CI on four URLs (`lighthouserc.cjs`) |
+| 9 | `e2e/synergy.test.ts` (a trait and a keyword straight from the address; an unknown id and a slug that is no keyword's are pages that say so; Back and Forward walk the picks); `e2e/synergy-trait.test.ts`, `e2e/synergy-keyword.test.ts` (read from the address); `e2e/fallback-page.test.ts` (the `404.html` a deep link boots from) |
+| 10 | `e2e/search-history.test.ts` (recent and saved searches are kept for the next visit; export, remove all, import restores; five refused files change nothing); `search-history.test.ts` and `search-history-file.test.ts` (core: limits, merge, a file that is damaged, property tests) |
+| 11 | `keyword-view-acceptance.test.ts` (the 42 keys, with and without `mat:yes`, against Explore's facet counts); `e2e/synergy-keyword.test.ts` (the page's counts against Explore's for the same filter) |
 
 ### Exit criteria
 All milestones merged, acceptance criteria covered by automated tests where possible, deployed on GitHub Pages; the owner's device

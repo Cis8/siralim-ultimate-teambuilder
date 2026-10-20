@@ -13,38 +13,21 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D65, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1–11.5 of M11 (Explain, the mirror, the history in
-  `core` and in the field, the search sheet of a phone); the next slice is 11.6, which closes M11 and Phase 2** (D15): budgets and
-  Lighthouse, QUERY_LANGUAGE §7–8 / SPEC §8.3 / DESIGN read once more against what shipped, the Phase 2 criteria-to-tests table, ROADMAP
-  ticks, this file collapsed; then ask the owner before Phase 3. Lighthouse after 11.5: `/` 0.90 with a layout shift of 0.035, as before. Sizes: initial JS 94.2 kB of 150, lazy 37.3 of 50, total 131.5
-  of 200 (**the lazy 50 kB has 12 kB left: revisit the limits at 11.6**). **On a phone a press on the search field now opens the sheet**
-  (D58); the owner's check on a real iPhone (Safari, Chrome) and an Android is the first thing that matters: keyboard docking and the
-  caret (checklist iPhone 17–22, Android 1–4), also that the first press after a cold load (the layer not there yet) edits in the page.
-  Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the criteria-to-tests
-  table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D65 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
-  the sheet, not families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D44–D48 (the phone:
-  a tab press is a history step, the focus card folds only its description, the pickers are sheets); D49–D50 (the Synergies link of a
-  result and of a slot; a search typed a moment before a link is followed is dropped); 8b.10 made "immune to debuffs" a mention (SPEC
-  §4); 8b.11 chose that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR and that each is a chip;
-  D58–D65 (the sheet: a press opens it, one editor in two fields, the focus after it, Enter and Escape, the toolbar); D53–D57 (the history: what is remembered and when, the list of an empty field that has nothing active, the star only while the field
-  holds something, *Manage searches* always in the field, two tabs not erasing each other).
-  **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
-  off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
-  the shortcut. Until then it ships as QUERY_LANGUAGE §6 says. **D26 is live now:** after typing, Tab and Enter take the first suggestion, so
-  leaving the field with text in it takes Esc first (Shift+Tab always leaves). If that feels wrong in use, the alternative is no active
-  option until ↓ (a one-line change in `combobox-state.ts`' `typed()`), at the price of Tab not taking what the ghost text will show. It
-  also means that Enter rarely *sends* a search (11.4): most searches are remembered on leaving the field.
-- Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
-  iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
-  of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); that on the same
-  phone the coloured text of the field lies exactly under the caret and the selection, also once a long query has scrolled (11.2:
-  checklist iPhone 16; desktop 42–43 for the reader and a Windows high-contrast theme); that the star, *Manage searches*, the list of an
-  empty field, Export and Import work in the search sheet of the phone and leave room to type (11.4–11.5: checklist iPhone 17–22, desktop 44–49);
-  the search sheet itself on iOS Safari and Chrome Android (11.5: keyboard docking, caret, no zoom; checklist iPhone 17–22, Android 1–4). GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
-  trigger; when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
-- Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be
-  green; `gh` may be missing, see Notes), `gh pr list` (read a data-refresh PR's report before merging it).
+- **Phase 2 is built and closed (M9–M13, D14–D65; 11.6, 2026-10-20). The next move is the owner's: ROADMAP says ask before Phase 3 (party analysis,
+  M14–M17), so say what Phase 2 leaves and wait for the go-ahead.** Phase 3 has no slices in this file yet: the first task is to write M14's from ROADMAP,
+  SPEC §8.5 and GAME_RULES, tests first. Phase 1 stays open for slice 8.4 only (credits: ask the owner to confirm the authors' names first; README; a
+  criteria-to-tests table for Phase 1 like Phase 2's in ROADMAP); deferred on 2026-10-18, not dropped (D25).
+- **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable off or remappable.
+  Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice), or drop the shortcut. Until then it ships
+  as QUERY_LANGUAGE §6 says. **D26 is live:** after typing, Tab and Enter take the first suggestion, so leaving the field with text takes Esc first
+  (Shift+Tab always leaves); the alternative, no active option until ↓, is one line in `combobox-state.ts`' `typed()`.
+- For the owner to veto, none blocking: D18–D65 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of the sheet, not
+  families, so their Same family lists nobody — tell me if one is a real family**; D44–D50 (the phone's tabs and sheets, the Synergies links); D53–D65
+  (the history, the search sheet); 8b.10 ("immune to debuffs" is a mention) and 8b.11 (*Any*, the actors).
+- Waiting on the owner, none blocking: `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and, on a real iPhone (Safari, Chrome) and an Android, the
+  search sheet (keyboard docking, caret, no zoom: iPhone 16–22, Android 1–4, desktop 42–49); GAME_RULES open questions 1-5.
+- Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be green; `gh` may be
+  missing, see Notes), `gh pr list` (read a data-refresh PR's report before merging it).
 
 ## Owner decisions (2026-10-16 unless dated)
 | # | Decision | Recorded in |
@@ -213,7 +196,7 @@ slice that builds it then follows.
   many workers at once: rerun them alone (`playwright test typing-latency assist-latency --workers=1`) before suspecting the code.
   Alone: search p95 4.5–5.4 ms; assist p95 6.4 ms with the suggestions and their counts, on a text with eight faults of every kind (the budget
   is 16 ms: 40% of it, under the 60% that the slower runner of CI allows). With the nine counts made in the key it was 16–17 ms, a count being 0.3 ms
-  here: see M10.
+  here: hence `countNext`, which counts the first suggestion with the list and the rest three at a time, each step after a paint.
   The assist sat at 13–14 ms here before `lint-term.ts` (2026-10-18) and went red on CI at 20–23 ms, on two runs in a row: the Linux
   runner is ~1.5× slower than this machine, so **a budget used past ~60% locally will fail there** (no Windows run can show it).
   The cost was the offer for a finished word that no trait has (a search of the vocabulary, 1.5 ms), paid again by every later key.
@@ -224,7 +207,7 @@ slice that builds it then follows.
 - `pnpm lint` runs dependency-cruiser over `apps/web/src` as well. The rule `assist-stays-lazy` lets only `query-assist-loader.ts` import
   `query-assist.ts`, with `import()`; what the loaded layer needs goes through `query-assist.ts`. Anything that `query-input.svelte` or the
   page imports statically is in the first script, which the rule cannot see: after touching imports run `pnpm build && pnpm size-budget`
-  (lazy JS 19.3 kB now, initial 85.4) or look for `aria-autocomplete` in the chunks. The relation code is the same kind of thing: a
+  (initial 94.2 kB, lazy 37.3 at the close of Phase 2) or look for `aria-autocomplete` in the chunks. The relation code is the same kind of thing: a
   module the first script imports (the header does, through `composition-root.ts`) brings along everything it exports, so the relation
   service is built in `relation-composition.ts` and the rule `relations-stay-lazy` lets only `routes/synergy/` import it (2 kB otherwise).
 - Lighthouse: fetching the assist chunk while the first results were being drawn cost 150 ms of LCP (0.92 → 0.90): Lantern counts a
@@ -274,6 +257,8 @@ slice that builds it then follows.
   (as `touch-targets.test.ts` does), or the name becomes "Search traits wea". To check an alignment, compare pictures (`pictures` and
   `offsetBetween` in `query-mirror.test.ts`): no two pictures are pixel for pixel alike, since the copy is rasterised in grey, so
   count the best shift, not the differing pixels (that gave 5–8% on text that lined up).
+- The mirror of the search field is not capped: a text of 10,000 characters costs it ~80 ms and one of 48,000 about a second, beside 1 s and 5.6 s for the
+  rest of the keystroke (the lint stops at 2,000 characters, `MAX_LINTED_LENGTH`). If a paste of that size is ever a problem, the cost is in the rest, not the mirror.
 - e2e, the search sheet (11.5): on the phone projects (a touch screen under 700 px) a **click** on the page's field opens the sheet, while `fill`,
   `focus`, `pressSequentially` and the keyboard edit in the page, so a test about the field of the page does not click it (`openHistoryList`: focus and Alt+Down).
   A test of the sheet opens it with `openSearchSheet` (a tap) and looks only through `searchSheet(page)`: **Playwright does not leave out what is behind a modal
@@ -392,157 +377,10 @@ old phrases are aliases); the Events filters have *Who acts* as a toggle for eac
 new one). 8b.10 made a buff or debuff no name gives, and protection from them ("immune to debuffs"), an event: it reversed a decision
 of 8b.6, and if the owner vetoes it the 7 protective patterns and the cue rule in `readEvent` go.
 
-## Phase 2 — slices
-Opened early on the owner's go-ahead (D25), in the order of D15. Decisions D14–D25; architecture in ADR-0010 (query assist) and
-ADR-0011 (Synergy routes). Prototypes: `SearchBar.dc.html`, `MobileSearch.dc.html`, `Synergy.dc.html`, `MobileSynergy.dc.html`
-(behaviour only; where the plan departs from them it says so). QUERY_LANGUAGE, SPEC and DESIGN change in the slice that makes
-them true, never ahead of it. Every new `core` module must be reachable from `core/src/index.ts` (dependency-cruiser `no-orphans`).
-- *Unchanged, reused:* lexer, parser (never throws), `evaluate`, `visitQuery`, `queryChips`, `serialise`, the URL codecs (`q` stays the
-  bar exactly as typed), facets, `ExploreState`, slot rules, the planner, `TraitRepository`.
-- *Extended:* `QueryDiagnostic` (+`severity`, +`fix`), `FieldDefinition` (+`help`, +`values`, +`describe`), `SearchService` (+`vocabulary`,
-  +`traits`, +`countMatches`), `timeSearches` (it times `.search` only today), `core/index.ts` (must export `compileQuery`; `serialiseTerm` is), `query-input.svelte` (stays the one `<input>`), `composition-root.ts` (one load, two services), `+page.svelte` (party and
-  address logic move to a shared session), `support/keyboard.ts` `CONTROLS` (+`[role=option]`, `[role=combobox]`), `tools/size-budget`
-  (+`lazyJs`, +`totalJs`: a lazy chunk is invisible to it today), `lighthouserc.cjs`.
-- *Watch while building:* the mirror must line up across engines (same font stack on both layers, `forced-colors`, selection); IME and
-  predictive keyboards (`isComposing`); iOS keyboard docking (owner device check); layout shift from the lazy chunk (the input never
-  swaps, the badge sits inside the field); `no-navigation-without-resolve` with dynamic routes; GitHub Pages serves `404.html` with
-  status 404 (no previews or SEO for `/synergy/…`: accepted, ADR-0001); 13.1 refactors a 776-line page (the Phase 1 e2e is the net);
-  assist latency (budget first, then defer the counts); the volume of *Same trigger* (ranked and capped).
-
-### M9 Diagnostics — done
-`core`: `TextEdit` + `applyEdit` + `caretAfterEdit`; `QueryDiagnostic<Code>` with `severity` and `fix?`; `withSyntaxFixes` (a fix only if
-the query means the same after it; none past 50 problems); `closestMatch` (own Levenshtein, bounded); `FieldDefinition` +`help`,
-+`values` (`choices` | `vocabulary` | `keyword`), +`describe`; `createQueryVocabulary` and `SearchService` +`vocabulary`, +`traits`,
-+`countMatches`; the lint registry (`LintRule`, `createLintRegistry`, `lintRegistry`: 12 rules, only `unknown-field` has
-`reportsWhileTyping`, D20) and `lintQuery(source, context, {caret})` (`MAX_LINTED_LENGTH` 2,000). Soundness is tested on the real sheet
-(`assist-acceptance.test.ts`: every finding of the value rules is a query that finds nothing, every fix lints clean). `web`: the badge
-inside the field, the list under it (`QueryIssues`), `applyFieldEdit` (native undo kept), the polite line (`issue-announcer`),
-`atlas:assist` (`timeAssist`), tokens `--issue-*`. Deviations worth knowing: D21 (a `family:`, `creature:` or `trait:` that matches
-nothing is a warning; only the class is an error); the keywords are not in the vocabulary (the taxonomy has them); a value has at most
-one fault; "did you mean" compares whole entries; a selection is no caret (the Tab key selects the whole text of a field); the list
-opens by itself only for a query that was typed, never for one that arrives with the address (nothing moves on load: Lighthouse CLS
-unchanged); `aria-invalid` for errors only; the list shows five issues, errors first. The findings of a term are remembered per text,
-`typing` flag and context (`lint-term.ts`; a text that stands elsewhere gets them moved). If suggestions push `atlas:assist` up,
-defer the counts (ADR-0010).
-
-### M10 Autocomplete — done
-`core`: `suggestionContext` (six kinds, each with the `replace` span an accept takes the place of), `suggestQuery` over a registry of providers
-(one per kind; `rankCandidates` by tier, cut at nine; `bestFits` before anything is written out), `acceptSuggestion` (a `TextEdit`, like a fix),
-`ghostText`, `withCounts` (within the filters, D18); soundness tested on the real sheet (`assist-acceptance`). `web`: `combobox-state.ts` (the
-key table is a table of tests), `Combobox` (APG editable combobox attached to the host's `<input>`; `keyPressOf` reads key code 229 as an IME,
-Safari), `list-announcer`, `search-shortcut` (`/`), and the wiring of 10.5: `query-input.svelte` keeps the plain `<input>` and fetches
-`query-assist.ts` (`import()` in `query-assist-loader.ts`, on first idle, focus or pointer) which brings `analyseQuery` (issues and suggestions of a key
-in one call, timed `atlas:assist`), `Combobox`, `IssueBadge`, `QueryIssues`. Deviations worth knowing: the ghost text is written but drawn with the
-mirror of 11.2 (until then the active option in the list is what Tab takes); the `Combobox` takes the `input` as a prop; an option that continues
-keeps the list open; the list does not scroll (axe: a scroll area is a tab stop); **the counts are not all made with the key**: nine searches at 4×
-CPU took 16–17 ms, so the first suggestion is counted with the list (it is the active one, read at once) and the rest three at a time, each step in
-a task of its own after a paint (`countNext`, `afterNextPaint`): assist p95 6.4 ms; **the list sits under the list of issues** (over it, it covered
-the fixes) **and under the fixed bars** (z-index 4; on a phone the Filters button was covered); `applyFieldEdit` marks its own `input` events
-(`isBeingEdited`) so a fix or an accept neither opens the list nor makes an option active. The size budget has `lazyJs` (50 kB; 9.2 now) and `totalJs`
-(200 kB), and dependency-cruiser runs over `apps/web/src` with the rule `assist-stays-lazy`. e2e: `searchBox` is a combobox (it waits for the layer),
-`query-suggestions.test.ts`, the option targets in `touch-targets.test.ts`.
-
-### M12 Relations engine (core) — done
-`core/src/relations/`: `createRelationIndex(traits, taxonomy)` over the 42 keys that can be a dependency (buffs, debuffs, effects; no event,
-mechanic or flag: R12, D16). `get(key)` → the traits that apply, apply conditionally or at random, and rely on it (a trait is listed once per
-key among the sources, under the strongest); `relationsOf(id)` → Enabled by / Enables (one trait per side, a `several` lane first, `unmet`
-keys, ranked by tier, links, name: D17; Enables lists only what the focus applies by name: D27); `alternativesOf`, `sameTriggerOf`,
-`sameFamilyOf` (D28); `keywordView(key)` / `keywordStats()` (lists, counts, verdict D29, co-applied keys). Each takes `artifactOnly`, returns
-the whole ranked list (the UI caps) and `undefined` for an unknown id or key. `createRelationService(repository)` is the web's entry: the four
-sections of a trait are remembered for the last 32 questions (`memoiseRecent`), beside `trait(id)`, `datasetVersion` and `findTraits(text,
-limit)` for the focus picker (the name begins with the text, has a word that does, has it inside; then the creature or the family). `keywordSlug` /
-`keywordFromSlug(slug, keys)` write and read `/synergy/kw/<slug>` (`createTaxonomy` refuses two keys with one slug or none, as it does a key
-that starts another; the slug is read exactly, and the caller gives `index.keys`, because an event's key has no page). `loadOnce(repository)`:
-the composition root fetches the dataset once for both services; the relation service is built in `relation-composition.ts` (13.2), so that
-its code stays out of the first script. Tested on the real sheet (`relation-acceptance`, `keyword-view-acceptance`: the counts
-equal Explore's facet panel for all 42 keys, with and without `mat:yes`, and the committed `keyword-verdicts-v2.0.txt`;
-`relation-service-acceptance`) and with hand-made traits and fast-check oracles, all mutation-checked. `pnpm bench` (`relations.bench.ts`):
-the index builds in 0.55 ms; the four sections of all 1,780 traits cost 2 µs (Enabled by / Enables), 1 µs (Alternatives), 44 µs (Same
-trigger) and 7 µs (Same family) a trait on average, 0.3 ms at worst for all four (Squirmies); all 42 keyword views 0.17 ms; one key of the
-focus picker 0.25 ms. Data worth knowing: the lanes are small (Poisoned 14 appliers, Burning 11, Vulnerable 8); events are huge (`attack`: 97
-cause, 370 react), hence D16; 27 enemy-only random sources and 4 conditional-source traits exist.
-
-### M13 Synergy UI — done
-Three routes under `/synergy` (ADR-0011; `ssr = false` for a trait and a keyword, which 404.html boots on Pages) that share the party with
-Explore through `partySession` (`party-session.ts`; the Phase 1 e2e passed untouched through the refactor of 13.1) and write it to the address
-with a writer of their own (`synergy-address.ts`: `mat=yes`, `section=`, the party). `web`: the picker (`TraitPicker` is the `Combobox` of 10.4
-over `relations.findTraits`; `KeywordPicker`; "Start from your party"), the trait page (`FocusCard`, `RelationSide` and `TraitLane` with the
-random group folded above 3, `TraitCard`, `RelatedSection` for Alternatives, Same trigger and Same family, `ExplorationTrail`,
-`ArtifactFilter`), the keyword page (`KeywordSummary` with the six verdicts, `RelatedSection` for Appliers and Rely on it with the conditional
-and random groups, "See in Explore"), the phone under 700 px (`SectionTabs` with `section=` as a history step, the folding focus card, the
-trail as a row of pills, `PickerSheet`), and the links from Explore (`SynergiesLink` in a result's foot and in a filled slot). `core`:
-`traitFacts`, `SameFamily.grouping`. Docs: SPEC §7 and §8.4, DESIGN § Synergy pages, § Result list, § Party panel, § Layout, checklist rows
-27–41 and iPhone 9–15. Deviations worth knowing: D23 and D30–D31 (the Synergies link sits beside the tab list, Party in the header goes to
-Explore); D33–D35 (a card and a step are links, no "Now centred" line, the trail is session memory); D36 (Exotic, Backer, Avatar and Zantai
-are groupings, not families); D37–D38 (6 cards and a button, up to 200); D39–D43 (a keyword's page); D44–D48 (the phone); D49–D50 (the links
-from Explore; a search typed a moment before a link is followed is dropped, `AddressWriter.abandon()`, a bug that was already there).
-Found by the e2e: `bind:this` hands back `null` when an element goes, not `undefined`; and (13.8) `SectionTabs` went along from `selected`,
-which follows the address, so keys that outran the navigation (a held arrow) landed on the wrong tab: a key now goes from the tab it
-was pressed on, with a test that sends three arrows in one task. Found by Lighthouse (13.8): a layout shift of
-0.07–0.12 on the three pages (the footer, jumping out of view when the lists arrived), prevented by `LoadStatus` holding the height of the
-window, and a `/robots.txt` answered with a page. 13.8 also added `tools/serve-build` and the three Synergy URLs to `lighthouserc.cjs`
-(D51). **Data:** the biggest lists in v2.0 are 67 alternatives (Jungle Boogie), 548 same trigger (Furor; the median is 35) and 147 same
-family (Numerical Nightmare); 531 of 1,780 traits rely on no event; a keyword has at most 18 appliers and 26 users and 27 random sources,
-so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the Synergy routes about 23), total 121.7.
-
-### M11 Editor — colours, explanation, saved searches, mobile sheet (last, D15)
-- [x] **11.1** Explain. `explainQuery(ast, registry)` (a visitor shaped like `serialise`; QUERY_LANGUAGE §7) and a "Reads as" line in the
-      effective-query component (D19). Deviations worth knowing: the reading of a term lives on the registry (`describeTerm`, beside
-      `matcherFor`, so that the two read an empty value, an unknown field and letter case the same way), not in the visitor; a term with no
-      value says "asks for nothing" (the words `describe` already used for `uses:/`); `SearchOutcome.effectiveReading` is worked out with
-      every search (a second `parseQuery` of the effective text: 14 µs for a long one, under the noise of `pnpm bench`).
-- [x] **11.2** Syntax colours and the mirror. `syntaxSegments(source, tokens, diagnostics)` (core; a segment is cut where a diagnostic
-      starts or ends, so a line is drawn under the text at fault and no more) and `QueryMirror` (`aria-hidden`, in the lazy chunk) under
-      the transparent input, with the ghost text of the active suggestion (`Combobox` gained `onactive`), a `forced-colors` fallback and
-      `--syntax-*`, `--underline-*`, `--field-selection` in `contrast.test.ts` (`.query-text` is the one place of the shared metrics).
-      Deviations worth knowing: **a warning is a dotted line and an error a wavy one** (the plan said wavy for both: two shapes, so
-      that the red and the amber are not told apart by colour alone); the mirror draws from the same `analysis` as the badge, in the
-      same flush, not from the lexer first (the lint was synchronous already, and no frame shows a text and colours that disagree);
-      the copy follows the field's scroll with a transform fed by `scrollLeft` every frame while the field has the focus (events alone
-      are not enough in every engine); the ghost text lies beyond the caret, so in a field that is full it is out of view (the list is
-      what is left); the field's name had to be read without `aria-hidden` text in `touch-targets.test.ts`, since the mirror lies in
-      its label. e2e: the text of the copy equals the field's, the pieces and the severities, the ghost, the scroll, forced colours
-      (Chromium), and **the alignment as a picture**: the field's own text in white against the copy in white must have a best shift
-      of under half a CSS pixel each way (the field and the copy round to the screen on their own: CI found one pixel down on a Pixel 7,
-      a PC one across); a mutant that moves the copy 2 px fails it. A text of 10,000 characters costs the mirror
-      ~80 ms and 48,000 about a second, beside 1 s and 5.6 s for the rest of the keystroke: no cap.
-- [x] **11.3** Search history (core). `core/src/history/`: an immutable `SearchHistory {recent, saved}`, `recordRecent`, `toggleSaved`,
-      `isSaved`, `removeRecent`, `removeSaved`, `exportHistory`, `importHistory(text, current)`; the rules and the file are in SPEC §8.3,
-      D52. Deviations worth knowing: `exportHistory` gives the **text** of the file (not an object), so that the format stays in `core`;
-      `toggleSaved` gives `{ok, history}` or a refusal (`empty` | `too-long` | `full`), like `executeCommand`, because the field has to say
-      why a star did nothing; `importHistory` also says how many it `added` and how many it `leftOut` for want of room (the message
-      "Imported 3 saved, 5 recent" needs both); the limits are 2,000 characters a search (`MAX_SEARCH_LENGTH`, not the lint's constant,
-      so that tuning the lint never changes what a file may hold) and 2,000,000 for a file (a test writes the biggest one the app can and
-      reads it back). Mutation-checked (18 mutants, none survived) and property-tested (limits hold after any steps; any file imports
-      without throwing and idempotently; export then import is the identity).
-- [x] **11.4** History UI. `search-history-store.ts` (the text of the file Export writes under one `localStorage` key; a damaged value is
-      refused as a damaged file would be and reads as empty; `undefined` when the storage cannot be read), `search-history-session.ts`
-      (reactive, made once in `composition-root` like the party's), `history-options.ts` (the rows of a blank field); in the lazy layer
-      `HistoryButtons` (the star and *Manage searches*), `SearchesSheet` (a `BottomSheet` `choice` with `SearchRow`) and the `browsable`
-      mode of the `Combobox`. The rules are in SPEC §8.3 *In the field*, D53–D57. Deviations worth knowing: **Enter rarely sends a search**:
-      with the list of suggestions open it takes the active one (D26), so a search is sent by Esc then Enter, and most searches are
-      remembered on leaving the field; the star is there only while the field holds something (so `empty` cannot happen in the page); the
-      Manage button is always in the field (Import has to be within reach of an empty history) and the two buttons take 88 px of it:
-      **on a 320 px phone the text has about 150 px, 46 with the issues badge: 11.5 takes the phone out of this field**; no `role="status"`
-      and no second live region in `.query` / `.field` (the e2e locators are strict about both): the words of the star and of a refusal
-      go through the field's one polite line. e2e (`search-history.test.ts`, 37 × 3 projects): remembering, the list of an empty field
-      (no active option, Tab leaves), the star, the full refusal, the sheet, export → remove all → import restores, five refused files,
-      a storage that throws; axe on the list, the star, the refusal and the sheet; the Tab walk of the sheet; the targets of the sheet.
-      Mutation-checked: `typed(browsing())` made `typed()` fails "stays so when the typing has just emptied the field".
-- [x] **11.5** Mobile search sheet. `core`: `insertAtCaret(source, selection, id)` and `SYNTAX_INSERTION_IDS` (QUERY_LANGUAGE §8 *The toolbar*; 31 tests with
-      property tests against the lexer, mutation-checked: 6 mutants, none survived). `web`: `SearchSheet` (a native `<dialog>` with the head, the issue banner, "Reads as",
-      the list, the star and *Manage searches*, the button *Show N traits* and `SyntaxToolbar`), `QueryTextInput` (the field and its mirror box, now shared by the page
-      and the sheet), `IssueBanner`, `SaveRefusal`, `fitToVisualViewport`, `search-sheet.ts`, and in `Combobox` two modes (`flow`: always showing, Escape is the
-      sheet's; `suspended`: the page's list stays shut behind the sheet). The rules are in SPEC §8.3 *The search sheet*, DESIGN § Search sheet, D58–D65. Deviations worth
-      knowing: **a press opens it, a focus does not** (D58: the plan said "the field opens"; a keyboard, `/`, `fill` and a press before the layer arrives edit in the page, so
-      the page's field stays complete and the 252 uses of `searchBox` in the e2e on the phone projects kept working); it is not a `BottomSheet` variant (D59); the
-      focus after it goes to the Results heading (D61); **Enter with nothing active closes it** and so a phone's "search" key takes the first suggestion before it sends (D62).
-      Found on the way: `bind:this` hands back `null` when the sheet's field goes, which crashed the mirror's effect and took the sheet with it (the mirror and the combobox
-      now test `instanceof HTMLInputElement`); the press that opens the sheet also reached the page's `Combobox`, which opened its list behind the sheet and left it open
-      after it (hence `suspended`). e2e (`search-sheet.test.ts`, 24 × 2 phone projects): open, text, count, closing and where the focus goes, Escape and Enter, a suggestion
-      pressed keeps the focus, the banner and its fix, the mirror, each button of the toolbar, history, star, Manage, axe, the visual viewport (Chromium, page scale 2),
-      and the mouse leaving the sheet shut; plus the Tab walk of the sheet (`keyboard.test.ts`), its 44 px targets, 16 px field and a 320 px window
-      (`touch-targets.test.ts`), contrast of the sheet's surfaces. Adapted: the tests of the page's list use `openHistoryList` (focus, Alt+Down) where a press would open the
-      sheet. **Owner device check** (iOS Safari and Chrome Android: keyboard docking, caret, zoom): not done, see *Resume here*.
-- [ ] **11.6** Close M11 and Phase 2. Budgets, Lighthouse, QUERY_LANGUAGE §7–8 and SPEC §8.3 rewritten to what shipped, DESIGN components,
-      the Phase 2 criteria-to-tests table, ROADMAP ticks, PLAN collapse; ask the owner before Phase 3.
+## Phase 2 — done (2026-10-20)
+M9 Diagnostics, M10 Autocomplete, M12 Relations engine, M13 Synergy UI and M11 Editor are on `main`, built in the order of D15 on the owner's early go-ahead (D25).
+Decisions D14–D65 above; architecture in ADR-0010 (query assist) and ADR-0011 (Synergy routes); the rules in QUERY_LANGUAGE §5–8, SPEC §8.3–8.4 and DESIGN
+(Suggestions, Query editor, Recent and saved searches, Search sheet, Synergy pages). The slice numbers those documents cite ("PLAN 11.4") are the `(M11.4)` of the
+commit subjects. ROADMAP maps its eleven criteria to tests. The Notes above hold what the slices taught that is not in the code.
+At the close (11.6): initial JS 94.2 kB of 150, lazy 37.3 of 50 (revisited: the limits stay), total 131.6 of 200, data 139.6 of 300, gzip; Lighthouse performance
+0.90 on `/` (layout shift 0.035), 0.96 on `/synergy`, 0.86 on a trait and 0.89 on a keyword (layout shift 0), the other categories 1.
