@@ -14,13 +14,18 @@ const UI_CONTRAST = 3;
 const channel = (hex: string, at: number): number => parseInt(hex.slice(at, at + 2), 16) / 255;
 const fromHex = (hex: string): Rgb => [channel(hex, 0), channel(hex, 2), channel(hex, 4)];
 
-/** The custom properties of `tokens.css` that are a plain `#rrggbb`. */
+/** The custom properties of `tokens.css` that are a plain `#rrggbb`, and those that are another one (`--a: var(--b);`). */
 const palette = new Map<string, Rgb>(
   Array.from(tokensCss.matchAll(/--([a-z0-9-]+):\s*#([0-9a-f]{6})\b/g), ([, name, hex]): [string, Rgb] => {
     if (name === undefined || hex === undefined) throw new Error('a token matched without its parts');
     return [name, fromHex(hex)];
   }),
 );
+for (const [, name, of] of tokensCss.matchAll(/--([a-z0-9-]+):\s*var\(--([a-z0-9-]+)\);/g)) {
+  const colour = of === undefined ? undefined : palette.get(of);
+  if (name === undefined || colour === undefined) throw new Error(`${name ?? 'a token'} is an alias of no colour`);
+  palette.set(name, colour);
+}
 
 function token(name: string): Rgb {
   const colour = palette.get(name);
@@ -127,6 +132,44 @@ describe('the colours of the issues of a query', () => {
 
   it('reads the surfaces it is meant to check', () => {
     for (const { surface } of rows) expect(palette.has(surface), surface).toBe(true);
+  });
+});
+
+describe('the colours of a query in the search field', () => {
+  // The mirror draws the text of the field on the surface of the field, in a colour for each kind of piece; the rest of a suggestion
+  // is grey after it, and a line under the text at fault says its severity beside the badge. A selection is a share of --accent over
+  // the field with the coloured text still showing through it (the ghost text is never selected: it is there only for a caret).
+  const ON = 'surface-1';
+  const PIECES = [
+    'syntax-field',
+    'syntax-value',
+    'syntax-text',
+    'syntax-phrase',
+    'syntax-operator',
+    'syntax-paren',
+    'syntax-negation',
+  ] as const;
+  const UNDERLINES = ['underline-error', 'underline-warning'] as const;
+
+  /** The selection as `tokens.css` writes it: a share of one token over what is behind. */
+  function selection(): { readonly colour: Rgb; readonly share: number } {
+    const match = /--field-selection:\s*color-mix\(in srgb, var\(--([a-z-]+)\) (\d+)%, transparent\)/.exec(tokensCss);
+    const [, name, percent] = match ?? [];
+    if (name === undefined || percent === undefined) throw new Error('tokens.css no longer mixes the field selection');
+    return { colour: token(name), share: Number(percent) / 100 };
+  }
+
+  it.each([...PIECES, 'syntax-ghost'] as const)('%s is at least 4.5:1 on the field', (text) => {
+    expect(contrast(token(text), token(ON))).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+
+  it.each(PIECES)('%s is at least 4.5:1 under the selection of the field', (text) => {
+    const { colour, share } = selection();
+    expect(contrast(token(text), over(colour, token(ON), share))).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+
+  it.each(UNDERLINES)('%s is at least 3:1 on the field', (line) => {
+    expect(contrast(token(line), token(ON))).toBeGreaterThanOrEqual(UI_CONTRAST);
   });
 });
 

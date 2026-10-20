@@ -17,6 +17,8 @@
   const SUGGESTIONS_ID = 'query-suggestions';
   /** How long after the data arrives the assist layer is fetched, if nobody has used the field by then. */
   const FETCH_AFTER_DATA_MS = 500;
+  /** What the mirror is given while the dataset, and so every issue, is not there yet. */
+  const NO_ISSUES: readonly QueryDiagnostic[] = [];
 
   /**
    * The query bar: a text field the owner of the state reads and writes, one keystroke at a time. It is a plain `<input>` until the
@@ -24,7 +26,8 @@
    * element: what is wrong with the query (QUERY_LANGUAGE §5), given the caret so that the term being typed is left alone, and
    * what may be typed at the caret (§6), counted within `filters`. Nothing is swapped, so the focus is not lost and nothing moves.
    * The issues are a badge inside the field and a list under it, the suggestions a list over the page; both are edits of the text
-   * made in the field as a person's typing is. Neither is there until the layer and the data are.
+   * made in the field as a person's typing is. Neither is there until the layer and the data are. The layer also brings the mirror
+   * (§8): a coloured copy of the text under the field, which turns transparent to let it show.
    */
   let {
     value,
@@ -60,6 +63,13 @@
     counted !== undefined && counted.of === analysis?.suggestions ? counted.suggestions : (analysis?.suggestions ?? []),
   );
   const options = $derived(assist?.optionsOf(suggestions) ?? []);
+  /** The option that Tab would take (the list tells), whose rest the mirror shows in grey after the text. */
+  let active = $state<number>();
+  const ghost = $derived(
+    assist === undefined || caret === undefined || active === undefined
+      ? ''
+      : assist.ghostText(value, caret, suggestions[active]),
+  );
   const summary = $derived(summariseIssues(analysis?.issues ?? []));
   const describedBy = $derived(
     summary.shown.length === 0 ? undefined : summary.shown.map((_, at) => issueTextId(ISSUES_ID, at)).join(' '),
@@ -170,30 +180,37 @@
         <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
         <path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" />
       </svg>
-      <input
-        id="query"
-        type="text"
-        bind:this={input}
-        {value}
-        oninput={(event) => {
-          // An edit made for the person (a fix, a suggestion) raises this event too, and is not their typing.
-          typed = !isBeingEdited(event.currentTarget);
-          readCaret();
-          onchange(event.currentTarget.value);
-        }}
-        onfocus={readCaret}
-        onclick={readCaret}
-        onkeyup={readCaret}
-        onselect={readCaret}
-        aria-invalid={summary.hasErrors ? 'true' : undefined}
-        aria-describedby={describedBy}
-        placeholder={copy.searchPlaceholder}
-        inputmode="search"
-        enterkeyhint="search"
-        autocomplete="off"
-        autocapitalize="off"
-        spellcheck="false"
-      />
+      <span class="editor">
+        {#if assist !== undefined}
+          <assist.QueryMirror {input} {value} issues={analysis?.issues ?? NO_ISSUES} {ghost} />
+        {/if}
+        <input
+          id="query"
+          class="query-text"
+          class:mirrored={assist !== undefined}
+          type="text"
+          bind:this={input}
+          {value}
+          oninput={(event) => {
+            // An edit made for the person (a fix, a suggestion) raises this event too, and is not their typing.
+            typed = !isBeingEdited(event.currentTarget);
+            readCaret();
+            onchange(event.currentTarget.value);
+          }}
+          onfocus={readCaret}
+          onclick={readCaret}
+          onkeyup={readCaret}
+          onselect={readCaret}
+          aria-invalid={summary.hasErrors ? 'true' : undefined}
+          aria-describedby={describedBy}
+          placeholder={copy.searchPlaceholder}
+          inputmode="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </span>
     </label>
     {#if assist !== undefined}
       {#if summary.count > 0}
@@ -207,7 +224,16 @@
           }}
         />
       {/if}
-      <assist.Combobox {input} {options} id={SUGGESTIONS_ID} label={copy.suggestionsLabel} onaccept={accept} />
+      <assist.Combobox
+        {input}
+        {options}
+        id={SUGGESTIONS_ID}
+        label={copy.suggestionsLabel}
+        onaccept={accept}
+        onactive={(index: number | undefined) => {
+          active = index;
+        }}
+      />
     {/if}
   </div>
   {#if assist !== undefined}
@@ -255,16 +281,22 @@
     padding: 0 12px;
   }
 
+  /* The input and the mirror under it fill this box together (the font, `.query-text`, is the same for both). */
+  .editor {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+  }
+
   input {
     flex: 1;
     min-width: 0;
-    height: 100%;
     padding: 0;
     border: 0;
     background: transparent;
     color: var(--text-strong);
-    font: inherit;
-    font-family: var(--font-mono);
   }
 
   /* The field draws the focus ring around the whole bar, icon included. */
@@ -277,10 +309,30 @@
     opacity: 1;
   }
 
-  /* iOS zooms the page in when a field of less than 16 px takes the focus, and leaves it zoomed. */
-  @media (pointer: coarse) {
-    input {
-      font-size: 16px;
+  /*
+   * With the mirror under it the field keeps the caret, the selection and the typing, and gives the colours up: its own text is
+   * transparent. The selection is a share of the accent, so that the coloured text still shows through it.
+   */
+  input.mirrored {
+    color: transparent;
+    caret-color: var(--text-strong);
+  }
+
+  input.mirrored::selection {
+    background: var(--field-selection);
+    color: transparent;
+  }
+
+  /* A high-contrast mode forces its colours and the mirror is not drawn (query-mirror.svelte): the field shows its text itself. */
+  @media (forced-colors: active) {
+    input.mirrored {
+      color: FieldText;
+      caret-color: auto;
+    }
+
+    input.mirrored::selection {
+      background: Highlight;
+      color: HighlightText;
     }
   }
 </style>

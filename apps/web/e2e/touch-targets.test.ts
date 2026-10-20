@@ -71,7 +71,12 @@ interface Measured {
 function measureControls(scope: Locator): Promise<Measured> {
   return scope.evaluate(
     (root, { controls, inSentence, min }) => {
-      const words = (element: Element): string => element.textContent.replace(/\s+/g, ' ').trim();
+      // What a reader makes of the text: what is hidden from it does not count (the mirror under the search field is, and lies in its label).
+      const words = (element: Element): string => {
+        const shown = element.cloneNode(true) as Element;
+        for (const hidden of shown.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+        return shown.textContent.replace(/\s+/g, ' ').trim();
+      };
       const names: string[] = [];
       const tooSmall: string[] = [];
       for (const control of root.querySelectorAll(controls)) {
@@ -123,7 +128,12 @@ const MIN_FIELD_FONT_SIZE = 16;
 async function expectFieldsNotZoomedIn(scope: Locator, including: readonly RegExp[]): Promise<void> {
   const { names, tooSmall } = await scope.evaluate(
     (root, { fields, min }) => {
-      const words = (element: Element): string => element.textContent.replace(/\s+/g, ' ').trim();
+      // What a reader makes of the text: what is hidden from it does not count (the mirror under the search field is, and lies in its label).
+      const words = (element: Element): string => {
+        const shown = element.cloneNode(true) as Element;
+        for (const hidden of shown.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+        return shown.textContent.replace(/\s+/g, ' ').trim();
+      };
       const names: string[] = [];
       const tooSmall: string[] = [];
       for (const field of root.querySelectorAll(fields)) {

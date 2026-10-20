@@ -13,10 +13,10 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain) of M11; the next slice is 11.2 (syntax
-  colours and the mirror), then M11 to its end** (D15). 11.1 added the "Reads as" line under the effective query (QUERY_LANGUAGE §7);
-  Lighthouse was not rerun for it (one more line only appears with a query or a filter, never on the pages it browses). Sizes: initial
-  JS 89.9 kB of 150, lazy 32.1 of 50, total 122.0 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
+- **Phase 2 (D14–D51, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain) and 11.2 (the mirror) of M11; the next
+  slice is 11.3 (search history in `core`), then M11 to its end** (D15). 11.2 draws the text of the field in colour, a line under what is
+  wrong and the grey ghost text (QUERY_LANGUAGE §8); Lighthouse rerun: `/` still 0.89–0.90 with a layout shift of 0.035. Sizes: initial
+  JS 90.1 kB of 150, lazy 33.0 of 50, total 123.1 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at
   11.6.** **On a phone the inline list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
   the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14, the
   links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
@@ -33,8 +33,10 @@ session (after `CLAUDE.md`), update it before ending one.
   option until ↓ (a one-line change in `combobox-state.ts`' `typed()`), at the price of Tab not taking what the ghost text will show.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
   iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
-  of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); when 11.5 lands, the
-  mobile search sheet on iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
+  of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); that on the same
+  phone the coloured text of the field lies exactly under the caret and the selection, also once a long query has scrolled (11.2:
+  checklist iPhone 16; desktop 42–43 for the reader and a Windows high-contrast theme); when 11.5 lands, the mobile search sheet on
+  iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
   trigger; when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be
   green; `gh` may be missing, see Notes), `gh pr list` (read a data-refresh PR's report before merging it).
@@ -241,6 +243,11 @@ slice that builds it then follows.
 - A link whose name ends in a `.visually-hidden` span (position: absolute) gets a space before it in its accessible name: the chip of a keyword is
   “Bleeding , 10 appliers, 20 users”, so a test matches `\s*,` (`chipName` in `support/keyword-page.ts`). Run `vitest` from the repository root:
   from `apps/web` the contrast tests lack the CSS include of the root config and fail (93 tests) with nothing wrong in the code.
+- The search field is `label > .editor > (QueryMirror, input)`: the label's `textContent` holds the text of the mirror (`aria-hidden`, so
+  a reader's name for the field is still "Search traits"). A helper that names a control from `textContent` must skip `[aria-hidden]`
+  (as `touch-targets.test.ts` does), or the name becomes "Search traits wea". To check an alignment, compare pictures (`pictures` and
+  `offsetBetween` in `query-mirror.test.ts`): no two pictures are pixel for pixel alike, since the copy is rasterised in grey, so
+  count the best shift, not the differing pixels (that gave 5–8% on text that lined up).
 - Do not rewrite files with Python's text mode on Windows: it writes CRLF into an LF tree (use the Edit tool).
 - `packages/core` and `pipeline` export TypeScript source (`exports: ./src/index.ts`); there is no build step.
 - The 8b.5 research lives in `packages/pipeline/.cache/research/events-v2.0/` (git-ignored, this machine only):
@@ -449,14 +456,20 @@ so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the
       `matcherFor`, so that the two read an empty value, an unknown field and letter case the same way), not in the visitor; a term with no
       value says "asks for nothing" (the words `describe` already used for `uses:/`); `SearchOutcome.effectiveReading` is worked out with
       every search (a second `parseQuery` of the effective text: 14 µs for a long one, under the noise of `pnpm bench`).
-- [ ] **11.2** Syntax colours and the mirror. `syntaxSegments(source, tokens, diagnostics)` → contiguous segments (field, value, phrase,
-      operator, paren, negation, text, blank; severity) whose concatenation is the source (property test). `QueryMirror` (`aria-hidden`)
-      under a transparent input, in the lazy chunk: identical metrics (font, size, `font-variant-ligatures: none`, `white-space: pre`,
-      padding), `scrollLeft` kept in sync, `::selection`, a wavy underline per severity (never colour alone: the badge and the panel
-      say it), ghost text after the end, a `forced-colors: active` fallback (the input's own text shown, the mirror hidden), 16 px
-      under coarse. Tokens `--syntax-*` and `--underline-*` go into `contrast.test.ts` (text 4.5:1, underline 3:1). The mirror
-      re-colours synchronously (lexer only); lint and counts may follow. *T:* e2e: forced-colors emulation, scroll alignment of a long
-      query, WebKit, typing latency, CLS.
+- [x] **11.2** Syntax colours and the mirror. `syntaxSegments(source, tokens, diagnostics)` (core; a segment is cut where a diagnostic
+      starts or ends, so a line is drawn under the text at fault and no more) and `QueryMirror` (`aria-hidden`, in the lazy chunk) under
+      the transparent input, with the ghost text of the active suggestion (`Combobox` gained `onactive`), a `forced-colors` fallback and
+      `--syntax-*`, `--underline-*`, `--field-selection` in `contrast.test.ts` (`.query-text` is the one place of the shared metrics).
+      Deviations worth knowing: **a warning is a dotted line and an error a wavy one** (the plan said wavy for both: two shapes, so
+      that the red and the amber are not told apart by colour alone); the mirror draws from the same `analysis` as the badge, in the
+      same flush, not from the lexer first (the lint was synchronous already, and no frame shows a text and colours that disagree);
+      the copy follows the field's scroll with a transform fed by `scrollLeft` every frame while the field has the focus (events alone
+      are not enough in every engine); the ghost text lies beyond the caret, so in a field that is full it is out of view (the list is
+      what is left); the field's name had to be read without `aria-hidden` text in `touch-targets.test.ts`, since the mirror lies in
+      its label. e2e: the text of the copy equals the field's, the pieces and the severities, the ghost, the scroll, forced colours
+      (Chromium), and **the alignment as a picture**: the field's own text in white against the copy in white must have the best shift
+      (0, 0) (under half a CSS pixel across); a mutant that moves the copy 2 px fails it. A text of 10,000 characters costs the mirror
+      ~80 ms and 48,000 about a second, beside 1 s and 5.6 s for the rest of the keystroke: no cap.
 - [ ] **11.3** Search history (core). An immutable `SearchHistory {recent, saved}`: `recordRecent` (trim, no empty, a repeat moves to the
       front, 10), `toggleSaved` (50; `{name, query}`, name = query), removals, `exportHistory` (`{app, kind: 'search-history',
       version: 1, …}`), `importHistory(text, current)` → ok or a refusal reason, merge by query, never throws, no schema library

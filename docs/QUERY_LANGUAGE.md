@@ -422,6 +422,43 @@ fields from `registry` (the one of the app by default). `(vulnerable OR weak) -s
   text (a property test) and different words for queries that find different traits on a sample of traits.
 
 ## 8. Editor (Phase 2)
-Syntax-coloured input = transparent `<input>` over a mirrored, coloured `<div>` with identical font metrics; errors get a
-wavy underline on their span. Must keep caret position after accepting a suggestion mid-string (the prototype does not).
-Mobile adds a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`, inserting at the caret.
+Syntax-coloured input = transparent `<input>` over a mirrored, coloured copy with identical font metrics; what is wrong gets a
+line under its span. The caret stays where an edit leaves it (§5, §6: `caretAfterEdit`).
+
+**Segments** (`syntaxSegments(source, tokens, diagnostics)`, `syntax-segments.ts`, PLAN 11.2). The query cut into the stretches that are drawn
+in one colour: `{ kind, span, text, severity? }`, in order, none empty, and put together they are the text (a property test on any text). `tokens` and
+`diagnostics` are those of `source` (`parseQuery`, or the issues of `lintQuery`).
+- **Kinds.** `field` (the name with its colon, `class:`), `value` (what follows it), `phrase` (a quoted value or word, closed or not, quotes included),
+  `text` (a word with no field), `operator` (`AND`, `OR`, `NOT`, `&`, `|`), `negation` (the dash that negates), `paren` and `blank` (what lies between tokens, all
+  of it). A field with no value is `field` alone. A field nobody knows is a `field` too, since that is how it was typed: the diagnostic marks it.
+- **Severity.** A diagnostic marks the text it is about and no more: a segment is cut where a diagnostic starts or ends inside it (`clas` of `clas:`,
+  the `(` that is never closed), the blanks a diagnostic runs over are marked with the rest, and where an error and a warning cover a stretch the error
+  shows. A diagnostic that covers no text marks none. The work is one walk over the pieces and the starts and ends of the diagnostics, so a text of
+  thousands of faults is as quick as any other (a test with 100,000).
+
+**The mirror** (`QueryMirror`, in the assist layer, `aria-hidden`; PLAN 11.2). Once the layer is there, the `<input>` turns its text transparent
+(`color: transparent`, `caret-color` and `::selection` of its own) and the mirror under it draws the segments of the text, one `span` each, in the box
+of the field: it takes no room, takes no pointer (`pointer-events: none`) and is drawn under the field, so nothing is lost that the field gave, and nothing
+moves when it arrives (the Lighthouse layout shift is the one it was).
+- **Colours** (`--syntax-*`, DESIGN § Tokens): a field in the accent, an operator in the warning yellow, a negation in the critical colour, a
+  phrase in a green of its own, the parentheses muted, a value or a word in the strong text colour. Never a weight or a style that would change a
+  letter's width: the field has one text of one weight, and the copy has to line up with it.
+- **Under what is wrong**: a wavy line in `--underline-error` for an error, a dotted one in `--underline-warning` for a warning, so that the two differ in more
+  than the colour; the badge and the list of issues say it in words (§5), and a screen reader never meets the copy. The findings are those of the
+  keystroke's own analysis, so the term being typed has none yet (D20), and a line goes with its issue when the issue is fixed.
+- **Ghost text** (§6): the rest of the suggestion that Tab takes, `ghostText(source, caret, suggestion)`, is drawn in `--syntax-ghost` after the text, as one
+  more piece of the copy. It is there while a suggestion is active (typing makes the first one active; an arrow moves it; an accept, a caret move, Esc or a blur
+  puts it away) and the caret is at the end of the text. It is drawn beyond the caret, so in a field that is full it is out of view: the list is what is left.
+- **Lining up.** The field and the copy wear one class, `.query-text` (`styles/query-text.css`: the font, `font-variant-ligatures: none` since a coloured piece would
+  break a ligature that the field forms, `white-space: pre`, no letter or word spacing, 16 px under a coarse pointer) and sit in one box. The copy follows the field's own
+  scroll with a transform: it asks the field's `scrollLeft` on every frame while the field has the focus and for a few after (a field scrolls back to its start then), and on its
+  `input` and `scroll` events. A line break in the value (an address can carry one) is not drawn, as the field drops it. The e2e checks the copy against the
+  field in every engine: the text of the copy is the text of the field, and the two paint the same picture (the field's own text in white against the copy in white: the best
+  shift between them is none across a line, and under half a CSS pixel across: the pieces of the copy each begin on a pixel of the screen).
+- **High contrast.** Under `forced-colors: active` the colours of the page are not the author's: the copy is not drawn and the field shows its own text
+  (`FieldText`, the selection `Highlight`).
+- **The selection** is a share of `--accent` (`--field-selection`, 25 %), so that the coloured text shows through it; `contrast.test.ts` holds every colour of a
+  piece at 4.5:1 on the field and under the selection, the grey of the ghost at 4.5:1 on the field and the lines at 3:1.
+
+Still to come (PLAN 11.3–11.5): saved and recent searches, and on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`,
+inserting at the caret.

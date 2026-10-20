@@ -4,11 +4,12 @@
 import { analyseQuery, countNext as countNextSuggestions } from './analyse-query';
 import { timeAssist } from './search-timing';
 
-export { acceptSuggestion } from '@atlas/core';
+export { acceptSuggestion, ghostText } from '@atlas/core';
 export { hasUncounted, optionsOf } from './analyse-query';
 export { default as Combobox } from './components/combobox.svelte';
 export { default as IssueBadge } from './components/issue-badge.svelte';
 export { default as QueryIssues } from './components/query-issues.svelte';
+export { default as QueryMirror } from './components/query-mirror.svelte';
 
 // The work of a keystroke and each step of the counts that follow it are timed as `atlas:assist`: the e2e holds each to the
 // budget beside the search.

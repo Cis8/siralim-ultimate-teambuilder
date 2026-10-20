@@ -27,6 +27,11 @@ Define as CSS custom properties; never hard-code hex values in components.
 | `--scrim` | `rgb(4 6 9 / 0.62)` | the page behind a modal sheet |
 | `--issue-error-surface` / `-border` | `#2a1816` / `#6e3a33` | a row of the issues list that is an error (text `--text`, the word and icon `--status-crit`) |
 | `--issue-warn-surface` / `-border` | `#2a2412` / `#5a4a22` | the same for a warning (the word and icon `--status-warn`) |
+| `--syntax-field` · `-operator` · `-negation` · `-paren` · `-value` · `-text` | `--accent` · `--status-warn` · `--status-crit` · `--text-muted` · `--text-strong` · `--text-strong` | the pieces of a query in the search field (§ Query editor); aliases, so that the palette has one source |
+| `--syntax-phrase` | `#a7e3c4` | a quoted value or word in the search field; the one colour of the editor that no other token has |
+| `--syntax-ghost` | `--text-faint` | the rest of the suggestion Tab takes, after the text |
+| `--underline-error` / `-warning` | `--status-crit` / `--status-warn` | the line under what is wrong in the search field (≥ 3:1 on `--surface-1`) |
+| `--field-selection` | `--accent` at 25 % | the selection of the search field: a share, so that the coloured text shows through it (text ≥ 4.5:1 under it) |
 
 Keyword kinds: debuff `#ff9b87`, buff `#74dbb0`, mechanic `#a9c1ff`, event `#f3c969` (the role shapes of a buff), flag muted italic.
 Class identity dots: Chaos `#ef6b5b`, Death `#b49cf5`, Life `#e9c46a`, Nature `#63c98a`, Sorcery `#5fb0f5`,
@@ -48,7 +53,7 @@ use the fallback `#8fa1b3`.
 - Base 14 px desktop, 14–15 px mobile; trait names 15 px semibold; descriptions 13.5–14.5 px, line-height 1.6.
 
 ## Components (build once, reuse)
-`QueryInput` (combobox), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
+`QueryInput` (combobox), `QueryMirror` (the coloured copy of its text), `Chip` (field + value, toggle NOT, remove), `KeywordToken` (kind + role, button),
 `FacetButton`, `SectionToggle`, `RoleToggle` (applies / uses with counts), `Segmented`, `ResultRow`, `TraitCard` (compact),
 `AddButton` and `PartyNotes` (what a card does with the party), `FocusCard`, `RelationSide`, `TraitLane`, `KeyPill`,
 `ExplorationTrail`, `ArtifactFilter`, `SlotRow`, `MemberCard`, `StatTile`, `IssueRow`, `SuggestionCard`, `CoverageMatrix`,
@@ -155,6 +160,23 @@ APG). Nothing is swapped, so the focus is not lost and nothing moves; a layer th
   line inside the frame of the field says the size of the list ("9 suggestions") once it has kept it for half a second.
 - **Focus** never leaves the field. Typing makes the first option active, so Tab and Enter take it; ↑ ↓ move (and wrap), Esc puts the list away.
   After an accept, a caret move, Esc or a blur nothing is active and Tab is the browser's again.
+
+### Query editor
+What the text of the search field looks like once the assist layer is there (QUERY_LANGUAGE §8, PLAN 11.2). The field is still the one `<input>`: it keeps
+the typing, the caret, the selection, the undo and the keyboard. Its text turns transparent and a coloured copy of it, the **mirror** (`QueryMirror`), is
+drawn under it in the same box.
+- **Pieces.** Each kind of piece of the query has a colour of its own (`--syntax-*`): a field in `--accent`, an operator in `--status-warn`, a negation in
+  `--status-crit`, a phrase in `--syntax-phrase`, the parentheses in `--text-muted`, a value or a word in `--text-strong`. Only the colour changes, never the weight
+  or the style: a letter has to be as wide in the copy as in the field. The colour is a help for the eye and carries nothing alone (the chips under the field say the
+  same terms in words).
+- **Under what is wrong**, the text at fault and no more: a wavy line in `--underline-error` for an error, a dotted one in `--underline-warning` for a warning. The two
+  differ in shape and colour; the badge and the list of issues say it in words. The line is 5 px under the text, so that it does not run into the letters.
+- **Ghost text.** The rest of the suggestion that Tab takes, in `--syntax-ghost`, after the text; only when the caret is at the end.
+- **Caret and selection.** The caret is `--text-strong`. The selection is `--field-selection`, a translucent accent: the coloured text is still read through it.
+- **Same metrics.** The field and the mirror wear `.query-text` (`styles/query-text.css`), and nothing else may set a font metric on either: a copy that is a pixel off
+  is a text that is hard to read and to put a caret in. The mirror follows the field's scroll.
+- **High contrast.** With `forced-colors: active` the mirror is not drawn and the field shows its text itself, in `FieldText`.
+- **Nothing moves** when the layer arrives: the mirror is positioned over the field's box and takes no room, and the field's size is the same with and without it.
 
 ### Party panel
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and

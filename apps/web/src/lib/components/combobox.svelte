@@ -32,6 +32,7 @@
     id,
     label,
     onaccept,
+    onactive,
   }: {
     input: HTMLInputElement | undefined;
     options: readonly ComboboxOption[];
@@ -41,6 +42,8 @@
     label: string;
     /** The option taken, and its place in `options`. */
     onaccept: (option: ComboboxOption, index: number) => void;
+    /** Told whenever the option that Tab would take changes, and which it is (none: Tab is the field's), so that the host can show what it adds. */
+    onactive?: (index: number | undefined) => void;
   } = $props();
 
   let status = $state.raw<ComboboxState>(shut);
@@ -113,6 +116,10 @@
         field.removeAttribute(name);
       }
     };
+  });
+
+  $effect(() => {
+    onactive?.(view.active);
   });
 
   // What the field says about the list now.

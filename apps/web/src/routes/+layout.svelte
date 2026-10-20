@@ -3,6 +3,7 @@
   import '../lib/styles/tokens.css';
   import '../lib/styles/base.css';
   import '../lib/styles/keyword.css';
+  import '../lib/styles/query-text.css';
   import type { Snippet } from 'svelte';
   import ExternalLink from '../lib/components/external-link.svelte';
   import SiteNav from '../lib/components/site-nav.svelte';

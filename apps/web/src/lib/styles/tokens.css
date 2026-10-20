@@ -29,6 +29,24 @@
   --issue-warn-surface: #2a2412;
   --issue-warn-border: #5a4a22;
 
+  /*
+   * A query in the search field (docs/DESIGN.md § Query editor), drawn on --surface-1 by the mirror under the transparent input:
+   * the colour of each kind of piece, the grey of the rest of a suggestion, and the line under what is wrong. Neither says anything
+   * alone: the badge and the list of issues say it in words.
+   */
+  --syntax-field: var(--accent);
+  --syntax-value: var(--text-strong);
+  --syntax-text: var(--text-strong);
+  --syntax-phrase: #a7e3c4;
+  --syntax-operator: var(--status-warn);
+  --syntax-paren: var(--text-muted);
+  --syntax-negation: var(--status-crit);
+  --syntax-ghost: var(--text-faint);
+  --underline-error: var(--status-crit);
+  --underline-warning: var(--status-warn);
+  /* The selection of the field lets the coloured text under it show, so it is a share of --accent and not a colour of its own. */
+  --field-selection: color-mix(in srgb, var(--accent) 25%, transparent);
+
   --kw-debuff: #ff9b87;
   --kw-buff: #74dbb0;
   --kw-mechanic: #a9c1ff;

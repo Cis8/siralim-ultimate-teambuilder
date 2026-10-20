@@ -1,0 +1,24 @@
+/*
+ * The text of the search field (docs/DESIGN.md § Query editor). Once the assist layer is there the field is drawn twice: the input,
+ * transparent, takes the typing, the caret and the selection, and a coloured copy of its text, the mirror, shows under it. The two
+ * line up only if they lay the text out the same way, so the input and the mirror both wear this class and nothing else may
+ * set a metric on either: the face and size, no ligature (a coloured piece of text would break one that the input forms), one
+ * line, and the 16 px that keep iOS from zooming the page in when the field takes the focus.
+ */
+.query-text {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-kerning: none;
+  font-variant-ligatures: none;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-indent: 0;
+  text-transform: none;
+  white-space: pre;
+}
+
+@media (pointer: coarse) {
+  .query-text {
+    font-size: 16px;
+  }
+}
