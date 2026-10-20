@@ -16,6 +16,15 @@ import {
   suggestions,
 } from './support/explore-page';
 import {
+  historyRows,
+  keepSearches,
+  openSearchesSheet,
+  saveRefusal,
+  saveSearchButton,
+  savedAs,
+  searchesSheet,
+} from './support/history-page';
+import {
   addButton,
   addElsewhereButton,
   addToParty,
@@ -197,6 +206,9 @@ test.describe('touch targets on a phone', () => {
       /^Filters/,
       /^Explore/,
       /^Party/,
+      // The star is there while the field holds a search; the button beside it opens the sheet of searches.
+      /^Save this search$/,
+      /^Manage searches$/,
     ]);
 
     // Scrolled into the list, the button at the top right of the window is there to be measured as well.
@@ -227,6 +239,39 @@ test.describe('touch targets on a phone', () => {
 
     await expectTargetsLargeEnough(page.locator('body'), [/^Search traits$/, /^Debuff/, /^Trait/]);
     expect(await widerThanTheWindow(page)).toBe(false);
+  });
+
+  test('has the list of recent and saved searches, the refusal to save one and the sheet of searches at least 44 × 44 px', async ({
+    page,
+  }) => {
+    const places = Array.from({ length: 50 }, (_, at) => `class:life ${String(at)}`);
+    await keepSearches(page, { recent: ['applies:snared', 'weak'], saved: savedAs(...places) });
+    await openExplore(page);
+    await searchBox(page).click();
+    await expect(historyRows(page).first()).toBeVisible();
+    await expectTargetsLargeEnough(page.locator('body'), [
+      /^Search traits$/,
+      /^Recent applies:snared$/,
+      /^Saved class:life/,
+    ]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+
+    await searchBox(page).pressSequentially('uses:weak');
+    await saveSearchButton(page).click();
+    await expect(saveRefusal(page)).toBeVisible();
+    await expectTargetsLargeEnough(page.locator('body'), [/^Save this search$/, /^Manage searches$/]);
+    expect(await widerThanTheWindow(page)).toBe(false);
+
+    await openSearchesSheet(page);
+    await expectTargetsLargeEnough(searchesSheet(page), [
+      /^class:life 0$/,
+      /^applies:snared$/,
+      /^Remove “class:life 0” from the saved searches$/,
+      /^Remove “weak” from the recent searches$/,
+      /^Export searches$/,
+      /^Import searches$/,
+      /^Done$/,
+    ]);
   });
 
   test('has text of 16 px or more in every text field and select, below which iOS zooms the page in on focus', async ({

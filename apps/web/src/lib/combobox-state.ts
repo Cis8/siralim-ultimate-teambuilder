@@ -71,9 +71,18 @@ export function comboboxView({ open, active }: ComboboxState, size: number): Com
   return { expanded, active: expanded && active !== undefined && active < size ? active : undefined };
 }
 
-/** The person typed: the list is wanted, and the first option, the best fit, is the one Tab takes (the ghost text shows it). */
-export function typed(): ComboboxState {
-  return { open: true, active: 0 };
+/**
+ * The person typed: the list is wanted, and the first option, the best fit, is the one Tab takes (the ghost text shows it). When the
+ * options are a list to browse (`browsing`: the history that an empty field offers) they complete nothing that was typed, so none
+ * is active and Tab is still the field's own.
+ */
+export function typed(browsing = false): ComboboxState {
+  return { open: true, active: browsing ? undefined : 0 };
+}
+
+/** The list was asked for by a press in the field: it shows, and the person has chosen nothing in it yet. */
+export function opened(): ComboboxState {
+  return { open: true, active: undefined };
 }
 
 /**

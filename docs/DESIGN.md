@@ -178,6 +178,25 @@ drawn under it in the same box.
 - **High contrast.** With `forced-colors: active` the mirror is not drawn and the field shows its text itself, in `FieldText`.
 - **Nothing moves** when the layer arrives: the mirror is positioned over the field's box and takes no room, and the field's size is the same with and without it.
 
+### Recent and saved searches
+What the field does with the searches a person has made and kept (SPEC §8.3 *In the field*, PLAN 11.4). Remembering is in the first script; the buttons, the list and the
+sheet arrive with the assist layer, and take room from the text inside the field, not from the page.
+- **Buttons** (`HistoryButtons`), inside the frame at its right end after the issues badge, each as tall as the field and 44 px wide (over the border, as the badge is), an
+  18 px glyph in `--text-muted`. The **star** is there while the field holds something: an outline star, filled and in `--status-warn` when the text is saved (the shape says it
+  as the colour does); its name is "Save this search" whatever the state (`aria-pressed` says it), its `title` the same. A press leaves the focus in the field
+  (`keepFieldFocus`). **Manage searches** (a clock with an arrow, `aria-haspopup="dialog"`) opens the sheet; the focus comes back to it. Each has a 2 px ring of its own around
+  the glyph (`outline-offset: -8px`) besides that of the field. The order of the tab key is the field, the badge, the star, Manage searches, the fixes, the chips.
+- **The line of a refusal** (`.refusal`, under the list of issues): `--surface-2` with a `--border-strong` line, 13 px, the sentence and, for the fifty places taken, a quiet 44 px
+  button "Manage searches". It is not a live region of its own: the sentence is said through the polite line of the field, and the line goes when the text changes.
+- **List of a blank field**: the `Combobox` of Suggestions, named "Recent and saved searches", with a badge "Recent" or "Saved" (neutral), the search in mono and, for a saved
+  search with a name of its own, the name in the place of the detail. No count (a row is a whole search). Nothing is active until the arrows choose.
+- **The sheet** (`SearchesSheet`, a `BottomSheet` of the `choice` kind: a sheet from the foot of the window under 700 px, a dialog 440 px wide from there, with a button "Done" that
+  only lets go): sections **Saved (N of 50)** and **Recent (N)**, each a heading (focusable, for the focus that the last removal leaves), then a row for each search: the search in
+  mono (`overflow-wrap: anywhere`: it may be 2,000 characters) as a button at least 44 px tall, with the name above it in `--text-muted` when it has one, and a 44 px square
+  "Remove “…” from the saved searches" (the quoted search is cut at 60 characters in a name). A list with nothing says so in `--text-muted`. Under them, **Keep a copy**: the sentence
+  that importing adds and replaces nothing, two 44 px buttons (Export searches, Import searches: a button that opens the file chooser of a hidden input) and the sentence of what
+  the last one did, which also goes to the polite line of the sheet.
+
 ### Party panel
 - **Slots** (`party-slot`): a row per slot, `--surface-2`, with the slot name in mono capitals (`--text-faint`), a class dot and
   the trait name. The slot is a toggle that makes it the target: `aria-pressed`, filled `--accent-surface` with a

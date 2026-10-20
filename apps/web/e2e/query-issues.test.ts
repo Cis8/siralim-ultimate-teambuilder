@@ -14,6 +14,7 @@ import {
   suggestionList,
   suggestions,
 } from './support/explore-page';
+import { manageSearchesButton, saveSearchButton } from './support/history-page';
 import { tabTo } from './support/keyboard';
 
 // Acceptance criterion 1 (docs/ROADMAP.md) and PLAN 9.6: a query that is wrong says so inside the search field, lists what is
@@ -87,9 +88,13 @@ test.describe('the issues of a query', () => {
     await page.keyboard.press('Escape');
     await expect(suggestionList(page)).toBeHidden();
 
-    // The badge follows the field, then the fixes of the list that opened under it.
+    // The badge follows the field, then the star and the button of the searches, then the fixes of the list that opened under it.
     await page.keyboard.press('Tab');
     await expect(issuesBadge(page)).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(saveSearchButton(page)).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(manageSearchesButton(page)).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(fixButton(page, FIX_FIELD)).toBeFocused();
     await page.keyboard.press('Enter');
@@ -97,9 +102,7 @@ test.describe('the issues of a query', () => {
     await expect(searchBox(page)).toHaveValue('class:life (weak OR snared');
     await expect(searchBox(page)).toBeFocused();
 
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await expect(fixButton(page, FIX_PARENTHESIS)).toBeFocused();
+    await tabTo(page, fixButton(page, FIX_PARENTHESIS), { limit: 6 });
     await page.keyboard.press('Space');
 
     await expect(searchBox(page)).toHaveValue(MENDED);

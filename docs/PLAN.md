@@ -13,30 +13,34 @@ session (after `CLAUDE.md`), update it before ending one.
   phase closes, replace its plan with a 3-line summary.
 
 ## Resume here
-- **Phase 2 (D14–D52, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1 (Explain), 11.2 (the mirror) and 11.3 (the history
-  in `core`) of M11; the next slice is 11.4 (the history in the field), then M11 to its end** (D15). 11.3 is `core` only, so nothing on a
-  page changed; the last Lighthouse rerun (11.2): `/` 0.89–0.90 with a layout shift of 0.035. Sizes: initial JS 90.1 kB of 150, lazy 33.0
-  of 50, total 123.1 of 200: **the editor spends what is left of the lazy 50 kB, so revisit the limits at 11.6.** **On a phone the inline
-  list of suggestions is all there is until 11.5** (nine rows reach the fixed bars, which stay on top):
-  the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8; the Synergy pages are rows 9–14, the
-  links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
+- **Phase 2 (D14–D57, *Phase 2 — slices* below): M9, M10, M12 and M13 are done, and 11.1–11.4 of M11 (Explain, the mirror, the history in
+  `core`, the history in the field); the next slice is 11.5 (the mobile search sheet), then 11.6 closes M11 and Phase 2** (D15). Lighthouse
+  after 11.4: `/` 0.90 with a layout shift of 0.035, as before. Sizes: initial JS 93.2 kB of 150, lazy 34.9 of 50, total 128.1 of 200:
+  **the editor spends what is left of the lazy 50 kB, so revisit the limits at 11.6.** **On a phone the inline field is all there is until
+  11.5**: its two new buttons leave about 150 px of text on a 320 px screen (46 with the issues badge) and nine rows of suggestions reach
+  the fixed bars (which stay on top); the owner's check of it on a real iPhone is the first one that matters (checklist iPhone 8 and 16–18;
+  the Synergy pages are rows 9–14, the links row 15). Phase 1 stays open for slice 8.4 only: credits (ask the owner to confirm the authors' names first), README, the
   criteria-to-tests table, ROADMAP ticks. The owner deferred it on 2026-10-18; it is not dropped (D25).
-- For the owner to veto, none blocking: D18–D52 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
+- For the owner to veto, none blocking: D18–D57 (chosen by Claude), above all **D36: Exotic, Backer, Avatar and Zantai are groupings of
   the sheet, not families, so their Same family lists nobody and says so — tell me if one of them is a real family**; D44–D48 (the phone:
   a tab press is a history step, the focus card folds only its description, the pickers are sheets); D49–D50 (the Synergies link of a
   result and of a slot; a search typed a moment before a link is followed is dropped); 8b.10 made "immune to debuffs" a mention (SPEC
-  §4); 8b.11 chose that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR and that each is a chip.
+  §4); 8b.11 chose that *Any* is pressed exactly when no actor is, that the actors of one event side are an OR and that each is a chip;
+  D53–D57 (the history: what is remembered and when, the list of an empty field that has nothing active, the star only while the field
+  holds something, *Manage searches* always in the field, two tabs not erasing each other).
   **Needs an answer:** `/` is a character-key shortcut that works from anywhere, and WCAG 2.1.4 (level A) wants one to be switchable
   off or remappable. Proposal: a "Keyboard shortcut: /" switch in the footer, remembered in `localStorage` (about one slice); or drop
   the shortcut. Until then it ships as QUERY_LANGUAGE §6 says. **D26 is live now:** after typing, Tab and Enter take the first suggestion, so
   leaving the field with text in it takes Esc first (Shift+Tab always leaves). If that feels wrong in use, the alternative is no active
-  option until ↓ (a one-line change in `combobox-state.ts`' `typed()`), at the price of Tab not taking what the ghost text will show.
+  option until ↓ (a one-line change in `combobox-state.ts`' `typed()`), at the price of Tab not taking what the ghost text will show. It
+  also means that Enter rarely *sends* a search (11.4): most searches are remembered on leaving the field.
 - Waiting on the owner, none blocking: run `docs/SCREEN_READER_CHECKLIST.md` (NVDA, VoiceOver) and report what sounded wrong; on a real
   iPhone (Safari and Chrome) check that focusing the search field and the sort no longer zooms the page (8b.1), and that pressing a Fix
   of the issues list (type `clas:life (weak OR snared`) keeps the keyboard up and the caret where it was (9.6); that on the same
   phone the coloured text of the field lies exactly under the caret and the selection, also once a long query has scrolled (11.2:
-  checklist iPhone 16; desktop 42–43 for the reader and a Windows high-contrast theme); when 11.5 lands, the mobile search sheet on
-  iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
+  checklist iPhone 16; desktop 42–43 for the reader and a Windows high-contrast theme); that the star, *Manage searches*, the list of an
+  empty field, Export and Import work on the phone too and leave room to type (11.4: checklist iPhone 17–18, desktop 44–49); when 11.5
+  lands, the mobile search sheet on iOS Safari and Chrome Android. GAME_RULES open questions 1-5 (allies vs enemies; "afflicted with" as a
   trigger; when a mastery is active; Diabolic Horde; Dusty Struggle's wording).
 - Every green commit on `main` is deployed to Pages (D2). Before coding: `git pull`, `gh run list --branch main -L 3` (main must be
   green; `gh` may be missing, see Notes), `gh pr list` (read a data-refresh PR's report before merging it).
@@ -91,9 +95,14 @@ session (after `CLAUDE.md`), update it before ending one.
 | D50 | (default) Leaving Explore for another route drops the text waiting to be written to the address (`abandon`), it does not flush it into the entry: a flush would be a second navigation racing the link's. So a link followed within 400 ms of the last key leaves Back with the search as the address last had it. A person takes longer to reach a link; the e2e waits for the address | SPEC §7 |
 | D51 | (default) The Synergy route has no size budget of its own: `lazyJs` (50 kB) and `totalJs` (200 kB) bound it, and a first visit to any page fetches at most the total, under the 150 kB of the first page; a route's chunks cannot be told apart without SvelteKit's internals. Lighthouse CI measures four URLs (`/`, `/synergy`, a trait, a keyword) behind `tools/serve-build`; the trait and the keyword page, drawn after the dataset arrives, need performance 0.8 where the others need 0.85 (measured 0.87 and 0.89, a slower runner would fall under 0.85 for no fault of the code); all four hold to a layout shift of 0.1 | `budgets.ts`, `lighthouserc.cjs`, SPEC §9 |
 | D52 | (default) Saved searches: a 51st is **refused** (`full`), never swapped for one the person chose to keep, and the field will say so (11.4); recent searches are the opposite, the oldest of ten simply goes. An import **merges** with what is there (current first, a repeat keeps its name) and refuses a file that is not this app's whole, leaving everything as it was | SPEC §8.3 |
+| D53 | (default) The history is *remembered* by the first script and *used* by the lazy layer. A search is remembered on Enter (not the Enter that took a suggestion or ended an IME composition), on leaving the field with its text changed since it was entered, on saving, and on taking one from the list or the sheet; a query that came with the address and was not touched is not | SPEC §8.3 |
+| D54 | (default) A blank field with a history lists it in place of the fields: five recent searches that are not saved at most, then the saved ones, nine rows; a saved search once. It opens on a press and on ↓ / Alt+↓, never on a plain focus; **nothing is active**, also when typing has just emptied the field, so Tab and Enter stay the field's own (WCAG 2.1.2) | SPEC §8.3, QUERY_LANGUAGE §6 |
+| D55 | (default) The star is there only while the field holds something; its name is fixed and `aria-pressed` is the state; saving also remembers the search as recent; a refusal is a line under the field, said aloud, that goes when the text changes (for `full`, with a *Manage searches* button) | SPEC §8.3, DESIGN § Recent and saved searches |
+| D56 | (default) *Manage searches* is a button in the field, always there, that opens a `choice` `BottomSheet`: the two lists (use, forget), Export (a download) and Import (a merge; a file over 6 MB is refused unread). A search taken from it is set through the page and the focus goes back to the button, so that a phone's keyboard does not rise | SPEC §8.3 |
+| D57 | (default) A change is made to what the browser keeps now, not to what the page last saw, so that two tabs do not erase each other's saved searches; a browser that keeps nothing leaves the history of the visit in memory | SPEC §8.3 |
 | D9–D13 | Defaults accepted: Phase 1 coverage = covered/missing only; free text is substring; overrides need `reason:`; data-refresh PR runs its own checks; GAME_RULES open questions don't block Phase 1 | SPEC, here |
 
-D18–D52 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
+D18–D57 are defaults Claude chose while building Phase 2 (2026-10-18/20). None blocks; the owner may veto or change any, and the
 slice that builds it then follows.
 
 ## Notes (toolchain gotchas)
@@ -160,6 +169,10 @@ slice that builds it then follows.
 - e2e, the announced count (`announcedCount`, the live region): it is empty until the count has stood still for 400 ms, then it says the
   whole list until the search's count has stood still as long. Reading it right after a `fill` gives either, depending on the speed of the
   machine (a fast one passes, the CI runner failed): wait for `toContainText('of')` **and** `not.toContainText('<total> of')` first.
+- e2e, live regions: `getByRole('status')` is the result count and nothing else, and `.query > [aria-live]` / `.query .field [aria-live]` are the
+  field's two polite lines, all strict locators: a new live region needs `aria-live="polite"` without a role and a place outside those two
+  boxes, or a message goes through the one that is there (`announced` in `query-input.svelte`). Adding a stop to the field (the star, Manage
+  searches) lengthens the Tab walks that count presses (`keyboard.test.ts` › "can skip the filters").
 - e2e: `rows` is the list items of the *Results* region (the party panel has lists too). Playwright will not click a button
   that says `aria-disabled="true"`: `click({ force: true })` is the person pressing it. A poll that waits for an address
   parameter can be satisfied by an earlier write: wait for the value the step just wrote.
@@ -484,14 +497,20 @@ so nothing of a keyword's page is cut. Sizes: initial JS 89.6 kB, lazy 32.1 (the
       so that tuning the lint never changes what a file may hold) and 2,000,000 for a file (a test writes the biggest one the app can and
       reads it back). Mutation-checked (18 mutants, none survived) and property-tested (limits hold after any steps; any file imports
       without throwing and idempotently; export then import is the identity).
-- [ ] **11.4** History UI. `search-history-store.ts` (`localStorage`, lazy and throw-safe like `last-party-store`; it can keep the text of
-      `exportHistory` and read it back with `importHistory(text, emptySearchHistory)`, so that a damaged storage is refused like a damaged
-      file); recorded on Enter, on
-      blur after a change and on saving; an empty field lists Recent and Saved in the dropdown (no active option: Tab is not
-      captured); a star button (`aria-pressed`, "Save this search"); a "Manage searches" panel (`BottomSheet`) with remove, **Export**
-      (a download, `trait-atlas-searches.json`) and **Import** (a file input; "Imported 3 saved, 5 recent" or the refusal, nothing
-      changed). *T:* the store over a storage that throws; e2e: save → reload, export → clear → import restores, a corrupt file is
-      refused; axe, keyboard, touch.
+- [x] **11.4** History UI. `search-history-store.ts` (the text of the file Export writes under one `localStorage` key; a damaged value is
+      refused as a damaged file would be and reads as empty; `undefined` when the storage cannot be read), `search-history-session.ts`
+      (reactive, made once in `composition-root` like the party's), `history-options.ts` (the rows of a blank field); in the lazy layer
+      `HistoryButtons` (the star and *Manage searches*), `SearchesSheet` (a `BottomSheet` `choice` with `SearchRow`) and the `browsable`
+      mode of the `Combobox`. The rules are in SPEC §8.3 *In the field*, D53–D57. Deviations worth knowing: **Enter rarely sends a search**:
+      with the list of suggestions open it takes the active one (D26), so a search is sent by Esc then Enter, and most searches are
+      remembered on leaving the field; the star is there only while the field holds something (so `empty` cannot happen in the page); the
+      Manage button is always in the field (Import has to be within reach of an empty history) and the two buttons take 88 px of it:
+      **on a 320 px phone the text has about 150 px, 46 with the issues badge: 11.5 takes the phone out of this field**; no `role="status"`
+      and no second live region in `.query` / `.field` (the e2e locators are strict about both): the words of the star and of a refusal
+      go through the field's one polite line. e2e (`search-history.test.ts`, 37 × 3 projects): remembering, the list of an empty field
+      (no active option, Tab leaves), the star, the full refusal, the sheet, export → remove all → import restores, five refused files,
+      a storage that throws; axe on the list, the star, the refusal and the sheet; the Tab walk of the sheet; the targets of the sheet.
+      Mutation-checked: `typed(browsing())` made `typed()` fails "stays so when the typing has just emptied the field".
 - [ ] **11.5** Mobile search sheet. Under 700 px (coarse) the field opens a full-screen modal `<dialog>` (the `BottomSheet` `full`
       variant) with the same editor: back, the field and clear, the first issue as a banner with its Fix and "+N more", "Reads as",
       suggestion rows (kind badge, label, detail, count with unit), a docked footer with "Show N traits" and the syntax `toolbar` (`(`

@@ -19,6 +19,7 @@ import {
   scrolledBy,
   searchBox,
 } from './support/explore-page';
+import { keepSearches, manageSearchesButton, saveSearchButton, savedAs, searchesSheet } from './support/history-page';
 import { problemsOf, tabTo, walkTabOrder, type TabWalk } from './support/keyboard';
 import {
   addButton,
@@ -81,8 +82,9 @@ test.describe('the tab key', () => {
     test.skip(browserName === 'webkit', 'Safari’s tab key does not stop at links unless the person asks it to.');
     await openExplore(page, await addressOf(request, 'explore'));
 
-    // After the query's own controls: the link to the content, the field, three chips of two buttons, the sort and the copy button.
-    const presses = await tabTo(page, page.getByRole('link', { name: 'Skip filters' }), { limit: 15 });
+    // After the query's own controls: the link to the content, the field with its star and the button of its searches, three chips of
+    // two buttons, the sort and the copy button.
+    const presses = await tabTo(page, page.getByRole('link', { name: 'Skip filters' }), { limit: 17 });
     expect(presses).toBeGreaterThan(1);
     await page.keyboard.press('Enter');
 
@@ -154,6 +156,41 @@ test.describe('the tab key', () => {
     expect(problemsOf(walk)).toEqual([]);
     expect(missed(walk, browserName)).toEqual([]);
     expect(await axeViolations(page)).toEqual([]);
+  });
+
+  test('reaches every control of the sheet that manages the searches, and none of the page behind it', async ({
+    page,
+    browserName,
+  }) => {
+    await keepSearches(page, { recent: ['applies:snared', 'weak'], saved: savedAs('stack:no') });
+    await openExplore(page);
+    await tabTo(page, manageSearchesButton(page), { limit: 20 });
+    await page.keyboard.press('Enter');
+    await expect(searchesSheet(page)).toBeVisible();
+
+    const walk = await walkTabOrder(page, { within: 'dialog[open]' });
+
+    // The three searches with the button that forgets each, Export, Import and Done.
+    expect(walk.stops.length).toBeGreaterThanOrEqual(9);
+    expect(problemsOf(walk)).toEqual([]);
+    expect(missed(walk, browserName)).toEqual([]);
+    expect(await axeViolations(page)).toEqual([]);
+  });
+
+  test('reaches the star and the button of the searches right after the field, and Space presses the star', async ({
+    page,
+  }) => {
+    await keepSearches(page, { recent: [], saved: savedAs('stack:no') });
+    await openExplore(page, './?q=weak');
+    await tabTo(page, searchBox(page), { limit: 20 });
+
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Tab');
+    await expect(saveSearchButton(page)).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(saveSearchButton(page)).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Tab');
+    await expect(manageSearchesButton(page)).toBeFocused();
   });
 
   test('reaches every slot of the sheet that offers them, and none of the page behind it', async ({

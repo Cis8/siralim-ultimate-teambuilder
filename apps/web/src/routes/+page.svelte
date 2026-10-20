@@ -35,7 +35,7 @@
   import TabBar from '../lib/components/tab-bar.svelte';
   import { showsBackToTop } from '../lib/back-to-top';
   import { createAddressWriter } from '../lib/address-writer';
-  import { loadSearchService, partySession } from '../lib/composition-root';
+  import { loadSearchService, partySession, searchHistory } from '../lib/composition-root';
   import { copy } from '../lib/copy';
   import type { KeywordActions } from '../lib/keyword-actions';
   import { pageAddress } from '../lib/page-address';
@@ -327,6 +327,7 @@
           value={explore.query}
           {service}
           filters={explore}
+          history={searchHistory}
           onchange={(query: string) => {
             explore = { ...explore, query };
             urlWriter.typed(pageState());

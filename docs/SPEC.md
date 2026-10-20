@@ -547,7 +547,7 @@ among those the filters of `state` leave, which is what a search would list if `
 Syntax highlighting in the input, autocomplete by context, inline diagnostics with one-click fixes, plain-language
 "reads as", ghost completion, recent and saved searches, mobile syntax toolbar. Full rules in `QUERY_LANGUAGE.md`.
 
-**Search history** (`core/src/history/`; the field's use of it comes with PLAN 11.4). `SearchHistory { recent, saved }` is immutable data,
+**Search history** (`core/src/history/`, used by the field as *In the field* below says). `SearchHistory { recent, saved }` is immutable data,
 and two searches are the same when their trimmed text is exactly the same, letter case included.
 - *Recent:* the newest 10, newest first; a search already there moves to the front. *Saved:* up to 50 `{name, query}` in the order they were
   saved (the name is the query until a search can be renamed); toggling a saved search takes it off, and a 51st is refused (`full`), never
@@ -561,6 +561,34 @@ and two searches are the same when their trimmed text is exactly the same, lette
   saved searches, a search over 2,000 characters, a text over 2,000,000 characters) is refused whole and changes nothing. A file is read
   leniently otherwise: a byte order mark, blanks around a search, a blank search, a search listed twice and properties it does not know are of
   no matter.
+
+**In the field** (PLAN 11.4; `search-history-session.ts`, `search-history-store.ts`, `query-input.svelte`, `searches-sheet.svelte`).
+- *Remembering* is done by the first script, whether or not the assist layer arrives: a search becomes the newest recent one when **Enter** is
+  pressed in the field (not the Enter that took a suggestion, nor the one that ends an IME composition), when the field is **left with its text
+  changed** since it was entered (a query that arrived with the address and was not touched is not remembered), when it is **saved**, and when it
+  is **taken from the list or the sheet**. Esc then Enter is how a search is sent while the list of suggestions is open: with a suggestion
+  active, Enter takes it (QUERY_LANGUAGE §6).
+- *Keeping.* One `localStorage` key, `trait-atlas:search-history`, holds the text of the file Export writes, so that a damaged value is
+  refused like a damaged file and read as an empty history; a browser that keeps nothing costs the convenience and nothing else (the history of
+  the visit is held in memory). Every change is made to what the browser keeps **now** and not to what the page last saw, so that a second
+  tab's saved search is not lost to the first tab's next change.
+- *The list of an empty field.* A blank field (blanks only count as blank) that has a history lists it: the newest recent searches (up to five
+  that are not saved), then the saved ones in the order they were saved, nine rows at most (the room one list leaves is the other's); a saved
+  search is listed once, as saved. It is a list to browse, not a completion: it opens on a press in the field and on ↓ / Alt+↓, never on a plain
+  focus; **nothing is active** until the arrows choose (also when typing has just emptied the field), so Tab and Enter are the field's own;
+  taking a row writes the whole search over the text and remembers it again. With no history a blank field offers what it always did.
+- *The star* sits inside the field while it holds something to keep: a toggle button ("Save this search": the name never changes, `aria-pressed`
+  says the state, and it is pressed whenever the text in the field is saved, however it came there). It does not take the focus from the field.
+  A search that is saved is also remembered as a recent one. When it cannot save, the field says why in a line under it, said aloud as well, which
+  goes when the text changes: the field is empty, the search is over 2,000 characters, or the fifty places are taken (`full`), with a
+  *Manage searches* button beside the sentence: a saved search is never swapped for the new one.
+- *The sheet* (*Manage searches*, a button inside the field beside the star, always there so that Import is within reach when the history is
+  empty) is a `BottomSheet` of the `choice` kind: **Saved (N of 50)** and **Recent (N)**, each search a button that writes it in the field and
+  shuts the sheet (the focus goes back to the button that opened it, as the keyboard of a phone must not be raised), each with a button that
+  forgets it (the focus goes to the search that takes its place, or to the heading of the list); **Export searches** hands the file over as a
+  download (`trait-atlas-searches.json`); **Import searches** reads a file chosen by the person and merges it, saying "Imported 3 saved, 5
+  recent." (and how many did not fit), "Nothing new in this file…" or why nothing was imported, in words that stay on the sheet and are said
+  politely. A file over three times the limit in bytes is refused without being read.
 
 ### 8.4 Synergy explorer (Phase 2)
 Three routes under `/synergy` (§7, ADR-0011) that share the party with Explore: the picker (`/synergy`), a trait

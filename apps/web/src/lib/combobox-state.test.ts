@@ -4,6 +4,7 @@ import {
   comboboxView,
   keyPressOf,
   moved,
+  opened,
   pressKey,
   shut,
   typed,
@@ -38,6 +39,28 @@ describe('what a combobox does with the person typing', () => {
     expect(comboboxView(shut, 5)).toEqual({ expanded: false, active: undefined });
     expect(comboboxView({ open: false, active: 2 }, 5).active).toBeUndefined();
     expect(comboboxView(open(7), 5)).toEqual({ expanded: true, active: undefined });
+  });
+});
+
+describe('what a combobox does when its options are a list to browse', () => {
+  it('opens on typing with no option active: the options do not complete the text, so Tab is still the field’s', () => {
+    expect(typed(true)).toEqual({ open: true, active: undefined });
+    expect(comboboxView(typed(true), 5)).toEqual({ expanded: true, active: undefined });
+  });
+
+  it('opens on a press in the field, with nothing chosen', () => {
+    expect(opened()).toEqual({ open: true, active: undefined });
+  });
+
+  it('still lets the arrows choose among the options, and Enter then takes the one chosen', () => {
+    const afterArrow = pressKey(opened(), key('ArrowDown'), 4);
+    expect(afterArrow.state).toEqual({ open: true, active: 0 });
+    expect(pressKey(afterArrow.state, key('Enter'), 4).accept).toBe(0);
+  });
+
+  it('leaves Tab and Enter to the field while nothing is chosen', () => {
+    expect(pressKey(opened(), key('Tab'), 4).handled).toBe(false);
+    expect(pressKey(opened(), key('Enter'), 4).handled).toBe(false);
   });
 });
 

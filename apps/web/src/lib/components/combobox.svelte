@@ -6,6 +6,7 @@
     comboboxView,
     keyPressOf,
     moved,
+    opened,
     pressKey,
     shut,
     typed,
@@ -25,12 +26,17 @@
    * text, made with `applyFieldEdit`). The `input` event of an edit made that way, this one or a fix, is not a keystroke and does
    * not bring the list back. The list is drawn against the nearest positioned ancestor, under it: the host makes the box that holds
    * the field (and whatever else sits under it) one.
+   *
+   * A host that offers a list to browse while the field is blank (the recent and saved searches) says so with `browsable`: the
+   * options then complete nothing, so a press in the blank field shows the list and typing into it, or emptying it, leaves
+   * nothing active; the arrows choose, and Tab stays the field's own (WCAG 2.1.2).
    */
   const {
     input,
     options,
     id,
     label,
+    browsable = false,
     onaccept,
     onactive,
   }: {
@@ -40,6 +46,8 @@
     id: string;
     /** The name of the list for a screen reader. */
     label: string;
+    /** Whether the options offered to a blank field are a list to browse and not completions of what is typed. */
+    browsable?: boolean;
     /** The option taken, and its place in `options`. */
     onaccept: (option: ComboboxOption, index: number) => void;
     /** Told whenever the option that Tab would take changes, and which it is (none: Tab is the field's), so that the host can show what it adds. */
@@ -87,15 +95,17 @@
       status = outcome.state;
       if (outcome.accept !== undefined) accept(outcome.accept);
     };
+    // The text decides, not the options: they are for the text before this key until the host has drawn again.
+    const browsing = (): boolean => browsable && field.value.trim() === '';
     const onInput = (): void => {
-      if (!isBeingEdited(field)) status = typed();
+      if (!isBeingEdited(field)) status = typed(browsing());
     };
     // The caret moved without typing, by a press in the text or by the keys that move it.
     const onKeyup = (event: KeyboardEvent): void => {
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) status = moved(status);
     };
     const onClick = (): void => {
-      status = moved(status);
+      status = browsing() ? opened() : moved(status);
     };
     const onBlur = (): void => {
       status = shut;

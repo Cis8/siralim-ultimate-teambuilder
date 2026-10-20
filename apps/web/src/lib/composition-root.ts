@@ -4,6 +4,8 @@ import { tick } from 'svelte';
 import { createStaticTraitRepository } from './data/static-trait-repository';
 import { createLastPartyStore } from './last-party-store';
 import { createPartySession } from './party-session';
+import { createSearchHistorySession } from './search-history-session';
+import { createSearchHistoryStore } from './search-history-store';
 import { timeSearches } from './search-timing';
 
 // `asset` takes only the names of files that exist when the app is built, and the dataset file is renamed whenever the
@@ -43,4 +45,9 @@ export function loadSearchService(): Promise<SearchService> {
 export const partySession = createPartySession({
   store: createLastPartyStore(() => (typeof localStorage === 'undefined' ? undefined : localStorage)),
   rendered: tick,
+});
+
+/** The recent and saved searches, made once like the party (SPEC §8.3). The page reads what the browser kept once it runs (`load`). */
+export const searchHistory = createSearchHistorySession({
+  store: createSearchHistoryStore(() => (typeof localStorage === 'undefined' ? undefined : localStorage)),
 });

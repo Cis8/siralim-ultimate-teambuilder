@@ -1,19 +1,25 @@
-import type {
-  ClickGoal,
-  DiagnosticSeverity,
-  EventGroup,
-  FacetKeywordKind,
-  KeywordActor,
-  KeywordHit,
-  KeywordMode,
-  KeywordRole,
-  MemberIndex,
-  PartyCommand,
-  SlotName,
-  SlotPosition,
-  SortKey,
-  SuggestionKind,
-  TraitKind,
+import {
+  MAX_RECENT,
+  MAX_SAVED,
+  MAX_SEARCH_LENGTH,
+  type ClickGoal,
+  type DiagnosticSeverity,
+  type EventGroup,
+  type FacetKeywordKind,
+  type ImportCounts,
+  type ImportRefusal,
+  type KeywordActor,
+  type KeywordHit,
+  type KeywordMode,
+  type KeywordRole,
+  type MemberIndex,
+  type PartyCommand,
+  type SaveRefusal,
+  type SlotName,
+  type SlotPosition,
+  type SortKey,
+  type SuggestionKind,
+  type TraitKind,
 } from '@atlas/core';
 import type { WhoChoice } from './event-who';
 import type { PageTab } from './page-tab';
@@ -27,6 +33,11 @@ const scopeOf = (artifactOnly: boolean): string =>
   artifactOnly ? 'among artifact-eligible traits' : 'in the compendium';
 
 const issueCount = (count: number): string => `${formatCount(count)} ${count === 1 ? 'issue' : 'issues'}`;
+
+/** A search in a sentence a screen reader reads out: in quotes, and cut short if it is a long one (it may be 2,000 characters). */
+const MAX_QUOTED_SEARCH = 60;
+const quotedSearch = (query: string): string =>
+  `“${query.length > MAX_QUOTED_SEARCH ? `${query.slice(0, MAX_QUOTED_SEARCH - 1)}…` : query}”`;
 
 const creatureLabel = (member: MemberIndex): string => `Creature ${String(member + 1)}`;
 const slotNames = { innate: 'Innate', fused: 'Fused', artifact: 'Artifact' } as const satisfies Record<
@@ -119,6 +130,54 @@ export const copy = {
   } as const satisfies Record<SuggestionKind, string>,
   /** How many traits a suggestion finds: the number as it is drawn at the end of the row, and the unit a screen reader reads after it. */
   suggestionFinds: (count: number) => ({ number: formatCount(count), unit: count === 1 ? 'trait' : 'traits' }),
+  /** Recent and saved searches (SPEC §8.3): the list of an empty field, the star beside the field, and the sheet that manages them. */
+  historyLabel: 'Recent and saved searches',
+  historyKinds: { recent: 'Recent', saved: 'Saved' } as const satisfies Record<'recent' | 'saved', string>,
+  saveSearch: 'Save this search',
+  searchSaved: 'Search saved.',
+  searchUnsaved: 'Search removed from the saved ones.',
+  saveRefusals: {
+    empty: 'There is nothing to save: the search field is empty.',
+    'too-long': `This search is too long to save: the limit is ${formatCount(MAX_SEARCH_LENGTH)} characters.`,
+    full: `You have ${String(MAX_SAVED)} saved searches already. Remove one to save this one.`,
+  } as const satisfies Record<SaveRefusal, string>,
+  manageSearches: 'Manage searches',
+  manageSearchesDone: 'Done',
+  savedSearchesHeading: (count: number) => `Saved (${String(count)} of ${String(MAX_SAVED)})`,
+  recentSearchesHeading: (count: number) => `Recent (${String(count)})`,
+  noSavedSearches: 'Nothing is saved yet. Press the star beside the search field to keep a search.',
+  noRecentSearches: 'No recent searches yet. A search is remembered when you press Enter in the field or leave it.',
+  /** The name of the button that takes a search from the lists (a long one is cut short: a name is read out). */
+  removeSearch: (query: string, from: 'recent' | 'saved') => `Remove ${quotedSearch(query)} from the ${from} searches`,
+  searchRemoved: (query: string, from: 'recent' | 'saved') =>
+    `Removed ${quotedSearch(query)} from the ${from} searches.`,
+  searchesFileHeading: 'Keep a copy',
+  searchesFileHint:
+    'The file holds the saved and the recent searches. Importing adds to what is here and replaces nothing.',
+  exportSearches: 'Export searches',
+  importSearches: 'Import searches',
+  searchesFileName: 'trait-atlas-searches.json',
+  searchesExported: (saved: number, recent: number) =>
+    `Exported ${String(saved)} saved and ${String(recent)} recent searches.`,
+  searchesImported: (added: ImportCounts, leftOut: ImportCounts) => {
+    const total = added.saved + added.recent;
+    const missed = leftOut.saved + leftOut.recent;
+    const imported =
+      total === 0
+        ? 'Nothing new in this file: its searches are here already.'
+        : `Imported ${String(added.saved)} saved, ${String(added.recent)} recent.`;
+    return missed === 0
+      ? imported
+      : `${imported} ${String(missed)} did not fit: the lists hold ${String(MAX_SAVED)} saved and ${String(MAX_RECENT)} recent searches.`;
+  },
+  importUnreadable: 'This file could not be read. Nothing was imported.',
+  importRefusals: {
+    'not-json': 'This file is not a list of searches (it is not JSON). Nothing was imported.',
+    foreign: 'This file was not made by Trait Atlas. Nothing was imported.',
+    'wrong-version': 'This file was made by another version of Trait Atlas. Nothing was imported.',
+    malformed: 'This file is damaged: its searches are not in the form Trait Atlas writes. Nothing was imported.',
+    'too-large': `This file holds more than Trait Atlas keeps (${String(MAX_SAVED)} saved and ${String(MAX_RECENT)} recent searches of ${formatCount(MAX_SEARCH_LENGTH)} characters at most). Nothing was imported.`,
+  } as const satisfies Record<ImportRefusal, string>,
   resultCount: (shown: number, total: number) => `${formatCount(shown)} of ${formatCount(total)} traits`,
   datasetVersion: (version: string) => `Compendium v${version}`,
   sortLabel: 'Sort',

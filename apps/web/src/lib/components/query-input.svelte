@@ -1,8 +1,15 @@
 <script lang="ts">
-  import type { CountedSuggestion, ExploreState, QueryDiagnostic, SearchService } from '@atlas/core';
-  import { onDestroy } from 'svelte';
+  import {
+    isSaved,
+    type CountedSuggestion,
+    type ExploreState,
+    type QueryDiagnostic,
+    type SearchService,
+  } from '@atlas/core';
+  import { onDestroy, onMount } from 'svelte';
   import { afterNextPaint } from '../after-paint';
   import { applyFieldEdit, isBeingEdited } from '../apply-field-edit';
+  import { keyPressOf } from '../combobox-state';
   import type { ComboboxOption } from '../combobox-option';
   import { copy } from '../copy';
   import { createIssueAnnouncer } from '../issue-announcer';
@@ -10,6 +17,7 @@
   import { whenIdle } from '../lazy-load';
   import { caretToLint } from '../lint-caret';
   import { loadQueryAssist, type QueryAssist } from '../query-assist-loader';
+  import type { SearchHistorySession } from '../search-history-session';
 
   /** The id of the list of issues: the badge controls it and the field is described by its texts. */
   const ISSUES_ID = 'query-issues';
@@ -28,12 +36,18 @@
    * The issues are a badge inside the field and a list under it, the suggestions a list over the page; both are edits of the text
    * made in the field as a person's typing is. Neither is there until the layer and the data are. The layer also brings the mirror
    * (§8): a coloured copy of the text under the field, which turns transparent to let it show.
+   *
+   * The recent and saved searches (SPEC §8.3) are remembered here, in the first script, whether or not the layer arrives: a search is
+   * remembered when Enter is pressed in the field, when the field is left with its text changed, and when it is saved or taken from
+   * a list. What the layer adds is the use of them: a blank field offers them as a list to browse, a star keeps the search in the
+   * field, and a sheet manages the lists.
    */
   let {
     value,
     onchange,
     service,
     filters,
+    history,
     input = $bindable(),
   }: {
     value: string;
@@ -42,6 +56,8 @@
     service: SearchService | undefined;
     /** The filters of the page: a suggestion is counted among the traits they leave (D18). */
     filters: ExploreState;
+    /** The searches the person has made and kept. */
+    history: SearchHistorySession;
     /** The `<input>`, for whoever needs to focus it or attach to it (the `/` shortcut, the assist layer). */
     input?: HTMLInputElement | undefined;
   } = $props();
@@ -62,11 +78,18 @@
   const suggestions = $derived(
     counted !== undefined && counted.of === analysis?.suggestions ? counted.suggestions : (analysis?.suggestions ?? []),
   );
-  const options = $derived(assist?.optionsOf(suggestions) ?? []);
+  const blank = $derived(value.trim() === '');
+  /** What a blank field offers, if the person has any: its own searches (SPEC §8.3), a list to browse and no completion of the text. */
+  const historyRows = $derived(assist?.historyRows(history.history) ?? []);
+  const browsable = $derived(historyRows.length > 0);
+  const browsing = $derived(assist !== undefined && browsable && blank);
+  const options = $derived(
+    assist === undefined ? [] : browsing ? assist.historyOptions(historyRows) : assist.optionsOf(suggestions),
+  );
   /** The option that Tab would take (the list tells), whose rest the mirror shows in grey after the text. */
   let active = $state<number>();
   const ghost = $derived(
-    assist === undefined || caret === undefined || active === undefined
+    assist === undefined || browsing || caret === undefined || active === undefined
       ? ''
       : assist.ghostText(value, caret, suggestions[active]),
   );
@@ -80,6 +103,10 @@
   });
   onDestroy(() => {
     announcer.stop();
+  });
+  // The prerendered page has no storage to read: the history is read once the page runs.
+  onMount(() => {
+    history.load();
   });
 
   /** Fetches the assist layer, once; a load that fails leaves the plain field, and the next focus or pointer tries again. */
@@ -161,12 +188,74 @@
     readCaret();
   }
 
-  /** A suggestion taken: its text goes in the place of the word being typed, and the caret after it. */
+  /**
+   * An option taken. A suggestion's text goes in the place of the word being typed, and the caret after it. A search of the history
+   * is the whole of the text, which it takes the place of; it is remembered again, as the newest.
+   */
   function accept(_option: ComboboxOption, index: number): void {
-    const suggestion = suggestions[index];
-    if (suggestion === undefined || assist === undefined || input === undefined) return;
-    applyFieldEdit(input, assist.acceptSuggestion(value, suggestion));
+    if (assist === undefined || input === undefined) return;
+    if (browsing) {
+      const row = historyRows[index];
+      if (row === undefined) return;
+      applyFieldEdit(input, { span: [0, value.length], text: row.query });
+      history.record(row.query);
+    } else {
+      const suggestion = suggestions[index];
+      if (suggestion === undefined) return;
+      applyFieldEdit(input, assist.acceptSuggestion(value, suggestion));
+    }
     readCaret();
+  }
+
+  // A search is remembered when it is sent (Enter) and when the field is left with its text changed since it was entered.
+  let valueOnFocus = '';
+  function focused(): void {
+    valueOnFocus = value;
+    readCaret();
+  }
+  function blurred(): void {
+    if (value !== valueOnFocus) history.record(value);
+  }
+  /** The Enter that ends an IME composition is the IME's, and an Enter the list took (it accepted a suggestion) sent nothing. */
+  function sent(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.defaultPrevented && !keyPressOf(event).isComposing) history.record(value);
+  }
+
+  const saved = $derived(isSaved(history.history, value));
+  /** Why the star did nothing, for the text it was pressed on: it goes when the text changes. */
+  let refusal = $state.raw<{ readonly text: string; readonly message: string; readonly full: boolean }>();
+  const shownRefusal = $derived(refusal?.text === value ? refusal : undefined);
+
+  function toggleSaved(): void {
+    const wasSaved = saved;
+    const result = history.toggleSaved(value);
+    if (result.ok) {
+      refusal = undefined;
+      announced = wasSaved ? copy.searchUnsaved : copy.searchSaved;
+    } else {
+      const message = copy.saveRefusals[result.reason];
+      refusal = { text: value, message, full: result.reason === 'full' };
+      announced = message;
+    }
+  }
+
+  let managing = $state(false);
+  let manageButton = $state<HTMLButtonElement>();
+  function manage(): void {
+    refusal = undefined;
+    want();
+    managing = true;
+  }
+  /** The sheet is shut, however: the focus goes back to the button that opened it. */
+  function managed(): void {
+    managing = false;
+    manageButton?.focus();
+  }
+  /** A search taken from the sheet goes in the field and is remembered as the newest; the sheet shuts itself, and says so. */
+  function useSearch(query: string): void {
+    onchange(query);
+    history.record(query);
+    managing = false;
   }
 </script>
 
@@ -197,7 +286,9 @@
             readCaret();
             onchange(event.currentTarget.value);
           }}
-          onfocus={readCaret}
+          onfocus={focused}
+          onblur={blurred}
+          onkeydown={sent}
           onclick={readCaret}
           onkeyup={readCaret}
           onselect={readCaret}
@@ -224,11 +315,13 @@
           }}
         />
       {/if}
+      <assist.HistoryButtons canSave={!blank} {saved} onsave={toggleSaved} onmanage={manage} bind:manageButton />
       <assist.Combobox
         {input}
         {options}
+        {browsable}
         id={SUGGESTIONS_ID}
-        label={copy.suggestionsLabel}
+        label={browsing ? copy.historyLabel : copy.suggestionsLabel}
         onaccept={accept}
         onactive={(index: number | undefined) => {
           active = index;
@@ -238,6 +331,16 @@
   </div>
   {#if assist !== undefined}
     <assist.QueryIssues id={ISSUES_ID} {summary} {open} onfix={fix} />
+    {#if shownRefusal !== undefined}
+      <!-- Said aloud with the polite line below (`announced`), so that it is not a live region of its own. -->
+      <p class="refusal">
+        {shownRefusal.message}
+        {#if shownRefusal.full}
+          <button type="button" onclick={manage}>{copy.manageSearches}</button>
+        {/if}
+      </p>
+    {/if}
+    <assist.SearchesSheet open={managing} {history} onuse={useSearch} onclose={managed} />
   {/if}
   <p class="visually-hidden" aria-live="polite">{announced}</p>
 </div>
@@ -252,6 +355,37 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  /* Why the star did nothing (the fifty places are taken, say): plain words under the field, with the way out when there is one. */
+  .refusal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .refusal button {
+    min-height: var(--target-min);
+    padding: 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-3);
+    color: var(--text-strong);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .refusal button:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
   }
 
   .field {

@@ -114,3 +114,42 @@ describe('the page of a trait', () => {
     expect(copy.triggerWithActor('Dodge', 'enemy')).toBe('Dodge (enemies)');
   });
 });
+
+describe('the sentences about the recent and saved searches', () => {
+  it('names a search in quotes where a screen reader reads it out', () => {
+    expect(copy.removeSearch('uses:weak', 'saved')).toBe('Remove “uses:weak” from the saved searches');
+    expect(copy.searchRemoved('weak', 'recent')).toBe('Removed “weak” from the recent searches.');
+  });
+
+  it('cuts a long search short in a name: it may be two thousand characters, and a name is read out whole', () => {
+    const name = copy.removeSearch('x'.repeat(2000), 'saved');
+
+    expect(name).toBe(`Remove “${'x'.repeat(59)}…” from the saved searches`);
+    expect(copy.removeSearch('x'.repeat(60), 'saved')).toContain('x'.repeat(60));
+  });
+
+  it('says what an import added, in the words of the lists', () => {
+    expect(copy.searchesImported({ saved: 3, recent: 5 }, { saved: 0, recent: 0 })).toBe('Imported 3 saved, 5 recent.');
+  });
+
+  it('says that a file with nothing new in it added nothing, rather than that three things were imported', () => {
+    expect(copy.searchesImported({ saved: 0, recent: 0 }, { saved: 0, recent: 0 })).toBe(
+      'Nothing new in this file: its searches are here already.',
+    );
+  });
+
+  it('says how many did not fit, and how many the lists hold', () => {
+    expect(copy.searchesImported({ saved: 1, recent: 0 }, { saved: 2, recent: 1 })).toBe(
+      'Imported 1 saved, 0 recent. 3 did not fit: the lists hold 50 saved and 10 recent searches.',
+    );
+  });
+
+  it('says nothing was imported for every reason a file is refused', () => {
+    for (const sentence of Object.values(copy.importRefusals)) expect(sentence).toMatch(/Nothing was imported\.$/);
+  });
+
+  it('says why a search could not be saved, with the limits the app has', () => {
+    expect(copy.saveRefusals.full).toBe('You have 50 saved searches already. Remove one to save this one.');
+    expect(copy.saveRefusals['too-long']).toContain('2,000 characters');
+  });
+});

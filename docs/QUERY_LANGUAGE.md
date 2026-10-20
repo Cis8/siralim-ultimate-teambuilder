@@ -382,7 +382,12 @@ suggestions of a keystroke in one call, so that they are timed as one.
 option; focus never leaves the field, and a press on an option does not take it either. At most nine options (`MAX_SUGGESTIONS`); a
 list with none is not shown. An option's name is all its text: the kind, what is written, the detail and the count with its unit
 ("Debuff applies:vulnerable applies “vulnerable” 42 traits").
-- **Opens** on typing or on ↓ / ↑ (↓ the first option, ↑ the last), never on a plain focus or a click.
+- **Opens** on typing or on ↓ / ↑ (↓ the first option, ↑ the last), never on a plain focus or a click — except in a blank field that has a
+  history (below).
+- **A blank field with a history** (PLAN 11.4, SPEC §8.3 *In the field*) offers its recent and saved searches in place of the fields, in a list
+  named "Recent and saved searches" (`Combobox` with `browsable`). It is a list to browse and completes nothing: it opens also on a press in the
+  field, and typing into the field, or emptying it, makes **no option active**, so Tab and Enter stay the field's own (WCAG 2.1.2) until ↑ / ↓
+  choose. A row takes the place of the whole text. The first character typed brings the suggestions back.
 - **Active option.** None until the person types or uses the arrows: typing makes the first one active (the one the ghost text
   shows), ↑ / ↓ move and wrap. None again after an accept, a caret move (arrows, Home, End, a click), Esc and a blur, so that a
   Tab that is not meant for the list leaves the field (WCAG 2.1.2) instead of taking what the next list puts first.
@@ -460,5 +465,7 @@ moves when it arrives (the Lighthouse layout shift is the one it was).
 - **The selection** is a share of `--accent` (`--field-selection`, 25 %), so that the coloured text shows through it; `contrast.test.ts` holds every colour of a
   piece at 4.5:1 on the field and under the selection, the grey of the ghost at 4.5:1 on the field and the lines at 3:1.
 
-Still to come (PLAN 11.4–11.5; the rules of the history are in SPEC §8.3): saved and recent searches in the field, and on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`,
-inserting at the caret.
+**Recent and saved searches** (PLAN 11.4): a star and a *Manage searches* button inside the field, the list of a blank field (§6) and the sheet
+that manages them; the rules and what the field does are in SPEC §8.3.
+
+Still to come (PLAN 11.5): on a phone a toolbar with `(` `)` `"` `OR` `AND` `NOT` `applies:` `uses:` `class:` `mat:yes`, inserting at the caret.

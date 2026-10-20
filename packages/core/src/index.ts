@@ -225,6 +225,7 @@ export {
 export {
   exportHistory,
   importHistory,
+  MAX_FILE_LENGTH,
   type ImportCounts,
   type ImportRefusal,
   type ImportResult,
